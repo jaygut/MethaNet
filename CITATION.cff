@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "MethaNet: Transfer Learning for Methane Flux Prediction"
+authors:
+  - family-names: "Philosof"
+    given-names: "Alon"
+    orcid: "https://orcid.org/0000-0003-2684-8678"
+  - family-names: "Gutierrez"
+    given-names: "Jay"
+    orcid: "https://orcid.org/0000-0003-0214-4641"
+    email: "jg@graphoflife.com"
+version: "0.1.0"
+date-released: "2025-01-01"
+url: "https://github.com/jaygut/MethaNet"
+repository-code: "https://github.com/jaygut/MethaNet"
+license: "CC-BY-4.0"
+keywords:
+  - methane flux
+  - transfer learning
+  - metagenomics
+  - carbon verification
+  - rumen microbiome
+  - coastal ecosystems
+  - archaeal genomics
+abstract: >
+  MethaNet is a research initiative developing computational methods
+  to predict net methane flux in coastal ecosystems using transfer
+  learning from agricultural microbiome data. By leveraging the
+  ruminant gut archaeome, we aim to decode complex coastal wetland
+  systems critical for carbon sequestration.
