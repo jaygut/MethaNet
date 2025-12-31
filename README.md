@@ -118,6 +118,9 @@ MethaNet/
 ├── CITATION.cff
 ├── pyproject.toml
 ├── uv.lock                 # Lockfile (reproducible installs)
+├── configs/                 # Pipeline configuration (template/spec)
+├── workflow/                # Snakemake pipeline (template/spec)
+├── .github/                 # CI workflows
 ├── src/methanet/           # Core package
 │   ├── features.py         # Feature extraction
 │   ├── models.py           # Transfer learning models
@@ -126,6 +129,32 @@ MethaNet/
 ├── tests/                  # Unit tests
 └── data/                   # Data directory (not in git)
 ```
+
+---
+
+## Pipeline Orchestration (Template Spec)
+
+The Snakemake workflow is intentionally a **template/spec**. It is designed to be adapted once datasets, storage, and cloud deployment details are finalized.
+
+**Guiding principles**
+- **Config-first**: `configs/pipeline.yaml` drives paths, stage toggles, and model settings.
+- **Stage gating**: Enable only the stages you can satisfy with available data; keep others off until inputs are ready.
+- **Portable by default**: The pipeline avoids hard-coded infrastructure; cloud/HPC specifics belong in Snakemake profiles.
+
+**Structure**
+- `workflow/Snakefile` wires the end-to-end DAG.
+- `workflow/rules/*.smk` are modular stage definitions (curation, annotation, embeddings, adaptation, prediction).
+- `workflow/scripts/*.py` are thin, reusable utilities so rule logic stays stable while implementations evolve.
+
+**Config highlights (template)**
+- `stages`: toggle `data_curator`, `marker_annotator`, `embedding_generator`, `domain_adapter`, `flux_predictor`.
+- `paths`: update to match your storage layout once datasets land.
+- `sra_accessions`, `ena_accessions`, `assembly_samples`: placeholders for discovery outputs.
+- `source_features`, `target_features`, `flux_features`: point to finalized Parquet feature tables.
+
+**CI/CD posture**
+- CI currently **lints and dry-runs** the workflow only (no data required).
+- Cloud deployment and runtime profiles will be introduced once datasets and infrastructure are locked.
 
 ---
 
