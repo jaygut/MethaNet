@@ -40,12 +40,63 @@ dependencies = [
 [project.optional-dependencies]
 ml = [
     "torch>=2.0",
-    "transformers>=4.30",
+    "transformers>=4.38",
 ]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
     "ruff>=0.1",
+]
+curation = [
+    "biopython>=1.79",
+    "pandas>=1.3",
+    "pyarrow>=10.0",
+    "requests>=2.31",
+    "tqdm>=4.66",
+]
+annotation = [
+    "biopython>=1.79",
+    "numpy>=1.21",
+    "pandas>=1.3",
+    "pyhmmer>=0.11",
+    "networkx>=2.8",
+    "scipy>=1.10",
+]
+embeddings = [
+    "torch>=2.0",
+    "transformers>=4.38",
+    "numpy>=1.21",
+    "scikit-learn>=1.2",
+    "umap-learn>=0.5",
+    "matplotlib>=3.7",
+    "seaborn>=0.12",
+    "tqdm>=4.66",
+]
+adaptation = [
+    "torch>=2.0",
+    "scikit-learn>=1.2",
+    "numpy>=1.21",
+    "pandas>=1.3",
+    "scipy>=1.10",
+    "optuna>=3.0",
+]
+prediction = [
+    "numpy>=1.21",
+    "pandas>=1.3",
+    "scikit-learn>=1.2",
+    "scipy>=1.10",
+    "statsmodels>=0.14",
+    "xgboost>=1.7",
+    "lightgbm>=4.0",
+    "shap>=0.45,<0.50",
+    "matplotlib>=3.7",
+    "seaborn>=0.12",
+]
+pipeline = [
+    "snakemake>=7.0",
+    "dvc>=3.0",
+    "mlflow>=2.0",
+    "pandera>=0.17",
 ]
 
 [project.urls]
