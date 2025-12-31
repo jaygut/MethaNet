@@ -262,14 +262,14 @@ We welcome contributions from the research community.
 **Principal Investigators:**
 
 - **Alon Philosof, PhD** — Microbial Ecology & Computational Biology  
-  ORCID: [0000-0003-2684-8678](https://orcid.org/0000-0003-2684-8678)
+  ORCID: [0000-0003-2684-8678](https://orcid.org/0000-0003-2684-8678)  
   Email: aphilosof@gmail.com
   LinkedIn: [alon-philosof](https://www.linkedin.com/in/aphilosof/)
 
 - **Jay Gutierrez, PhD** — Systems Biology & Biodiversity Informatics  
-  ORCID: [0000-0003-0214-4641](https://orcid.org/0000-0003-0214-4641)
+  ORCID: [0000-0003-0214-4641](https://orcid.org/0000-0003-0214-4641)  
   Email: jg@graphoflife.com  
-  LinkedIn: [jay-gutierrez](https://www.linkedin.com/in/jaygut)
+  LinkedIn: [jay-gutierrez](https://www.linkedin.com/in/jaygut)  
   Website: https://biome-translator.emergent.host/
 
 ---
