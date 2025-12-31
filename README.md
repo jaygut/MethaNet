@@ -9,7 +9,7 @@
 
 ## Overview
 
-MethaNet is a research initiative developing computational methods to predict net methane flux in coastal ecosystems using transfer learning from agricultural microbiome data. By leveraging the world's most comprehensive methanogen genomic resources—the ruminant gut archaeome—we aim to decode complex coastal wetland systems that are critical for carbon sequestration but remain data-sparse.
+MethaNet is a research initiative developing computational methods to predict net methane flux in coastal ecosystems using transfer learning from agricultural microbiome data. By leveraging the world's most comprehensive methanogen genomic resources, the ruminant gut archaeome, we aim to decode complex coastal wetland systems that are critical for carbon sequestration but remain data-sparse.
 
 Methane has a global warming potential approximately 30× that of CO₂ over a 100-year horizon. Coastal wetlands can be net carbon sinks or sources depending on the balance between carbon uptake and methane emissions. Current measurement methods (chamber measurements, flux towers) are expensive, sparse, and unable to scale. This project addresses a critical gap in climate accounting: the inability to distinguish net climate benefits from net climate harms using molecular data.
 
@@ -57,7 +57,7 @@ Target environmental datasets for model validation and transfer learning.
 | Global Mangrove Metagenomes | ~150 publicly available samples | NCBI SRA |
 | Mangrove Methanogen Study | 13 MAGs with pathway analysis | [Zhang et al., 2020](https://doi.org/10.1186/s40168-020-00876-z) |
 
-**Data disparity:** ~26,000 rumen microbiome sequencing runs exist in NCBI SRA compared to ~2,400 from mangrove sites—a >10× disparity that motivates our transfer learning approach.
+**Data disparity:** ~26,000 rumen microbiome sequencing runs exist in NCBI SRA compared to ~2,400 from mangrove sites, a >10× disparity that motivates our transfer learning approach.
 
 **Validation strategy:** We are curating publicly available coastal metagenomes with co-located flux tower or chamber measurements for model validation.
 
@@ -97,7 +97,7 @@ Planned feature matrices for genomic language model analysis:
 | mcrA | Methyl-coenzyme M reductase α | Catalyzes final step of methanogenesis | Methanogen abundance proxy |
 | pmoA | Particulate methane monooxygenase α | Catalyzes methane oxidation | Methanotroph abundance proxy |
 
-**The mcrA/pmoA ratio** captures the balance between methane production and consumption—the key determinant of whether an ecosystem is a net methane source or sink.
+**The mcrA/pmoA ratio** captures the balance between methane production and consumption, the key determinant of whether an ecosystem is a net methane source or sink.
 
 ### Methanogenesis Pathways
 
@@ -273,7 +273,7 @@ This work builds on the following foundational datasets and methods:
    DOI: [10.1038/nbt.4110](https://doi.org/10.1038/nbt.4110)
 
 4. **Global Methane Marker Atlas**
-   Nwokolo, N.L. & Enebe, M.C. (2025). Methane production and oxidation—A review on the pmoA and mcrA gene abundances. *Pedosphere*, 35(1), 161-181.
+   Nwokolo, N.L. & Enebe, M.C. (2025). Methane production and oxidation: A review on the pmoA and mcrA gene abundances. *Pedosphere*, 35(1), 161-181.
    DOI: [10.1016/j.pedsph.2024.05.006](https://doi.org/10.1016/j.pedsph.2024.05.006)
 
 5. **Transfer Learning for Microbial Communities**
@@ -299,11 +299,11 @@ This work builds on the following foundational datasets and methods:
 This project is licensed under the **Creative Commons Attribution 4.0 International License** (CC BY 4.0).
 
 You are free to:
-- **Share** — copy and redistribute the material in any medium or format
-- **Adapt** — remix, transform, and build upon the material for any purpose, even commercially
+- **Share**: copy and redistribute the material in any medium or format
+- **Adapt**: remix, transform, and build upon the material for any purpose, even commercially
 
 Under the following terms:
-- **Attribution** — You must give appropriate credit, provide a link to the license, and indicate if changes were made.
+- **Attribution**: You must give appropriate credit, provide a link to the license, and indicate if changes were made.
 
 See [LICENSE](LICENSE) for full details.
 
@@ -327,12 +327,12 @@ We welcome contributions from the research community.
 
 **Principal Investigators:**
 
-- **Alon Philosof, PhD** — Microbial Ecology & Computational Biology  
+- **Alon Philosof, PhD** - Microbial Ecology & Computational Biology  
   ORCID: [0000-0003-2684-8678](https://orcid.org/0000-0003-2684-8678)  
   Email: aphilosof@gmail.com
   LinkedIn: [alon-philosof](https://www.linkedin.com/in/aphilosof/)
 
-- **Jay Gutierrez, PhD** — Systems Biology & Biodiversity Informatics  
+- **Jay Gutierrez, PhD** - Systems Biology & Biodiversity Informatics  
   ORCID: [0000-0003-0214-4641](https://orcid.org/0000-0003-0214-4641)  
   Email: jg@graphoflife.com  
   LinkedIn: [jay-gutierrez](https://www.linkedin.com/in/jaygut)  
