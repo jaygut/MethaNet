@@ -1,0 +1,72 @@
+simulate: false
+
+stages:
+  data_curator: true
+  marker_annotator: true
+  embedding_generator: true
+  domain_adapter: false
+  flux_predictor: false
+
+paths:
+  raw_sra: data/raw/sra
+  raw_ena: data/raw/ena
+  qc_reads: data/qc_reads
+  qc_reports: data/qc_reports
+  qc_assemblies: data/qc_assemblies
+  qc_mags: data/qc_mags
+  assemblies: data/assemblies
+  mags: data/mags
+  hmm_dir: data/hmm
+  orfs: features/orfs
+  marker_hits: features/marker_hits
+  marker_sequences: features/marker_sequences
+  dna_sequences: features/dna_sequences
+  marker_db: db/marker_db.mmsdb
+  embeddings: features/embeddings
+  adapted_features: features/adapted
+  models: models
+  reports: reports
+  figures: figures
+  source_features: features/rumen.parquet
+  target_features: features/coastal.parquet
+  flux_features: features/all_features.parquet
+
+sra_accessions: []
+ena_accessions: []
+assembly_samples: []
+mag_sets: []
+marker_samples: []
+embedding_samples: []
+dna_embedding_samples: []
+fraggenescan_inputs: {}
+
+threads:
+  download: 8
+  qc: 8
+  hmmer: 4
+  mmseqs: 8
+  embedding: 1
+  training: 1
+
+models:
+  esm2: facebook/esm2_t33_650M_UR50D
+  dnabert2: zhihan1996/DNABERT-2-117M
+
+embedding:
+  batch_size: 4
+  device: auto
+
+training:
+  label_column: measured_flux
+  dann:
+    epochs: 20
+    batch_size: 64
+    lr: 0.001
+    hidden_dim: 256
+    alpha: 1.0
+    top_k: 50
+  flux:
+    model: linear
+    random_state: 42
+    bootstrap_samples: 1000
+    ci: 0.95
