@@ -54,18 +54,18 @@ Target environmental datasets for model validation and transfer learning.
 
 | Dataset | Description | Source |
 |---------|-------------|--------|
-| Global Mangrove Metagenomes | ~150 publicly available samples | NCBI SRA |
+| Global Mangrove Metagenomes | ~127 curated samples (from ~150 public samples) | NCBI SRA |
 | Mangrove Methanogen Study | 13 MAGs with pathway analysis | [Zhang et al., 2020](https://doi.org/10.1186/s40168-020-00876-z) |
 
 **Data disparity:** ~26,000 rumen microbiome sequencing runs exist in NCBI SRA compared to ~2,400 from mangrove sites, a >10× disparity that motivates our transfer learning approach.
 
-**Validation strategy:** We are curating publicly available coastal metagenomes with co-located flux tower or chamber measurements for model validation.
+**Validation strategy:** We are curating publicly available coastal metagenomes with co-located flux tower or chamber measurements for model validation, with 23 samples targeted for paired-flux evaluation.
 
 ---
 
 ## Feature Engineering
 
-Planned feature matrices for genomic language model analysis:
+Planned feature matrices for genomic language model analysis (targeted for initial Kosmos/Edison runs in the first weeks after data access and QC):
 
 | Feature Type | Description | Tools |
 |--------------|-------------|-------|
