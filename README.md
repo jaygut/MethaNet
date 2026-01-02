@@ -3,7 +3,7 @@
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 ![Status](https://img.shields.io/badge/Status-In%20Development-yellow)
 
-**Bridging Rumen Microbiome Data to Climate Verification Through AI-Accelerated Knowledge Transfer**
+**Bridging Rumen Microbiome Data to Climate Verification Through Cross-Ecosystem Genomic Analysis**
 
 ---
 
@@ -65,7 +65,7 @@ Target environmental datasets for model validation and transfer learning.
 
 ## Feature Engineering
 
-Planned feature matrices for genomic language model analysis (targeted for initial Kosmos/Edison runs in the first weeks after data access and QC):
+Planned feature matrices for genomic language model analysis (designed for immediate analysis after data access and QC):
 
 | Feature Type | Description | Tools |
 |--------------|-------------|-------|
@@ -155,43 +155,6 @@ The Snakemake workflow is intentionally a **template/spec**. It is designed to b
 **CI/CD posture**
 - CI currently **lints and dry-runs** the workflow only (no data required).
 - Cloud deployment and runtime profiles will be introduced once datasets and infrastructure are locked.
-
----
-
-## Kosmos and Edison Integration (Template Spec)
-
-Our proposal assumes that **Kosmos** (the AI Scientist) and **Edison Analysis** (its analytical engine) are the external discovery/analysis layer. The integration described here is intentionally a **template/spec**, so we can adapt it once dataset access and cloud deployment are finalized.
-
-**What the Edison platform provides (from Edison Scientific resources)**
-- Kosmos is positioned as a **data-driven discovery agent** designed for iterative scientific objectives.
-- Edison Analysis is the **analysis engine underpinning Kosmos**, performing data analysis by iteratively updating **Jupyter notebooks** in a dedicated environment.
-- Edison Analysis supports **Python, R, and Bash** execution, includes a **dataset access tool**, and is available via the **Edison platform and API**.
-
-**MethaNet → Kosmos/Edison interface contract (template)**
-- **Inputs from MethaNet**:
-  - A **clear research objective** with scope for iteration, plus key scientific context and assumptions.
-  - **QC'd datasets** and metadata exported as Parquet, plus a concise schema/provenance manifest.
-  - Feature tables (e.g., marker ratios, embeddings) and evaluation constraints (e.g., LOOCV for n=23).
-- **Outputs expected from Kosmos/Edison**:
-  - A structured analysis notebook with intermediate results, diagnostics, and interpretability outputs.
-  - Hypotheses and feature priorities to feed back into MethaNet configuration (e.g., new markers to test).
-  - Recommendations for targeted data augmentation or new sample selection.
-
-**Operational flow (template)**
-1. **Pipeline curation and QC** generate the datasets required for AI-assisted exploration.
-2. A **research objective brief** (objective, constraints, and context) is supplied to Kosmos, aligned with their best-practice guidance for clear, feasible, iterative tasks.
-3. **Edison Analysis** runs in its notebook environment, producing analysis artifacts for review.
-4. MethaNet integrates the outputs by updating **`configs/pipeline.yaml`** (feature sets, thresholds, and stage toggles) and re-running the workflow.
-
-**Grant alignment**
-The Edison Platform ACU grant emphasizes **complex, QC'd datasets ready for AI-assisted exploration**. The MethaNet pipeline is designed to deliver those datasets and accompanying metadata manifests, ensuring we can start productive Kosmos/Edison runs as soon as access is provisioned.
-
-References:
-- Edison Scientific blog: https://edisonscientific.com/blog
-- Announcing Kosmos: https://edisonscientific.com/articles/announcing-kosmos
-- Introducing Edison Analysis: https://edisonscientific.com/articles/introducing-edison-analysis
-- Kosmos best practices: https://edisonscientific.com/articles/kosmos-best-practices-guidelines
-- Edison Platform ACU grant: https://edisonscientific.com/articles/edison-platform-acu-grant
 
 ---
 
