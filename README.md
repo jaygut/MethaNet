@@ -3,6 +3,8 @@
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 ![Status](https://img.shields.io/badge/Status-In%20Development-yellow)
 
+*MethaNet is a flagship project within the [EmergentBiome](https://emergent.host/) research initiative, developing cross-biome knowledge transfer methods for climate science.*
+
 **Bridging Rumen Microbiome Data to Climate Verification Through Cross-Ecosystem Genomic Analysis**
 
 ---
@@ -206,6 +208,12 @@ ML (optional): torch, transformers
 
 ---
 
+## Related Projects
+
+MethaNet is part of the EmergentBiome research initiative. Future projects within this initiative will extend the cross-biome transfer learning methodology to additional ecosystems including mangroves, seagrass beds, and agricultural soils.
+
+For more information about EmergentBiome, visit https://emergent.host/.
+
 ## Citation
 
 If you use MethaNet in your research, please cite:
@@ -227,12 +235,12 @@ This work builds on the following foundational datasets and methods:
    Mi, J., et al. (2024). A metagenomic catalogue of the ruminant gut archaeome. *Nature Communications*, 15, 9426.
    DOI: [10.1038/s41467-024-54025-3](https://doi.org/10.1038/s41467-024-54025-3)
 
-2. **RUG2 Genome Catalog**
-   Stewart, R.D., et al. (2019). Compendium of 4,941 rumen metagenome-assembled genomes for rumen microbiome biology and enzyme discovery. *Nature Biotechnology*, 37, 953–961.
+2. **RUG2 Genome Catalog**  
+   Stewart, R.D., et al. (2019). Compendium of 4,941 rumen metagenome-assembled genomes for rumen microbiome biology and enzyme discovery. *Nature Biotechnology*, 37, 953-961.  
    DOI: [10.1038/s41587-019-0202-3](https://doi.org/10.1038/s41587-019-0202-3)
 
-3. **Hungate1000 Collection**
-   Seshadri, R., et al. (2018). Cultivation and sequencing of rumen microbiome members from the Hungate1000 Collection. *Nature Biotechnology*, 36, 359–367.
+3. **Hungate1000 Collection**  
+   Seshadri, R., et al. (2018). Cultivation and sequencing of rumen microbiome members from the Hungate1000 Collection. *Nature Biotechnology*, 36, 359-367.  
    DOI: [10.1038/nbt.4110](https://doi.org/10.1038/nbt.4110)
 
 4. **Global Methane Marker Atlas**
@@ -277,6 +285,8 @@ See [LICENSE](LICENSE) for full details.
 ## Contributing
 
 We welcome contributions from the research community.
+
+This project is part of the broader EmergentBiome initiative - contributors interested in extending the methodology to other ecosystems are encouraged to reach out.
 
 ### Ways to Contribute
 
