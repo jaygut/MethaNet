@@ -6,7 +6,7 @@ for deployed MethaNet models.
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 import numpy as np
 
 try:
@@ -190,6 +190,97 @@ class ONNXInference:
         """Get active execution providers."""
         return self.session.get_providers()
 
+
+class ONNXEnsembleInference:
+    """ONNX Runtime inference for an ensemble of models."""
+
+    def __init__(
+        self,
+        model_paths: Dict[str, Path],
+        model_weights: Dict[str, float],
+        config: Optional[InferenceConfig] = None,
+    ):
+        if not ORT_AVAILABLE:
+            raise ImportError(
+                "ONNX Runtime required. Install: pip install onnxruntime-gpu"
+            )
+
+        self.config = config or InferenceConfig()
+        self.model_weights = model_weights
+        self.sessions: Dict[str, "ort.InferenceSession"] = {}
+        self.input_names: Dict[str, str] = {}
+        self.output_names: Dict[str, str] = {}
+
+        for name, path in model_paths.items():
+            model_path = Path(path)
+            if not model_path.exists():
+                raise FileNotFoundError(f"Model not found: {model_path}")
+            session = self._create_session(model_path)
+            self.sessions[name] = session
+            self.input_names[name] = session.get_inputs()[0].name
+            self.output_names[name] = self._select_prob_output(session)
+
+    def _create_session(self, model_path: Path) -> "ort.InferenceSession":
+        sess_options = ort.SessionOptions()
+        sess_options.intra_op_num_threads = self.config.num_threads
+        sess_options.graph_optimization_level = ort.GraphOptimizationLevel(
+            self.config.optimization_level
+        )
+
+        providers = []
+        if self.config.use_gpu:
+            available_providers = ort.get_available_providers()
+            if "CUDAExecutionProvider" in available_providers:
+                providers.append("CUDAExecutionProvider")
+            elif "CoreMLExecutionProvider" in available_providers:
+                providers.append("CoreMLExecutionProvider")
+        providers.append("CPUExecutionProvider")
+
+        return ort.InferenceSession(
+            str(model_path),
+            sess_options=sess_options,
+            providers=providers,
+        )
+
+    def _select_prob_output(self, session: "ort.InferenceSession") -> str:
+        for output in session.get_outputs():
+            shape = output.shape
+            if shape and len(shape) == 2:
+                return output.name
+        return session.get_outputs()[-1].name
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        if X.ndim == 1:
+            X = X.reshape(1, -1)
+        X = X.astype(np.float32)
+
+        probs = None
+        total_weight = 0.0
+
+        for name, session in self.sessions.items():
+            weight = self.model_weights.get(name, 0.0)
+            if weight <= 0:
+                continue
+            output_name = self.output_names[name]
+            input_name = self.input_names[name]
+            pred = session.run([output_name], {input_name: X})[0]
+            if probs is None:
+                probs = np.zeros_like(pred)
+            probs += weight * pred
+            total_weight += weight
+
+        if probs is None or total_weight == 0:
+            raise RuntimeError("No active ONNX models available for inference.")
+
+        return probs / total_weight
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        probs = self.predict_proba(X)
+        return np.argmax(probs, axis=1)
+
+    @property
+    def providers(self) -> Dict[str, List[str]]:
+        return {name: session.get_providers() for name, session in self.sessions.items()}
 
 def batch_inference(
     model_path: Path,

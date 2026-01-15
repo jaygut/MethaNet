@@ -3,10 +3,10 @@
 This module provides utilities for combining:
 - Functional gene features (77-dim)
 - ESM-2 protein embeddings (1280-dim)
-- GenomeOcean genome embeddings (3072-dim)
+- Genome embeddings (DNABERT-2 768-dim or GenomeOcean 3072-dim)
 - Environmental metadata (~100-dim)
 
-Total fused dimension: ~5429 features
+Total fused dimension depends on genome embedding backend.
 """
 
 from dataclasses import dataclass, field
@@ -14,6 +14,14 @@ from typing import Dict, List, Optional, Union
 import numpy as np
 
 from methanet.functional.quantify import FunctionalProfile
+from methanet.schema import (
+    DEFAULT_FUNCTIONAL_PATHWAYS,
+    DEFAULT_GENOME_DIM,
+    DNABERT2_DIM,
+    ESM2_DIM as SCHEMA_ESM2_DIM,
+    FUNCTIONAL_BASE_DIM,
+    GENOMEOCEAN_DIM as SCHEMA_GENOMEOCEAN_DIM,
+)
 
 
 @dataclass
@@ -25,7 +33,7 @@ class FusedFeatures:
         features: Full fused feature vector.
         functional_dim: Dimension of functional features.
         esm2_dim: Dimension of ESM-2 embeddings.
-        genomeocean_dim: Dimension of GenomeOcean embeddings.
+        genomeocean_dim: Dimension of genome embeddings.
         metadata_dim: Dimension of environmental metadata.
     """
 
@@ -33,7 +41,7 @@ class FusedFeatures:
     features: np.ndarray
     functional_dim: int = 77
     esm2_dim: int = 1280
-    genomeocean_dim: int = 3072
+    genomeocean_dim: int = DEFAULT_GENOME_DIM
     metadata_dim: int = 0
 
     @property
@@ -52,7 +60,7 @@ class FusedFeatures:
         return self.features[start:end]
 
     def get_genomeocean(self) -> np.ndarray:
-        """Extract GenomeOcean embeddings."""
+        """Extract genome embeddings."""
         start = self.functional_dim + self.esm2_dim
         end = start + self.genomeocean_dim
         return self.features[start:end]
@@ -72,10 +80,11 @@ class FusionConfig:
     Attributes:
         include_functional: Include functional gene features.
         include_esm2: Include ESM-2 embeddings.
-        include_genomeocean: Include GenomeOcean embeddings.
+        include_genomeocean: Include genome embeddings (GenomeOcean or DNABERT-2).
         include_metadata: Include environmental metadata.
         normalize: Apply L2 normalization to embeddings.
         functional_pathways: Number of pathway completeness features.
+        genome_dim: Expected genome embedding dimension.
     """
 
     include_functional: bool = True
@@ -83,7 +92,8 @@ class FusionConfig:
     include_genomeocean: bool = True
     include_metadata: bool = True
     normalize: bool = True
-    functional_pathways: int = 72  # KEGG pathway completeness scores
+    functional_pathways: int = DEFAULT_FUNCTIONAL_PATHWAYS  # KEGG pathway completeness scores
+    genome_dim: int = DEFAULT_GENOME_DIM
 
 
 class FeatureFusion:
@@ -92,14 +102,15 @@ class FeatureFusion:
     This class handles the fusion of:
     1. Functional gene abundances (mcrA, pmoA, dsrA, nifH, cbbL + pathway scores)
     2. ESM-2 protein embeddings (mean-pooled)
-    3. GenomeOcean genome embeddings
+    3. Genome embeddings (GenomeOcean or DNABERT-2)
     4. Environmental covariates (optional)
     """
 
     # Feature dimensions
-    BASE_FUNCTIONAL_DIM = 5  # mcrA, pmoA, dsrA, nifH, cbbL
-    ESM2_DIM = 1280
-    GENOMEOCEAN_DIM = 3072
+    BASE_FUNCTIONAL_DIM = FUNCTIONAL_BASE_DIM
+    ESM2_DIM = SCHEMA_ESM2_DIM
+    GENOMEOCEAN_DIM = SCHEMA_GENOMEOCEAN_DIM
+    DNABERT2_DIM = DNABERT2_DIM
 
     def __init__(self, config: Optional[FusionConfig] = None):
         """Initialize feature fusion.
@@ -124,7 +135,7 @@ class FeatureFusion:
             sample_id: Sample identifier.
             functional: Functional profile or vector.
             esm2_embedding: ESM-2 embedding array (1280-dim).
-            genomeocean_embedding: GenomeOcean embedding (3072-dim).
+            genomeocean_embedding: Genome embedding array.
             metadata: Environmental metadata features.
             pathway_scores: KEGG pathway completeness scores.
 
@@ -170,7 +181,7 @@ class FeatureFusion:
             esm2_dim = len(esm2_vec)
             components.append(esm2_vec)
 
-        # GenomeOcean embeddings
+        # Genome embeddings
         go_dim = 0
         if self.config.include_genomeocean:
             if genomeocean_embedding is not None:
@@ -180,7 +191,7 @@ class FeatureFusion:
                     if norm > 0:
                         go_vec = go_vec / norm
             else:
-                go_vec = np.zeros(self.GENOMEOCEAN_DIM)
+                go_vec = np.zeros(self.config.genome_dim)
 
             go_dim = len(go_vec)
             components.append(go_vec)
@@ -220,7 +231,7 @@ class FeatureFusion:
             sample_ids: List of sample identifiers.
             functional_profiles: Optional list of FunctionalProfile objects.
             esm2_embeddings: Optional dict mapping sample_id to ESM-2 embedding.
-            genomeocean_embeddings: Optional dict mapping sample_id to GenomeOcean embedding.
+            genomeocean_embeddings: Optional dict mapping sample_id to genome embedding.
             metadata_df: Optional DataFrame with sample_id as index.
 
         Returns:
@@ -281,5 +292,5 @@ class FeatureFusion:
         if self.config.include_esm2:
             dim += self.ESM2_DIM
         if self.config.include_genomeocean:
-            dim += self.GENOMEOCEAN_DIM
+            dim += self.config.genome_dim
         return dim

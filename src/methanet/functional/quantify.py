@@ -6,9 +6,19 @@ functional gene markers in metagenome-assembled genomes (MAGs).
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Sequence, Union
 import subprocess
 import numpy as np
+
+
+@dataclass
+class MarkerGene:
+    """Marker gene definition for HMM-based searches."""
+
+    name: str
+    hmm_path: Path
+    threshold: float = 1e-10
+    description: Optional[str] = None
 
 
 @dataclass
@@ -32,6 +42,17 @@ class FunctionalProfile:
     cbbL: float
 
     @property
+    def marker_abundances(self) -> Dict[str, float]:
+        """Return marker abundances as a dictionary."""
+        return {
+            "mcrA": self.mcrA,
+            "pmoA": self.pmoA,
+            "dsrA": self.dsrA,
+            "nifH": self.nifH,
+            "cbbL": self.cbbL,
+        }
+
+    @property
     def mcrA_pmoA_ratio(self) -> float:
         """Log2-transformed mcrA/pmoA ratio with pseudocount.
 
@@ -40,6 +61,11 @@ class FunctionalProfile:
         """
         pseudocount = 1e-6
         return np.log2((self.mcrA + pseudocount) / (self.pmoA + pseudocount))
+
+    @property
+    def mcra_pmoa_ratio(self) -> float:
+        """Alias for mcrA_pmoA_ratio (backward compatibility)."""
+        return self.mcrA_pmoA_ratio
 
     @property
     def methanogenic_potential(self) -> str:
@@ -73,6 +99,17 @@ class FunctionalProfile:
             self.mcrA_pmoA_ratio,
         ])
 
+    def to_array(self) -> np.ndarray:
+        """Alias for to_vector."""
+        return self.to_vector()
+
+    def get_normalized_abundances(self, method: str = "per_1k_proteins") -> Dict[str, float]:
+        """Return normalized abundances using a supported method."""
+        method = method.lower()
+        if method in {"per_1k_proteins", "raw"}:
+            return self.marker_abundances
+        raise ValueError(f"Unsupported normalization method: {method}")
+
     def to_dict(self) -> Dict:
         """Convert to dictionary representation."""
         return {
@@ -101,6 +138,8 @@ GENE_MAPPING = {
     "TIGR01168": "cbbL",
 }
 
+DEFAULT_MARKERS = ("mcrA", "pmoA", "dsrA", "nifH", "cbbL")
+
 
 class FunctionalQuantifier:
     """Quantify functional gene markers using HMM search.
@@ -110,6 +149,7 @@ class FunctionalQuantifier:
 
     Attributes:
         hmm_db_path: Path to HMM database file.
+        hmm_dir: Directory containing per-marker HMMs.
         evalue_threshold: Maximum e-value for valid hits.
         score_threshold: Minimum bit score for valid hits.
         threads: Number of CPU threads for hmmsearch.
@@ -117,7 +157,9 @@ class FunctionalQuantifier:
 
     def __init__(
         self,
-        hmm_db_path: Path,
+        hmm_db_path: Optional[Path] = None,
+        hmm_dir: Optional[Path] = None,
+        markers: Optional[Sequence[Union[str, MarkerGene]]] = None,
         evalue_threshold: float = 1e-10,
         score_threshold: float = 50.0,
         threads: int = 8,
@@ -126,15 +168,27 @@ class FunctionalQuantifier:
 
         Args:
             hmm_db_path: Path to concatenated HMM profile database.
+            hmm_dir: Directory containing per-marker HMMs.
+            markers: Marker names or MarkerGene definitions (defaults to core markers).
             evalue_threshold: Maximum e-value for reporting hits.
             score_threshold: Minimum bit score for counting hits.
             threads: Number of CPU threads for parallel search.
         """
-        self.hmm_db_path = Path(hmm_db_path)
+        if hmm_db_path and hmm_dir:
+            raise ValueError("Provide either hmm_db_path or hmm_dir, not both.")
+        if not hmm_db_path and not hmm_dir:
+            raise ValueError("Provide hmm_db_path or hmm_dir.")
+
+        self.hmm_db_path = Path(hmm_db_path) if hmm_db_path else None
+        self.hmm_dir = Path(hmm_dir) if hmm_dir else None
         self.evalue_threshold = evalue_threshold
         self.score_threshold = score_threshold
         self.threads = threads
         self._profile_lengths: Dict[str, int] = {}
+        self.markers: List[MarkerGene] = []
+
+        if self.hmm_dir:
+            self.markers = self._resolve_markers(markers)
 
     def quantify(
         self,
@@ -151,10 +205,11 @@ class FunctionalQuantifier:
             FunctionalProfile with normalized gene abundances.
         """
         # Run hmmsearch
-        hits = self._run_hmmsearch(protein_fasta)
-
-        # Aggregate hits by gene
-        abundances = self._aggregate_hits(hits)
+        if self.hmm_db_path:
+            hits = self._run_hmmsearch_db(protein_fasta)
+            abundances = self._aggregate_hits(hits)
+        else:
+            abundances = self._run_marker_searches(protein_fasta)
 
         # Normalize by genome size (proteins per Mb proxy)
         total_proteins = self._count_proteins(protein_fasta)
@@ -173,7 +228,46 @@ class FunctionalQuantifier:
             cbbL=normalized.get("cbbL", 0.0),
         )
 
-    def _run_hmmsearch(self, protein_fasta: Path) -> List[Dict]:
+    def quantify_mag(self, protein_fasta: Path, sample_id: Optional[str] = None) -> FunctionalProfile:
+        """Convenience wrapper for MAG quantification."""
+        inferred_id = sample_id or Path(protein_fasta).stem
+        return self.quantify(protein_fasta, inferred_id)
+
+    def _resolve_markers(
+        self, markers: Optional[Sequence[Union[str, MarkerGene]]]
+    ) -> List[MarkerGene]:
+        if markers is None:
+            markers = DEFAULT_MARKERS
+
+        resolved: List[MarkerGene] = []
+        for marker in markers:
+            if isinstance(marker, MarkerGene):
+                resolved.append(marker)
+                continue
+            hmm_path = self.hmm_dir / f"{marker}.hmm"
+            resolved.append(
+                MarkerGene(
+                    name=str(marker),
+                    hmm_path=hmm_path,
+                    threshold=self.evalue_threshold,
+                )
+            )
+
+        for marker in resolved:
+            if not marker.hmm_path.exists():
+                raise FileNotFoundError(f"HMM file not found: {marker.hmm_path}")
+
+        return resolved
+
+    def _run_marker_searches(self, protein_fasta: Path) -> Dict[str, int]:
+        counts: Dict[str, int] = {}
+        for marker in self.markers:
+            counts[marker.name] = self._run_hmmsearch_marker(
+                protein_fasta, marker
+            )
+        return counts
+
+    def _run_hmmsearch_db(self, protein_fasta: Path) -> List[Dict]:
         """Execute hmmsearch and parse results.
 
         Args:
@@ -182,6 +276,8 @@ class FunctionalQuantifier:
         Returns:
             List of hit dictionaries with target, query, evalue, score.
         """
+        if not self.hmm_db_path:
+            raise RuntimeError("hmm_db_path is required for database searches.")
         cmd = [
             "hmmsearch",
             "--tblout",
@@ -206,7 +302,33 @@ class FunctionalQuantifier:
                 "hmmsearch not found. Install HMMER: conda install -c bioconda hmmer"
             )
 
-    def _parse_hmm_output(self, output: str) -> List[Dict]:
+    def _run_hmmsearch_marker(self, protein_fasta: Path, marker: MarkerGene) -> int:
+        cmd = [
+            "hmmsearch",
+            "--tblout",
+            "/dev/stdout",
+            "-E",
+            str(marker.threshold),
+            "--cpu",
+            str(self.threads),
+            str(marker.hmm_path),
+            str(protein_fasta),
+        ]
+
+        try:
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, check=True
+            )
+            hits = self._parse_hmm_output(result.stdout, self.score_threshold)
+            return self._count_unique_targets(hits)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"hmmsearch failed: {e.stderr}") from e
+        except FileNotFoundError:
+            raise RuntimeError(
+                "hmmsearch not found. Install HMMER: conda install -c bioconda hmmer"
+            )
+
+    def _parse_hmm_output(self, output: str, score_threshold: Optional[float] = None) -> List[Dict]:
         """Parse hmmsearch tabular output.
 
         Args:
@@ -215,21 +337,25 @@ class FunctionalQuantifier:
         Returns:
             List of parsed hit dictionaries.
         """
+        threshold = self.score_threshold if score_threshold is None else score_threshold
         hits = []
         for line in output.strip().split("\n"):
             if line.startswith("#") or not line.strip():
                 continue
             fields = line.split()
-            if len(fields) >= 9:
+            if len(fields) >= 8:
                 hit = {
                     "target": fields[0],
-                    "query": fields[2],
-                    "evalue": float(fields[4]),
-                    "score": float(fields[5]),
+                    "query": fields[3],
+                    "evalue": float(fields[6]),
+                    "score": float(fields[7]),
                 }
-                if hit["score"] >= self.score_threshold:
+                if hit["score"] >= threshold:
                     hits.append(hit)
         return hits
+
+    def _count_unique_targets(self, hits: List[Dict]) -> int:
+        return len({hit["target"] for hit in hits})
 
     def _aggregate_hits(self, hits: List[Dict]) -> Dict[str, int]:
         """Map HMM profiles to gene names and count unique hits.

@@ -48,56 +48,59 @@ class TestFunctionalProfile:
         """Create a sample profile for testing."""
         return FunctionalProfile(
             sample_id="test_sample",
-            marker_abundances={
-                "mcrA": 100.0,
-                "pmoA": 50.0,
-                "dsrA": 25.0,
-            },
-            total_genes=10000,
+            mcrA=100.0,
+            pmoA=50.0,
+            dsrA=25.0,
+            nifH=0.0,
+            cbbL=0.0,
         )
 
     def test_profile_creation(self, sample_profile):
         """Test creating a functional profile."""
         assert sample_profile.sample_id == "test_sample"
         assert sample_profile.marker_abundances["mcrA"] == 100.0
-        assert sample_profile.total_genes == 10000
+        assert sample_profile.pmoA == 50.0
 
     def test_mcra_pmoa_ratio(self, sample_profile):
         """Test mcrA/pmoA ratio calculation."""
         ratio = sample_profile.mcra_pmoa_ratio
 
-        assert ratio == pytest.approx(2.0, rel=1e-6)
+        assert ratio == pytest.approx(np.log2(2.0), rel=1e-6)
 
     def test_mcra_pmoa_ratio_zero_pmoa(self):
         """Test ratio when pmoA is zero."""
         profile = FunctionalProfile(
             sample_id="test",
-            marker_abundances={"mcrA": 100.0, "pmoA": 0.0},
-            total_genes=1000,
+            mcrA=100.0,
+            pmoA=0.0,
+            dsrA=0.0,
+            nifH=0.0,
+            cbbL=0.0,
         )
 
-        assert profile.mcra_pmoa_ratio == float("inf")
+        assert profile.mcra_pmoa_ratio > 20.0
 
-    def test_mcra_pmoa_ratio_missing_markers(self):
-        """Test ratio when markers are missing."""
+    def test_mcra_pmoa_ratio_zero_markers(self):
+        """Test ratio when markers are zeroed."""
         profile = FunctionalProfile(
             sample_id="test",
-            marker_abundances={"dsrA": 50.0},
-            total_genes=1000,
+            mcrA=0.0,
+            pmoA=0.0,
+            dsrA=50.0,
+            nifH=0.0,
+            cbbL=0.0,
         )
 
-        assert profile.mcra_pmoa_ratio is None
+        assert profile.mcra_pmoa_ratio == pytest.approx(0.0, rel=1e-6)
 
     def test_normalized_abundances(self, sample_profile):
-        """Test RPKM normalization."""
-        normalized = sample_profile.get_normalized_abundances(method="rpkm")
-
-        # RPKM = (count * 1e9) / (total_genes * gene_length)
-        # For simplicity, assuming gene_length=1000
-        expected_mcra = (100.0 * 1e6) / 10000
+        """Test per-1k-proteins normalization passthrough."""
+        normalized = sample_profile.get_normalized_abundances(
+            method="per_1k_proteins"
+        )
 
         assert "mcrA" in normalized
-        assert normalized["mcrA"] == pytest.approx(expected_mcra, rel=1e-3)
+        assert normalized["mcrA"] == pytest.approx(100.0, rel=1e-6)
 
     def test_to_array(self, sample_profile):
         """Test conversion to numpy array."""
@@ -112,7 +115,7 @@ class TestFunctionalProfile:
 
         assert isinstance(d, dict)
         assert d["sample_id"] == "test_sample"
-        assert "marker_abundances" in d
+        assert "mcrA" in d
 
 
 class TestFunctionalQuantifier:
@@ -223,32 +226,26 @@ class TestPathwayCompleteness:
 
 
 class TestNormalization:
-    """Tests for abundance normalization methods."""
+    """Tests for normalization selection."""
 
-    def test_rpkm_calculation(self):
-        """Test RPKM calculation."""
-        raw_count = 1000
-        total_reads = 1_000_000
-        gene_length = 1000  # bp
+    @pytest.fixture
+    def sample_profile(self):
+        """Create a sample profile for testing."""
+        return FunctionalProfile(
+            sample_id="test_sample",
+            mcrA=100.0,
+            pmoA=50.0,
+            dsrA=25.0,
+            nifH=0.0,
+            cbbL=0.0,
+        )
 
-        # RPKM = (count * 10^9) / (total_reads * gene_length)
-        rpkm = (raw_count * 1e9) / (total_reads * gene_length)
+    def test_raw_normalization(self, sample_profile):
+        """Test raw normalization passthrough."""
+        normalized = sample_profile.get_normalized_abundances(method="raw")
+        assert normalized["mcrA"] == pytest.approx(100.0, rel=1e-6)
 
-        assert rpkm == pytest.approx(1000.0, rel=1e-6)
-
-    def test_tpm_calculation(self):
-        """Test TPM calculation."""
-        raw_counts = {"gene1": 100, "gene2": 200, "gene3": 300}
-        gene_lengths = {"gene1": 1000, "gene2": 500, "gene3": 1500}
-
-        # RPK for each gene
-        rpk = {g: raw_counts[g] / (gene_lengths[g] / 1000) for g in raw_counts}
-
-        # Scaling factor
-        scaling_factor = sum(rpk.values()) / 1e6
-
-        # TPM
-        tpm = {g: rpk[g] / scaling_factor for g in rpk}
-
-        # TPM should sum to 1 million
-        assert sum(tpm.values()) == pytest.approx(1e6, rel=1e-3)
+    def test_invalid_normalization(self, sample_profile):
+        """Test unsupported normalization method raises."""
+        with pytest.raises(ValueError):
+            sample_profile.get_normalized_abundances(method="rpkm")

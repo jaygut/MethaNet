@@ -8,7 +8,7 @@ with optimized weights for coastal ecosystem prediction:
 - FAISS k-NN (15%): Similarity-based for transfer learning
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import numpy as np
@@ -18,6 +18,7 @@ try:
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.neural_network import MLPClassifier
     from sklearn.preprocessing import StandardScaler
+    from sklearn.calibration import CalibratedClassifierCV
 
     SKLEARN_AVAILABLE = True
 except ImportError:
@@ -115,6 +116,8 @@ class EnsembleConfig:
     bootstrap_iterations: int = 1000
     confidence_level: float = 0.95
     random_state: int = 42
+    ci_method: str = "bootstrap"  # bootstrap or approx
+    calibration_method: Optional[str] = None  # isotonic or sigmoid
 
 
 class MethaNetEnsemble:
@@ -140,8 +143,17 @@ class MethaNetEnsemble:
         self.models: Dict = {}
         self.faiss_index = None
         self.train_labels = None
+        self._train_X = None
+        self._train_y = None
         self._is_fitted = False
         self._n_classes = 5  # Risk tiers A-E
+        self._active_models: List[str] = []
+        self._calibrator = None
+
+    @property
+    def is_fitted(self) -> bool:
+        """Return whether the ensemble has been fitted."""
+        return self._is_fitted
 
     def fit(
         self,
@@ -162,16 +174,23 @@ class MethaNetEnsemble:
         # Scale features
         X_scaled = self.scaler.fit_transform(X)
         self._n_classes = len(np.unique(y))
+        self.classes_ = np.arange(self._n_classes)
+        self._train_X = np.asarray(X)
+        self._train_y = np.asarray(y)
+        self._active_models = [
+            name for name, weight in self.config.model_weights.items() if weight > 0
+        ]
+        self._calibrator = None
 
         # Train XGBoost
-        if XGBOOST_AVAILABLE:
+        if "xgboost" in self._active_models and XGBOOST_AVAILABLE:
             self.models["xgboost"] = xgb.XGBClassifier(
                 **self.config.xgb_params,
                 num_class=self._n_classes,
                 random_state=self.config.random_state,
             )
             self.models["xgboost"].fit(X_scaled, y, sample_weight=sample_weight)
-        else:
+        elif "xgboost" in self._active_models:
             # Fallback to sklearn GradientBoosting
             from sklearn.ensemble import GradientBoostingClassifier
 
@@ -183,21 +202,24 @@ class MethaNetEnsemble:
             self.models["xgboost"].fit(X_scaled, y, sample_weight=sample_weight)
 
         # Train Neural Network
-        self.models["neural_net"] = MLPClassifier(
-            **self.config.nn_params,
-            random_state=self.config.random_state,
-        )
-        self.models["neural_net"].fit(X_scaled, y)
+        if "neural_net" in self._active_models:
+            self.models["neural_net"] = MLPClassifier(
+                **self.config.nn_params,
+                random_state=self.config.random_state,
+            )
+            self.models["neural_net"].fit(X_scaled, y)
 
         # Train Random Forest
-        self.models["random_forest"] = RandomForestClassifier(
-            **self.config.rf_params,
-            random_state=self.config.random_state,
-        )
-        self.models["random_forest"].fit(X_scaled, y, sample_weight=sample_weight)
+        if "random_forest" in self._active_models:
+            self.models["random_forest"] = RandomForestClassifier(
+                **self.config.rf_params,
+                random_state=self.config.random_state,
+            )
+            self.models["random_forest"].fit(X_scaled, y, sample_weight=sample_weight)
 
         # Build FAISS index
-        self._build_faiss_index(X_scaled, y)
+        if "faiss_knn" in self._active_models:
+            self._build_faiss_index(X_scaled, y)
 
         self._is_fitted = True
         return self
@@ -223,7 +245,7 @@ class MethaNetEnsemble:
         self.faiss_index.add(X_float32)
         self.train_labels = y.copy()
 
-    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+    def _predict_proba_uncalibrated(self, X: np.ndarray) -> np.ndarray:
         """Get ensemble probability predictions.
 
         Args:
@@ -242,16 +264,20 @@ class MethaNetEnsemble:
         probs = {}
 
         # XGBoost
-        probs["xgboost"] = self.models["xgboost"].predict_proba(X_scaled)
+        if "xgboost" in self.models:
+            probs["xgboost"] = self.models["xgboost"].predict_proba(X_scaled)
 
         # Neural Network
-        probs["neural_net"] = self.models["neural_net"].predict_proba(X_scaled)
+        if "neural_net" in self.models:
+            probs["neural_net"] = self.models["neural_net"].predict_proba(X_scaled)
 
         # Random Forest
-        probs["random_forest"] = self.models["random_forest"].predict_proba(X_scaled)
+        if "random_forest" in self.models:
+            probs["random_forest"] = self.models["random_forest"].predict_proba(X_scaled)
 
         # FAISS k-NN (or sklearn fallback)
-        probs["faiss_knn"] = self._faiss_predict_proba(X_scaled)
+        if "faiss_knn" in self._active_models:
+            probs["faiss_knn"] = self._faiss_predict_proba(X_scaled)
 
         # Weighted ensemble
         ensemble_probs = np.zeros((n_samples, self._n_classes))
@@ -262,9 +288,17 @@ class MethaNetEnsemble:
                 ensemble_probs += weight * probs[model_name]
                 total_weight += weight
 
+        if total_weight == 0:
+            raise RuntimeError("No active models available for prediction.")
         ensemble_probs /= total_weight
 
         return ensemble_probs
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        """Get calibrated or raw ensemble probabilities."""
+        if self._calibrator is not None:
+            return self._calibrator.predict_proba(X)
+        return self._predict_proba_uncalibrated(X)
 
     def _faiss_predict_proba(self, X: np.ndarray) -> np.ndarray:
         """k-NN probability prediction.
@@ -346,16 +380,25 @@ class MethaNetEnsemble:
         # Tier midpoints for expected value calculation
         tier_weights = np.array([TIER_MIDPOINTS[i] for i in range(self._n_classes)])
 
+        ci_lower = None
+        ci_upper = None
+        if compute_ci:
+            if self.config.ci_method == "bootstrap":
+                ci_lower, ci_upper = self._bootstrap_ci_batch(X, tier_weights)
+            else:
+                ci_lower, ci_upper = self._approx_ci_batch(X, tier_weights)
+
         for i in range(n_samples):
             # Risk score = expected value over tier probabilities
             risk_score = float(np.dot(probs[i], tier_weights))
 
             # Compute confidence interval via bootstrap
             if compute_ci:
-                ci_lower, ci_upper = self._bootstrap_ci(X[i : i + 1], tier_weights)
+                ci_lower_i = float(ci_lower[i])
+                ci_upper_i = float(ci_upper[i])
             else:
-                ci_lower = max(0, risk_score - 5)
-                ci_upper = min(100, risk_score + 5)
+                ci_lower_i = max(0, risk_score - 5)
+                ci_upper_i = min(100, risk_score + 5)
 
             # Per-model component scores
             X_scaled = self.scaler.transform(X[i : i + 1])
@@ -376,8 +419,8 @@ class MethaNetEnsemble:
                 ClassificationResult(
                     risk_score=risk_score,
                     risk_tier=RiskTier.from_score(risk_score),
-                    confidence_lower=float(ci_lower),
-                    confidence_upper=float(ci_upper),
+                    confidence_lower=ci_lower_i,
+                    confidence_upper=ci_upper_i,
                     component_scores=component_scores,
                     methane_component=methane_component,
                     stability_component=stability_component,
@@ -388,43 +431,61 @@ class MethaNetEnsemble:
 
         return results
 
-    def _bootstrap_ci(
+    def _approx_ci_batch(
         self,
         X: np.ndarray,
         tier_weights: np.ndarray,
-    ) -> Tuple[float, float]:
-        """Compute bootstrap confidence interval.
-
-        Args:
-            X: Single sample features.
-            tier_weights: Tier midpoint values.
-
-        Returns:
-            Tuple of (lower, upper) CI bounds.
-        """
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """Approximate CI by perturbing probabilities."""
         n_iter = self.config.bootstrap_iterations
         alpha = 1 - self.config.confidence_level
-
-        # Get base prediction
-        base_probs = self.predict_proba(X)[0]
-
-        # Bootstrap by adding small noise to probabilities
-        bootstrap_scores = []
+        base_probs = self.predict_proba(X)
         rng = np.random.default_rng(self.config.random_state)
 
-        for _ in range(n_iter):
+        samples = []
+        for _ in range(max(n_iter, 1)):
             noise = rng.normal(0, 0.02, size=base_probs.shape)
             noisy_probs = np.clip(base_probs + noise, 0, 1)
-            noisy_probs /= noisy_probs.sum()
+            noisy_probs /= noisy_probs.sum(axis=1, keepdims=True)
+            scores = noisy_probs @ tier_weights
+            samples.append(scores)
 
-            score = np.dot(noisy_probs, tier_weights)
-            bootstrap_scores.append(score)
+        scores = np.stack(samples, axis=0)
+        lower = np.percentile(scores, 100 * alpha / 2, axis=0)
+        upper = np.percentile(scores, 100 * (1 - alpha / 2), axis=0)
+        return lower, upper
 
-        bootstrap_scores = np.array(bootstrap_scores)
-        ci_lower = np.percentile(bootstrap_scores, 100 * alpha / 2)
-        ci_upper = np.percentile(bootstrap_scores, 100 * (1 - alpha / 2))
+    def _bootstrap_ci_batch(
+        self,
+        X: np.ndarray,
+        tier_weights: np.ndarray,
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """Compute bootstrap CI by refitting on resampled training data."""
+        if self._train_X is None or self._train_y is None:
+            raise RuntimeError("Bootstrap CI requires stored training data.")
 
-        return ci_lower, ci_upper
+        n_iter = max(self.config.bootstrap_iterations, 1)
+        alpha = 1 - self.config.confidence_level
+        rng = np.random.default_rng(self.config.random_state)
+
+        scores = np.zeros((n_iter, X.shape[0]))
+        base_config = replace(
+            self.config,
+            ci_method="approx",
+            bootstrap_iterations=0,
+            calibration_method=None,
+        )
+
+        for i in range(n_iter):
+            idx = rng.choice(len(self._train_X), size=len(self._train_X), replace=True)
+            bootstrap_model = MethaNetEnsemble(base_config)
+            bootstrap_model.fit(self._train_X[idx], self._train_y[idx])
+            probs = bootstrap_model.predict_proba(X)
+            scores[i] = probs @ tier_weights
+
+        lower = np.percentile(scores, 100 * alpha / 2, axis=0)
+        upper = np.percentile(scores, 100 * (1 - alpha / 2), axis=0)
+        return lower, upper
 
     def _compute_methane_component(self, x: np.ndarray) -> float:
         """Extract methane-specific component.
@@ -452,6 +513,69 @@ class MethaNetEnsemble:
         """
         # Placeholder: would use pathway scores
         return 50.0
+
+    def calibrate(
+        self,
+        X_val: np.ndarray,
+        y_val: np.ndarray,
+        method: str = "isotonic",
+    ) -> "MethaNetEnsemble":
+        """Fit a probability calibrator using validation data."""
+        if not SKLEARN_AVAILABLE:
+            raise ImportError("scikit-learn required for calibration.")
+        if not self._is_fitted:
+            raise RuntimeError("Model not fitted. Call fit() first.")
+
+        class _PrefitWrapper:
+            def __init__(self, parent: "MethaNetEnsemble"):
+                self.parent = parent
+                self.classes_ = parent.classes_
+
+            def predict_proba(self, X: np.ndarray) -> np.ndarray:
+                return self.parent._predict_proba_uncalibrated(X)
+
+            def predict(self, X: np.ndarray) -> np.ndarray:
+                return np.argmax(self.predict_proba(X), axis=1)
+
+        wrapper = _PrefitWrapper(self)
+        calibrator = CalibratedClassifierCV(wrapper, method=method, cv="prefit")
+        calibrator.fit(X_val, y_val)
+        self._calibrator = calibrator
+        return self
+
+    def get_feature_importance(self) -> Dict[int, float]:
+        """Return aggregated feature importances where available."""
+        if not self._is_fitted:
+            raise RuntimeError("Model not fitted. Call fit() first.")
+
+        n_features = self.scaler.mean_.shape[0]
+        importances = np.zeros(n_features, dtype=float)
+        weight_sum = 0.0
+
+        for name, model in self.models.items():
+            weight = self.config.model_weights.get(name, 0.0)
+            if weight <= 0:
+                continue
+
+            values = None
+            if hasattr(model, "feature_importances_"):
+                values = model.feature_importances_
+            elif hasattr(model, "coef_"):
+                values = np.mean(np.abs(model.coef_), axis=0)
+            elif hasattr(model, "coefs_") and model.coefs_:
+                values = np.mean(np.abs(model.coefs_[0]), axis=1)
+
+            if values is None or len(values) != n_features:
+                continue
+
+            importances += weight * values
+            weight_sum += weight
+
+        if weight_sum == 0:
+            raise RuntimeError("No feature importances available from active models.")
+
+        importances /= weight_sum
+        return {i: float(val) for i, val in enumerate(importances)}
 
     def save(self, path: Path) -> None:
         """Save ensemble to disk.

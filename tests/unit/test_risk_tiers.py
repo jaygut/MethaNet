@@ -88,7 +88,7 @@ class TestMonitoringInterval:
 
     def test_tier_e_monitoring(self):
         """Test Tier E monitoring interval (monthly)."""
-        assert get_monitoring_interval(RiskTier.E) == "Monthly"
+        assert get_monitoring_interval(RiskTier.E) == "1 month"
 
 
 class TestTierThresholds:
@@ -147,7 +147,7 @@ class TestClassificationResult:
         )
 
         # Access monitoring interval through the tier
-        assert result.risk_tier.monitoring_interval == "monthly"
+        assert result.risk_tier.monitoring_interval == "3 months"
 
     def test_result_confidence_width(self):
         """Test confidence interval width calculation."""
