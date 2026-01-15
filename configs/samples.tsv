@@ -1,0 +1,27 @@
+sample_id	domain	ecosystem	data_source	accession	has_flux	flux_value	flux_unit	latitude	longitude	depth_cm	salinity_ppt	temperature_c	collection_date	notes
+# Template for MethaNet sample manifest
+# Replace placeholder entries with actual sample data
+#
+# Column descriptions:
+#   sample_id: Unique identifier for the sample
+#   domain: Source domain (rumen, coastal)
+#   ecosystem: Specific ecosystem type (cattle, sheep, mangrove, saltmarsh, seagrass)
+#   data_source: Data repository (SRA, ENA, local)
+#   accession: Repository accession number (SRR*, ERR*)
+#   has_flux: Whether paired flux measurement exists (TRUE/FALSE)
+#   flux_value: Measured methane flux (numeric, NA if no measurement)
+#   flux_unit: Unit of flux measurement (mg_CH4_m2_day)
+#   latitude: Sample latitude (decimal degrees, NA if unavailable)
+#   longitude: Sample longitude (decimal degrees, NA if unavailable)
+#   depth_cm: Sediment depth in centimeters (NA if not applicable)
+#   salinity_ppt: Salinity in parts per thousand (NA if unavailable)
+#   temperature_c: Temperature in Celsius (NA if unavailable)
+#   collection_date: Sample collection date (YYYY-MM-DD)
+#   notes: Additional notes or comments
+#
+# Example entries (replace with actual data):
+RUMEN_001	rumen	cattle	SRA	SRR12345678	TRUE	45.2	mg_CH4_m2_day	NA	NA	NA	NA	38.5	2023-06-15	High-producing dairy cow
+RUMEN_002	rumen	sheep	SRA	SRR12345679	TRUE	32.1	mg_CH4_m2_day	NA	NA	NA	NA	39.0	2023-07-20	Merino sheep on pasture
+COASTAL_001	coastal	mangrove	SRA	SRR23456789	TRUE	12.4	mg_CH4_m2_day	25.7832	-80.2156	15	28.5	26.3	2022-09-10	Florida mangrove sediment
+COASTAL_002	coastal	mangrove	SRA	SRR23456790	FALSE	NA	NA	25.8124	-80.1893	20	30.1	27.1	2022-09-10	No paired flux measurement
+COASTAL_003	coastal	saltmarsh	ENA	ERR9876543	TRUE	8.7	mg_CH4_m2_day	42.3456	-70.9876	10	25.0	18.5	2023-04-22	New England salt marsh
