@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoConfig, AutoModel, AutoTokenizer
 
 
 def read_fasta(path: Path) -> list[str]:
@@ -43,30 +43,51 @@ def main() -> None:
     parser.add_argument("--model", required=True)
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--device", default="auto")
+    parser.add_argument("--max-length", type=int, default=512)
     args = parser.parse_args()
 
     sequences = read_fasta(Path(args.input))
     if not sequences:
-        raise ValueError("No sequences found in input FASTA.")
+        config = AutoConfig.from_pretrained(args.model, trust_remote_code=True)
+        embedding = np.zeros(config.hidden_size, dtype=np.float32)
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        np.save(args.output, embedding)
+        return
 
     device = resolve_device(args.device)
     tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
     model = AutoModel.from_pretrained(args.model, trust_remote_code=True)
     model.to(device)
     model.eval()
+    embedding_dim = model.config.hidden_size
 
-    embeddings = []
+    sum_embedding = None
+    count = 0
     with torch.no_grad():
         for batch in batch_iter(sequences, args.batch_size):
-            tokens = tokenizer(batch, return_tensors="pt", padding=True, truncation=True)
+            tokens = tokenizer(
+                batch,
+                return_tensors="pt",
+                padding=True,
+                truncation=True,
+                max_length=args.max_length,
+            )
             tokens = {k: v.to(device) for k, v in tokens.items()}
             outputs = model(**tokens)
             pooled = outputs.last_hidden_state.mean(dim=1)
-            embeddings.append(pooled.cpu().numpy())
+            pooled_np = pooled.cpu().numpy()
+            if sum_embedding is None:
+                sum_embedding = pooled_np.sum(axis=0)
+            else:
+                sum_embedding += pooled_np.sum(axis=0)
+            count += pooled_np.shape[0]
 
-    array = np.vstack(embeddings)
+    if count == 0:
+        embedding = np.zeros(embedding_dim, dtype=np.float32)
+    else:
+        embedding = (sum_embedding / count).astype(np.float32)
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
-    np.save(args.output, array)
+    np.save(args.output, embedding)
 
 
 if __name__ == "__main__":

@@ -20,6 +20,7 @@ ORFS = _path("orfs", "features/orfs")
 MARKER_HITS = _path("marker_hits", "features/marker_hits")
 MARKER_SEQS = _path("marker_sequences", "features/marker_sequences")
 DNA_SEQS = _path("dna_sequences", "features/dna_sequences")
+FUNCTIONAL_FEATURES = _path("functional_features", "features/functional")
 MARKER_DB = _path("marker_db", "db/marker_db.mmsdb")
 EMBEDDINGS = _path("embeddings", "features/embeddings")
 ADAPTED_FEATURES = _path("adapted_features", "features/adapted")
@@ -36,13 +37,15 @@ ASSEMBLY_SAMPLES = config.get("assembly_samples", [])
 MAG_SETS = config.get("mag_sets", [])
 MARKER_SAMPLES = config.get("marker_samples", []) or ASSEMBLY_SAMPLES
 EMBED_SAMPLES = config.get("embedding_samples", []) or MARKER_SAMPLES
-DNA_EMBED_SAMPLES = config.get("dna_embedding_samples", [])
+DNA_EMBED_SAMPLES = config.get("dna_embedding_samples", []) or MARKER_SAMPLES
 FRAGGENE_INPUTS = config.get("fraggenescan_inputs", {})
 
 THREADS = config.get("threads", {})
 MODELS_CFG = config.get("models", {})
 EMBEDDING_CFG = config.get("embedding", {})
+FUNCTIONAL_CFG = config.get("functional", {})
 TRAINING = config.get("training", {})
+GENOME_BACKEND = EMBEDDING_CFG.get("genome_backend", "dnabert2")
 
 
 def ensure_outputs(outputs):
@@ -78,7 +81,12 @@ if stage_enabled("marker_annotator"):
         ALL_TARGETS += expand(f"{ORFS}/{{sample}}.faa", sample=MARKER_SAMPLES)
         ALL_TARGETS += expand(f"{MARKER_HITS}/{{sample}}/mcrA.tbl", sample=MARKER_SAMPLES)
         ALL_TARGETS += expand(f"{MARKER_HITS}/{{sample}}/pmoA.tbl", sample=MARKER_SAMPLES)
+        ALL_TARGETS += expand(f"{MARKER_HITS}/{{sample}}/dsrA.tbl", sample=MARKER_SAMPLES)
+        ALL_TARGETS += expand(f"{MARKER_HITS}/{{sample}}/nifH.tbl", sample=MARKER_SAMPLES)
+        ALL_TARGETS += expand(f"{MARKER_HITS}/{{sample}}/cbbL.tbl", sample=MARKER_SAMPLES)
         ALL_TARGETS += expand(f"{MARKER_HITS}/{{sample}}/mmseqs.tsv", sample=MARKER_SAMPLES)
+        ALL_TARGETS += expand(f"{MARKER_SEQS}/{{sample}}.fasta", sample=MARKER_SAMPLES)
+        ALL_TARGETS += expand(f\"{FUNCTIONAL_FEATURES}/{{sample}}.tsv\", sample=MARKER_SAMPLES)
     if FRAGGENE_INPUTS:
         ALL_TARGETS += expand(
             f"{ORFS}/fraggenescan/{{sample}}.faa",
@@ -89,10 +97,17 @@ if stage_enabled("embedding_generator"):
     if EMBED_SAMPLES:
         ALL_TARGETS += expand(f"{EMBEDDINGS}/{{sample}}_esm2.npy", sample=EMBED_SAMPLES)
     if DNA_EMBED_SAMPLES:
-        ALL_TARGETS += expand(f"{EMBEDDINGS}/{{sample}}_dnabert2.npy", sample=DNA_EMBED_SAMPLES)
+        ALL_TARGETS += expand(
+            f"{EMBEDDINGS}/{{sample}}_{GENOME_BACKEND}.npy",
+            sample=DNA_EMBED_SAMPLES,
+        )
 
 if stage_enabled("domain_adapter"):
+    ALL_TARGETS.append(FLUX_FEATURES)
+    ALL_TARGETS.append(SOURCE_FEATURES)
+    ALL_TARGETS.append(TARGET_FEATURES)
     ALL_TARGETS.append(f"{REPORTS}/domain_shift/shift_metrics.json")
+    ALL_TARGETS.append(f"{REPORTS}/domain_shift/shift_metrics_adapted.json")
     ALL_TARGETS.append(f"{MODELS}/adapted/coral_transform.npy")
     ALL_TARGETS.append(f"{MODELS}/adapted/dann.pt")
     ALL_TARGETS.append(f"{REPORTS}/domain_shift/transferable_features.csv")
@@ -100,6 +115,9 @@ if stage_enabled("domain_adapter"):
     ALL_TARGETS.append(f"{ADAPTED_FEATURES}/target_coral.parquet")
 
 if stage_enabled("flux_predictor"):
+    ALL_TARGETS.append(FLUX_FEATURES)
+    ALL_TARGETS.append(SOURCE_FEATURES)
+    ALL_TARGETS.append(TARGET_FEATURES)
     ALL_TARGETS.append(f"{MODELS}/flux_predictor/model.pkl")
     ALL_TARGETS.append(f"{REPORTS}/flux_predictor/train_metrics.json")
     ALL_TARGETS.append(f"{REPORTS}/flux_predictor/validation_metrics.json")

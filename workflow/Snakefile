@@ -4,6 +4,7 @@ include: "workflow/rules/common.smk"
 include: "workflow/rules/data_curator.smk"
 include: "workflow/rules/marker_annotator.smk"
 include: "workflow/rules/embedding_generator.smk"
+include: "workflow/rules/feature_fusion.smk"
 include: "workflow/rules/domain_adapter.smk"
 include: "workflow/rules/flux_predictor.smk"
 
