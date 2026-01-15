@@ -32,6 +32,7 @@ paths:
   marker_hits: features/marker_hits
   marker_sequences: features/marker_sequences
   dna_sequences: features/dna_sequences
+  functional_features: features/functional
   marker_db: db/marker_db.mmsdb
   embeddings: features/embeddings
   adapted_features: features/adapted
@@ -121,10 +122,13 @@ threads:
 models:
   esm2: facebook/esm2_t33_650M_UR50D
   dnabert2: zhihan1996/DNABERT-2-117M
+  genomeocean: null  # Optional local model path for GenomeOcean
 
 # Embedding parameters (PRD Appendix B)
 embedding:
   esm2_model: facebook/esm2_t33_650M_UR50D
+  genome_backend: dnabert2  # dnabert2 or genomeocean
+  genome_dim: 768
   batch_size: 8
   device: auto  # auto, cuda, or cpu
   # ESM-2 specific
@@ -139,6 +143,10 @@ embedding:
 
 # Functional gene quantification
 functional:
+  evalue_threshold: 1e-10
+  hmm_versions:
+    pfam: "37.0"
+    tigrfam: "15.0"
   # HMM profiles for marker genes
   markers:
     - name: mcrA
@@ -162,7 +170,7 @@ functional:
       threshold: 1e-10
       description: RuBisCO large subunit
   # Normalization method
-  normalization: rpkm  # rpkm, tpm, or raw
+  normalization: per_1k_proteins  # per_1k_proteins or raw
 
 # Domain adaptation parameters
 domain_adaptation:
@@ -236,8 +244,10 @@ training:
 feature_dims:
   functional: 77  # Pathway completeness + gene abundances
   esm2: 1280
+  dnabert2: 768
   genomeocean: 3072
-  total_fused: 5429  # Sum of all feature dimensions
+  total_fused: 2125  # Functional + ESM2 + DNABERT-2 (default)
+  total_fused_genomeocean: 4429  # Functional + ESM2 + GenomeOcean
 
 # ONNX export configuration
 onnx:

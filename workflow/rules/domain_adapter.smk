@@ -34,6 +34,22 @@ rule train_coral:
             )
 
 
+rule measure_shift_adapted:
+    input:
+        source=f"{ADAPTED_FEATURES}/source_coral.parquet",
+        target=f"{ADAPTED_FEATURES}/target_coral.parquet",
+    output:
+        metrics=f"{REPORTS}/domain_shift/shift_metrics_adapted.json",
+    run:
+        if SIMULATE:
+            ensure_outputs(output)
+        else:
+            shell(
+                "python workflow/scripts/measure_shift.py "
+                "--source {input.source} --target {input.target} --output {output.metrics}"
+            )
+
+
 rule train_dann:
     input:
         source=SOURCE_FEATURES,

@@ -43,11 +43,15 @@ def main() -> None:
     parser.add_argument("--model", required=True)
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--device", default="auto")
+    parser.add_argument("--max-length", type=int, default=1022)
     args = parser.parse_args()
 
     sequences = read_fasta(Path(args.input))
     if not sequences:
-        raise ValueError("No sequences found in input FASTA.")
+        embedding = np.zeros(1280, dtype=np.float32)
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        np.save(args.output, embedding)
+        return
 
     device = resolve_device(args.device)
     tokenizer = AutoTokenizer.from_pretrained(args.model)
@@ -55,7 +59,8 @@ def main() -> None:
     model.to(device)
     model.eval()
 
-    embeddings = []
+    sum_embedding = None
+    count = 0
     with torch.no_grad():
         for batch in batch_iter(sequences, args.batch_size):
             tokens = tokenizer(
@@ -63,6 +68,7 @@ def main() -> None:
                 return_tensors="pt",
                 padding=True,
                 truncation=True,
+                max_length=args.max_length,
                 return_special_tokens_mask=True,
             )
             tokens = {k: v.to(device) for k, v in tokens.items()}
@@ -75,11 +81,19 @@ def main() -> None:
                 mask = attention * (1 - special)
             mask = mask.unsqueeze(-1)
             pooled = (outputs.last_hidden_state * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1)
-            embeddings.append(pooled.cpu().numpy())
+            pooled_np = pooled.cpu().numpy()
+            if sum_embedding is None:
+                sum_embedding = pooled_np.sum(axis=0)
+            else:
+                sum_embedding += pooled_np.sum(axis=0)
+            count += pooled_np.shape[0]
 
-    array = np.vstack(embeddings)
+    if count == 0:
+        embedding = np.zeros(1280, dtype=np.float32)
+    else:
+        embedding = (sum_embedding / count).astype(np.float32)
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
-    np.save(args.output, array)
+    np.save(args.output, embedding)
 
 
 if __name__ == "__main__":
