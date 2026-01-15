@@ -82,8 +82,8 @@ mamba env create -f workflow/envs/viz.yaml
 # Create HMM directory
 mkdir -p data/hmm
 
-# Download marker gene HMMs from TIGRFAM/Pfam
-# (Replace with actual download commands when HMMs are finalized)
+# Download marker gene HMMs from Pfam 37.0 and TIGRFAM 15.0
+# (Final TIGRFAM release hosted by NCBI; Pfam 37.0 via Xfam)
 wget -O data/hmm/mcrA.hmm https://example.com/mcrA.hmm
 wget -O data/hmm/pmoA.hmm https://example.com/pmoA.hmm
 wget -O data/hmm/dsrA.hmm https://example.com/dsrA.hmm
@@ -169,7 +169,19 @@ paths:
   raw_sra: data/raw/coastal
   mags: data/mags
   embeddings: features/embeddings
+
+# Genome embedding backend (default)
+embedding:
+  genome_backend: dnabert2
+  genome_dim: 768
+
+# Functional normalization
+functional:
+  normalization: per_1k_proteins
 ```
+
+If you set `embedding.genome_backend: genomeocean`, provide per-sample
+`features/embeddings/{sample}_genomeocean.npy` files or add a custom rule.
 
 ### 4.2 Validate Configuration
 
@@ -213,6 +225,7 @@ snakemake --summary --configfile configs/pipeline.yaml
 ### 5.1 Feature Extraction
 
 ```python
+import numpy as np
 from methanet.functional import FunctionalQuantifier
 from methanet.embedding import ESM2Embedder, EmbeddingConfig
 from methanet.embedding import FeatureFusion, FusionConfig
@@ -233,9 +246,20 @@ config = EmbeddingConfig(
 embedder = ESM2Embedder(config)
 esm2_features = embedder.embed_all_mags(protein_fastas)
 
-# Fuse features
-fusion = FeatureFusion(FusionConfig())
-X = fusion.fuse(functional_features, esm2_features)
+# Fuse features (DNABERT-2 default)
+dnabert2_features = np.load("features/embeddings/dnabert2.npy")  # (n, 768)
+fusion = FeatureFusion(FusionConfig(genome_dim=768, include_metadata=False))
+X = []
+for i, profile in enumerate(functional_features):
+    X.append(
+        fusion.fuse(
+            sample_id=str(i),
+            functional=profile,
+            esm2_embedding=esm2_features[i],
+            genomeocean_embedding=dnabert2_features[i],
+        ).features
+    )
+X = np.vstack(X)
 ```
 
 ### 5.2 Domain Adaptation
@@ -309,9 +333,11 @@ joblib.dump(final_ensemble.models, "models/trained/ensemble.joblib")
 # Export neural net to ONNX
 export_neural_net_to_onnx(
     final_ensemble.models["neural_net"],
-    input_dim=5429,
+    input_dim=2125,
     output_path="models/onnx/neural_net.onnx"
 )
+
+# Use input_dim=4429 if GenomeOcean embeddings are enabled.
 ```
 
 ---
