@@ -1,0 +1,13 @@
+name: methanet-binning
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - metabat2=2.15
+  - semibin=2.1.0
+  - vamb=4.1.0
+  - das_tool=1.1.6
+  - checkm2=1.0.2
+  - gtdbtk=2.4.0
+  - drep=3.4.5
+  - python=3.11
