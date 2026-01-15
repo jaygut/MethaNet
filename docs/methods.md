@@ -1,0 +1,342 @@
+# MethaNet Methods
+
+This document provides detailed technical descriptions of the computational methods used in MethaNet for predicting methane emission risk in coastal ecosystems.
+
+## Table of Contents
+
+1. [Feature Engineering](#1-feature-engineering)
+2. [Domain Adaptation](#2-domain-adaptation)
+3. [Ensemble Classification](#3-ensemble-classification)
+4. [Statistical Analysis](#4-statistical-analysis)
+5. [Model Export](#5-model-export)
+
+---
+
+## 1. Feature Engineering
+
+### 1.1 Functional Gene Quantification
+
+MethaNet quantifies five key marker genes using Hidden Markov Model (HMM) profiles:
+
+| Marker | Function | HMM Source | E-value Threshold |
+|--------|----------|------------|-------------------|
+| mcrA | Methyl-coenzyme M reductase α | TIGRFAM/Pfam | 1e-10 |
+| pmoA | Particulate methane monooxygenase α | TIGRFAM/Pfam | 1e-10 |
+| dsrA | Dissimilatory sulfite reductase α | TIGRFAM | 1e-10 |
+| nifH | Nitrogenase iron protein | Pfam | 1e-10 |
+| cbbL | RuBisCO large subunit | Pfam | 1e-10 |
+
+**Quantification pipeline:**
+
+1. Open reading frame (ORF) prediction using FragGeneScan or Prodigal
+2. HMM search against marker profiles using pyhmmer
+3. Normalization to RPKM (Reads Per Kilobase per Million mapped reads)
+4. Computation of derived features:
+   - mcrA/pmoA ratio (methane balance indicator)
+   - Pathway completeness scores (MCR complex, HdrABC)
+
+**Feature vector (77 dimensions):**
+- Raw marker abundances (5)
+- Log-transformed abundances (5)
+- Pairwise ratios (10)
+- Pathway completeness scores (7)
+- MCR complex component scores (50)
+
+### 1.2 Foundation Model Embeddings
+
+#### ESM-2 Protein Embeddings (1280 dimensions)
+
+We use ESM-2 (facebook/esm2_t33_650M_UR50D) to generate protein-level embeddings:
+
+```
+Input: Protein sequences from marker genes
+Model: ESM-2 650M parameter model
+Layer: 33 (final layer)
+Pooling: Mean across sequence length
+Output: 1280-dimensional embedding per protein
+```
+
+**Genome-level aggregation:**
+1. Extract embeddings for all marker proteins in a MAG
+2. Aggregate using mean pooling (primary) or max pooling
+3. Concatenate mean and max for robust representation
+
+#### GenomeOcean Embeddings (3072 dimensions)
+
+GenomeOcean provides genome-level representations from nucleotide sequences:
+
+```
+Input: Concatenated contig sequences (k-mer tokenization)
+Model: GenomeOcean foundation model
+K-mer size: 6
+Output: 3072-dimensional genome embedding
+```
+
+### 1.3 Feature Fusion
+
+Total feature dimensionality: **5429**
+
+| Component | Dimensions | Description |
+|-----------|------------|-------------|
+| Functional | 77 | HMM-based marker quantification |
+| ESM-2 | 1280 | Protein language model embeddings |
+| GenomeOcean | 3072 | Genomic foundation model embeddings |
+| Environmental | 1000 | Optional environmental covariates |
+
+Fusion is performed via concatenation with optional PCA dimensionality reduction for computational efficiency.
+
+---
+
+## 2. Domain Adaptation
+
+### 2.1 Problem Formulation
+
+MethaNet addresses the domain shift between:
+- **Source domain (S)**: Rumen microbiomes (998 MAGs, 412 with flux labels)
+- **Target domain (T)**: Coastal ecosystems (127 samples, 23 with flux labels)
+
+The goal is to learn a feature representation that minimizes domain discrepancy while preserving task-relevant information.
+
+### 2.2 MMD-CORAL Weighted (MCW) Adaptation
+
+We combine two domain adaptation objectives:
+
+#### Maximum Mean Discrepancy (MMD)
+
+MMD measures the distance between feature distributions using kernel mean embeddings:
+
+```
+L_MMD = ||μ_S - μ_T||²_H
+
+where:
+  μ_S = (1/n_S) Σ φ(x_s)  (source mean embedding)
+  μ_T = (1/n_T) Σ φ(x_t)  (target mean embedding)
+  φ(·) = Gaussian kernel feature map
+```
+
+**Multi-kernel MMD:**
+We use a mixture of Gaussian kernels with bandwidth parameters {0.1, 0.5, 1.0, 2.0, 5.0} for robustness.
+
+#### Correlation Alignment (CORAL)
+
+CORAL aligns the second-order statistics (covariances) between domains:
+
+```
+L_CORAL = (1/4d²) ||C_S - C_T||²_F
+
+where:
+  C_S = covariance matrix of source features
+  C_T = covariance matrix of target features
+  d = feature dimensionality
+```
+
+#### Combined Loss Function
+
+```
+L_total = L_task + λ₁·L_MMD + λ₂·L_CORAL
+
+Default hyperparameters:
+  λ₁ = 0.1 (MMD weight)
+  λ₂ = 0.1 (CORAL weight)
+```
+
+### 2.3 Network Architecture
+
+```
+Input (5429-dim)
+    │
+    ▼
+Linear(5429 → 1024) + BatchNorm + ReLU + Dropout(0.3)
+    │
+    ▼
+Linear(1024 → 512) + BatchNorm + ReLU + Dropout(0.3)
+    │
+    ▼
+Linear(512 → 256) + BatchNorm + ReLU + Dropout(0.3)
+    │
+    ├──────────────────┐
+    ▼                  ▼
+Classifier         Domain Loss
+(5 classes)       (MMD + CORAL)
+```
+
+### 2.4 Training Procedure
+
+1. **Pre-training**: Train on source domain only (100 epochs)
+2. **Adaptation**: Fine-tune with combined loss (100 epochs)
+3. **Early stopping**: Patience of 10 epochs on validation loss
+4. **Optimizer**: AdamW with learning rate 1e-4
+
+---
+
+## 3. Ensemble Classification
+
+### 3.1 Base Classifiers
+
+MethaNet employs four diverse classifiers with optimized weights:
+
+| Model | Weight | Description |
+|-------|--------|-------------|
+| XGBoost | 0.35 | Gradient boosting with tree ensembles |
+| Neural Network | 0.30 | 3-layer MLP with dropout |
+| Random Forest | 0.20 | Bagging ensemble of decision trees |
+| FAISS k-NN | 0.15 | Similarity-based using L2 distance |
+
+#### XGBoost Configuration
+
+```python
+{
+    "n_estimators": 500,
+    "max_depth": 8,
+    "learning_rate": 0.05,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "reg_alpha": 0.1,
+    "reg_lambda": 1.0
+}
+```
+
+#### Neural Network Architecture
+
+```
+Input → Linear(D, 512) → ReLU → Dropout(0.3)
+     → Linear(512, 256) → ReLU → Dropout(0.3)
+     → Linear(256, 128) → ReLU → Dropout(0.3)
+     → Linear(128, 5) → Softmax
+```
+
+#### Random Forest Configuration
+
+```python
+{
+    "n_estimators": 500,
+    "max_depth": 20,
+    "min_samples_split": 5,
+    "min_samples_leaf": 2,
+    "max_features": "sqrt"
+}
+```
+
+#### FAISS k-NN Configuration
+
+```python
+{
+    "k": 15,
+    "distance_metric": "L2",
+    "index_type": "IndexFlatL2"  # Exact search
+}
+```
+
+### 3.2 Ensemble Aggregation
+
+Probability aggregation using weighted voting:
+
+```
+P_ensemble(y|x) = Σ w_i · P_i(y|x)
+
+where:
+  w_i = model weight (sum to 1.0)
+  P_i = probability from model i
+```
+
+### 3.3 Risk Tier Assignment
+
+| Tier | Risk Level | Probability Range | Monitoring |
+|------|------------|-------------------|------------|
+| A | Very Low | [0.00, 0.10) | 24 months |
+| B | Low | [0.10, 0.25) | 12 months |
+| C | Moderate | [0.25, 0.45) | 6 months |
+| D | Elevated | [0.45, 0.65) | 3 months |
+| E | High | [0.65, 1.00] | Monthly |
+
+---
+
+## 4. Statistical Analysis
+
+### 4.1 Bootstrap Confidence Intervals
+
+We compute 95% confidence intervals using the percentile bootstrap method:
+
+```
+Algorithm: Bootstrap CI
+Input: Model M, data X, n_iterations=1000, alpha=0.05
+Output: (CI_lower, CI_upper)
+
+1. For i = 1 to n_iterations:
+   a. Sample X* from X with replacement
+   b. Compute prediction score θ* = M(X*)
+   c. Store θ*
+2. Sort all θ* values
+3. CI_lower = percentile(θ*, alpha/2 * 100)
+4. CI_upper = percentile(θ*, (1 - alpha/2) * 100)
+```
+
+### 4.2 Classification Metrics
+
+| Metric | Formula | Description |
+|--------|---------|-------------|
+| Balanced Accuracy | (1/K) Σ Recall_k | Macro-averaged recall |
+| Macro F1 | (1/K) Σ F1_k | Macro-averaged F1 |
+| AUC-ROC | Area under ROC curve | Discrimination ability |
+| Cohen's Kappa | (p_o - p_e) / (1 - p_e) | Agreement beyond chance |
+
+### 4.3 Transfer Metrics
+
+| Metric | Description |
+|--------|-------------|
+| Accuracy Drop | Source accuracy - Target accuracy |
+| Transfer Ratio | Target accuracy / Source accuracy |
+| Domain Discrepancy | MMD between adapted features |
+
+---
+
+## 5. Model Export
+
+### 5.1 ONNX Export Specification
+
+Models are exported to ONNX format for production deployment:
+
+```
+ONNX Configuration:
+  - Opset version: 17
+  - Dynamic batch size: Yes
+  - Constant folding: Enabled
+  - Input: "features" (batch_size, 5429)
+  - Output: "probabilities" (batch_size, 5)
+```
+
+### 5.2 Inference Pipeline
+
+```
+┌─────────────────┐
+│  Raw Features   │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Preprocessing  │
+│  (Normalization)│
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  ONNX Runtime   │
+│    Inference    │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Risk Tier      │
+│  Assignment     │
+└─────────────────┘
+```
+
+---
+
+## References
+
+1. Lin, T.Y., et al. (2017). Focal loss for dense object detection. ICCV.
+2. Sun, B., & Saenko, K. (2016). Deep CORAL: Correlation alignment for deep domain adaptation. ECCV Workshops.
+3. Long, M., et al. (2015). Learning transferable features with deep adaptation networks. ICML.
+4. Chen, T., & Guestrin, C. (2016). XGBoost: A scalable tree boosting system. KDD.
+5. Rives, A., et al. (2021). Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences. PNAS.
