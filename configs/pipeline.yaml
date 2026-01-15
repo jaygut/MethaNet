@@ -1,5 +1,10 @@
+# MethaNet Pipeline Configuration
+# Aligned with PRD Appendix B specifications
+# Version: 1.0.0
+
 simulate: false
 
+# Pipeline stages to execute
 stages:
   data_curator: true
   marker_annotator: true
@@ -7,16 +12,22 @@ stages:
   domain_adapter: false
   flux_predictor: false
 
+# Data paths
 paths:
+  # Raw data inputs
   raw_sra: data/raw/sra
   raw_ena: data/raw/ena
+  # QC outputs
   qc_reads: data/qc_reads
   qc_reports: data/qc_reports
   qc_assemblies: data/qc_assemblies
   qc_mags: data/qc_mags
+  # Assembly and binning
   assemblies: data/assemblies
   mags: data/mags
+  # Reference databases
   hmm_dir: data/hmm
+  # Feature outputs
   orfs: features/orfs
   marker_hits: features/marker_hits
   marker_sequences: features/marker_sequences
@@ -24,13 +35,21 @@ paths:
   marker_db: db/marker_db.mmsdb
   embeddings: features/embeddings
   adapted_features: features/adapted
+  # Model artifacts
   models: models
+  models_trained: models/trained
+  models_onnx: models/onnx
+  # Results
   reports: reports
   figures: figures
+  statistics: results/statistics
+  tables: results/tables
+  # Domain-specific feature files
   source_features: features/rumen.parquet
   target_features: features/coastal.parquet
   flux_features: features/all_features.parquet
 
+# Sample accessions (populated from samples.tsv)
 sra_accessions: []
 ena_accessions: []
 assembly_samples: []
@@ -40,22 +59,164 @@ embedding_samples: []
 dna_embedding_samples: []
 fraggenescan_inputs: {}
 
+# Quality control parameters (PRD Appendix B)
+qc:
+  min_length: 50
+  min_quality: 20
+  threads: 16
+  # fastp-specific options
+  fastp:
+    qualified_quality_phred: 20
+    unqualified_percent_limit: 40
+    length_required: 50
+    cut_tail: true
+    cut_mean_quality: 20
+
+# Assembly parameters (PRD Appendix B)
+assembly:
+  min_contig_length: 1000
+  k_list: [21, 29, 39, 59, 79, 99, 119, 141]
+  threads: 32
+  # MEGAHIT-specific options
+  megahit:
+    min_count: 2
+    k_min: 21
+    k_max: 141
+    k_step: 20
+
+# Binning parameters (PRD Appendix B)
+binning:
+  min_completeness: 90
+  max_contamination: 5
+  threads: 16
+  # CheckM2-specific options
+  checkm2:
+    database_path: null  # Set to local path if available
+  # SemiBin2-specific options
+  semibin:
+    environment: global
+    min_len: 1000
+  # MetaBAT2-specific options
+  metabat2:
+    min_contig: 1500
+    max_p: 95
+    min_s: 60
+
+# Taxonomy parameters (PRD Appendix B)
+taxonomy:
+  gtdb_release: r220
+  threads: 32
+
+# Thread allocation (legacy support)
 threads:
   download: 8
-  qc: 8
+  qc: 16
+  assembly: 32
   hmmer: 4
   mmseqs: 8
   embedding: 1
   training: 1
 
+# Foundation model configurations
 models:
   esm2: facebook/esm2_t33_650M_UR50D
   dnabert2: zhihan1996/DNABERT-2-117M
 
+# Embedding parameters (PRD Appendix B)
 embedding:
-  batch_size: 4
-  device: auto
+  esm2_model: facebook/esm2_t33_650M_UR50D
+  batch_size: 8
+  device: auto  # auto, cuda, or cpu
+  # ESM-2 specific
+  esm2:
+    layer: 33  # Use last layer
+    pooling: mean  # mean or max
+    truncation_length: 1022
+  # DNABERT-2 specific
+  dnabert2:
+    kmer_size: 6
+    max_length: 512
 
+# Functional gene quantification
+functional:
+  # HMM profiles for marker genes
+  markers:
+    - name: mcrA
+      hmm: data/hmm/mcrA.hmm
+      threshold: 1e-10
+      description: Methyl-coenzyme M reductase alpha subunit (methanogen)
+    - name: pmoA
+      hmm: data/hmm/pmoA.hmm
+      threshold: 1e-10
+      description: Particulate methane monooxygenase alpha subunit (methanotroph)
+    - name: dsrA
+      hmm: data/hmm/dsrA.hmm
+      threshold: 1e-10
+      description: Dissimilatory sulfite reductase alpha subunit
+    - name: nifH
+      hmm: data/hmm/nifH.hmm
+      threshold: 1e-10
+      description: Nitrogenase iron protein
+    - name: cbbL
+      hmm: data/hmm/cbbL.hmm
+      threshold: 1e-10
+      description: RuBisCO large subunit
+  # Normalization method
+  normalization: rpkm  # rpkm, tpm, or raw
+
+# Domain adaptation parameters
+domain_adaptation:
+  method: mcw  # mcw (MMD-CORAL Weighted), dann, coral, or mmd
+  mmd_weight: 0.1
+  coral_weight: 0.1
+  hidden_dims: [1024, 512, 256]
+  dropout: 0.3
+  learning_rate: 0.0001
+  batch_size: 64
+  epochs: 100
+  patience: 10
+
+# Classification parameters (PRD Appendix B)
+classification:
+  # Ensemble model weights
+  model_weights:
+    xgboost: 0.35
+    neural_net: 0.30
+    random_forest: 0.20
+    faiss_knn: 0.15
+  # Bootstrap confidence intervals
+  bootstrap_iterations: 1000
+  confidence_level: 0.95
+  random_state: 42
+  # Risk tier thresholds
+  risk_tiers:
+    A:
+      name: very_low
+      min: 0.0
+      max: 0.10
+      monitoring_months: 24
+    B:
+      name: low
+      min: 0.10
+      max: 0.25
+      monitoring_months: 12
+    C:
+      name: moderate
+      min: 0.25
+      max: 0.45
+      monitoring_months: 6
+    D:
+      name: elevated
+      min: 0.45
+      max: 0.65
+      monitoring_months: 3
+    E:
+      name: high
+      min: 0.65
+      max: 1.0
+      monitoring_months: 1
+
+# Training parameters (legacy support)
 training:
   label_column: measured_flux
   dann:
@@ -70,3 +231,22 @@ training:
     random_state: 42
     bootstrap_samples: 1000
     ci: 0.95
+
+# Feature dimensions (for validation)
+feature_dims:
+  functional: 77  # Pathway completeness + gene abundances
+  esm2: 1280
+  genomeocean: 3072
+  total_fused: 5429  # Sum of all feature dimensions
+
+# ONNX export configuration
+onnx:
+  opset_version: 17
+  dynamic_batch: true
+  quantization: false  # Enable for smaller models
+
+# Validation thresholds
+validation:
+  min_balanced_accuracy: 0.80
+  min_auc_roc: 0.85
+  max_accuracy_drop: 0.15  # Max allowed drop from source to target domain
