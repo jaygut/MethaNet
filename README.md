@@ -2,7 +2,7 @@
 
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 ![Version](https://img.shields.io/badge/Version-1.0.0-blue)
-![Python](https://img.shields.io/badge/Python-3.9%2B-green)
+![Python](https://img.shields.io/badge/Python-3.11%2B-green)
 
 *MethaNet is a flagship project within the [EmergentBiome](https://emergent.host/) research initiative, developing cross-biome knowledge transfer methods for climate science.*
 
@@ -42,7 +42,7 @@ for result in results:
     print(f"Risk Tier: {result.risk_tier.name}")
     print(f"Score: {result.score:.3f}")
     print(f"Confidence: [{result.ci_lower:.3f}, {result.ci_upper:.3f}]")
-    print(f"Monitoring: {result.monitoring_interval}")
+    print(f"Monitoring: {result.risk_tier.monitoring_interval}")
 ```
 
 ---
@@ -57,7 +57,7 @@ MethaNet classifies samples into five risk tiers based on methane emission proba
 | B | Low | 10-25% | 12 months |
 | C | Moderate | 25-45% | 6 months |
 | D | Elevated | 45-65% | 3 months |
-| E | High | 65-100% | Monthly |
+| E | High | 65-100% | 1 month |
 
 ---
 
@@ -69,10 +69,10 @@ MethaNet uses a weighted ensemble of four classifiers:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                    Feature Vector (5429-dim)                  │
+│                Feature Vector (2125-dim default)             │
 │  ┌──────────────┬──────────────┬──────────────┐              │
-│  │ Functional   │   ESM-2      │ GenomeOcean  │              │
-│  │  (77-dim)    │ (1280-dim)   │ (3072-dim)   │              │
+│  │ Functional   │   ESM-2      │  DNABERT-2   │              │
+│  │  (77-dim)    │ (1280-dim)   │  (768-dim)   │              │
 │  └──────┬───────┴──────┬───────┴──────┬───────┘              │
 │         └──────────────┼──────────────┘                       │
 │                        ▼                                      │
@@ -94,6 +94,8 @@ MethaNet uses a weighted ensemble of four classifiers:
 │              └─────────────────────────┘                      │
 └──────────────────────────────────────────────────────────────┘
 ```
+
+GenomeOcean is supported as an optional genome backend (3072-dim), producing 4429-dim fused vectors.
 
 ### Key Performance Metrics
 
@@ -120,6 +122,14 @@ MethaNet uses a weighted ensemble of four classifiers:
 |---------|-------------|------|
 | Global Mangrove Metagenomes | Curated coastal sediment samples | 127 samples |
 | Paired Flux Validation | Samples with chamber/tower measurements | 23 samples |
+
+---
+
+## Climate and MRV Alignment
+
+- IPCC 2019 Refinement Wetlands guidance: https://www.ipcc-nggip.iges.or.jp/public/2019rf/pdf/4_Volume4/19R_V4_Ch07_Wetlands.pdf
+- IPCC 2013 Wetlands Supplement: https://www.ipcc.ch/publication/2013-supplement-to-the-2006-ipcc-guidelines-for-national-greenhouse-gas-inventories-wetlands/
+- Verra VM0033 v2.1 methodology: https://verra.org/methodologies/vm0033-methodology-for-tidal-wetland-and-seagrass-restoration-v2-1/
 
 ---
 
@@ -172,8 +182,8 @@ MethaNet/
 │   │   │   └── quantify.py       # mcrA, pmoA, dsrA, nifH, cbbL
 │   │   ├── embedding/            # Foundation model embeddings
 │   │   │   ├── esm2.py           # ESM-2 protein embeddings
-│   │   │   ├── genomeocean.py    # GenomeOcean genome embeddings
-│   │   │   └── fusion.py         # Feature fusion (5429-dim)
+│   │   │   ├── genomeocean.py    # GenomeOcean genome embeddings (optional)
+│   │   │   └── fusion.py         # Feature fusion (2125-dim default)
 │   │   ├── domain_adapt/         # Transfer learning
 │   │   │   ├── losses.py         # MMD and CORAL losses
 │   │   │   └── mcw.py            # MCW domain adaptation
@@ -215,6 +225,8 @@ MethaNet/
 | cbbL | RuBisCO large subunit | Carbon fixation | Autotroph proxy |
 
 The **mcrA/pmoA ratio** captures the balance between methane production and consumption—the key determinant of whether an ecosystem is a net methane source or sink.
+In the pipeline, marker counts are normalized per 1k proteins and the ratio is log2-transformed with a pseudocount.
+HMM profiles should be pinned to Pfam 37.0 (https://xfam.wordpress.com/2024/06/06/pfam-37-0-release/) and TIGRFAM 15.0 (final JCVI release; https://www.ncbi.nlm.nih.gov/refseq/annotation_prok/tigrfams/) for reproducibility.
 
 ---
 
@@ -288,9 +300,11 @@ from api_bridge import export_neural_net_to_onnx, ONNXInference
 # Export trained model
 export_neural_net_to_onnx(
     model=trained_model,
-    input_dim=5429,
+    input_dim=2125,
     output_path="models/onnx/methanet.onnx"
 )
+
+# Use input_dim=4429 if you fuse GenomeOcean embeddings.
 
 # Production inference
 inference = ONNXInference("models/onnx/methanet.onnx")

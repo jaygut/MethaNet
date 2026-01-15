@@ -26,21 +26,22 @@ MethaNet quantifies five key marker genes using Hidden Markov Model (HMM) profil
 | nifH | Nitrogenase iron protein | Pfam | 1e-10 |
 | cbbL | RuBisCO large subunit | Pfam | 1e-10 |
 
+For reproducibility, pin HMMs to Pfam 37.0 (Xfam, 2024) and TIGRFAM 15.0
+(final JCVI release, 2014; hosted by NCBI).
+
 **Quantification pipeline:**
 
 1. Open reading frame (ORF) prediction using FragGeneScan or Prodigal
 2. HMM search against marker profiles using pyhmmer
-3. Normalization to RPKM (Reads Per Kilobase per Million mapped reads)
+3. Normalization per 1k proteins (counts / (total proteins / 1000))
 4. Computation of derived features:
-   - mcrA/pmoA ratio (methane balance indicator)
-   - Pathway completeness scores (MCR complex, HdrABC)
+   - log2(mcrA/pmoA) ratio with pseudocount
+   - Pathway completeness slots (reserved, default zeros in pipeline)
 
 **Feature vector (77 dimensions):**
-- Raw marker abundances (5)
-- Log-transformed abundances (5)
-- Pairwise ratios (10)
-- Pathway completeness scores (7)
-- MCR complex component scores (50)
+- Normalized marker abundances (5)
+- log2(mcrA/pmoA) ratio (1)
+- Pathway completeness slots (71)
 
 ### 1.2 Foundation Model Embeddings
 
@@ -58,12 +59,20 @@ Output: 1280-dimensional embedding per protein
 
 **Genome-level aggregation:**
 1. Extract embeddings for all marker proteins in a MAG
-2. Aggregate using mean pooling (primary) or max pooling
-3. Concatenate mean and max for robust representation
+2. Aggregate using mean pooling (default; max pooling optional)
 
-#### GenomeOcean Embeddings (3072 dimensions)
+#### Genome Embeddings (DNABERT-2 default, GenomeOcean optional)
 
-GenomeOcean provides genome-level representations from nucleotide sequences:
+**DNABERT-2 (default, 768 dimensions)** provides genome-level representations from nucleotide sequences:
+
+```
+Input: Concatenated contig sequences
+Model: DNABERT-2 (zhihan1996/DNABERT-2-117M)
+K-mer size: 6
+Output: 768-dimensional genome embedding
+```
+
+**GenomeOcean (optional, 3072 dimensions)** provides genome-level representations from nucleotide sequences:
 
 ```
 Input: Concatenated contig sequences (k-mer tokenization)
@@ -74,16 +83,18 @@ Output: 3072-dimensional genome embedding
 
 ### 1.3 Feature Fusion
 
-Total feature dimensionality: **5429**
+Total feature dimensionality: **2125** (DNABERT-2 default) or **4429** (GenomeOcean)
 
 | Component | Dimensions | Description |
 |-----------|------------|-------------|
 | Functional | 77 | HMM-based marker quantification |
 | ESM-2 | 1280 | Protein language model embeddings |
-| GenomeOcean | 3072 | Genomic foundation model embeddings |
+| DNABERT-2 | 768 | Genomic foundation model embeddings (default) |
+| GenomeOcean | 3072 | Genomic foundation model embeddings (optional) |
 | Environmental | 1000 | Optional environmental covariates |
 
 Fusion is performed via concatenation with optional PCA dimensionality reduction for computational efficiency.
+Environmental covariates are not included in the default pipeline outputs.
 
 ---
 
@@ -143,10 +154,10 @@ Default hyperparameters:
 ### 2.3 Network Architecture
 
 ```
-Input (5429-dim)
+Input (D-dim; 2125 default with DNABERT-2)
     │
     ▼
-Linear(5429 → 1024) + BatchNorm + ReLU + Dropout(0.3)
+Linear(D → 1024) + BatchNorm + ReLU + Dropout(0.3)
     │
     ▼
 Linear(1024 → 512) + BatchNorm + ReLU + Dropout(0.3)
@@ -247,7 +258,7 @@ where:
 | B | Low | [0.10, 0.25) | 12 months |
 | C | Moderate | [0.25, 0.45) | 6 months |
 | D | Elevated | [0.45, 0.65) | 3 months |
-| E | High | [0.65, 1.00] | Monthly |
+| E | High | [0.65, 1.00] | 1 month |
 
 ---
 
@@ -286,7 +297,7 @@ Output: (CI_lower, CI_upper)
 |--------|-------------|
 | Accuracy Drop | Source accuracy - Target accuracy |
 | Transfer Ratio | Target accuracy / Source accuracy |
-| Domain Discrepancy | MMD between adapted features |
+| Domain Discrepancy | MMD and A-distance before/after adaptation |
 
 ---
 
@@ -301,9 +312,11 @@ ONNX Configuration:
   - Opset version: 17
   - Dynamic batch size: Yes
   - Constant folding: Enabled
-  - Input: "features" (batch_size, 5429)
+  - Input: "features" (batch_size, D)
   - Output: "probabilities" (batch_size, 5)
 ```
+
+D = 2125 by default (DNABERT-2); D = 4429 when using GenomeOcean embeddings.
 
 ### 5.2 Inference Pipeline
 
@@ -340,3 +353,6 @@ ONNX Configuration:
 3. Long, M., et al. (2015). Learning transferable features with deep adaptation networks. ICML.
 4. Chen, T., & Guestrin, C. (2016). XGBoost: A scalable tree boosting system. KDD.
 5. Rives, A., et al. (2021). Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences. PNAS.
+6. Pfam 37.0 release (2024). Xfam Blog. https://xfam.wordpress.com/2024/06/06/pfam-37-0-release/
+7. TIGRFAMs release 15.0 (2014). NCBI. https://www.ncbi.nlm.nih.gov/refseq/annotation_prok/tigrfams/
+8. GenomeOcean (2025). bioRxiv. https://www.biorxiv.org/content/10.1101/2025.01.30.635558v1
