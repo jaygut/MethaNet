@@ -5,7 +5,7 @@ to ONNX format for production deployment.
 """
 
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 try:
     import torch
@@ -157,6 +157,74 @@ def export_sklearn_to_onnx(
     validate_onnx_model(output_path)
 
     return output_path
+
+
+def export_sklearn_pipeline_to_onnx(
+    scaler,
+    model,
+    input_dim: int,
+    output_path: Path,
+) -> Path:
+    """Export a scaler + sklearn model pipeline to ONNX."""
+    try:
+        from sklearn.pipeline import Pipeline
+        from skl2onnx import convert_sklearn
+        from skl2onnx.common.data_types import FloatTensorType
+    except ImportError:
+        raise ImportError(
+            "skl2onnx and scikit-learn required. Install: pip install skl2onnx scikit-learn"
+        )
+
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    pipeline = Pipeline([("scaler", scaler), ("model", model)])
+    initial_type = [("features", FloatTensorType([None, input_dim]))]
+    onnx_model = convert_sklearn(pipeline, initial_types=initial_type)
+
+    with open(output_path, "wb") as f:
+        f.write(onnx_model.SerializeToString())
+
+    validate_onnx_model(output_path)
+    return output_path
+
+
+def export_ensemble_to_onnx(
+    models: Dict[str, object],
+    scaler,
+    input_dim: int,
+    output_dir: Path,
+    model_names: Optional[list] = None,
+    require_exportable: bool = False,
+) -> Dict[str, Dict[str, str]]:
+    """Export supported ensemble components to ONNX pipelines."""
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    exported: Dict[str, str] = {}
+    skipped: Dict[str, str] = {}
+    names = model_names or list(models.keys())
+
+    for name in names:
+        if name == "faiss_knn":
+            skipped[name] = "faiss_knn is not ONNX-exportable"
+            continue
+
+        model = models.get(name)
+        if model is None:
+            skipped[name] = "model not found"
+            continue
+
+        try:
+            out_path = output_dir / f"{name}.onnx"
+            export_sklearn_pipeline_to_onnx(scaler, model, input_dim, out_path)
+            exported[name] = str(out_path)
+        except Exception as exc:
+            skipped[name] = str(exc)
+            if require_exportable:
+                raise
+
+    return {"exported": exported, "skipped": skipped}
 
 
 def get_onnx_metadata(model_path: Path) -> dict:

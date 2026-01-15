@@ -40,6 +40,7 @@ class GenomeOceanConfig:
     kmer_size: int = 6
     device: str = "auto"
     fp16: bool = True
+    allow_stub: bool = False
 
     def __post_init__(self):
         if self.device == "auto":
@@ -176,7 +177,11 @@ class GenomeOceanEmbedder:
             RuntimeError: If model not loaded.
         """
         if self.model is None:
-            # Return random embedding for testing when model unavailable
+            if not self.config.allow_stub:
+                raise RuntimeError(
+                    "GenomeOcean model not loaded. Provide model_path or "
+                    "use DNABERT-2 as the genome embedding backend."
+                )
             import warnings
 
             warnings.warn(

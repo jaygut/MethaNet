@@ -1,11 +1,11 @@
 """Risk tier definitions and classification results.
 
 This module defines the MethaNet risk classification system:
-- Tier A (0-10%): Very low risk, annual monitoring
-- Tier B (10-25%): Low risk, semi-annual monitoring
-- Tier C (25-45%): Moderate risk, quarterly monitoring
-- Tier D (45-65%): Elevated risk, monthly monitoring
-- Tier E (65-100%): High risk, continuous monitoring
+- Tier A (0-10%): Very low risk, 24-month monitoring
+- Tier B (10-25%): Low risk, 12-month monitoring
+- Tier C (25-45%): Moderate risk, 6-month monitoring
+- Tier D (45-65%): Elevated risk, 3-month monitoring
+- Tier E (65-100%): High risk, 1-month monitoring
 """
 
 from dataclasses import dataclass, field
@@ -71,11 +71,11 @@ class RiskTier(Enum):
             Human-readable interval description.
         """
         intervals = {
-            RiskTier.A: "annual",
-            RiskTier.B: "semi-annual",
-            RiskTier.C: "quarterly",
-            RiskTier.D: "monthly",
-            RiskTier.E: "continuous",
+            RiskTier.A: "24 months",
+            RiskTier.B: "12 months",
+            RiskTier.C: "6 months",
+            RiskTier.D: "3 months",
+            RiskTier.E: "1 month",
         }
         return intervals[self]
 
@@ -174,6 +174,21 @@ class ClassificationResult:
         return self.confidence_upper - self.confidence_lower
 
     @property
+    def score(self) -> float:
+        """Alias for risk_score."""
+        return self.risk_score
+
+    @property
+    def ci_lower(self) -> float:
+        """Alias for confidence_lower."""
+        return self.confidence_lower
+
+    @property
+    def ci_upper(self) -> float:
+        """Alias for confidence_upper."""
+        return self.confidence_upper
+
+    @property
     def is_high_risk(self) -> bool:
         """Check if classified as high risk (D or E)."""
         return self.risk_tier in (RiskTier.D, RiskTier.E)
@@ -230,7 +245,7 @@ def get_monitoring_interval(tier: RiskTier) -> str:
         RiskTier.B: "12 months",
         RiskTier.C: "6 months",
         RiskTier.D: "3 months",
-        RiskTier.E: "Monthly",
+        RiskTier.E: "1 month",
     }
     return intervals[tier]
 
