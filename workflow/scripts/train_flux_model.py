@@ -4,23 +4,11 @@ from pathlib import Path
 
 import joblib
 import numpy as np
-import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-
-def load_data(path: Path, target: str):
-    df = pd.read_parquet(path)
-    if target not in df.columns:
-        raise ValueError(f"Target column '{target}' not found in features file.")
-    numeric = df.select_dtypes(include=["number"]).copy()
-    if target not in numeric.columns:
-        raise ValueError(f"Target column '{target}' is not numeric.")
-    y = numeric.pop(target).to_numpy()
-    X = numeric.to_numpy()
-    feature_names = list(numeric.columns)
-    return X, y, feature_names
+from flux_utils import load_labeled_flux_data
 
 
 def build_model(name: str, random_state: int):
@@ -64,24 +52,40 @@ def main() -> None:
     parser.add_argument("--metrics-out", required=True)
     args = parser.parse_args()
 
-    X, y, feature_names = load_data(Path(args.features), args.target)
+    flux_data = load_labeled_flux_data(Path(args.features), args.target)
+    X = flux_data.X
+    y = flux_data.y
+    feature_names = flux_data.feature_names
     model = build_model(args.model, args.random_state)
     model.fit(X, y)
 
     preds = model.predict(X)
+    pearson_r = None
+    if len(y) > 1:
+        pearson_r = float(np.corrcoef(y, preds)[0, 1])
     metrics = {
         "r2": float(r2_score(y, preds)),
         "rmse": float(np.sqrt(mean_squared_error(y, preds))),
         "mae": float(mean_absolute_error(y, preds)),
-        "pearson_r": float(np.corrcoef(y, preds)[0, 1]) if len(y) > 1 else None,
+        "pearson_r": pearson_r,
         "model": args.model,
         "n_samples": int(len(y)),
         "n_features": int(X.shape[1]),
+        "data_stats": flux_data.stats,
     }
 
     model_path = Path(args.output_model)
     model_path.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump({"model": model, "feature_names": feature_names, "target": args.target}, model_path)
+    joblib.dump(
+        {
+            "model": model,
+            "feature_names": feature_names,
+            "target": args.target,
+            "train_sample_ids": flux_data.sample_ids,
+            "data_stats": flux_data.stats,
+        },
+        model_path,
+    )
 
     metrics_path = Path(args.metrics_out)
     metrics_path.parent.mkdir(parents=True, exist_ok=True)

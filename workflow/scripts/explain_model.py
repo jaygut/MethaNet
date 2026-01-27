@@ -9,19 +9,6 @@ import shap
 
 matplotlib.use("Agg")
 
-
-def load_data(path: Path, target: str):
-    df = pd.read_parquet(path)
-    if target not in df.columns:
-        raise ValueError(f"Target column '{target}' not found in features file.")
-    numeric = df.select_dtypes(include=["number"]).copy()
-    if target in numeric.columns:
-        numeric = numeric.drop(columns=[target])
-    if numeric.empty:
-        raise ValueError("No numeric feature columns available for SHAP.")
-    return numeric
-
-
 def build_explainer(model, X):
     if hasattr(model, "feature_importances_"):
         return shap.TreeExplainer(model)
@@ -36,9 +23,20 @@ def main() -> None:
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
 
-    X = load_data(Path(args.features), args.target)
     payload = joblib.load(args.model)
     model = payload["model"] if isinstance(payload, dict) and "model" in payload else payload
+    trained_features = payload.get("feature_names") if isinstance(payload, dict) else None
+    trained_target = payload.get("target") if isinstance(payload, dict) else None
+    target_name = trained_target or args.target
+
+    from flux_utils import load_labeled_flux_data
+
+    flux_data = load_labeled_flux_data(
+        Path(args.features),
+        target_name,
+        feature_names=trained_features,
+    )
+    X = pd.DataFrame(flux_data.X, columns=flux_data.feature_names)
 
     explainer = build_explainer(model, X)
     shap_values = explainer(X)
