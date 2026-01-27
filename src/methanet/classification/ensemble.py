@@ -28,8 +28,13 @@ try:
     import xgboost as xgb
 
     XGBOOST_AVAILABLE = True
-except ImportError:
+    _XGBOOST_IMPORT_ERROR: Optional[Exception] = None
+except Exception as exc:  # pragma: no cover - optional dependency
+    # XGBoost can fail to import due to missing system libraries (e.g., libomp
+    # on macOS). Treat any import failure as "not available" and fall back to
+    # sklearn-based models.
     XGBOOST_AVAILABLE = False
+    _XGBOOST_IMPORT_ERROR = exc
 
 try:
     import faiss
@@ -600,12 +605,18 @@ class MethaNetEnsemble:
         # Save FAISS index
         if FAISS_AVAILABLE and self.faiss_index is not None:
             faiss.write_index(self.faiss_index, str(path / "faiss.index"))
-        np.save(path / "train_labels.npy", self.train_labels)
+        has_train_labels = self.train_labels is not None
+        if has_train_labels:
+            np.save(path / "train_labels.npy", np.asarray(self.train_labels))
 
         # Save config and metadata
         joblib.dump(self.config, path / "config.joblib")
         joblib.dump(
-            {"n_classes": self._n_classes, "is_fitted": self._is_fitted},
+            {
+                "n_classes": self._n_classes,
+                "is_fitted": self._is_fitted,
+                "has_train_labels": has_train_labels,
+            },
             path / "metadata.joblib",
         )
 
@@ -622,12 +633,19 @@ class MethaNetEnsemble:
         path = Path(path)
 
         config = joblib.load(path / "config.joblib")
+        metadata = joblib.load(path / "metadata.joblib")
         ensemble = cls(config)
 
         # Load sklearn models
         ensemble.scaler = joblib.load(path / "scaler.joblib")
-        ensemble.models["neural_net"] = joblib.load(path / "neural_net.joblib")
-        ensemble.models["random_forest"] = joblib.load(path / "random_forest.joblib")
+        if (path / "neural_net.joblib").exists():
+            neural_net = joblib.load(path / "neural_net.joblib")
+            if neural_net is not None:
+                ensemble.models["neural_net"] = neural_net
+        if (path / "random_forest.joblib").exists():
+            random_forest = joblib.load(path / "random_forest.joblib")
+            if random_forest is not None:
+                ensemble.models["random_forest"] = random_forest
 
         # Load XGBoost
         if (path / "xgboost.ubj").exists() and XGBOOST_AVAILABLE:
@@ -639,10 +657,12 @@ class MethaNetEnsemble:
         # Load FAISS index
         if FAISS_AVAILABLE and (path / "faiss.index").exists():
             ensemble.faiss_index = faiss.read_index(str(path / "faiss.index"))
-        ensemble.train_labels = np.load(path / "train_labels.npy")
+        if metadata.get("has_train_labels", False) and (path / "train_labels.npy").exists():
+            ensemble.train_labels = np.load(path / "train_labels.npy")
+        else:
+            ensemble.train_labels = None
 
         # Load metadata
-        metadata = joblib.load(path / "metadata.joblib")
         ensemble._n_classes = metadata["n_classes"]
         ensemble._is_fitted = metadata["is_fitted"]
 
