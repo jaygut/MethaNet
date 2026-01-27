@@ -107,7 +107,7 @@ class TestMethaNetEnsemble:
         predictions = ensemble.predict(X[:10])
 
         assert len(predictions) == 10
-        assert all(isinstance(p, int) for p in predictions)
+        assert all(isinstance(p, (int, np.integer)) for p in predictions)
         assert all(0 <= p <= 4 for p in predictions)
 
     def test_ensemble_predict_proba(self, sample_data, simple_config):
@@ -134,7 +134,8 @@ class TestMethaNetEnsemble:
         assert len(results) == 5
         for result in results:
             assert isinstance(result.risk_tier, RiskTier)
-            assert 0 <= result.score <= 1
+            # Risk scores are expressed as percentages (0-100).
+            assert 0 <= result.score <= 100
             assert result.ci_lower <= result.score <= result.ci_upper
 
     def test_ensemble_not_fitted_error(self, simple_config):

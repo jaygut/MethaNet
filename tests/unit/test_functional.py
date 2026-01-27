@@ -1,8 +1,10 @@
 """Unit tests for functional gene quantification."""
 
-import pytest
-import numpy as np
 from pathlib import Path
+import shutil
+
+import numpy as np
+import pytest
 
 try:
     from methanet.functional.quantify import (
@@ -13,6 +15,9 @@ try:
     IMPORTS_AVAILABLE = True
 except ImportError:
     IMPORTS_AVAILABLE = False
+
+
+HMMSEARCH_AVAILABLE = shutil.which("hmmsearch") is not None
 
 
 class TestMarkerGene:
@@ -177,8 +182,8 @@ MLSLLLNTALLASAAASPGQKAHFADACLAALAQHGGTGFAAALSNAASPAAQNRSGIAP
             )
 
     @pytest.mark.skipif(
-        not IMPORTS_AVAILABLE,
-        reason="pyhmmer not available"
+        not (IMPORTS_AVAILABLE and HMMSEARCH_AVAILABLE),
+        reason="Functional quantification requires hmmsearch (HMMER)",
     )
     def test_quantify_mag_returns_profile(self, mock_hmm_dir, mock_fasta):
         """Test that quantify_mag returns a FunctionalProfile."""
