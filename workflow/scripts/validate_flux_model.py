@@ -4,23 +4,11 @@ from pathlib import Path
 
 import joblib
 import numpy as np
-import pandas as pd
 from sklearn.base import clone
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import LeaveOneOut
 
-
-def load_data(path: Path, target: str):
-    df = pd.read_parquet(path)
-    if target not in df.columns:
-        raise ValueError(f"Target column '{target}' not found in features file.")
-    numeric = df.select_dtypes(include=["number"]).copy()
-    if target not in numeric.columns:
-        raise ValueError(f"Target column '{target}' is not numeric.")
-    y = numeric.pop(target).to_numpy()
-    X = numeric.to_numpy()
-    feature_names = list(numeric.columns)
-    return X, y, feature_names
+from flux_utils import load_labeled_flux_data
 
 
 def loocv_predictions(model, X, y):
@@ -43,22 +31,40 @@ def main() -> None:
     parser.add_argument("--predictions-out", required=True)
     args = parser.parse_args()
 
-    X, y, _ = load_data(Path(args.features), args.target)
     payload = joblib.load(args.model)
     model = payload["model"] if isinstance(payload, dict) and "model" in payload else payload
+    trained_features = payload.get("feature_names") if isinstance(payload, dict) else None
+    trained_target = payload.get("target") if isinstance(payload, dict) else None
+    target_name = trained_target or args.target
 
-    if args.method == "loocv":
+    flux_data = load_labeled_flux_data(
+        Path(args.features),
+        target_name,
+        feature_names=trained_features,
+    )
+    X = flux_data.X
+    y = flux_data.y
+
+    method = args.method
+    if method == "loocv" and len(y) < 2:
+        method = "direct"
+
+    if method == "loocv":
         preds = loocv_predictions(model, X, y)
     else:
         preds = model.predict(X)
 
+    pearson_r = None
+    if len(y) > 1:
+        pearson_r = float(np.corrcoef(y, preds)[0, 1])
     metrics = {
         "r2": float(r2_score(y, preds)) if len(y) > 1 else None,
         "rmse": float(np.sqrt(mean_squared_error(y, preds))),
         "mae": float(mean_absolute_error(y, preds)),
-        "pearson_r": float(np.corrcoef(y, preds)[0, 1]) if len(y) > 1 else None,
-        "method": args.method,
+        "pearson_r": pearson_r,
+        "method": method,
         "n_samples": int(len(y)),
+        "data_stats": flux_data.stats,
     }
 
     metrics_path = Path(args.metrics_out)
@@ -67,7 +73,15 @@ def main() -> None:
 
     preds_path = Path(args.predictions_out)
     preds_path.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame({"y_true": y, "y_pred": preds}).to_csv(preds_path, index=False)
+    import pandas as pd
+
+    pd.DataFrame(
+        {
+            "sample_id": flux_data.sample_ids,
+            "y_true": y,
+            "y_pred": preds,
+        }
+    ).to_csv(preds_path, index=False)
 
 
 if __name__ == "__main__":

@@ -6,17 +6,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 
-
-def load_data(path: Path, target: str):
-    df = pd.read_parquet(path)
-    if target not in df.columns:
-        raise ValueError(f"Target column '{target}' not found in features file.")
-    numeric = df.select_dtypes(include=["number"]).copy()
-    if target not in numeric.columns:
-        raise ValueError(f"Target column '{target}' is not numeric.")
-    y = numeric.pop(target).to_numpy()
-    X = numeric.to_numpy()
-    return X, y
+from flux_utils import load_labeled_flux_data
 
 
 def main() -> None:
@@ -29,9 +19,19 @@ def main() -> None:
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
 
-    X, y = load_data(Path(args.features), args.target)
     payload = joblib.load(args.model)
     model = payload["model"] if isinstance(payload, dict) and "model" in payload else payload
+    trained_features = payload.get("feature_names") if isinstance(payload, dict) else None
+    trained_target = payload.get("target") if isinstance(payload, dict) else None
+    target_name = trained_target or args.target
+
+    flux_data = load_labeled_flux_data(
+        Path(args.features),
+        target_name,
+        feature_names=trained_features,
+    )
+    X = flux_data.X
+    y = flux_data.y
 
     rng = np.random.default_rng(42)
     preds = []
@@ -49,7 +49,14 @@ def main() -> None:
 
     out_path = Path(args.output)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame({"mean": mean_pred, "lower": lower, "upper": upper}).to_csv(out_path, index=False)
+    pd.DataFrame(
+        {
+            "sample_id": flux_data.sample_ids,
+            "mean": mean_pred,
+            "lower": lower,
+            "upper": upper,
+        }
+    ).to_csv(out_path, index=False)
 
 
 if __name__ == "__main__":

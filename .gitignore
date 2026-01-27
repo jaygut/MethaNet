@@ -45,6 +45,9 @@ htmlcov/
 data/*
 !data/.gitkeep
 
+# Pipeline outputs
+features/
+
 # AI assistant rules
 .windsurfrules
 .cursor/
@@ -52,7 +55,12 @@ data/*
 .claude/
 .windsurf/
 .codacy/
+.codex/
 CLAUDE.md
+AGENTS.md
+
+# Snakemake
+.snakemake/
 
 # Project-specific excludes
 ai_docs/

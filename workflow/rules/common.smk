@@ -86,7 +86,7 @@ if stage_enabled("marker_annotator"):
         ALL_TARGETS += expand(f"{MARKER_HITS}/{{sample}}/cbbL.tbl", sample=MARKER_SAMPLES)
         ALL_TARGETS += expand(f"{MARKER_HITS}/{{sample}}/mmseqs.tsv", sample=MARKER_SAMPLES)
         ALL_TARGETS += expand(f"{MARKER_SEQS}/{{sample}}.fasta", sample=MARKER_SAMPLES)
-        ALL_TARGETS += expand(f\"{FUNCTIONAL_FEATURES}/{{sample}}.tsv\", sample=MARKER_SAMPLES)
+        ALL_TARGETS += expand(f"{FUNCTIONAL_FEATURES}/{{sample}}.tsv", sample=MARKER_SAMPLES)
     if FRAGGENE_INPUTS:
         ALL_TARGETS += expand(
             f"{ORFS}/fraggenescan/{{sample}}.faa",
