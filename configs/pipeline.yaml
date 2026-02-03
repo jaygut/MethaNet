@@ -9,6 +9,7 @@ stages:
   data_curator: true
   marker_annotator: true
   embedding_generator: true
+  poc_report: false
   domain_adapter: false
   flux_predictor: false
 
@@ -140,6 +141,7 @@ embedding:
   dnabert2:
     kmer_size: 6
     max_length: 512
+    pooling: mean
 
 # Functional gene quantification
 functional:
@@ -226,7 +228,7 @@ classification:
 
 # Training parameters (legacy support)
 training:
-  label_column: measured_flux
+  label_column: flux_value
   dann:
     epochs: 20
     batch_size: 64

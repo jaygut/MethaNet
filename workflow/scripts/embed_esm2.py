@@ -48,7 +48,7 @@ def main() -> None:
 
     sequences = read_fasta(Path(args.input))
     if not sequences:
-        embedding = np.zeros(1280, dtype=np.float32)
+        embedding = np.full(1280, np.nan, dtype=np.float32)
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         np.save(args.output, embedding)
         return
@@ -89,7 +89,7 @@ def main() -> None:
             count += pooled_np.shape[0]
 
     if count == 0:
-        embedding = np.zeros(1280, dtype=np.float32)
+        embedding = np.full(1280, np.nan, dtype=np.float32)
     else:
         embedding = (sum_embedding / count).astype(np.float32)
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)

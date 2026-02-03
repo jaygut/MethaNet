@@ -235,7 +235,7 @@ class ESM2Embedder:
             Genome-level embedding array.
         """
         if not protein_embeddings:
-            return np.zeros(self.model.config.hidden_size)
+            return np.full(self.model.config.hidden_size, np.nan)
 
         emb_matrix = np.stack(list(protein_embeddings.values()))
 

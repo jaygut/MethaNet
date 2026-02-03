@@ -141,7 +141,7 @@ cp poc/mucc_rumen_poc/manifest.tsv configs/samples.tsv
 Run Snakemake:
 
 ```bash
-snakemake --cores 8 --configfile poc/mucc_rumen_poc/pipeline.yaml --rerun-incomplete
+snakemake -s workflow/Snakefile --cores 8 --configfile poc/mucc_rumen_poc/pipeline.yaml --rerun-incomplete
 ```
 
 ---

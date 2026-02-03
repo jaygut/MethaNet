@@ -102,6 +102,12 @@ if stage_enabled("embedding_generator"):
             sample=DNA_EMBED_SAMPLES,
         )
 
+if stage_enabled("poc_report"):
+    ALL_TARGETS.append(FLUX_FEATURES)
+    ALL_TARGETS.append(SOURCE_FEATURES)
+    ALL_TARGETS.append(TARGET_FEATURES)
+    ALL_TARGETS.append(f"{REPORTS}/poc/poc_report.json")
+
 if stage_enabled("domain_adapter"):
     ALL_TARGETS.append(FLUX_FEATURES)
     ALL_TARGETS.append(SOURCE_FEATURES)

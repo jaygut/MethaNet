@@ -56,7 +56,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Train a simple DANN model.")
     parser.add_argument("--source", required=True)
     parser.add_argument("--target", required=True)
-    parser.add_argument("--label-column", default="measured_flux")
+    parser.add_argument("--label-column", default="flux_value")
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--lr", type=float, default=0.001)

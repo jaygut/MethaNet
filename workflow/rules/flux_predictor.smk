@@ -5,7 +5,7 @@ rule train_flux_model:
         model=f"{MODELS}/flux_predictor/model.pkl",
         metrics=f"{REPORTS}/flux_predictor/train_metrics.json",
     params:
-        target=TRAINING.get("label_column", "measured_flux"),
+        target=TRAINING.get("label_column", "flux_value"),
         model_type=TRAINING.get("flux", {}).get("model", "linear"),
         random_state=TRAINING.get("flux", {}).get("random_state", 42),
     threads: THREADS.get("training", 1)
@@ -29,7 +29,7 @@ rule validate_flux_model:
         metrics=f"{REPORTS}/flux_predictor/validation_metrics.json",
         predictions=f"{REPORTS}/flux_predictor/predictions.csv",
     params:
-        target=TRAINING.get("label_column", "measured_flux"),
+        target=TRAINING.get("label_column", "flux_value"),
         method="loocv",
     threads: THREADS.get("training", 1)
     run:
@@ -51,7 +51,7 @@ rule bootstrap_ci:
     output:
         intervals=f"{REPORTS}/flux_predictor/bootstrap_intervals.csv",
     params:
-        target=TRAINING.get("label_column", "measured_flux"),
+        target=TRAINING.get("label_column", "flux_value"),
         n_boot=TRAINING.get("flux", {}).get("bootstrap_samples", 1000),
         ci=TRAINING.get("flux", {}).get("ci", 0.95),
     threads: THREADS.get("training", 1)
@@ -74,7 +74,7 @@ rule explain_model:
     output:
         plot=f"{FIGURES}/flux_predictor/shap_summary.png",
     params:
-        target=TRAINING.get("label_column", "measured_flux"),
+        target=TRAINING.get("label_column", "flux_value"),
     threads: THREADS.get("training", 1)
     run:
         if SIMULATE:
