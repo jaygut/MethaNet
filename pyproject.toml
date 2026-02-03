@@ -79,6 +79,7 @@ embeddings = [
     "transformers>=4.38",
     "numpy>=1.21",
     "scikit-learn>=1.4",
+    "numba>=0.58",
     "umap-learn>=0.5",
     "matplotlib>=3.7",
     "seaborn>=0.12",
