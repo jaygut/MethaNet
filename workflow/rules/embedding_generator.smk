@@ -42,12 +42,15 @@ rule embed_dnabert2:
         fasta=f"{DNA_SEQS}/{{sample}}.fasta",
     output:
         npy=f"{EMBEDDINGS}/{{sample}}_dnabert2.npy",
+        metrics=f"{EMBEDDINGS}/{{sample}}_dnabert2_metrics.json",
     threads: THREADS.get("embedding", 1)
     params:
         model=MODELS_CFG.get("dnabert2", "zhihan1996/DNABERT-2-117M"),
         batch_size=EMBEDDING_CFG.get("batch_size", 4),
         device=EMBEDDING_CFG.get("device", "auto"),
         max_length=EMBEDDING_CFG.get("dnabert2", {}).get("max_length", 512),
+        kmer_size=EMBEDDING_CFG.get("dnabert2", {}).get("kmer_size", 6),
+        pooling=EMBEDDING_CFG.get("dnabert2", {}).get("pooling", "mean"),
     run:
         if SIMULATE:
             ensure_outputs(output)
@@ -56,5 +59,7 @@ rule embed_dnabert2:
                 "python workflow/scripts/embed_dnabert2.py "
                 "--input {input.fasta} --output {output.npy} "
                 "--model {params.model} --batch-size {params.batch_size} "
-                "--device {params.device} --max-length {params.max_length}"
+                "--device {params.device} --max-length {params.max_length} "
+                "--kmer-size {params.kmer_size} --pooling {params.pooling} "
+                "--metrics-out {output.metrics}"
             )

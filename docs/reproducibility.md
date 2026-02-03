@@ -187,25 +187,25 @@ If you set `embedding.genome_backend: genomeocean`, provide per-sample
 
 ```bash
 # Dry run to check DAG
-snakemake -n --configfile configs/pipeline.yaml
+snakemake -n -s workflow/Snakefile --configfile configs/pipeline.yaml
 
 # Print rule graph
-snakemake --rulegraph | dot -Tpng > workflow_dag.png
+snakemake -s workflow/Snakefile --rulegraph | dot -Tpng > workflow_dag.png
 ```
 
 ### 4.3 Execute Pipeline
 
 ```bash
 # Full pipeline execution
-snakemake --cores 32 --use-conda --configfile configs/pipeline.yaml
+snakemake -s workflow/Snakefile --cores 32 --use-conda --configfile configs/pipeline.yaml
 
 # With cluster execution (SLURM)
-snakemake --cores 32 --use-conda \
+snakemake -s workflow/Snakefile --cores 32 --use-conda \
   --cluster "sbatch -p gpu -N 1 -c {threads} --mem={resources.mem_mb}M" \
   --jobs 10 --configfile configs/pipeline.yaml
 
 # Resume after failure
-snakemake --cores 32 --use-conda --configfile configs/pipeline.yaml --rerun-incomplete
+snakemake -s workflow/Snakefile --cores 32 --use-conda --configfile configs/pipeline.yaml --rerun-incomplete
 ```
 
 ### 4.4 Monitor Progress
@@ -215,7 +215,7 @@ snakemake --cores 32 --use-conda --configfile configs/pipeline.yaml --rerun-inco
 tail -f .snakemake/log/*.log
 
 # Check completed rules
-snakemake --summary --configfile configs/pipeline.yaml
+snakemake -s workflow/Snakefile --summary --configfile configs/pipeline.yaml
 ```
 
 ---
@@ -415,7 +415,7 @@ embedding:
 
 ```bash
 # Unlock directory
-snakemake --unlock --configfile configs/pipeline.yaml
+snakemake -s workflow/Snakefile --unlock --configfile configs/pipeline.yaml
 ```
 
 #### Missing HMM Profiles
@@ -451,7 +451,7 @@ pip install torch==2.1.0+cu121 --index-url https://download.pytorch.org/whl/cu12
 - [ ] Conda environments created (`workflow/envs/*.yaml`)
 - [ ] HMM profiles downloaded (`data/hmm/*.hmm`)
 - [ ] Sample manifest created (`configs/samples.tsv`)
-- [ ] Pipeline configuration verified (`snakemake -n`)
+- [ ] Pipeline configuration verified (`snakemake -n -s workflow/Snakefile --configfile configs/pipeline.yaml`)
 - [ ] Raw data downloaded (source and target domains)
 - [ ] Pipeline executed successfully
 - [ ] Models trained and saved

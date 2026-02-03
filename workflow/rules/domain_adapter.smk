@@ -58,7 +58,7 @@ rule train_dann:
         model=f"{MODELS}/adapted/dann.pt",
         metrics=f"{REPORTS}/domain_shift/dann_metrics.json",
     params:
-        label_column=TRAINING.get("label_column", "measured_flux"),
+        label_column=TRAINING.get("label_column", "flux_value"),
         epochs=TRAINING.get("dann", {}).get("epochs", 20),
         batch_size=TRAINING.get("dann", {}).get("batch_size", 64),
         lr=TRAINING.get("dann", {}).get("lr", 0.001),
@@ -95,4 +95,42 @@ rule select_transferable:
                 "python workflow/scripts/select_transferable.py "
                 "--source {input.source} --target {input.target} "
                 "--output {output.csv} --top-k {params.top_k}"
+            )
+
+
+rule report_transferability:
+    input:
+        features=FLUX_FEATURES,
+    output:
+        report=f"{REPORTS}/poc/poc_report.json",
+        domain_shift=f"{REPORTS}/poc/domain_shift_by_group.csv",
+        finiteness=f"{REPORTS}/poc/feature_finiteness_by_group.csv",
+        transfer=f"{REPORTS}/poc/cross_domain_transfer_by_group.csv",
+        summary=f"{REPORTS}/poc/transferability_summary.json",
+    params:
+        source_domain="rumen",
+        target_domain="coastal",
+        target_col=TRAINING.get("label_column", "flux_value"),
+        functional_dim=config.get("feature_dims", {}).get("functional", 77),
+        esm2_dim=config.get("feature_dims", {}).get("esm2", 1280),
+        genome_dim=EMBEDDING_CFG.get("genome_dim", 768),
+        bootstrap_samples=TRAINING.get("flux", {}).get("bootstrap_samples", 500),
+    threads: THREADS.get("training", 1)
+    run:
+        if SIMULATE:
+            ensure_outputs(output)
+        else:
+            metrics_arg = ""
+            if GENOME_BACKEND == "dnabert2":
+                metrics_arg = f" --dnabert2-metrics-dir {EMBEDDINGS}"
+            shell(
+                "python workflow/scripts/report_transferability.py "
+                "--features {input.features} --output-dir {REPORTS}/poc "
+                "--source-domain {params.source_domain} --target-domain {params.target_domain} "
+                "--target-col {params.target_col} "
+                "--functional-dim {params.functional_dim} --esm2-dim {params.esm2_dim} "
+                "--genome-dim {params.genome_dim} "
+                "--bootstrap-samples {params.bootstrap_samples} "
+                "--report-out {output.report}"
+                + metrics_arg
             )

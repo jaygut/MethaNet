@@ -9,7 +9,7 @@ This module provides utilities for combining:
 Total fused dimension depends on genome embedding backend.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Union
 import numpy as np
 
@@ -147,20 +147,22 @@ class FeatureFusion:
         # Functional features
         func_dim = 0
         if self.config.include_functional:
+            functional_missing = functional is None
             if functional is not None:
                 if isinstance(functional, FunctionalProfile):
                     func_vec = functional.to_vector()
                 else:
                     func_vec = functional
             else:
-                func_vec = np.zeros(self.BASE_FUNCTIONAL_DIM + 1)  # +1 for ratio
+                func_vec = np.full(self.BASE_FUNCTIONAL_DIM + 1, np.nan)
 
             # Add pathway scores if provided
             if pathway_scores is not None:
                 func_vec = np.concatenate([func_vec, pathway_scores])
             elif self.config.functional_pathways > 0:
+                fill_value = np.nan if functional_missing else 0.0
                 func_vec = np.concatenate(
-                    [func_vec, np.zeros(self.config.functional_pathways)]
+                    [func_vec, np.full(self.config.functional_pathways, fill_value)]
                 )
 
             func_dim = len(func_vec)
@@ -176,7 +178,7 @@ class FeatureFusion:
                     if norm > 0:
                         esm2_vec = esm2_vec / norm
             else:
-                esm2_vec = np.zeros(self.ESM2_DIM)
+                esm2_vec = np.full(self.ESM2_DIM, np.nan)
 
             esm2_dim = len(esm2_vec)
             components.append(esm2_vec)
@@ -191,7 +193,7 @@ class FeatureFusion:
                     if norm > 0:
                         go_vec = go_vec / norm
             else:
-                go_vec = np.zeros(self.config.genome_dim)
+                go_vec = np.full(self.config.genome_dim, np.nan)
 
             go_dim = len(go_vec)
             components.append(go_vec)

@@ -27,7 +27,7 @@ def read_functional(path: Path) -> np.ndarray:
 
 def load_embedding(path: Path, expected_dim: int) -> np.ndarray:
     if not path.exists():
-        return np.zeros(expected_dim, dtype=float)
+        return np.full(expected_dim, np.nan, dtype=float)
     arr = np.load(path)
     if arr.ndim > 1:
         arr = arr.mean(axis=0)

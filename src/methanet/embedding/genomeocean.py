@@ -185,10 +185,10 @@ class GenomeOceanEmbedder:
             import warnings
 
             warnings.warn(
-                "GenomeOcean model not loaded. Returning zero embedding. "
+                "GenomeOcean model not loaded. Returning NaN embedding. "
                 "Use DNABERT-2 via workflow scripts as alternative."
             )
-            return np.zeros(self.EMBEDDING_DIM)
+            return np.full(self.EMBEDDING_DIM, np.nan)
 
         try:
             from Bio import SeqIO
@@ -201,7 +201,7 @@ class GenomeOceanEmbedder:
             full_sequence += str(record.seq)
 
         if not full_sequence:
-            return np.zeros(self.EMBEDDING_DIM)
+            return np.full(self.EMBEDDING_DIM, np.nan)
 
         # Tokenize
         tokens = self._tokenize_genome(full_sequence)
