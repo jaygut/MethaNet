@@ -49,12 +49,14 @@ fi
 
 echo "Extracting marker profiles..."
 
+MISSING_MARKERS=()
+
 # Function to fetch HMM if not exists
 fetch_hmm() {
     local outfile=$1
     local accession=$2
     local name=$3
-    local fallback_pattern=${4:-}
+    local fallback_patterns=${4:-}
     
     if [ ! -f "$outfile" ]; then
         echo "  - Extracting $name ($accession) -> $outfile"
@@ -63,8 +65,8 @@ fetch_hmm() {
         fi
 
         echo "WARNING: $accession not found in TIGRFAMs_15.0_HMM.LIB. Attempting fallback lookup..."
-        if [ -z "$fallback_pattern" ]; then
-            fallback_pattern="$name"
+        if [ -z "$fallback_patterns" ]; then
+            fallback_patterns="$name"
         fi
 
         if [ ! -f "TIGRFAMs_15.0_HMM.LIB.keys" ]; then
@@ -72,17 +74,25 @@ fetch_hmm() {
         fi
 
         # keys file format is: <accession> <name>
-        local resolved_acc
-        resolved_acc=$(awk -v pat="$fallback_pattern" 'BEGIN{IGNORECASE=1} $0 ~ pat {print $1; exit}' TIGRFAMs_15.0_HMM.LIB.keys)
+        local resolved_acc=""
+        local pat
+        IFS='|' read -r -a pat_arr <<< "$fallback_patterns"
+        for pat in "${pat_arr[@]}"; do
+            pat=$(echo "$pat" | xargs)
+            if [ -z "$pat" ]; then
+                continue
+            fi
+            resolved_acc=$(awk -v pat="$pat" 'BEGIN{IGNORECASE=1} $0 ~ pat {print $1; exit}' TIGRFAMs_15.0_HMM.LIB.keys)
+            if [ -n "$resolved_acc" ]; then
+                echo "  - Fallback matched accession $resolved_acc for '$name' (pattern: $pat)"
+                hmmfetch -o "$outfile" TIGRFAMs_15.0_HMM.LIB "$resolved_acc"
+                return 0
+            fi
+        done
 
-        if [ -z "$resolved_acc" ]; then
-            echo "ERROR: Could not resolve an accession for '$name' using pattern '$fallback_pattern'."
-            echo "       Try: grep -iE '<pattern>' data/hmm/TIGRFAMs_15.0_HMM.LIB.keys | head"
-            exit 1
-        fi
-
-        echo "  - Fallback matched accession $resolved_acc for '$name'"
-        hmmfetch -o "$outfile" TIGRFAMs_15.0_HMM.LIB "$resolved_acc"
+        echo "ERROR: Could not resolve an accession for '$name' using fallback patterns: '$fallback_patterns'."
+        MISSING_MARKERS+=("$outfile :: $name :: $accession :: $fallback_patterns")
+        return 1
     else
         echo "  - $name ($outfile) already exists."
     fi
@@ -101,9 +111,9 @@ fetch_hmm "mcrG.hmm" "TIGR03259" "mcrA partner (gamma)"
 
 # --- 2. The Sulfate Bypass (Mangrove Critical) ---
 # Essential for capturing methylotrophic methanogenesis which competes with sulfate reducers
-fetch_hmm "mtaB.hmm" "TIGR02626" "Methanol utilization" "mtaB|methanol"
-fetch_hmm "mttB.hmm" "TIGR02512" "Methylamine utilization" "mttB|methylamine"
-fetch_hmm "mtbA.hmm" "TIGR02506" "Methylcobalamin:CoM methyltransferase" "mtbA|methylcobalamin|cob\w*"
+fetch_hmm "mtaB.hmm" "TIGR02626" "Methanol utilization" "mtaB|methanol|methanol.*methyltransferase|mta"
+fetch_hmm "mttB.hmm" "TIGR02512" "Methylamine utilization" "mttB|methylamine|trimethylamine|mtt"
+fetch_hmm "mtbA.hmm" "TIGR02506" "Methylcobalamin:CoM methyltransferase" "mtbA|methylcobalamin|cob|methyltransferase.*com"
 
 # --- 3. The Copper-Switch Oxidizers ---
 fetch_hmm "pmoA.hmm" "TIGR03080" "Particulate methane monooxygenase A" "pmoA|particulate methane monooxygenase"
@@ -118,3 +128,19 @@ fetch_hmm "nifH.hmm" "TIGR01287" "Nitrogenase" "nifH|nitrogenase"
 fetch_hmm "cbbL.hmm" "TIGR01168" "RuBisCO large" "cbbL|rubisco|ribulose"
 
 echo "Success! All strategic HMM markers are ready in data/hmm/"
+
+if [ ${#MISSING_MARKERS[@]} -gt 0 ]; then
+    echo ""
+    echo "ERROR: Some marker profiles could not be extracted from TIGRFAMs_15.0_HMM.LIB."
+    echo "This usually means the TIGR accession was renamed/retired or the marker is not present in this release."
+    echo ""
+    echo "Unresolved markers:"
+    for item in "${MISSING_MARKERS[@]}"; do
+        echo "  - $item"
+    done
+    echo ""
+    echo "Next debug step (run from repo root):"
+    echo "  grep -iE '<pattern>' data/hmm/TIGRFAMs_15.0_HMM.LIB.keys | head"
+    echo ""
+    exit 1
+fi
