@@ -49,7 +49,9 @@ fi
 # This is also useful on HPC where some TIGR accessions differ across releases.
 if [ -f "TIGRFAMs_15.0_HMM.LIB.ssi" ] && [ ! -f "TIGRFAMs_15.0_HMM.LIB.keys" ]; then
     echo "Caching TIGRFAM keys (accession + name)..."
-    hmmfetch -l TIGRFAMs_15.0_HMM.LIB > TIGRFAMs_15.0_HMM.LIB.keys
+    # hmmfetch -l is not available in all HMMER builds; use hmmstat instead.
+    # hmmstat tbl columns: name (col2), accession (col3)
+    hmmstat --tblout /dev/stdout TIGRFAMs_15.0_HMM.LIB | awk '!/^#/{print $3, $2}' > TIGRFAMs_15.0_HMM.LIB.keys
 fi
 
 # Download Pfam-A library for fallback (version pinned via PFAM_RELEASE)
@@ -80,7 +82,7 @@ index_library() {
 
     if [ ! -f "$keysfile" ]; then
         echo "Caching keys: $keysfile"
-        hmmfetch -l "$libfile" > "$keysfile"
+        hmmstat --tblout /dev/stdout "$libfile" | awk '!/^#/{print $3, $2}' > "$keysfile"
     fi
 }
 
@@ -143,7 +145,7 @@ fetch_hmm() {
         echo "  - Extracting $name ($accession) -> $outfile"
         # Try TIGRFAMs first
         if [ ! -f "TIGRFAMs_15.0_HMM.LIB.keys" ]; then
-            hmmfetch -l TIGRFAMs_15.0_HMM.LIB > TIGRFAMs_15.0_HMM.LIB.keys
+            hmmstat --tblout /dev/stdout TIGRFAMs_15.0_HMM.LIB | awk '!/^#/{print $3, $2}' > TIGRFAMs_15.0_HMM.LIB.keys
         fi
 
         if resolve_and_fetch "$outfile" "TIGRFAMs_15.0_HMM.LIB" "TIGRFAMs_15.0_HMM.LIB.keys" "$accession" "$name" "$fallback_patterns"; then
