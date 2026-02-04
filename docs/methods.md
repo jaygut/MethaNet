@@ -16,32 +16,37 @@ This document provides detailed technical descriptions of the computational meth
 
 ### 1.1 Functional Gene Quantification
 
-MethaNet quantifies five key marker genes using Hidden Markov Model (HMM) profiles:
+MethaNet quantifies an expanded set of **12 key marker genes** to capture complex methane dynamics, specifically addressing the "Sulfate Bypass" in saline environments and "Copper-Switch" oxidation.
 
-| Marker | Function | HMM Source | E-value Threshold |
-|--------|----------|------------|-------------------|
-| mcrA | Methyl-coenzyme M reductase α | TIGRFAM/Pfam | 1e-10 |
-| pmoA | Particulate methane monooxygenase α | TIGRFAM/Pfam | 1e-10 |
-| dsrA | Dissimilatory sulfite reductase α | TIGRFAM | 1e-10 |
-| nifH | Nitrogenase iron protein | Pfam | 1e-10 |
-| cbbL | RuBisCO large subunit | Pfam | 1e-10 |
+| Marker | Function | Rationale | HMM Source |
+|--------|----------|-----------|------------|
+| **mcrA** | Methyl-coenzyme M reductase α | Core methanogenesis | TIGR03256 |
+| **mcrB** | MCR beta subunit | Complex validation | TIGR03258 |
+| **mcrG** | MCR gamma subunit | Complex validation | TIGR03259 |
+| **pmoA** | pMMO alpha subunit | Aerobic oxidation (Copper-rich) | TIGR03080 |
+| **mmoX** | sMMO alpha subunit | **Copper-switch** oxidation (stress) | TIGR01691 |
+| **dsrA** | Sulfite reductase α | **Competitor** (Sulfate reduction) | TIGR02064 |
+| **dsrB** | Sulfite reductase β | Competitor validation | TIGR02066 |
+| **mtaB** | Methanol methyltransferase | **Sulfate Bypass** (Methylotrophic) | TIGR02626 |
+| **mttB** | Methylamine methyltransferase | **Sulfate Bypass** (Methylotrophic) | TIGR02512 |
+| **mtbA** | Methylcobalamin:CoM MT | **Sulfate Bypass** (Methylotrophic) | TIGR02506 |
+| **nifH** | Nitrogenase iron protein | Normalization/Control | TIGR01287 |
+| **cbbL** | RuBisCO large subunit | Normalization/Control | TIGR01168 |
 
-For reproducibility, pin HMMs to Pfam 37.0 (Xfam, 2024) and TIGRFAM 15.0
-(final JCVI release, 2014; hosted by NCBI).
+**HMM Source:** All profiles are extracted from **TIGRFAMs v15.0** (JCVI/NCBI) to ensure consistent score thresholds and full-length equivalog specificity.
 
 **Quantification pipeline:**
 
-1. Open reading frame (ORF) prediction using FragGeneScan or Prodigal
-2. HMM search against marker profiles using pyhmmer
-3. Normalization per 1k proteins (counts / (total proteins / 1000))
+1. Open reading frame (ORF) prediction using Prodigal (`-p meta`) or FragGeneScanRs.
+2. HMM search against the 12 marker profiles using HMMER 3.
+3. Normalization per 1k proteins (counts / (total proteins / 1000)).
 4. Computation of derived features:
-   - log2(mcrA/pmoA) ratio with pseudocount
-   - Pathway completeness slots (reserved, default zeros in pipeline)
+   - log2(mcrA/pmoA) ratio with pseudocount.
+   - Pathway completeness (inferred from subunit presence).
 
-**Feature vector (77 dimensions):**
-- Normalized marker abundances (5)
-- log2(mcrA/pmoA) ratio (1)
-- Pathway completeness slots (71)
+**Feature vector:**
+- Normalized abundances for all 12 markers.
+- log2(mcrA/pmoA) ratio.
 
 ### 1.2 Foundation Model Embeddings
 

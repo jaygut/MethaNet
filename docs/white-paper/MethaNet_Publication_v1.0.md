@@ -42,9 +42,14 @@ Third, the binary nature of current verification (creditable vs. non-creditable)
 
 ### 1.3 Microbial Functional Genes as Leading Indicators
 
-MethaNet exploits the observation that microbial functional gene abundances provide leading indicators of ecosystem carbon dynamics that can complement, and in some contexts substitute for, direct flux measurement. All biological methane production depends on the methyl-coenzyme M reductase (MCR) complex, encoded by the mcrABG operon and present in all known methanogens^14^. The abundance of mcrA genes in environmental samples quantitatively correlates with methanogenic capacity across diverse ecosystems^15,16^.
+MethaNet exploits the observation that microbial functional gene abundances provide leading indicators of ecosystem carbon dynamics. We quantify an expanded set of **12 functional markers** to capture the complexity of methane cycling in saline environments:
 
-Conversely, aerobic methane oxidation is catalyzed by particulate methane monooxygenase (pMMO), encoded by the pmoA gene found in methanotrophic bacteria^17^. The balance between methanogenic and methanotrophic potential, measured as the mcrA/pmoA abundance ratio, thus provides a mechanistic indicator of net methane flux that integrates community-level metabolism in a single interpretable metric.
+1.  **Methanogenesis:** `mcrA`, `mcrB`, `mcrG` (core production) plus `mtaB`, `mttB`, `mtbA` (methylotrophic pathways critical in mangroves).
+2.  **Oxidation:** `pmoA` (aerobic) and `mmoX` (soluble/copper-switch) to capture diverse oxidation regimes.
+3.  **Competition:** `dsrA`, `dsrB` (sulfate reduction) to model competitive exclusion in saline sediments.
+4.  **Normalization:** `nifH`, `cbbL` as single-copy controls.
+
+The balance between these functional guilds, particularly the mcrA/pmoA ratio augmented by salinity-specific bypass markers, provides a mechanistic indicator of net methane flux.
 
 Prior work has demonstrated correlations between functional gene ratios and methane emissions. Lee et al. reported strong relationships between mcrA/pmoA ratios and net methane flux in wetland ecosystems^18^. He et al. showed that functional gene repertoires predict methane emission patterns more accurately than taxonomic composition alone^19^. Zhang et al. demonstrated that methanogen and methanotroph abundances respond predictably to environmental drivers including water content, carbon availability, and nitrogen status^20^.
 
@@ -112,17 +117,28 @@ Taxonomic assignment of recovered MAGs used GTDB-Tk v2.3.0^39^ against the Genom
 
 #### 2.2.1 Marker Gene Detection
 
-We targeted five functional marker genes representing key biogeochemical processes relevant to carbon permanence:
+We targeted 12 functional marker genes representing key biogeochemical processes relevant to carbon permanence, including "Sulfate Bypass" and "Copper-Switch" mechanisms critical for coastal transferability. All profiles were extracted from the TIGRFAMs v15.0 database to ensure consistent curation standards.
 
-**mcrA (methyl-coenzyme M reductase alpha subunit):** The terminal enzyme of methanogenesis, present in all known methanogens. Detection used custom HMM profiles trained on the FunGene mcrA reference alignment^42^ (threshold: E-value <1e-20, coverage >70%).
+**Core Methanogenesis (Universal):**
+*   **mcrA (Methyl-coenzyme M reductase alpha):** The terminal enzyme of methanogenesis. Detection used TIGR03256 (E-value <1e-10).
+*   **mcrB, mcrG (MCR beta/gamma):** Partner subunits used to validate pathway completeness and distinguish functional operons from fragments (TIGR03258, TIGR03259).
 
-**pmoA (particulate methane monooxygenase alpha subunit):** Catalyzes aerobic methane oxidation in methanotrophic bacteria. Detection used HMM profiles for both Type I and Type II methanotrophs^43^ (threshold: E-value <1e-15, coverage >60%).
+**Methane Oxidation (Sink Potential):**
+*   **pmoA (Particulate methane monooxygenase alpha):** Catalyzes aerobic oxidation in copper-sufficient conditions. Detection used TIGR03080 (E-value <1e-10).
+*   **mmoX (Soluble methane monooxygenase alpha):** Captures methanotrophy in copper-limited or stressed sediment layers ("Copper-Switch"), ensuring sinks are not underestimated (TIGR01691).
 
-**dsrA (dissimilatory sulfite reductase alpha subunit):** Marker for sulfate-reducing bacteria that compete with methanogens for electron donors. Detection used profiles from established dsrAB reference databases^44^ (threshold: E-value <1e-20, coverage >70%).
+**Methylotrophic Methanogenesis ("Sulfate Bypass"):**
+*   **mtaB (Methanol-cobalamin methyltransferase):** Key marker for methanol utilization (TIGR02626).
+*   **mttB (Trimethylamine methyltransferase):** Key marker for methylamine utilization (TIGR02512).
+*   **mtbA (Methylcobalamin:CoM methyltransferase):** Central hub for methyl-group funneling (TIGR02506).
+*   *Rationale:* These markers capture methanogenesis from non-competitive substrates (methanol, methylamines) that persist even when sulfate reducers outcompete hydrogenotrophic methanogens in saline coastal sediments.
 
-**nifH (nitrogenase iron protein):** Marker for nitrogen fixation capacity, relevant to ecosystem productivity and carbon inputs. Detection used HMM profiles from the nifH reference database^45^ (threshold: E-value <1e-15, coverage >50%).
+**Competitive Exclusion (Sulfate Reduction):**
+*   **dsrA, dsrB (Dissimilatory sulfite reductase alpha/beta):** Markers for sulfate-reducing bacteria that compete for hydrogen and acetate. High dsr abundances typically suppress hydrogenotrophic methanogenesis risk (TIGR02064, TIGR02066).
 
-**cbbL (RuBisCO large subunit):** Marker for autotrophic carbon fixation, indicating primary production potential. Detection distinguished Form I and Form II variants using separate HMM profiles (threshold: E-value <1e-30, coverage >70%).
+**Ecological Controls (Normalization):**
+*   **nifH (Nitrogenase iron protein):** Marker for nitrogen fixation capacity (TIGR01287).
+*   **cbbL (RuBisCO large subunit):** Marker for autotrophic carbon fixation (TIGR01168).
 
 #### 2.2.2 Abundance Quantification
 

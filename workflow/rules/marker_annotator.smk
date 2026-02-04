@@ -1,3 +1,6 @@
+# Get list of markers from config
+MARKERS = [m["name"] for m in config["functional"]["markers"]]
+
 rule orf_prodigal:
     input:
         fasta=f"{ASSEMBLIES}/{{sample}}.fasta",
@@ -26,80 +29,13 @@ rule orf_fraggenescan:
             shell("FragGeneScanRs -t complete -s {input.fasta} -o {params.out_prefix} -w 1")
 
 
-rule hmmsearch_mcrA:
+# Dynamic rule generation for all configured markers
+rule hmmsearch_marker:
     input:
         proteins=f"{ORFS}/{{sample}}.faa",
-        hmm=f"{HMM_DIR}/mcrA.hmm",
+        hmm=f"{HMM_DIR}/{{marker}}.hmm",
     output:
-        hits=f"{MARKER_HITS}/{{sample}}/mcrA.tbl",
-    threads: THREADS.get("hmmer", 4)
-    run:
-        if SIMULATE:
-            ensure_outputs(output)
-        else:
-            shell(
-                "mkdir -p {MARKER_HITS}/{wildcards.sample} "
-                "&& hmmsearch --cpu {threads} --tblout {output.hits} {input.hmm} {input.proteins}"
-            )
-
-
-rule hmmsearch_pmoA:
-    input:
-        proteins=f"{ORFS}/{{sample}}.faa",
-        hmm=f"{HMM_DIR}/pmoA.hmm",
-    output:
-        hits=f"{MARKER_HITS}/{{sample}}/pmoA.tbl",
-    threads: THREADS.get("hmmer", 4)
-    run:
-        if SIMULATE:
-            ensure_outputs(output)
-        else:
-            shell(
-                "mkdir -p {MARKER_HITS}/{wildcards.sample} "
-                "&& hmmsearch --cpu {threads} --tblout {output.hits} {input.hmm} {input.proteins}"
-            )
-
-
-rule hmmsearch_dsrA:
-    input:
-        proteins=f"{ORFS}/{{sample}}.faa",
-        hmm=f"{HMM_DIR}/dsrA.hmm",
-    output:
-        hits=f"{MARKER_HITS}/{{sample}}/dsrA.tbl",
-    threads: THREADS.get("hmmer", 4)
-    run:
-        if SIMULATE:
-            ensure_outputs(output)
-        else:
-            shell(
-                "mkdir -p {MARKER_HITS}/{wildcards.sample} "
-                "&& hmmsearch --cpu {threads} --tblout {output.hits} {input.hmm} {input.proteins}"
-            )
-
-
-rule hmmsearch_nifH:
-    input:
-        proteins=f"{ORFS}/{{sample}}.faa",
-        hmm=f"{HMM_DIR}/nifH.hmm",
-    output:
-        hits=f"{MARKER_HITS}/{{sample}}/nifH.tbl",
-    threads: THREADS.get("hmmer", 4)
-    run:
-        if SIMULATE:
-            ensure_outputs(output)
-        else:
-            shell(
-                "mkdir -p {MARKER_HITS}/{wildcards.sample} "
-                "&& hmmsearch --cpu {threads} --tblout {output.hits} {input.hmm} {input.proteins}"
-            )
-
-
-rule hmmsearch_cbbL:
-    input:
-        proteins=f"{ORFS}/{{sample}}.faa",
-        hmm=f"{HMM_DIR}/cbbL.hmm",
-    output:
-        hits=f"{MARKER_HITS}/{{sample}}/cbbL.tbl",
+        hits=f"{MARKER_HITS}/{{sample}}/{{marker}}.tbl",
     threads: THREADS.get("hmmer", 4)
     run:
         if SIMULATE:
@@ -133,11 +69,8 @@ rule mmseqs_search:
 rule extract_marker_sequences:
     input:
         proteins=f"{ORFS}/{{sample}}.faa",
-        mcrA=f"{MARKER_HITS}/{{sample}}/mcrA.tbl",
-        pmoA=f"{MARKER_HITS}/{{sample}}/pmoA.tbl",
-        dsrA=f"{MARKER_HITS}/{{sample}}/dsrA.tbl",
-        nifH=f"{MARKER_HITS}/{{sample}}/nifH.tbl",
-        cbbL=f"{MARKER_HITS}/{{sample}}/cbbL.tbl",
+        # Dynamically request all marker hits
+        hits=expand(f"{MARKER_HITS}/{{sample}}/{{marker}}.tbl", marker=MARKERS)
     output:
         fasta=f"{MARKER_SEQS}/{{sample}}.fasta",
     params:
@@ -147,11 +80,12 @@ rule extract_marker_sequences:
         if SIMULATE:
             ensure_outputs(output)
         else:
+            # Construct --hits arguments dynamically
+            hits_args = " ".join([f"--hits {h}" for h in input.hits])
             shell(
                 "python workflow/scripts/extract_marker_seqs.py "
                 "--proteins {input.proteins} "
-                "--hits {input.mcrA} --hits {input.pmoA} --hits {input.dsrA} "
-                "--hits {input.nifH} --hits {input.cbbL} "
+                "{hits_args} "
                 "--evalue-threshold {params.evalue_threshold} "
                 "--output {output.fasta}"
             )
@@ -160,26 +94,30 @@ rule extract_marker_sequences:
 rule build_functional_features:
     input:
         proteins=f"{ORFS}/{{sample}}.faa",
-        mcrA=f"{MARKER_HITS}/{{sample}}/mcrA.tbl",
-        pmoA=f"{MARKER_HITS}/{{sample}}/pmoA.tbl",
-        dsrA=f"{MARKER_HITS}/{{sample}}/dsrA.tbl",
-        nifH=f"{MARKER_HITS}/{{sample}}/nifH.tbl",
-        cbbL=f"{MARKER_HITS}/{{sample}}/cbbL.tbl",
+        # Dynamically request all marker hits
+        hits=expand(f"{MARKER_HITS}/{{sample}}/{{marker}}.tbl", marker=MARKERS)
     output:
         features=f"{FUNCTIONAL_FEATURES}/{{sample}}.tsv",
     params:
         evalue_threshold=FUNCTIONAL_CFG.get("evalue_threshold", 1e-10),
+        markers=MARKERS
     threads: THREADS.get("hmmer", 4)
     run:
         if SIMULATE:
             ensure_outputs(output)
         else:
+            # Construct arguments like --mcrA path/to/mcrA.tbl
+            marker_args = []
+            for marker_name, hit_path in zip(params.markers, input.hits):
+                marker_args.append(f"--{marker_name} {hit_path}")
+            
+            cmd_args = " ".join(marker_args)
+            
             shell(
                 "python workflow/scripts/build_functional_features.py "
                 "--sample-id {wildcards.sample} "
                 "--proteins {input.proteins} "
-                "--mcrA {input.mcrA} --pmoA {input.pmoA} --dsrA {input.dsrA} "
-                "--nifH {input.nifH} --cbbL {input.cbbL} "
+                "{cmd_args} "
                 "--evalue-threshold {params.evalue_threshold} "
                 "--output {output.features}"
             )

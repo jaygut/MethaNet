@@ -92,12 +92,17 @@ Planned feature matrices for genomic language model analysis (designed for immed
 
 ### Key Molecular Markers
 
-| Marker | Gene | Function | Role |
-|--------|------|----------|------|
-| mcrA | Methyl-coenzyme M reductase α | Catalyzes final step of methanogenesis | Methanogen abundance proxy |
-| pmoA | Particulate methane monooxygenase α | Catalyzes methane oxidation | Methanotroph abundance proxy |
+MethaNet uses a strategic set of **12 HMM markers** (TIGRFAMs v15.0) to capture methanogenesis, oxidation, and competition dynamics.
 
-**The mcrA/pmoA ratio** captures the balance between methane production and consumption, the key determinant of whether an ecosystem is a net methane source or sink.
+| Marker | Gene | Role | Strategic Value |
+|--------|------|------|-----------------|
+| **mcrA** | Methyl-coenzyme M reductase α | Methanogenesis | Universal production proxy |
+| **pmoA** | pMMO α | Aerobic Oxidation | Primary sink proxy (Copper-rich) |
+| **mmoX** | sMMO α | Soluble Oxidation | **"Copper-Switch"** for stressed environments |
+| **mtaB** | Methanol MT | Methylotrophic | **"Sulfate Bypass"** in saline/mangrove systems |
+| **dsrA** | Dissimilatory sulfite reductase | Sulfate Reduction | Competitive exclusion signal |
+
+**The mcrA/pmoA ratio** (augmented by mmoX) captures the balance between methane production and consumption. The inclusion of **mtaB** and **dsrA** allows the model to adjust for the unique thermodynamic constraints of coastal ecosystems.
 
 ### Methanogenesis Pathways
 

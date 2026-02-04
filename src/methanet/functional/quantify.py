@@ -28,10 +28,17 @@ class FunctionalProfile:
     Attributes:
         sample_id: Unique identifier for the sample/MAG.
         mcrA: Methyl-coenzyme M reductase alpha subunit abundance.
+        mcrB: Methyl-coenzyme M reductase beta subunit abundance.
+        mcrG: Methyl-coenzyme M reductase gamma subunit abundance.
         pmoA: Particulate methane monooxygenase subunit A abundance.
+        mmoX: Soluble methane monooxygenase component A alpha.
         dsrA: Dissimilatory sulfite reductase alpha subunit abundance.
+        dsrB: Dissimilatory sulfite reductase beta subunit abundance.
         nifH: Nitrogenase iron protein abundance.
         cbbL: RuBisCO large subunit abundance.
+        mtaB: Methanol-cobalamin methyltransferase abundance.
+        mttB: Trimethylamine methyltransferase abundance.
+        mtbA: Methylcobalamin:CoM methyltransferase abundance.
     """
 
     sample_id: str
@@ -40,16 +47,31 @@ class FunctionalProfile:
     dsrA: float
     nifH: float
     cbbL: float
+    # New markers
+    mcrB: float = 0.0
+    mcrG: float = 0.0
+    mmoX: float = 0.0
+    dsrB: float = 0.0
+    mtaB: float = 0.0
+    mttB: float = 0.0
+    mtbA: float = 0.0
 
     @property
     def marker_abundances(self) -> Dict[str, float]:
         """Return marker abundances as a dictionary."""
         return {
             "mcrA": self.mcrA,
+            "mcrB": self.mcrB,
+            "mcrG": self.mcrG,
             "pmoA": self.pmoA,
+            "mmoX": self.mmoX,
             "dsrA": self.dsrA,
+            "dsrB": self.dsrB,
             "nifH": self.nifH,
             "cbbL": self.cbbL,
+            "mtaB": self.mtaB,
+            "mttB": self.mttB,
+            "mtbA": self.mtbA,
         }
 
     @property
@@ -60,6 +82,7 @@ class FunctionalProfile:
         negative values indicate methanotrophic dominance.
         """
         pseudocount = 1e-6
+        # Use primary markers for the main ratio
         return np.log2((self.mcrA + pseudocount) / (self.pmoA + pseudocount))
 
     @property
@@ -88,7 +111,7 @@ class FunctionalProfile:
         """Convert profile to feature vector for ML models.
 
         Returns:
-            Array of [mcrA, pmoA, dsrA, nifH, cbbL, ratio]
+            Array of [mcrA, pmoA, dsrA, nifH, cbbL, ratio, ...new_markers]
         """
         return np.array([
             self.mcrA,
@@ -97,6 +120,14 @@ class FunctionalProfile:
             self.nifH,
             self.cbbL,
             self.mcrA_pmoA_ratio,
+            # New markers added to end of vector
+            self.mcrB,
+            self.mcrG,
+            self.mmoX,
+            self.dsrB,
+            self.mtaB,
+            self.mttB,
+            self.mtbA,
         ])
 
     def to_array(self) -> np.ndarray:
@@ -119,6 +150,13 @@ class FunctionalProfile:
             "dsrA": self.dsrA,
             "nifH": self.nifH,
             "cbbL": self.cbbL,
+            "mcrB": self.mcrB,
+            "mcrG": self.mcrG,
+            "mmoX": self.mmoX,
+            "dsrB": self.dsrB,
+            "mtaB": self.mtaB,
+            "mttB": self.mttB,
+            "mtbA": self.mtbA,
             "mcrA_pmoA_ratio": self.mcrA_pmoA_ratio,
             "methanogenic_potential": self.methanogenic_potential,
         }
@@ -126,19 +164,37 @@ class FunctionalProfile:
 
 # HMM profile to gene name mapping
 GENE_MAPPING = {
+    # Core Methanogenesis
     "PF02249": "mcrA",
     "TIGR03256": "mcrA",
+    "TIGR03258": "mcrB",
+    "TIGR03259": "mcrG",
+    # Oxidizers
     "PF02461": "pmoA",
     "TIGR03080": "pmoA",
+    "TIGR01691": "mmoX",
+    # Competitors
     "PF04358": "dsrA",
     "TIGR02064": "dsrA",
+    "TIGR02066": "dsrB",
+    # Methylotrophic / Saline
+    "TIGR02626": "mtaB",
+    "TIGR02512": "mttB",
+    "TIGR02506": "mtbA",
+    # Controls
     "PF00142": "nifH",
     "TIGR01287": "nifH",
     "PF00016": "cbbL",
     "TIGR01168": "cbbL",
 }
 
-DEFAULT_MARKERS = ("mcrA", "pmoA", "dsrA", "nifH", "cbbL")
+DEFAULT_MARKERS = (
+    "mcrA", "mcrB", "mcrG",
+    "pmoA", "mmoX",
+    "dsrA", "dsrB",
+    "nifH", "cbbL",
+    "mtaB", "mttB", "mtbA"
+)
 
 
 class FunctionalQuantifier:
@@ -222,10 +278,17 @@ class FunctionalQuantifier:
         return FunctionalProfile(
             sample_id=sample_id,
             mcrA=normalized.get("mcrA", 0.0),
+            mcrB=normalized.get("mcrB", 0.0),
+            mcrG=normalized.get("mcrG", 0.0),
             pmoA=normalized.get("pmoA", 0.0),
+            mmoX=normalized.get("mmoX", 0.0),
             dsrA=normalized.get("dsrA", 0.0),
+            dsrB=normalized.get("dsrB", 0.0),
             nifH=normalized.get("nifH", 0.0),
             cbbL=normalized.get("cbbL", 0.0),
+            mtaB=normalized.get("mtaB", 0.0),
+            mttB=normalized.get("mttB", 0.0),
+            mtbA=normalized.get("mtbA", 0.0),
         )
 
     def quantify_mag(self, protein_fasta: Path, sample_id: Optional[str] = None) -> FunctionalProfile:

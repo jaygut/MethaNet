@@ -58,6 +58,7 @@ class TestFunctionalProfile:
             dsrA=25.0,
             nifH=0.0,
             cbbL=0.0,
+            mmoX=10.0,  # Test new marker
         )
 
     def test_profile_creation(self, sample_profile):
@@ -65,6 +66,7 @@ class TestFunctionalProfile:
         assert sample_profile.sample_id == "test_sample"
         assert sample_profile.marker_abundances["mcrA"] == 100.0
         assert sample_profile.pmoA == 50.0
+        assert sample_profile.mmoX == 10.0
 
     def test_mcra_pmoa_ratio(self, sample_profile):
         """Test mcrA/pmoA ratio calculation."""
@@ -106,6 +108,8 @@ class TestFunctionalProfile:
 
         assert "mcrA" in normalized
         assert normalized["mcrA"] == pytest.approx(100.0, rel=1e-6)
+        assert "mmoX" in normalized
+        assert normalized["mmoX"] == pytest.approx(10.0, rel=1e-6)
 
     def test_to_array(self, sample_profile):
         """Test conversion to numpy array."""
@@ -113,6 +117,8 @@ class TestFunctionalProfile:
 
         assert isinstance(arr, np.ndarray)
         assert arr.ndim == 1
+        # 12 markers + 1 ratio = 13 features
+        assert len(arr) == 13
 
     def test_to_dict(self, sample_profile):
         """Test conversion to dictionary."""
@@ -133,7 +139,21 @@ class TestFunctionalQuantifier:
         hmm_dir.mkdir()
 
         # Create mock HMM files (empty files for testing)
-        for marker in ["mcrA", "pmoA", "dsrA", "nifH", "cbbL"]:
+        markers = [
+            "mcrA",
+            "mcrB",
+            "mcrG",
+            "pmoA",
+            "mmoX",
+            "dsrA",
+            "dsrB",
+            "mtaB",
+            "mttB",
+            "mtbA",
+            "nifH",
+            "cbbL",
+        ]
+        for marker in markers:
             (hmm_dir / f"{marker}.hmm").touch()
 
         return hmm_dir
@@ -166,9 +186,23 @@ MLSLLLNTALLASAAASPGQKAHFADACLAALAQHGGTGFAAALSNAASPAAQNRSGIAP
         """Test default markers."""
         quantifier = FunctionalQuantifier(hmm_dir=mock_hmm_dir)
 
-        expected_markers = ["mcrA", "pmoA", "dsrA", "nifH", "cbbL"]
-        assert all(m in [marker.name for marker in quantifier.markers]
-                   for m in expected_markers)
+        expected_markers = [
+            "mcrA",
+            "mcrB",
+            "mcrG",
+            "pmoA",
+            "mmoX",
+            "dsrA",
+            "dsrB",
+            "mtaB",
+            "mttB",
+            "mtbA",
+            "nifH",
+            "cbbL",
+        ]
+        assert all(
+            m in [marker.name for marker in quantifier.markers] for m in expected_markers
+        )
 
     def test_quantifier_missing_hmm(self, tmp_path):
         """Test error when HMM file is missing."""
