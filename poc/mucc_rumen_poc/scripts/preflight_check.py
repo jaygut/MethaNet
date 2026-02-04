@@ -172,7 +172,7 @@ def check_config_samples(
         values = config.get(key, []) or []
         if not values:
             return
-        value_set = set(values)
+        value_set = {str(value) for value in values}
         missing_in_manifest = sorted(value_set - manifest_ids)
         if missing_in_manifest:
             errors.append(
