@@ -48,6 +48,13 @@ TRAINING = config.get("training", {})
 GENOME_BACKEND = EMBEDDING_CFG.get("genome_backend", "dnabert2")
 
 
+def _marker_names() -> list[str]:
+    markers = FUNCTIONAL_CFG.get("markers", [])
+    if not markers:
+        return []
+    return [m["name"] for m in markers if "name" in m]
+
+
 def ensure_outputs(outputs):
     for out in outputs:
         if is_flagged(out, "directory"):
@@ -79,11 +86,13 @@ if stage_enabled("data_curator"):
 if stage_enabled("marker_annotator"):
     if MARKER_SAMPLES:
         ALL_TARGETS += expand(f"{ORFS}/{{sample}}.faa", sample=MARKER_SAMPLES)
-        ALL_TARGETS += expand(f"{MARKER_HITS}/{{sample}}/mcrA.tbl", sample=MARKER_SAMPLES)
-        ALL_TARGETS += expand(f"{MARKER_HITS}/{{sample}}/pmoA.tbl", sample=MARKER_SAMPLES)
-        ALL_TARGETS += expand(f"{MARKER_HITS}/{{sample}}/dsrA.tbl", sample=MARKER_SAMPLES)
-        ALL_TARGETS += expand(f"{MARKER_HITS}/{{sample}}/nifH.tbl", sample=MARKER_SAMPLES)
-        ALL_TARGETS += expand(f"{MARKER_HITS}/{{sample}}/cbbL.tbl", sample=MARKER_SAMPLES)
+        marker_names = _marker_names()
+        if marker_names:
+            ALL_TARGETS += expand(
+                f"{MARKER_HITS}/{{sample}}/{{marker}}.tbl",
+                sample=MARKER_SAMPLES,
+                marker=marker_names,
+            )
         ALL_TARGETS += expand(f"{MARKER_HITS}/{{sample}}/mmseqs.tsv", sample=MARKER_SAMPLES)
         ALL_TARGETS += expand(f"{MARKER_SEQS}/{{sample}}.fasta", sample=MARKER_SAMPLES)
         ALL_TARGETS += expand(f"{FUNCTIONAL_FEATURES}/{{sample}}.tsv", sample=MARKER_SAMPLES)

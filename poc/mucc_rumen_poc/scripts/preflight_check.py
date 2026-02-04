@@ -34,8 +34,15 @@ REQUIRED_COLUMNS = {
 
 DEFAULT_MARKERS = [
     "mcrA",
+    "mcrB",
+    "mcrG",
     "pmoA",
+    "mmoX",
     "dsrA",
+    "dsrB",
+    "mtaB",
+    "mttB",
+    "mtbA",
     "nifH",
     "cbbL",
 ]

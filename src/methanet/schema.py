@@ -1,11 +1,17 @@
 """Schema constants for MethaNet feature and model interfaces."""
 
-FEATURE_SCHEMA_VERSION = "1.0"
+FEATURE_SCHEMA_VERSION = "1.1"
 
-FUNCTIONAL_MARKERS = ("mcrA", "pmoA", "dsrA", "nifH", "cbbL")
+FUNCTIONAL_MARKERS = (
+    "mcrA", "mcrB", "mcrG",
+    "pmoA", "mmoX",
+    "dsrA", "dsrB",
+    "mtaB", "mttB", "mtbA",
+    "nifH", "cbbL"
+)
 FUNCTIONAL_BASE_DIM = len(FUNCTIONAL_MARKERS)
 FUNCTIONAL_RATIO_DIM = 1
-DEFAULT_FUNCTIONAL_PATHWAYS = 71
+DEFAULT_FUNCTIONAL_PATHWAYS = 0
 FUNCTIONAL_VECTOR_DIM = (
     FUNCTIONAL_BASE_DIM + FUNCTIONAL_RATIO_DIM + DEFAULT_FUNCTIONAL_PATHWAYS
 )

@@ -78,18 +78,20 @@ mamba env create -f workflow/envs/viz.yaml
 
 ### 2.4 Download HMM Profiles
 
-```bash
-# Create HMM directory
-mkdir -p data/hmm
+We use a bundled script to download the authoritative TIGRFAMs v15.0 library from NCBI and extract the specific marker set used by MethaNet.
 
-# Download marker gene HMMs from Pfam 37.0 and TIGRFAM 15.0
-# (Final TIGRFAM release hosted by NCBI; Pfam 37.0 via Xfam)
-wget -O data/hmm/mcrA.hmm https://example.com/mcrA.hmm
-wget -O data/hmm/pmoA.hmm https://example.com/pmoA.hmm
-wget -O data/hmm/dsrA.hmm https://example.com/dsrA.hmm
-wget -O data/hmm/nifH.hmm https://example.com/nifH.hmm
-wget -O data/hmm/cbbL.hmm https://example.com/cbbL.hmm
+```bash
+# Make the setup script executable
+chmod +x workflow/scripts/setup_hmm_resources.sh
+
+# Run the setup script
+./workflow/scripts/setup_hmm_resources.sh
 ```
+
+This will:
+1.  Download `TIGRFAMs_15.0_HMM.LIB.gz` (approx 106 MB) to `data/hmm/`.
+2.  Index the library using `hmmfetch`.
+3.  Extract the 12 required profiles (mcrA, pmoA, mmoX, mtaB, etc.) into `data/hmm/*.hmm`.
 
 ---
 

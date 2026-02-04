@@ -36,59 +36,69 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Build functional marker features.")
     parser.add_argument("--sample-id", required=True)
     parser.add_argument("--proteins", required=True)
-    parser.add_argument("--mcrA", required=True)
-    parser.add_argument("--pmoA", required=True)
-    parser.add_argument("--dsrA", required=True)
-    parser.add_argument("--nifH", required=True)
-    parser.add_argument("--cbbL", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--evalue-threshold", type=float, default=1e-10)
+    
+    # Marker inputs
+    parser.add_argument("--mcrA", required=True)
+    parser.add_argument("--mcrB", required=False)
+    parser.add_argument("--mcrG", required=False)
+    parser.add_argument("--pmoA", required=True)
+    parser.add_argument("--mmoX", required=False)
+    parser.add_argument("--dsrA", required=True)
+    parser.add_argument("--dsrB", required=False)
+    parser.add_argument("--nifH", required=True)
+    parser.add_argument("--cbbL", required=True)
+    parser.add_argument("--mtaB", required=False)
+    parser.add_argument("--mttB", required=False)
+    parser.add_argument("--mtbA", required=False)
+
     args = parser.parse_args()
 
     total_proteins = count_proteins(Path(args.proteins))
     normalization_factor = total_proteins / 1000 if total_proteins > 0 else 1
 
-    counts = {
-        "mcrA": count_hits(Path(args.mcrA), args.evalue_threshold),
-        "pmoA": count_hits(Path(args.pmoA), args.evalue_threshold),
-        "dsrA": count_hits(Path(args.dsrA), args.evalue_threshold),
-        "nifH": count_hits(Path(args.nifH), args.evalue_threshold),
-        "cbbL": count_hits(Path(args.cbbL), args.evalue_threshold),
-    }
+    # Initialize all potential markers
+    markers = [
+        "mcrA", "mcrB", "mcrG", 
+        "pmoA", "mmoX", 
+        "dsrA", "dsrB", 
+        "nifH", "cbbL", 
+        "mtaB", "mttB", "mtbA"
+    ]
+    
+    counts = {}
+    for marker in markers:
+        # Get path from args if present
+        path_str = getattr(args, marker, None)
+        if path_str:
+            counts[marker] = count_hits(Path(path_str), args.evalue_threshold)
+        else:
+            counts[marker] = 0
 
     normalized = {k: v / normalization_factor for k, v in counts.items()}
+    
+    # Robust ratio calculation
     pseudocount = 1e-6
+    # Use primary markers for the main ratio, consistent with FunctionalProfile
     ratio = math.log2((normalized["mcrA"] + pseudocount) / (normalized["pmoA"] + pseudocount))
 
     out_path = Path(args.output)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     with out_path.open("w", newline="") as handle:
+        fieldnames = ["sample_id"] + markers + ["mcrA_pmoA_ratio"]
         writer = csv.DictWriter(
             handle,
-            fieldnames=[
-                "sample_id",
-                "mcrA",
-                "pmoA",
-                "dsrA",
-                "nifH",
-                "cbbL",
-                "mcrA_pmoA_ratio",
-            ],
+            fieldnames=fieldnames,
             delimiter="\t",
         )
         writer.writeheader()
-        writer.writerow(
-            {
-                "sample_id": args.sample_id,
-                "mcrA": normalized["mcrA"],
-                "pmoA": normalized["pmoA"],
-                "dsrA": normalized["dsrA"],
-                "nifH": normalized["nifH"],
-                "cbbL": normalized["cbbL"],
-                "mcrA_pmoA_ratio": ratio,
-            }
-        )
+        
+        row = {"sample_id": args.sample_id, "mcrA_pmoA_ratio": ratio}
+        row.update(normalized)
+        
+        writer.writerow(row)
 
 
 if __name__ == "__main__":

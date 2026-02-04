@@ -155,14 +155,42 @@ functional:
       hmm: data/hmm/mcrA.hmm
       threshold: 1e-10
       description: Methyl-coenzyme M reductase alpha subunit (methanogen)
+    - name: mcrB
+      hmm: data/hmm/mcrB.hmm
+      threshold: 1e-10
+      description: Methyl-coenzyme M reductase beta subunit
+    - name: mcrG
+      hmm: data/hmm/mcrG.hmm
+      threshold: 1e-10
+      description: Methyl-coenzyme M reductase gamma subunit
     - name: pmoA
       hmm: data/hmm/pmoA.hmm
       threshold: 1e-10
       description: Particulate methane monooxygenase alpha subunit (methanotroph)
+    - name: mmoX
+      hmm: data/hmm/mmoX.hmm
+      threshold: 1e-10
+      description: Soluble methane monooxygenase alpha subunit (copper-switch)
     - name: dsrA
       hmm: data/hmm/dsrA.hmm
       threshold: 1e-10
       description: Dissimilatory sulfite reductase alpha subunit
+    - name: dsrB
+      hmm: data/hmm/dsrB.hmm
+      threshold: 1e-10
+      description: Dissimilatory sulfite reductase beta subunit
+    - name: mtaB
+      hmm: data/hmm/mtaB.hmm
+      threshold: 1e-10
+      description: Methanol-cobalamin methyltransferase (methylotrophic)
+    - name: mttB
+      hmm: data/hmm/mttB.hmm
+      threshold: 1e-10
+      description: Trimethylamine methyltransferase (methylotrophic)
+    - name: mtbA
+      hmm: data/hmm/mtbA.hmm
+      threshold: 1e-10
+      description: Methylcobalamin:CoM methyltransferase (methylotrophic)
     - name: nifH
       hmm: data/hmm/nifH.hmm
       threshold: 1e-10
@@ -244,12 +272,12 @@ training:
 
 # Feature dimensions (for validation)
 feature_dims:
-  functional: 77  # Pathway completeness + gene abundances
+  functional: 13  # 12 markers + 1 ratio
   esm2: 1280
   dnabert2: 768
   genomeocean: 3072
-  total_fused: 2125  # Functional + ESM2 + DNABERT-2 (default)
-  total_fused_genomeocean: 4429  # Functional + ESM2 + GenomeOcean
+  total_fused: 2061  # Functional + ESM2 + DNABERT-2 (default)
+  total_fused_genomeocean: 4365  # Functional + ESM2 + GenomeOcean
 
 # ONNX export configuration
 onnx:

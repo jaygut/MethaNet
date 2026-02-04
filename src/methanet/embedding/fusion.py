@@ -1,7 +1,7 @@
 """Feature fusion for combining multiple embedding types.
 
 This module provides utilities for combining:
-- Functional gene features (77-dim)
+- Functional gene features (13-dim: 12 markers + ratio)
 - ESM-2 protein embeddings (1280-dim)
 - Genome embeddings (DNABERT-2 768-dim or GenomeOcean 3072-dim)
 - Environmental metadata (~100-dim)
@@ -39,7 +39,7 @@ class FusedFeatures:
 
     sample_id: str
     features: np.ndarray
-    functional_dim: int = 77
+    functional_dim: int = 13
     esm2_dim: int = 1280
     genomeocean_dim: int = DEFAULT_GENOME_DIM
     metadata_dim: int = 0

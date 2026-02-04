@@ -286,7 +286,7 @@ def main() -> None:
     parser.add_argument("--source-domain", default="rumen")
     parser.add_argument("--target-domain", default="coastal")
     parser.add_argument("--target-col", default="flux_value")
-    parser.add_argument("--functional-dim", type=int, default=77)
+    parser.add_argument("--functional-dim", type=int, default=13)
     parser.add_argument("--esm2-dim", type=int, default=1280)
     parser.add_argument("--genome-dim", type=int, default=None)
     parser.add_argument("--random-state", type=int, default=42)
