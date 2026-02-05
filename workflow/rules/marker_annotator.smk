@@ -50,11 +50,11 @@ rule hmmsearch_marker:
 rule mmseqs_search:
     input:
         proteins=f"{ORFS}/{{sample}}.faa",
+        db=MARKER_DB,
     output:
         hits=f"{MARKER_HITS}/{{sample}}/mmseqs.tsv",
     params:
         tmp_dir=lambda wc: f"{MARKER_HITS}/{wc.sample}/tmp",
-        db=MARKER_DB,
     threads: THREADS.get("mmseqs", 8)
     run:
         if SIMULATE:
@@ -62,7 +62,7 @@ rule mmseqs_search:
         else:
             shell(
                 "mkdir -p {MARKER_HITS}/{wildcards.sample} {params.tmp_dir} "
-                "&& mmseqs easy-search {input.proteins} {params.db} {output.hits} {params.tmp_dir} --threads {threads}"
+                "&& mmseqs easy-search {input.proteins} {input.db} {output.hits} {params.tmp_dir} --threads {threads}"
             )
 
 

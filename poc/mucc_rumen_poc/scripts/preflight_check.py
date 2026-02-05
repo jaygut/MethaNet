@@ -52,7 +52,7 @@ TBD_VALUES = {"", "NA", "N/A", "TBD", "NONE", "NULL"}
 
 
 REQUIRED_TOOLS_BY_STAGE = {
-    "marker_annotator": {"prodigal", "hmmsearch", "mmseqs"},
+    "marker_annotator": {"prodigal", "hmmsearch"},
 }
 
 
@@ -153,7 +153,12 @@ def check_fastas(
     return errors, warnings
 
 
-def check_hmms(hmm_dir: Path, marker_db: Path, marker_paths: list[Path]) -> list[str]:
+def check_hmms(
+    hmm_dir: Path,
+    marker_db: Path,
+    marker_paths: list[Path],
+    require_marker_db: bool,
+) -> list[str]:
     errors: list[str] = []
     if not hmm_dir.exists():
         errors.append(f"hmm_dir missing: {hmm_dir}")
@@ -163,7 +168,7 @@ def check_hmms(hmm_dir: Path, marker_db: Path, marker_paths: list[Path]) -> list
         if not marker.exists():
             errors.append(f"missing HMM: {marker}")
 
-    if not marker_db.exists():
+    if require_marker_db and not marker_db.exists():
         errors.append(f"missing marker_db: {marker_db}")
     return errors
 
@@ -179,6 +184,12 @@ def check_config_samples(
         values = config.get(key, []) or []
         if not values:
             return
+        if any(isinstance(value, int) for value in values):
+            warnings.append(
+                f"{key} contains integers after YAML parsing. "
+                "If your sample IDs look like 3300013126_82, YAML may parse them as numbers. "
+                "Quote them in YAML, e.g. '3300013126_82'."
+            )
         value_set = {str(value) for value in values}
         missing_in_manifest = sorted(value_set - manifest_ids)
         if missing_in_manifest:
@@ -290,6 +301,8 @@ def main() -> int:
 
     stages = config.get("stages", {}) or {}
     fraggenescan_inputs = config.get("fraggenescan_inputs", {}) or {}
+    functional_cfg = config.get("functional", {}) or {}
+    mmseqs_enabled = bool(functional_cfg.get("mmseqs_enabled", False))
     require_accessions = stages.get("data_curator", False)
     require_fastas = stages.get("marker_annotator", False) or stages.get(
         "embedding_generator", False
@@ -314,13 +327,25 @@ def main() -> int:
     )
     marker_paths = build_marker_paths(config, hmm_dir)
     if stages.get("marker_annotator", False):
-        errors.extend(check_hmms(hmm_dir, marker_db, marker_paths))
+        errors.extend(
+            check_hmms(
+                hmm_dir,
+                marker_db,
+                marker_paths,
+                require_marker_db=mmseqs_enabled,
+            )
+        )
 
     tool_errors, tool_warnings = check_external_tools(
         stages=stages,
         fraggenescan_inputs=fraggenescan_inputs,
         skip_tool_check=args.skip_tool_check,
     )
+    if stages.get("marker_annotator", False) and mmseqs_enabled:
+        if shutil.which("mmseqs") is None:
+            tool_errors.append(
+                "missing external tool 'mmseqs' on PATH (install and retry preflight)"
+            )
     errors.extend(tool_errors)
     warnings.extend(tool_warnings)
 

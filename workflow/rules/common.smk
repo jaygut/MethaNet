@@ -46,6 +46,7 @@ EMBEDDING_CFG = config.get("embedding", {})
 FUNCTIONAL_CFG = config.get("functional", {})
 TRAINING = config.get("training", {})
 GENOME_BACKEND = EMBEDDING_CFG.get("genome_backend", "dnabert2")
+MMSEQS_ENABLED = bool(FUNCTIONAL_CFG.get("mmseqs_enabled", False))
 
 
 def _marker_names() -> list[str]:
@@ -93,7 +94,8 @@ if stage_enabled("marker_annotator"):
                 sample=MARKER_SAMPLES,
                 marker=marker_names,
             )
-        ALL_TARGETS += expand(f"{MARKER_HITS}/{{sample}}/mmseqs.tsv", sample=MARKER_SAMPLES)
+        if MMSEQS_ENABLED:
+            ALL_TARGETS += expand(f"{MARKER_HITS}/{{sample}}/mmseqs.tsv", sample=MARKER_SAMPLES)
         ALL_TARGETS += expand(f"{MARKER_SEQS}/{{sample}}.fasta", sample=MARKER_SAMPLES)
         ALL_TARGETS += expand(f"{FUNCTIONAL_FEATURES}/{{sample}}.tsv", sample=MARKER_SAMPLES)
     if FRAGGENE_INPUTS:
