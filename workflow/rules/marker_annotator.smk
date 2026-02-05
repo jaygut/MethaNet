@@ -70,7 +70,10 @@ rule extract_marker_sequences:
     input:
         proteins=f"{ORFS}/{{sample}}.faa",
         # Dynamically request all marker hits
-        hits=expand(f"{MARKER_HITS}/{{sample}}/{{marker}}.tbl", marker=MARKERS)
+        hits=lambda wc: expand(
+            f"{MARKER_HITS}/{wc.sample}/{{marker}}.tbl",
+            marker=MARKERS,
+        )
     output:
         fasta=f"{MARKER_SEQS}/{{sample}}.fasta",
     params:
@@ -95,7 +98,10 @@ rule build_functional_features:
     input:
         proteins=f"{ORFS}/{{sample}}.faa",
         # Dynamically request all marker hits
-        hits=expand(f"{MARKER_HITS}/{{sample}}/{{marker}}.tbl", marker=MARKERS)
+        hits=lambda wc: expand(
+            f"{MARKER_HITS}/{wc.sample}/{{marker}}.tbl",
+            marker=MARKERS,
+        )
     output:
         features=f"{FUNCTIONAL_FEATURES}/{{sample}}.tsv",
     params:
