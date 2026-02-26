@@ -14,6 +14,14 @@ module load miniconda3/25.5.1
 source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate MethaNet311
 
+ENV_PREFIX="${ENV_PREFIX:-$HOME/.conda/envs/MethaNet311}"
+ENV_PY="${ENV_PREFIX}/bin/python"
+export PATH="${ENV_PREFIX}/bin:${PATH}"
+
+echo "DEBUG CONDA_PREFIX=${CONDA_PREFIX:-unset}"
+echo "DEBUG ENV_PY=${ENV_PY}"
+echo "DEBUG which python=$(which python)"
+
 export METHANET_ROOT="${METHANET_ROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
 export PYTHONPATH="$METHANET_ROOT/src:${PYTHONPATH:-}"
 
@@ -50,7 +58,7 @@ export RUMEN_ALLOW_GENE_CALLING="${RUMEN_ALLOW_GENE_CALLING:-1}"
 # Example:
 # export MUCC_MANUAL_PROTEOME_URL="https://.../MUCC_v2.0.0_HQMQ_genes.faa.zip"
 
-if ! python -m jupyter --version >/dev/null 2>&1; then
+if ! "$ENV_PY" -m jupyter --version >/dev/null 2>&1; then
   echo "ERROR: jupyter is not available in current env. Install it before running this job."
   exit 1
 fi
@@ -61,10 +69,11 @@ if [[ "$RUMEN_ALLOW_GENE_CALLING" == "1" ]] && ! command -v prodigal >/dev/null 
   exit 1
 fi
 
-python -m jupyter nbconvert \
+echo "DEBUG: Using $ENV_PY for jupyter nbconvert"
+"$ENV_PY" -m jupyter nbconvert \
   --to notebook \
   --execute "$METHANET_ROOT/notebooks/blue_catalyst_esm2_poc.ipynb" \
-  --output "blue_catalyst_esm2_poc.executed.ipynb" \
+  --output "blue_catalyst_poc.executed.ipynb" \
   --output-dir "$METHANET_ROOT/results/blue_catalyst_poc" \
   --ExecutePreprocessor.timeout=-1 \
   --ExecutePreprocessor.kernel_name=python3
