@@ -43,9 +43,13 @@ export XDG_CACHE_HOME="$CACHE_BASE/xdg"
 export TMPDIR="$CACHE_BASE/tmp"
 
 # Notebook knobs (override with sbatch --export=VAR=...)
-export BC_SUBSET_MODE="${BC_SUBSET_MODE:-1}"
-export BC_SUBSET_MUCC="${BC_SUBSET_MUCC:-20}"
-export BC_SUBSET_RUMEN="${BC_SUBSET_RUMEN:-20}"
+export BC_RUN_ID="${BC_RUN_ID:-apolo_${SLURM_JOB_ID:-$(date +%Y%m%d_%H%M%S)}}"
+export BC_ARTIFACTS_DIR="${BC_ARTIFACTS_DIR:-$METHANET_ROOT/results/blue_catalyst_poc/runs/$BC_RUN_ID/artifacts}"
+export BC_OFFLINE_MODE="${BC_OFFLINE_MODE:-0}"
+export BC_SUBSET_MODE="${BC_SUBSET_MODE:-0}"
+export BC_SUBSET_MUCC="${BC_SUBSET_MUCC:-200}"
+export BC_SUBSET_RUMEN="${BC_SUBSET_RUMEN:-200}"
+export BC_RUMEN_MAX_PER_ANALYSIS="${BC_RUMEN_MAX_PER_ANALYSIS:-3}"
 export BC_ESM2_MODEL="${BC_ESM2_MODEL:-facebook/esm2_t33_650M_UR50D}"
 export BC_ESM2_BATCH="${BC_ESM2_BATCH:-4}"
 export BC_ESM2_MAXLEN="${BC_ESM2_MAXLEN:-1022}"
@@ -69,13 +73,16 @@ if [[ "$RUMEN_ALLOW_GENE_CALLING" == "1" ]] && ! command -v prodigal >/dev/null 
   exit 1
 fi
 
+echo "DEBUG BC_RUN_ID=${BC_RUN_ID}"
+echo "DEBUG BC_ARTIFACTS_DIR=${BC_ARTIFACTS_DIR}"
+
 echo "DEBUG: Using $ENV_PY for jupyter nbconvert"
 "$ENV_PY" -m jupyter nbconvert \
   --to notebook \
   --execute "$METHANET_ROOT/notebooks/blue_catalyst_esm2_poc.ipynb" \
   --output "blue_catalyst_poc.executed.ipynb" \
-  --output-dir "$METHANET_ROOT/results/blue_catalyst_poc" \
+  --output-dir "$BC_ARTIFACTS_DIR" \
   --ExecutePreprocessor.timeout=-1 \
   --ExecutePreprocessor.kernel_name=python3
 
-echo "Done. Outputs available under: $METHANET_ROOT/results/blue_catalyst_poc"
+echo "Done. Outputs available under: $BC_ARTIFACTS_DIR"
