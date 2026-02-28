@@ -153,6 +153,74 @@ SRR23456790	coastal	mangrove	FALSE	-	25.8	-80.1
 
 ## 4. Pipeline Execution
 
+### 4.0 Blue Catalyst notebook POC (Apolo-3 validated + local offline path)
+
+For a proposal-focused, end-to-end reproducible run using MUCC + PRJEB31266 proteomes/assemblies, use the Blue Catalyst notebook path.
+
+#### Option A — Apolo-3 HPC execution (full pipeline with GPU-accelerated ESM2)
+
+```bash
+# Submit notebook execution on Apolo-3
+sbatch scripts/submit_blue_catalyst_poc_apolo3.sh
+
+# After package export on Apolo, fetch artifacts locally
+./scripts/fetch_apolo_blue_catalyst_artifacts.sh --stamp 20260226_194505
+```
+
+#### Option B — Local offline execution (advanced analytics only; requires downloaded artifacts)
+
+The notebook auto-detects `OFFLINE_MODE` when `genome_embeddings.npz` is present in the artifacts directory, skipping all data download, ORF prediction, and ESM2 embedding steps.
+
+```bash
+# One-time: sync visualization and notebook execution extras
+uv sync --extra embeddings --extra dev
+
+# One-time: register the methanet311 Jupyter kernel
+uv run python -m ipykernel install --user --name methanet311
+
+# Execute notebook (always use absolute paths with nbconvert)
+uv run jupyter nbconvert \
+  --to notebook --execute \
+  --ExecutePreprocessor.timeout=600 \
+  --ExecutePreprocessor.kernel_name=methanet311 \
+  --output "$(pwd)/notebooks/blue_catalyst_esm2_poc.executed.ipynb" \
+  "$(pwd)/notebooks/blue_catalyst_esm2_poc.ipynb"
+```
+
+Validated run:
+- `results/blue_catalyst_poc/runs/apolo_20260226_194505/`
+- extracted outputs: `results/blue_catalyst_poc/runs/apolo_20260226_194505/artifacts/` (28 files)
+
+Validated metrics snapshot:
+- `n_samples=40`, `silhouette_non_noise=0.433`, `cluster_purity~0.99`
+- **PERMANOVA**: F=40.6, p=0.001, R²=0.517
+- **PCA**: PC1=62.9%, PC1+PC2=78.0%, 3 PCs for 80% variance
+- **Trajectory t-test**: t=13.97, p=1.5e-16
+- **Bridge genome**: `rumen__10674_0001_idba_bin.23` mixing_coeff=1.0
+
+Expected core outputs (Apolo-3 pipeline):
+- `poc_metrics.json` / `embedding_stats.json`
+- `embedding_projection_clusters.tsv` / `embedding_metadata.tsv`
+- `bridging_genomes_top.tsv`
+- `umap_ecosystem_domain.html` / `umap_hdbscan_clusters.html` / `tsne_ecosystem_domain.html`
+- `genome_embeddings.npz`
+- `blue_catalyst_poc.executed.ipynb`
+
+Expected advanced analytics outputs (local notebook run):
+- `pca_variance_explained.png` / `pca_pc1_pc2.png`
+- `umap_kde_landscape.{png,html}` / `tsne_kde_landscape.{png,html}`
+- `permanova_ecosystem.png` / `ecosystem_trajectory.png` / `umap_trajectory_projection.html`
+- `silhouette_profiles.png` / `pairwise_cosine_heatmap.png`
+- `bridge_genome_analysis.html` / `bridge_top_candidates.tsv` / `bridge_knn_neighborhoods.tsv` / `bridge_knn_composition.html`
+- `proposal_panel_figure.png` / `advanced_analytics_summary.json`
+
+Operational notes from validated execution:
+- SLURM script uses explicit environment Python for stable `jupyter nbconvert` behavior.
+- Notebook tolerates per-file gzip/prodigal failures and skips bad inputs.
+- Analysis stage handles zero/insufficient sample sizes without crashing.
+- Artifact fetch normalizes checksum entries when remote SHA files include absolute paths.
+- `nbconvert` requires absolute paths for both input and output to avoid directory prefix doubling.
+
 ### 4.1 Configure Pipeline
 
 Edit `configs/pipeline.yaml`:

@@ -61,6 +61,61 @@ Target environmental datasets for model validation and transfer learning.
 
 **Validation strategy:** We are curating publicly available coastal metagenomes with co-located flux tower or chamber measurements for model validation, with 23 samples targeted for paired-flux evaluation.
 
+### Blue Catalyst POC (Completed on Apolo-3)
+
+We completed a proposal-focused Blue Catalyst POC that directly operationalizes cross-ecosystem representation learning between MUCC wetland genomes and rumen genomes from PRJEB31266 using ESM-2 proteome embeddings.
+
+**Execution path**
+- Notebook: `notebooks/blue_catalyst_esm2_poc.ipynb`
+- Apolo-3 SLURM launcher: `scripts/submit_blue_catalyst_poc_apolo3.sh`
+- Artifact fetch utility: `scripts/fetch_apolo_blue_catalyst_artifacts.sh`
+
+**Validated run snapshot (apolo_20260226_194505)**
+- `n_samples=40` (20 MUCC + 20 rumen)
+- `samples_embedded=40` with no non-finite embeddings
+- HDBSCAN clusters (excluding noise): `5`, `noise_fraction=0.1`
+- `silhouette_non_noise=0.433`
+- cluster purity (ecosystem/domain): `~0.99`
+- **PERMANOVA**: F=40.6, p=0.001, R²=0.517 (ecosystem explains 51.7% of embedding variance)
+- **PCA**: PC1=62.9%, PC1+PC2=78.0%; only 3 PCs needed for 80% cumulative variance
+- **Ecosystem trajectory t-test**: t=13.97, p=1.5e-16
+- **Key finding**: rumen Archaea (`rumen__10674_0001_idba_bin.23`) embeds 100% inside the wetland cluster (mixing_coeff=1.0), providing a strong cross-domain transfer signal
+
+**Artifact package (downloaded and unpacked locally)**
+- Run root: `results/blue_catalyst_poc/runs/apolo_20260226_194505/`
+- Extracted artifacts: `results/blue_catalyst_poc/runs/apolo_20260226_194505/artifacts/` (28 files total)
+- Core ESM2 pipeline outputs:
+  - `genome_embeddings.npz`
+  - `embedding_metadata.tsv`
+  - `embedding_projection_clusters.tsv`
+  - `bridging_genomes_top.tsv`
+  - `poc_metrics.json`
+  - `embedding_stats.json`
+  - `umap_ecosystem_domain.html`
+  - `umap_hdbscan_clusters.html`
+  - `tsne_ecosystem_domain.html`
+  - `blue_catalyst_poc.executed.ipynb`
+- Advanced analytics outputs (generated locally from `notebooks/blue_catalyst_esm2_poc.ipynb`):
+  - `pca_variance_explained.png` / `pca_pc1_pc2.png` — PCA scree and biplot
+  - `umap_kde_landscape.png` / `umap_kde_landscape.html` — UMAP with KDE density contours
+  - `tsne_kde_landscape.png` / `tsne_kde_landscape.html` — t-SNE with KDE density contours
+  - `permanova_ecosystem.png` — PERMANOVA permutation null distribution
+  - `ecosystem_trajectory.png` — genome projections onto rumen→wetland axis
+  - `umap_trajectory_projection.html` — interactive trajectory visualization
+  - `silhouette_profiles.png` — per-genome silhouette score profiles
+  - `bridge_genome_analysis.html` — interactive bridging genome explorer
+  - `bridge_top_candidates.tsv` / `bridge_knn_neighborhoods.tsv` / `bridge_knn_composition.html` — k-NN bridging analysis
+  - `pairwise_cosine_heatmap.png` — 40×40 pairwise cosine distance heatmap
+  - `proposal_panel_figure.png` — 2×2 publication-ready summary panel
+  - `advanced_analytics_summary.json` — machine-readable metrics summary
+
+**POC hardening implemented during development**
+- Batch/runtime reliability on Apolo-3 by forcing explicit `MethaNet311` Python for notebook execution.
+- Per-file tolerance for corrupted gzip and `prodigal` failures to prevent full-run aborts.
+- Safe handling for zero/insufficient sample conditions in downstream analysis.
+- Numerical stability fixes for embedding generation to avoid NaN/Inf vectors.
+- Portable checksum verification in artifact pulls (normalization of remote-path SHA entries).
+
 ---
 
 ## Feature Engineering

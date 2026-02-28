@@ -53,6 +53,8 @@ dev = [
     "ruff>=0.1",
     "mypy>=1.0",
     "black>=23.0",
+    "nbconvert>=7.0",
+    "nbformat>=5.0",
 ]
 bioinformatics = [
     "biopython>=1.79",
@@ -83,6 +85,7 @@ embeddings = [
     "umap-learn>=0.5",
     "matplotlib>=3.7",
     "seaborn>=0.12",
+    "plotly>=5.0",
     "tqdm>=4.66",
     "h5py>=3.10",
 ]

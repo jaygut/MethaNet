@@ -6,6 +6,68 @@ This folder holds the operational artifacts for a focused pilot POC that uses:
 
 The POC exercises marker detection, ESM-2 embeddings, DNABERT-2 embeddings, and optional GenomeOcean embeddings on Apolo-3.
 
+## Blue Catalyst execution status (Apolo-3)
+
+The Blue Catalyst notebook-based proteome POC has been executed successfully on Apolo-3 and validated locally after artifact download.
+
+- Notebook: `notebooks/blue_catalyst_esm2_poc.ipynb`
+- SLURM runner: `scripts/submit_blue_catalyst_poc_apolo3.sh`
+- Artifact pull utility: `scripts/fetch_apolo_blue_catalyst_artifacts.sh`
+
+Validated run ID:
+- `results/blue_catalyst_poc/runs/apolo_20260226_194505/`
+
+Extracted local artifacts:
+- `results/blue_catalyst_poc/runs/apolo_20260226_194505/artifacts/`
+
+Key results from this run:
+- 40 genomes analyzed (20 MUCC wetland + 20 rumen)
+- 40/40 successfully embedded with finite vectors
+- 5 HDBSCAN clusters (excluding noise), `noise_fraction=0.1`
+- `silhouette_non_noise=0.433`, cluster purity (ecosystem/domain) ~0.99
+- **PERMANOVA**: F=40.6, p=0.001, R²=0.517 (ecosystem explains 51.7% of embedding variance)
+- **PCA**: PC1=62.9%, PC1+PC2=78.0%; 3 PCs capture ≥80% cumulative variance
+- **Ecosystem trajectory t-test**: t=13.97, p=1.5e-16
+- **Key finding**: rumen Archaea (`rumen__10674_0001_idba_bin.23`) embeds 100% inside wetland cluster
+
+Key output files (core ESM2 pipeline):
+- `poc_metrics.json` / `embedding_stats.json`
+- `embedding_projection_clusters.tsv`
+- `bridging_genomes_top.tsv`
+- `umap_ecosystem_domain.html` / `umap_hdbscan_clusters.html` / `tsne_ecosystem_domain.html`
+
+Advanced analytics outputs (generated locally by `notebooks/blue_catalyst_esm2_poc.ipynb`):
+- `pca_variance_explained.png` / `pca_pc1_pc2.png`
+- `umap_kde_landscape.{png,html}` / `tsne_kde_landscape.{png,html}`
+- `permanova_ecosystem.png` / `ecosystem_trajectory.png` / `umap_trajectory_projection.html`
+- `silhouette_profiles.png` / `pairwise_cosine_heatmap.png`
+- `bridge_genome_analysis.html` / `bridge_top_candidates.tsv` / `bridge_knn_neighborhoods.tsv` / `bridge_knn_composition.html`
+- `proposal_panel_figure.png` / `advanced_analytics_summary.json`
+
+Local offline execution (OFFLINE_MODE auto-detected when `genome_embeddings.npz` is present):
+```bash
+# Sync visualization and notebook extras
+uv sync --extra embeddings --extra dev
+
+# Register kernel (once per environment)
+uv run python -m ipykernel install --user --name methanet311
+
+# Execute notebook in batch mode (use absolute paths)
+uv run jupyter nbconvert \
+  --to notebook --execute \
+  --ExecutePreprocessor.timeout=600 \
+  --ExecutePreprocessor.kernel_name=methanet311 \
+  --output "$(pwd)/notebooks/blue_catalyst_esm2_poc.executed.ipynb" \
+  "$(pwd)/notebooks/blue_catalyst_esm2_poc.ipynb"
+```
+
+Operational hardening applied during this POC:
+- Explicit environment Python usage in SLURM execution to avoid base-env drift.
+- Per-file skip/log behavior for corrupted gzip and `prodigal` failures.
+- Safe handling for low/zero sample counts in analysis stage.
+- Filtering/stability guards to prevent non-finite genome embeddings.
+- Checksum path normalization in artifact pull workflow when remote `.sha256` lines include absolute paths.
+
 ---
 
 ## 1) Recommended POC Size

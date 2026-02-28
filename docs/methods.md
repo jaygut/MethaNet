@@ -50,6 +50,30 @@ MethaNet quantifies an expanded set of **12 key marker genes** to capture comple
 
 ### 1.2 Foundation Model Embeddings
 
+#### Blue Catalyst POC implementation note (Apolo-3 validated)
+
+The methods in this section were exercised end-to-end in the Blue Catalyst notebook workflow using:
+- `notebooks/blue_catalyst_esm2_poc.ipynb`
+- `scripts/submit_blue_catalyst_poc_apolo3.sh`
+
+Validated run context:
+- Source notebook: `notebooks/blue_catalyst_esm2_poc.ipynb`
+- Executed output: `notebooks/blue_catalyst_esm2_poc.executed.ipynb`
+- Run directory: `results/blue_catalyst_poc/runs/apolo_20260226_194505/`
+- Extracted artifacts: `results/blue_catalyst_poc/runs/apolo_20260226_194505/artifacts/` (28 files)
+
+Observed run metrics from this implementation pass:
+- `n_samples=40`, `samples_embedded=40` (no non-finite vectors)
+- `silhouette_non_noise=0.433`, cluster purity ~0.99
+- `n_clusters_excluding_noise=5`, `noise_fraction=0.1`
+- **PERMANOVA** (999 permutations, Euclidean distance): F=40.63, p=0.001, R²=0.517 — ecosystem label explains 51.7% of total embedding variance
+- **PCA**: PC1=62.9%, PC1+PC2=78.0% cumulative variance; 3 PCs capture ≥80% variance
+- **Ecosystem trajectory t-test** (projection onto rumen→wetland centroid axis): t=13.97, p=1.5e-16
+- **Key bridge genome**: `rumen__10674_0001_idba_bin.23` (mixing_coeff=1.0, all k-NN neighbors in wetland cluster)
+- Machine-readable summary: `advanced_analytics_summary.json`
+
+This provides a concrete, reproducible reference implementation for proposal materials while broader MethaNet training and adaptation stages continue to evolve.
+
 #### ESM-2 Protein Embeddings (1280 dimensions)
 
 We use ESM-2 (facebook/esm2_t33_650M_UR50D) to generate protein-level embeddings:
