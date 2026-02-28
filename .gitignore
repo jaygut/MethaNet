@@ -65,6 +65,9 @@ AGENTS.md
 # Project-specific excludes
 ai_docs/
 grants/
+docs/papers/
+results/
+notebooks/*.executed.ipynb
 
 # OS
 .DS_Store
