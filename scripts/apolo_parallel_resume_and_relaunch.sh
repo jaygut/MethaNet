@@ -132,56 +132,74 @@ def preview(fp: Path, n_records: int = 20):
     return checked, aa_like
 
 
-def process(filename: str) -> str:
+def process(filename: str):
     fp = RAW / filename
     if not fp.exists():
-        return "missing_raw"
+        return filename, "missing_raw", "raw file not found"
 
     sample = sanitize(fp.stem.replace(".fa", ""))
     out_fp = PROT / f"rumen__{sample}.faa"
 
     # Critical: preserve previous work and skip reruns.
     if out_fp.exists() and out_fp.stat().st_size > 0:
-        return "reused"
+        return filename, "reused", ""
 
     try:
         checked, aa_like = preview(fp)
-    except Exception:
-        return "preview_error"
+    except Exception as e:
+        return filename, "preview_error", str(e)
 
     if checked > 0 and aa_like >= max(1, int(0.7 * checked)):
         try:
             with gzip.open(fp, "rb") as src, out_fp.open("wb") as dst:
                 shutil.copyfileobj(src, dst)
-            return "copied"
-        except Exception:
+            return filename, "copied", ""
+        except Exception as e:
             out_fp.unlink(missing_ok=True)
-            return "copy_error"
+            return filename, "copy_error", str(e)
 
     nuc = TMP / fp.with_suffix("").name
     if not nuc.exists():
         try:
             with gzip.open(fp, "rb") as src, nuc.open("wb") as dst:
                 shutil.copyfileobj(src, dst)
-        except Exception:
+        except Exception as e:
             nuc.unlink(missing_ok=True)
-            return "decompress_error"
+            return filename, "decompress_error", str(e)
 
     cmd = ["prodigal", "-i", str(nuc), "-a", str(out_fp), "-p", "meta", "-q"]
     rc = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
     if rc != 0 or (not out_fp.exists()) or out_fp.stat().st_size == 0:
         out_fp.unlink(missing_ok=True)
-        return "prodigal_failed"
-    return "prodigal"
+        return filename, "prodigal_failed", f"returncode={rc}"
+    return filename, "prodigal", ""
 
 
 counts = Counter()
+fail_rows = []
 
 with cf.ThreadPoolExecutor(max_workers=WORKERS) as ex:
-    for i, status in enumerate(ex.map(process, filenames), start=1):
+    futures = [ex.submit(process, fn) for fn in filenames]
+    for i, fut in enumerate(cf.as_completed(futures), start=1):
+        filename, status, detail = fut.result()
         counts[status] += 1
+        if detail and status in {
+            "missing_raw",
+            "preview_error",
+            "copy_error",
+            "decompress_error",
+            "prodigal_failed",
+        }:
+            fail_rows.append({"filename": filename, "status": status, "detail": detail})
+            print(f"[prep][warn] {status} :: {filename} :: {detail}")
         if i % 25 == 0 or i == len(filenames):
             print(f"[prep] {i}/{len(filenames)} :: {dict(counts)}")
+
+if fail_rows:
+    fail_df = pd.DataFrame(fail_rows)
+    fail_path = ART / "parallel_prep_failures.tsv"
+    fail_df.to_csv(fail_path, sep="\t", index=False)
+    print(f"[prep] wrote failure report: {fail_path} (n={len(fail_rows)})")
 
 print("[prep] FINAL:", dict(counts))
 PY
