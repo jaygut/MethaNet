@@ -11,6 +11,9 @@ set -euo pipefail
 #   MROOT                 project root (default set below)
 #   RUN_ID                new run id (default: <SOURCE_RUN_ID>_embed_<timestamp>)
 #   TIME_LIMIT            sbatch time limit override (default: 08:00:00)
+#   CPUS_PER_TASK         sbatch CPU request (default: 4)
+#   MEM_PER_NODE          sbatch memory request (default: 25G)
+#   GPU_GRES              sbatch GPU request (default: gpu:1)
 #   BC_EMBED_COHORT_MODE  strict_run|extended_cache (default: strict_run)
 #   BC_EXCLUDE_COASSEMBLY 1|0 (default: 1)
 
@@ -18,6 +21,9 @@ MROOT="${MROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
 SOURCE_RUN_ID="${SOURCE_RUN_ID:-}"
 RUN_ID="${RUN_ID:-}"
 TIME_LIMIT="${TIME_LIMIT:-08:00:00}"
+CPUS_PER_TASK="${CPUS_PER_TASK:-4}"
+MEM_PER_NODE="${MEM_PER_NODE:-25G}"
+GPU_GRES="${GPU_GRES:-gpu:1}"
 BC_EMBED_COHORT_MODE="${BC_EMBED_COHORT_MODE:-strict_run}"
 BC_EXCLUDE_COASSEMBLY="${BC_EXCLUDE_COASSEMBLY:-1}"
 
@@ -75,8 +81,18 @@ echo "[INFO] subset_rows=$subset_rows"
 echo "[INFO] BC_EMBED_COHORT_MODE=$BC_EMBED_COHORT_MODE"
 echo "[INFO] BC_EXCLUDE_COASSEMBLY=$BC_EXCLUDE_COASSEMBLY"
 echo "[INFO] TIME_LIMIT=$TIME_LIMIT"
+echo "[INFO] CPUS_PER_TASK=$CPUS_PER_TASK"
+echo "[INFO] MEM_PER_NODE=$MEM_PER_NODE"
+echo "[INFO] GPU_GRES=$GPU_GRES"
 
-new_job_id=$(sbatch --parsable --time="$TIME_LIMIT" --export="$export_list" "$JOB_SCRIPT")
+new_job_id=$(sbatch \
+  --parsable \
+  --time="$TIME_LIMIT" \
+  --cpus-per-task="$CPUS_PER_TASK" \
+  --mem="$MEM_PER_NODE" \
+  --gres="$GPU_GRES" \
+  --export="$export_list" \
+  "$JOB_SCRIPT")
 
 echo "[INFO] Submitted embedding-focused job: $new_job_id"
 echo "Monitor:"
