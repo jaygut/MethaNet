@@ -14,6 +14,7 @@ set -euo pipefail
 #   CPUS_PER_TASK         sbatch CPU request (default: 4)
 #   MEM_PER_NODE          sbatch memory request (default: 25G)
 #   GPU_GRES              sbatch GPU request (default: gpu:1)
+#   BC_EMBED_CHECKPOINT_EVERY checkpoint cadence in genomes (default: 25)
 #   BC_EMBED_COHORT_MODE  strict_run|extended_cache (default: strict_run)
 #   BC_EXCLUDE_COASSEMBLY 1|0 (default: 1)
 
@@ -24,6 +25,7 @@ TIME_LIMIT="${TIME_LIMIT:-08:00:00}"
 CPUS_PER_TASK="${CPUS_PER_TASK:-4}"
 MEM_PER_NODE="${MEM_PER_NODE:-25G}"
 GPU_GRES="${GPU_GRES:-gpu:1}"
+BC_EMBED_CHECKPOINT_EVERY="${BC_EMBED_CHECKPOINT_EVERY:-25}"
 BC_EMBED_COHORT_MODE="${BC_EMBED_COHORT_MODE:-strict_run}"
 BC_EXCLUDE_COASSEMBLY="${BC_EXCLUDE_COASSEMBLY:-1}"
 
@@ -70,6 +72,7 @@ export_list+=",BC_PREFER_LOCAL_RUMEN_CACHE=1"
 export_list+=",BC_SUBSET_RUMEN=$subset_rows"
 export_list+=",RUMEN_ALLOW_GENE_CALLING=0"
 export_list+=",BC_NETWORK_PREFLIGHT=0"
+export_list+=",BC_EMBED_CHECKPOINT_EVERY=$BC_EMBED_CHECKPOINT_EVERY"
 export_list+=",BC_EMBED_COHORT_MODE=$BC_EMBED_COHORT_MODE"
 export_list+=",BC_EXCLUDE_COASSEMBLY=$BC_EXCLUDE_COASSEMBLY"
 
@@ -84,6 +87,7 @@ echo "[INFO] TIME_LIMIT=$TIME_LIMIT"
 echo "[INFO] CPUS_PER_TASK=$CPUS_PER_TASK"
 echo "[INFO] MEM_PER_NODE=$MEM_PER_NODE"
 echo "[INFO] GPU_GRES=$GPU_GRES"
+echo "[INFO] BC_EMBED_CHECKPOINT_EVERY=$BC_EMBED_CHECKPOINT_EVERY"
 
 new_job_id=$(sbatch \
   --parsable \
