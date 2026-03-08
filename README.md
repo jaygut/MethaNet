@@ -81,6 +81,16 @@ We completed a proposal-focused Blue Catalyst POC that directly operationalizes 
 - **Ecosystem trajectory t-test**: t=13.97, p=1.5e-16
 - **Key finding**: rumen Archaea (`rumen__10674_0001_idba_bin.23`) embeds 100% inside the wetland cluster (mixing_coeff=1.0), providing a strong cross-domain transfer signal
 
+**Current operational status update (latest Apolo completion)**
+- Completed embedding-focused run: `results/blue_catalyst_poc/runs/apolo_full_20260228_080644_embed_20260305_061952/artifacts/`
+- Embedding completion: `embedded=662`, `pending_remaining=0` (`embedding_stats.json`)
+- Canonical local interim analytics notebook: `notebooks/blue_catalyst_partial_report_local.ipynb`
+- Latest interim snapshot (post-completion):
+  - `results/blue_catalyst_poc/interim_snapshots/apolo_full_20260228_080644_embed_20260305_061952_notebook_interim_20260306_055012/`
+  - `n_embeddings=662` (`analytics/analytics_summary.json`)
+- Report path (rewritten for interim analytics):
+  - `results/blue_catalyst_poc/runs/apolo_20260226_194505/report/blue_catalyst_poc_report.docx`
+
 **Artifact package (downloaded and unpacked locally)**
 - Run root: `results/blue_catalyst_poc/runs/apolo_20260226_194505/`
 - Extracted artifacts: `results/blue_catalyst_poc/runs/apolo_20260226_194505/artifacts/` (28 files total)
