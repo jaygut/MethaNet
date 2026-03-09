@@ -5,6 +5,7 @@
 #SBATCH --time=02:00:00
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=16G
+#SBATCH --partition=accel
 
 set -euo pipefail
 
@@ -18,6 +19,7 @@ set -euo pipefail
 MROOT="${MROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
 RUNS_ROOT="${RUNS_ROOT:-$MROOT/results/blue_catalyst_poc/runs}"
 DB_ROOT="${DB_ROOT:-$HOME/scratch/methanet_db}"
+SLURM_PARTITION="${SLURM_PARTITION:-accel}"
 SOURCE_RUN_ID="${SOURCE_RUN_ID:-}"
 
 if [[ -z "$SOURCE_RUN_ID" ]]; then
@@ -92,6 +94,7 @@ EXPORTS+=",GUNC_DB=$DB_ROOT/gunc/gunc_db_progenomes2.1.dmnd"
 SBATCH_CMD=(
   sbatch
   --parsable
+  --partition="${SLURM_PARTITION}"
   --time="${INNER_TIME_LIMIT:-02:00:00}"
   --cpus-per-task="${INNER_CPUS_PER_TASK:-2}"
   --mem="${INNER_MEM_PER_NODE:-16G}"
