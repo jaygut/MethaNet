@@ -68,10 +68,12 @@ conda activate methanet-fgintel
 DRAM.py --help >/dev/null
 hmmsearch -h >/dev/null
 [[ -d "$HMM_DIR" ]] || { echo "ERROR: missing HMM dir $HMM_DIR" >&2; exit 1; }
-python -m jupyter --version >/dev/null 2>&1 || {
-  echo "ERROR: jupyter is not available in methanet-fgintel env" >&2
-  exit 1
-}
+
+HAS_JUPYTER=1
+if ! python -m jupyter --version >/dev/null 2>&1; then
+  HAS_JUPYTER=0
+  echo "[WARN] jupyter is not available in methanet-fgintel env; falling back to direct python stage execution" >&2
+fi
 
 python "$MROOT/scripts/generate_blue_catalyst_fg_runbook.py"
 
@@ -89,13 +91,28 @@ export BC_FG_EMBED_METADATA="$EMBED_META"
 export BC_FG_EMBED_NPZ="$EMBED_NPZ"
 export BC_FG_HMM_DIR="$HMM_DIR"
 
-python -m jupyter nbconvert \
-  --to notebook \
-  --execute "$RUNBOOK_NOTEBOOK" \
-  --output "blue_catalyst_fgintel_plan.executed.ipynb" \
-  --output-dir "$FG_ART_DIR" \
-  --ExecutePreprocessor.timeout=-1 \
-  --ExecutePreprocessor.kernel_name=python3
+if [[ "$HAS_JUPYTER" == "1" ]]; then
+  python -m jupyter nbconvert \
+    --to notebook \
+    --execute "$RUNBOOK_NOTEBOOK" \
+    --output "blue_catalyst_fgintel_plan.executed.ipynb" \
+    --output-dir "$FG_ART_DIR" \
+    --ExecutePreprocessor.timeout=-1 \
+    --ExecutePreprocessor.kernel_name=python3
+else
+  PLAN_CMD=(
+    python "$MROOT/scripts/blue_catalyst_fg_batch_pipeline.py" plan
+    --embedding-metadata "$EMBED_META"
+    --embedding-npz "$EMBED_NPZ"
+    --embedding-run-id "$FG_SOURCE_EMBED_RUN_ID"
+    --output-dir "$FG_ART_DIR"
+    --batch-size "$FG_BATCH_SIZE"
+  )
+  if [[ "$FG_HASH_PROTEOMES" == "1" ]]; then
+    PLAN_CMD+=(--hash-proteomes)
+  fi
+  "${PLAN_CMD[@]}"
+fi
 
 BATCH_PLAN="$FG_PLAN_DIR/fg_batch_plan.tsv"
 [[ -f "$BATCH_PLAN" ]] || { echo "ERROR: missing batch plan $BATCH_PLAN" >&2; exit 1; }
@@ -135,13 +152,21 @@ echo "[INFO] Worker array sacct"
 sacct -j "$WORKER_JOB_ID" --format=JobID,State,ExitCode,Elapsed,Reason%50
 
 export BC_FG_STAGE="merge"
-python -m jupyter nbconvert \
-  --to notebook \
-  --execute "$RUNBOOK_NOTEBOOK" \
-  --output "blue_catalyst_fgintel_merge.executed.ipynb" \
-  --output-dir "$FG_ART_DIR" \
-  --ExecutePreprocessor.timeout=-1 \
-  --ExecutePreprocessor.kernel_name=python3
+if [[ "$HAS_JUPYTER" == "1" ]]; then
+  python -m jupyter nbconvert \
+    --to notebook \
+    --execute "$RUNBOOK_NOTEBOOK" \
+    --output "blue_catalyst_fgintel_merge.executed.ipynb" \
+    --output-dir "$FG_ART_DIR" \
+    --ExecutePreprocessor.timeout=-1 \
+    --ExecutePreprocessor.kernel_name=python3
+else
+  python "$MROOT/scripts/blue_catalyst_fg_batch_pipeline.py" merge \
+    --fg-plan-dir "$FG_ART_DIR" \
+    --batch-results-dir "$FG_ART_DIR/batch_results" \
+    --output-dir "$FG_ART_DIR" \
+    --min-join-coverage "$FG_MIN_JOIN_COVERAGE"
+fi
 
 python "$MROOT/scripts/validate_blue_catalyst_fg_artifacts.py" \
   --artifacts-dir "$FG_ART_DIR"
