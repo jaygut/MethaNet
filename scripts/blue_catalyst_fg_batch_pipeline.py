@@ -62,6 +62,21 @@ def _write_tsv(df: pd.DataFrame, path: Path) -> None:
     df.to_csv(path, sep="\t", index=False)
 
 
+def _resolve_proteome_path(path_value: Any, base_dir: Path) -> str:
+    raw = str(path_value).strip()
+    p = Path(raw).expanduser()
+    if p.is_absolute():
+        return str(p)
+
+    # Prefer paths relative to the embedding metadata file location.
+    candidate = (base_dir / p).resolve()
+    if candidate.exists():
+        return str(candidate)
+
+    # Fallback: preserve relative-to-cwd behavior used by prior runs.
+    return str(p)
+
+
 def run_plan(args: argparse.Namespace) -> int:
     embedding_metadata_fp = Path(args.embedding_metadata)
     embedding_npz_fp = Path(args.embedding_npz)
@@ -75,6 +90,11 @@ def run_plan(args: argparse.Namespace) -> int:
             "embedding_metadata.tsv missing required columns: "
             + ", ".join(missing_cols)
         )
+
+    metadata_base_dir = embedding_metadata_fp.resolve().parent
+    meta_df["proteome_faa"] = meta_df["proteome_faa"].map(
+        lambda v: _resolve_proteome_path(v, metadata_base_dir)
+    )
 
     embeddings = np.load(embedding_npz_fp)
     if "embeddings" not in embeddings:
@@ -317,6 +337,15 @@ def run_merge(args: argparse.Namespace) -> int:
     feature_frames = [frame for frame in feature_frames if not frame.empty]
     failure_frames = [frame for frame in failure_frames if not frame.empty]
     if not feature_frames:
+        if failure_frames:
+            failures_df = pd.concat(failure_frames, ignore_index=True)
+            top_errors = (
+                failures_df["error_type"].fillna("unknown").value_counts().head(5).to_dict()
+            )
+            raise SystemExit(
+                "all batch feature outputs were empty; cannot merge. "
+                f"Observed failures={int(failures_df.shape[0])}, top_error_types={top_errors}"
+            )
         raise SystemExit("all batch feature outputs were empty; cannot merge")
 
     features_df = pd.concat(feature_frames, ignore_index=True)
