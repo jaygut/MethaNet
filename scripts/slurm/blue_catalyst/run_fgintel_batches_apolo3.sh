@@ -69,6 +69,23 @@ DRAM.py --help >/dev/null
 hmmsearch -h >/dev/null
 [[ -d "$HMM_DIR" ]] || { echo "ERROR: missing HMM dir $HMM_DIR" >&2; exit 1; }
 
+if ! python - <<'PY'
+import importlib.util
+import sys
+
+required = ["numpy", "pandas"]
+missing = [name for name in required if importlib.util.find_spec(name) is None]
+if missing:
+    sys.stderr.write("ERROR: missing python deps in methanet-fgintel env: " + ", ".join(missing) + "\n")
+    sys.exit(1)
+PY
+then
+  echo "Install once and retry:" >&2
+  echo "  conda activate methanet-fgintel" >&2
+  echo "  conda install -y -c conda-forge numpy pandas" >&2
+  exit 1
+fi
+
 HAS_JUPYTER=1
 if ! python -m jupyter --version >/dev/null 2>&1; then
   HAS_JUPYTER=0
