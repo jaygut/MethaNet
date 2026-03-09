@@ -40,6 +40,23 @@ source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate methanet-fgintel
 export PYTHONPATH="$MROOT/src:${PYTHONPATH:-}"
 
+if ! python - <<'PY'
+import importlib.util
+import sys
+
+required = ["numpy", "pandas"]
+missing = [name for name in required if importlib.util.find_spec(name) is None]
+if missing:
+    sys.stderr.write("ERROR: missing python deps in methanet-fgintel env: " + ", ".join(missing) + "\n")
+    sys.exit(1)
+PY
+then
+  echo "Install once and retry:" >&2
+  echo "  conda activate methanet-fgintel" >&2
+  echo "  conda install -y -c conda-forge numpy pandas" >&2
+  exit 1
+fi
+
 python "$MROOT/scripts/blue_catalyst_fg_batch_pipeline.py" process-batch \
   --batch-manifest "$BATCH_MANIFEST" \
   --hmm-dir "$HMM_DIR" \
