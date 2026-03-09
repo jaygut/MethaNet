@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Union
 import subprocess
+import tempfile
 import numpy as np
 
 
@@ -341,10 +342,14 @@ class FunctionalQuantifier:
         """
         if not self.hmm_db_path:
             raise RuntimeError("hmm_db_path is required for database searches.")
+        tblout_path = Path(tempfile.mkstemp(prefix="methanet_hmm_db_", suffix=".tbl")[1])
         cmd = [
             "hmmsearch",
             "--tblout",
-            "/dev/stdout",
+            str(tblout_path),
+            "--noali",
+            "-o",
+            "/dev/null",
             "-E",
             str(self.evalue_threshold),
             "--cpu",
@@ -354,22 +359,27 @@ class FunctionalQuantifier:
         ]
 
         try:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, check=True
-            )
-            return self._parse_hmm_output(result.stdout)
+            subprocess.run(cmd, capture_output=True, text=True, check=True)
+            return self._parse_hmm_output(tblout_path.read_text(encoding="utf-8"))
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"hmmsearch failed: {e.stderr}") from e
+            err = (e.stderr or e.stdout or "").strip()
+            raise RuntimeError(f"hmmsearch failed: {err}") from e
         except FileNotFoundError:
             raise RuntimeError(
                 "hmmsearch not found. Install HMMER: conda install -c bioconda hmmer"
             )
+        finally:
+            tblout_path.unlink(missing_ok=True)
 
     def _run_hmmsearch_marker(self, protein_fasta: Path, marker: MarkerGene) -> int:
+        tblout_path = Path(tempfile.mkstemp(prefix=f"methanet_{marker.name}_", suffix=".tbl")[1])
         cmd = [
             "hmmsearch",
             "--tblout",
-            "/dev/stdout",
+            str(tblout_path),
+            "--noali",
+            "-o",
+            "/dev/null",
             "-E",
             str(marker.threshold),
             "--cpu",
@@ -379,17 +389,21 @@ class FunctionalQuantifier:
         ]
 
         try:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, check=True
+            subprocess.run(cmd, capture_output=True, text=True, check=True)
+            hits = self._parse_hmm_output(
+                tblout_path.read_text(encoding="utf-8"),
+                self.score_threshold,
             )
-            hits = self._parse_hmm_output(result.stdout, self.score_threshold)
             return self._count_unique_targets(hits)
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"hmmsearch failed: {e.stderr}") from e
+            err = (e.stderr or e.stdout or "").strip()
+            raise RuntimeError(f"hmmsearch failed for marker {marker.name}: {err}") from e
         except FileNotFoundError:
             raise RuntimeError(
                 "hmmsearch not found. Install HMMER: conda install -c bioconda hmmer"
             )
+        finally:
+            tblout_path.unlink(missing_ok=True)
 
     def _parse_hmm_output(self, output: str, score_threshold: Optional[float] = None) -> List[Dict]:
         """Parse hmmsearch tabular output.
@@ -407,12 +421,15 @@ class FunctionalQuantifier:
                 continue
             fields = line.split()
             if len(fields) >= 8:
-                hit = {
-                    "target": fields[0],
-                    "query": fields[3],
-                    "evalue": float(fields[6]),
-                    "score": float(fields[7]),
-                }
+                try:
+                    hit = {
+                        "target": fields[0],
+                        "query": fields[3],
+                        "evalue": float(fields[6]),
+                        "score": float(fields[7]),
+                    }
+                except ValueError:
+                    continue
                 if hit["score"] >= threshold:
                     hits.append(hit)
         return hits

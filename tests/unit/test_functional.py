@@ -215,6 +215,28 @@ MLSLLLNTALLASAAASPGQKAHFADACLAALAQHGGTGFAAALSNAASPAAQNRSGIAP
                 markers=["mcrA"],
             )
 
+    def test_parse_hmm_output_skips_non_numeric_lines(self, mock_hmm_dir):
+        """Parser should skip non-tabular/non-numeric lines safely."""
+        quantifier = FunctionalQuantifier(
+            hmm_dir=mock_hmm_dir,
+            markers=["mcrA"],
+            score_threshold=50.0,
+        )
+
+        raw_output = "\n".join(
+            [
+                "# hmmsearch :: tblout",
+                "target1 - 100 mcrA - 200 1e-25 120.0 0.0",
+                "this line is not numeric at expected columns and should be skipped",
+                "target2 - 100 mcrA - 200 1e-5 40.0 0.0",
+            ]
+        )
+
+        hits = quantifier._parse_hmm_output(raw_output)
+        assert len(hits) == 1
+        assert hits[0]["target"] == "target1"
+        assert hits[0]["query"] == "mcrA"
+
     @pytest.mark.skipif(
         not (IMPORTS_AVAILABLE and HMMSEARCH_AVAILABLE),
         reason="Functional quantification requires hmmsearch (HMMER)",
