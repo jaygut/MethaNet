@@ -63,68 +63,59 @@ Target environmental datasets for model validation and transfer learning.
 
 ### Blue Catalyst POC (Completed on Apolo-3)
 
-We completed a proposal-focused Blue Catalyst POC that directly operationalizes cross-ecosystem representation learning between MUCC wetland genomes and rumen genomes from PRJEB31266 using ESM-2 proteome embeddings.
+We completed a cross-ecosystem proteome embedding POC between MUCC wetland genomes and rumen genomes (PRJEB31266) using ESM2-650M protein language model embeddings. The POC was developed for the [Hatch Blue — Blue Catalyst](https://www.hatch.blue/programs/blue-catalyst) accelerator program (Singapore, May 2026).
 
-**Execution path**
-- Notebook: `notebooks/blue_catalyst_esm2_poc.ipynb`
+**662-genome cohort (current, `apolo_full_20260228_080644_embed_20260305_061952`)**
+
+| Metric | Value | Interpretation |
+|--------|-------|----------------|
+| Cohort | 662 genomes (107 wetland MUCC + 555 rumen PRJEB31266) | 16.5× scale-up from baseline |
+| Embedding | 662 × 1,280 (ESM2-650M, layer 33, mean-pooled) | Zero attrition, zero non-finite vectors |
+| PERMANOVA R² | 0.202 (p=0.001) | Ecosystem explains 20.2% of embedding variance |
+| Silhouette | 0.398 [95% CI: 0.364–0.439] | Bootstrap CI from 150 resamples |
+| CV Classifier | AUC=1.000, balanced accuracy=0.999 | 5-fold CV, PCA-50, balanced class weights |
+| Cohen's d | 3.63 | Very large effect size on trajectory axis |
+| Bridge genomes | 14 with ≥1 opposite-ecosystem k-NN neighbor | Out of 662 total |
+| Top bridge | bin.8 (Archaea), alpha-transfer score=3.47 | >6 SDs above cohort mean; all top 11 are rumen Archaea |
+
+**Key scientific findings:**
+- Rumen Archaea dominate bridge candidate rankings — all top 11 alpha-transfer scores are Archaea, consistent with conserved methanogenesis machinery (mcrA, HdrABC) across ecosystems
+- Perfect classifier separation (AUC=1.0) under real-world class imbalance confirms the embedding manifold encodes a learnable ecosystem boundary
+- **P0 caveat**: Source and ecosystem are perfectly confounded (all rumen = PRJEB31266, all wetland = MUCC). Deconfounding with additional sources is the highest-priority next step.
+
+**40-genome baseline (initial validation, `apolo_20260226_194505`)**
+- 40 samples (20 MUCC + 20 rumen), PERMANOVA R²=0.517, silhouette=0.433, trajectory t=13.97 (p=1.5e-16)
+- bin.23 (Archaea) embeds 100% inside wetland cluster (mixing_coeff=1.0)
+- The R² decrease from 0.517→0.202 at scale is expected: adding 515 rumen genomes increases intra-class diversity while the ecosystem boundary remains perfectly classifiable
+
+**Deep-dive analytics report**
+- 6 publication-grade figures + Word report: `results/blue_catalyst_poc/interim_snapshots/apolo_full_20260228_080644_embed_20260305_061952_notebook_interim_20260306_055012/deep_dive_report/`
+- Fig 1: Embedding landscape (PCA/UMAP/t-SNE with KDE contours + bridge entropy histogram)
+- Fig 2: Statistical validation (PCA scree, silhouette violin, trajectory + Cohen's d, boundary diagnostic)
+- Fig 3: Top 20 alpha-transfer candidate ranking
+- Fig 4: Confounding decomposition (domain composition, protein counts, confounding matrix)
+- Fig 5: Cosine distance heatmap sorted by ecosystem
+- Fig 6: Key metrics infographic dashboard
+- Review memo: `ai_docs/Blue_Catalyst_Deep_Dive_Review_Memo.md`
+
+**Execution paths**
+- HPC notebook: `notebooks/blue_catalyst_esm2_poc.ipynb`
+- Local analytics notebook: `notebooks/blue_catalyst_partial_report_local.ipynb`
+- Deep-dive report builder: `scripts/build_blue_catalyst_deep_dive_report.py`
 - Apolo-3 SLURM launcher: `scripts/submit_blue_catalyst_poc_apolo3.sh`
 - Artifact fetch utility: `scripts/fetch_apolo_blue_catalyst_artifacts.sh`
 
-**Validated run snapshot (apolo_20260226_194505)**
-- `n_samples=40` (20 MUCC + 20 rumen)
-- `samples_embedded=40` with no non-finite embeddings
-- HDBSCAN clusters (excluding noise): `5`, `noise_fraction=0.1`
-- `silhouette_non_noise=0.433`
-- cluster purity (ecosystem/domain): `~0.99`
-- **PERMANOVA**: F=40.6, p=0.001, R²=0.517 (ecosystem explains 51.7% of embedding variance)
-- **PCA**: PC1=62.9%, PC1+PC2=78.0%; only 3 PCs needed for 80% cumulative variance
-- **Ecosystem trajectory t-test**: t=13.97, p=1.5e-16
-- **Key finding**: rumen Archaea (`rumen__10674_0001_idba_bin.23`) embeds 100% inside the wetland cluster (mixing_coeff=1.0), providing a strong cross-domain transfer signal
+**Artifact locations**
+- 662-genome run: `results/blue_catalyst_poc/runs/apolo_full_20260228_080644_embed_20260305_061952/artifacts/`
+- 40-genome baseline: `results/blue_catalyst_poc/runs/apolo_20260226_194505/artifacts/`
+- Latest snapshot: `results/blue_catalyst_poc/interim_snapshots/apolo_full_20260228_080644_embed_20260305_061952_notebook_interim_20260306_055012/`
 
-**Current operational status update (latest Apolo completion)**
-- Completed embedding-focused run: `results/blue_catalyst_poc/runs/apolo_full_20260228_080644_embed_20260305_061952/artifacts/`
-- Embedding completion: `embedded=662`, `pending_remaining=0` (`embedding_stats.json`)
-- Canonical local interim analytics notebook: `notebooks/blue_catalyst_partial_report_local.ipynb`
-- Latest interim snapshot (post-completion):
-  - `results/blue_catalyst_poc/interim_snapshots/apolo_full_20260228_080644_embed_20260305_061952_notebook_interim_20260306_055012/`
-  - `n_embeddings=662` (`analytics/analytics_summary.json`)
-- Report path (rewritten for interim analytics):
-  - `results/blue_catalyst_poc/runs/apolo_20260226_194505/report/blue_catalyst_poc_report.docx`
-
-**Artifact package (downloaded and unpacked locally)**
-- Run root: `results/blue_catalyst_poc/runs/apolo_20260226_194505/`
-- Extracted artifacts: `results/blue_catalyst_poc/runs/apolo_20260226_194505/artifacts/` (28 files total)
-- Core ESM2 pipeline outputs:
-  - `genome_embeddings.npz`
-  - `embedding_metadata.tsv`
-  - `embedding_projection_clusters.tsv`
-  - `bridging_genomes_top.tsv`
-  - `poc_metrics.json`
-  - `embedding_stats.json`
-  - `umap_ecosystem_domain.html`
-  - `umap_hdbscan_clusters.html`
-  - `tsne_ecosystem_domain.html`
-  - `blue_catalyst_poc.executed.ipynb`
-- Advanced analytics outputs (generated locally from `notebooks/blue_catalyst_esm2_poc.ipynb`):
-  - `pca_variance_explained.png` / `pca_pc1_pc2.png` — PCA scree and biplot
-  - `umap_kde_landscape.png` / `umap_kde_landscape.html` — UMAP with KDE density contours
-  - `tsne_kde_landscape.png` / `tsne_kde_landscape.html` — t-SNE with KDE density contours
-  - `permanova_ecosystem.png` — PERMANOVA permutation null distribution
-  - `ecosystem_trajectory.png` — genome projections onto rumen→wetland axis
-  - `umap_trajectory_projection.html` — interactive trajectory visualization
-  - `silhouette_profiles.png` — per-genome silhouette score profiles
-  - `bridge_genome_analysis.html` — interactive bridging genome explorer
-  - `bridge_top_candidates.tsv` / `bridge_knn_neighborhoods.tsv` / `bridge_knn_composition.html` — k-NN bridging analysis
-  - `pairwise_cosine_heatmap.png` — 40×40 pairwise cosine distance heatmap
-  - `proposal_panel_figure.png` — 2×2 publication-ready summary panel
-  - `advanced_analytics_summary.json` — machine-readable metrics summary
-
-**POC hardening implemented during development**
-- Batch/runtime reliability on Apolo-3 by forcing explicit `MethaNet311` Python for notebook execution.
-- Per-file tolerance for corrupted gzip and `prodigal` failures to prevent full-run aborts.
-- Safe handling for zero/insufficient sample conditions in downstream analysis.
-- Numerical stability fixes for embedding generation to avoid NaN/Inf vectors.
-- Portable checksum verification in artifact pulls (normalization of remote-path SHA entries).
+**POC hardening**
+- Batch/runtime reliability on Apolo-3 by forcing explicit `MethaNet311` Python for notebook execution
+- Per-file tolerance for corrupted gzip and `prodigal` failures to prevent full-run aborts
+- Embedding checkpointing every 25 genomes with resume support
+- Numerical stability (NaN/Inf guards at every aggregation step)
+- Portable checksum verification in artifact pulls (normalization of remote-path SHA entries)
 
 ---
 

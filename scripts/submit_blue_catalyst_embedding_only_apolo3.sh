@@ -17,6 +17,7 @@ set -euo pipefail
 #   BC_EMBED_CHECKPOINT_EVERY checkpoint cadence in genomes (default: 25)
 #   BC_EMBED_COHORT_MODE  strict_run|extended_cache (default: strict_run)
 #   BC_EXCLUDE_COASSEMBLY 1|0 (default: 1)
+#   BC_BACKFILL_PROFILE   1 enables a shorter/lighter scheduling profile (default: 0)
 
 MROOT="${MROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
 SOURCE_RUN_ID="${SOURCE_RUN_ID:-}"
@@ -28,6 +29,7 @@ GPU_GRES="${GPU_GRES:-gpu:1}"
 BC_EMBED_CHECKPOINT_EVERY="${BC_EMBED_CHECKPOINT_EVERY:-25}"
 BC_EMBED_COHORT_MODE="${BC_EMBED_COHORT_MODE:-strict_run}"
 BC_EXCLUDE_COASSEMBLY="${BC_EXCLUDE_COASSEMBLY:-1}"
+BC_BACKFILL_PROFILE="${BC_BACKFILL_PROFILE:-0}"
 
 if [[ -z "$SOURCE_RUN_ID" ]]; then
   echo "ERROR: SOURCE_RUN_ID is required." >&2
@@ -41,10 +43,17 @@ fi
 SOURCE_ART="$MROOT/results/blue_catalyst_poc/runs/$SOURCE_RUN_ID/artifacts"
 TARGET_ART="$MROOT/results/blue_catalyst_poc/runs/$RUN_ID/artifacts"
 SOURCE_SUBSET="$SOURCE_ART/prjeb31266_selected_subset.tsv"
+SOURCE_MANIFEST="$SOURCE_ART/proteome_sample_manifest.tsv"
+INVENTORY_SCRIPT="$MROOT/scripts/audit_blue_catalyst_embedding_inputs.py"
 JOB_SCRIPT="$MROOT/scripts/submit_blue_catalyst_poc_apolo3.sh"
 
 if [[ ! -f "$JOB_SCRIPT" ]]; then
   echo "ERROR: job script not found: $JOB_SCRIPT" >&2
+  exit 1
+fi
+
+if [[ ! -f "$INVENTORY_SCRIPT" ]]; then
+  echo "ERROR: inventory script not found: $INVENTORY_SCRIPT" >&2
   exit 1
 fi
 
@@ -61,6 +70,29 @@ fi
 
 mkdir -p "$TARGET_ART"
 cp "$SOURCE_SUBSET" "$TARGET_ART/prjeb31266_source_subset_seed.tsv"
+
+if [[ -f "$SOURCE_MANIFEST" ]]; then
+  cp "$SOURCE_MANIFEST" "$TARGET_ART/proteome_sample_manifest_seed.tsv"
+fi
+
+if [[ "$BC_BACKFILL_PROFILE" == "1" ]]; then
+  TIME_LIMIT="${TIME_LIMIT:-04:00:00}"
+  CPUS_PER_TASK="${CPUS_PER_TASK:-2}"
+  MEM_PER_NODE="${MEM_PER_NODE:-16G}"
+  GPU_GRES="${GPU_GRES:-gpu:1}"
+fi
+
+run_manifest_arg=()
+if [[ -f "$SOURCE_MANIFEST" ]]; then
+  run_manifest_arg=(--run-manifest "$SOURCE_MANIFEST")
+fi
+
+python "$INVENTORY_SCRIPT" \
+  --proteomes-dir "$MROOT/data/blue_catalyst_poc/proteomes" \
+  --source-subset "$SOURCE_SUBSET" \
+  "${run_manifest_arg[@]}" \
+  --out-tsv "$TARGET_ART/embedding_input_inventory_preflight.tsv" \
+  --out-json "$TARGET_ART/embedding_denominator_summary_preflight.json"
 
 export_list="ALL"
 export_list+=",BC_RUN_ID=$RUN_ID"
@@ -83,11 +115,14 @@ echo "[INFO] TARGET_ART=$TARGET_ART"
 echo "[INFO] subset_rows=$subset_rows"
 echo "[INFO] BC_EMBED_COHORT_MODE=$BC_EMBED_COHORT_MODE"
 echo "[INFO] BC_EXCLUDE_COASSEMBLY=$BC_EXCLUDE_COASSEMBLY"
+echo "[INFO] BC_BACKFILL_PROFILE=$BC_BACKFILL_PROFILE"
 echo "[INFO] TIME_LIMIT=$TIME_LIMIT"
 echo "[INFO] CPUS_PER_TASK=$CPUS_PER_TASK"
 echo "[INFO] MEM_PER_NODE=$MEM_PER_NODE"
 echo "[INFO] GPU_GRES=$GPU_GRES"
 echo "[INFO] BC_EMBED_CHECKPOINT_EVERY=$BC_EMBED_CHECKPOINT_EVERY"
+echo "[INFO] preflight inventory TSV=$TARGET_ART/embedding_input_inventory_preflight.tsv"
+echo "[INFO] preflight denominator JSON=$TARGET_ART/embedding_denominator_summary_preflight.json"
 
 new_job_id=$(sbatch \
   --parsable \
