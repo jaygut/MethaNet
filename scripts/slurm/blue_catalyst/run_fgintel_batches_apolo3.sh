@@ -48,28 +48,25 @@ source "$(conda info --base)/etc/profile.d/conda.sh"
 export PYTHONPATH="$MROOT/src:${PYTHONPATH:-}"
 
 # Cross-env readiness checks for production FG layer
-conda activate methanet-gunc
-gunc -h >/dev/null
+conda run -n methanet-gunc gunc -h >/dev/null
 [[ -f "${GUNC_DB:-$DB_ROOT/gunc/gunc_db_progenomes2.1.dmnd}" ]] || {
   echo "ERROR: GUNC DB not found" >&2
   exit 1
 }
 
-conda activate methanet-annot
-emapper.py -h >/dev/null
-exec_annotation -h >/dev/null
+conda run -n methanet-annot emapper.py -h >/dev/null
+conda run -n methanet-annot exec_annotation -h >/dev/null
 [[ -d "${EGGNOG_DATA_DIR:-$DB_ROOT/eggnog}" ]] || { echo "ERROR: eggNOG DB missing" >&2; exit 1; }
 [[ -d "$DB_ROOT/kofam/profiles" && -s "$DB_ROOT/kofam/ko_list" ]] || {
   echo "ERROR: KOfam DB missing" >&2
   exit 1
 }
 
-conda activate methanet-fgintel
-DRAM.py --help >/dev/null
-hmmsearch -h >/dev/null
+conda run -n methanet-fgintel DRAM.py --help >/dev/null
+conda run -n methanet-fgintel hmmsearch -h >/dev/null
 [[ -d "$HMM_DIR" ]] || { echo "ERROR: missing HMM dir $HMM_DIR" >&2; exit 1; }
 
-if ! python - <<'PY'
+if ! conda run -n methanet-fgintel python - <<'PY'
 import importlib.util
 import sys
 
@@ -87,12 +84,12 @@ then
 fi
 
 HAS_JUPYTER=1
-if ! python -m jupyter --version >/dev/null 2>&1; then
+if ! conda run -n methanet-fgintel python -m jupyter --version >/dev/null 2>&1; then
   HAS_JUPYTER=0
   echo "[WARN] jupyter is not available in methanet-fgintel env; falling back to direct python stage execution" >&2
 fi
 
-python "$MROOT/scripts/generate_blue_catalyst_fg_runbook.py"
+conda run -n methanet-fgintel python "$MROOT/scripts/generate_blue_catalyst_fg_runbook.py"
 
 RUNBOOK_NOTEBOOK="$MROOT/notebooks/blue_catalyst_fgintel_batch_runbook.ipynb"
 [[ -f "$RUNBOOK_NOTEBOOK" ]] || { echo "ERROR: missing runbook notebook $RUNBOOK_NOTEBOOK" >&2; exit 1; }
@@ -109,7 +106,7 @@ export BC_FG_EMBED_NPZ="$EMBED_NPZ"
 export BC_FG_HMM_DIR="$HMM_DIR"
 
 if [[ "$HAS_JUPYTER" == "1" ]]; then
-  python -m jupyter nbconvert \
+  conda run -n methanet-fgintel python -m jupyter nbconvert \
     --to notebook \
     --execute "$RUNBOOK_NOTEBOOK" \
     --output "blue_catalyst_fgintel_plan.executed.ipynb" \
@@ -118,7 +115,7 @@ if [[ "$HAS_JUPYTER" == "1" ]]; then
     --ExecutePreprocessor.kernel_name=python3
 else
   PLAN_CMD=(
-    python "$MROOT/scripts/blue_catalyst_fg_batch_pipeline.py" plan
+    conda run -n methanet-fgintel python "$MROOT/scripts/blue_catalyst_fg_batch_pipeline.py" plan
     --embedding-metadata "$EMBED_META"
     --embedding-npz "$EMBED_NPZ"
     --embedding-run-id "$FG_SOURCE_EMBED_RUN_ID"
@@ -170,7 +167,7 @@ sacct -j "$WORKER_JOB_ID" --format=JobID,State,ExitCode,Elapsed,Reason%50
 
 export BC_FG_STAGE="merge"
 if [[ "$HAS_JUPYTER" == "1" ]]; then
-  python -m jupyter nbconvert \
+  conda run -n methanet-fgintel python -m jupyter nbconvert \
     --to notebook \
     --execute "$RUNBOOK_NOTEBOOK" \
     --output "blue_catalyst_fgintel_merge.executed.ipynb" \
@@ -178,14 +175,14 @@ if [[ "$HAS_JUPYTER" == "1" ]]; then
     --ExecutePreprocessor.timeout=-1 \
     --ExecutePreprocessor.kernel_name=python3
 else
-  python "$MROOT/scripts/blue_catalyst_fg_batch_pipeline.py" merge \
+  conda run -n methanet-fgintel python "$MROOT/scripts/blue_catalyst_fg_batch_pipeline.py" merge \
     --fg-plan-dir "$FG_ART_DIR" \
     --batch-results-dir "$FG_ART_DIR/batch_results" \
     --output-dir "$FG_ART_DIR" \
     --min-join-coverage "$FG_MIN_JOIN_COVERAGE"
 fi
 
-python "$MROOT/scripts/validate_blue_catalyst_fg_artifacts.py" \
+conda run -n methanet-fgintel python "$MROOT/scripts/validate_blue_catalyst_fg_artifacts.py" \
   --artifacts-dir "$FG_ART_DIR"
 
 echo "[OK] FG batch pipeline completed. Artifacts: $FG_ART_DIR"
