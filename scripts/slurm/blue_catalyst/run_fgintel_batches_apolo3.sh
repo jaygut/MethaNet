@@ -167,6 +167,48 @@ if ! sacct -j "$WORKER_JOB_ID" --format=JobID,State,ExitCode,Elapsed,Reason%50; 
   echo "[WARN] sacct unavailable (slurmdbd down or inaccessible); continuing without accounting report" >&2
 fi
 
+conda run -n methanet-fgintel python - <<'PY'
+import os
+from pathlib import Path
+import pandas as pd
+
+art_dir = Path(os.environ["FG_ART_DIR"])
+batch_root = art_dir / "batch_results"
+
+feature_rows = 0
+failure_frames = []
+
+for feat_fp in batch_root.glob("batch_*/fg_features.tsv"):
+    try:
+        feature_rows += int(pd.read_csv(feat_fp, sep="\t").shape[0])
+    except Exception:
+        pass
+
+for fail_fp in batch_root.glob("batch_*/fg_failures.tsv"):
+    try:
+        df = pd.read_csv(fail_fp, sep="\t")
+        if not df.empty:
+            failure_frames.append(df)
+    except Exception:
+        pass
+
+if feature_rows == 0:
+    if failure_frames:
+        merged = pd.concat(failure_frames, ignore_index=True)
+        top = merged["error_type"].fillna("unknown").value_counts().head(8).to_dict()
+        raise SystemExit(
+            "No functional feature rows were produced by workers. "
+            f"failure_rows={int(merged.shape[0])}, top_error_types={top}. "
+            "Inspect batch_*/fg_failures.tsv to fix upstream inputs/env before merge."
+        )
+    raise SystemExit(
+        "No functional feature rows were produced and no non-empty failure files were found. "
+        "Inspect worker logs (bc-fg-batch-worker.*.err) and batch_results outputs."
+    )
+
+print(f"[OK] Pre-merge sanity: feature_rows={feature_rows}")
+PY
+
 export BC_FG_STAGE="merge"
 if [[ "$HAS_JUPYTER" == "1" ]]; then
   conda run -n methanet-fgintel python -m jupyter nbconvert \
