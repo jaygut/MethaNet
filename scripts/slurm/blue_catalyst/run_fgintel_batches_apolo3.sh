@@ -163,7 +163,9 @@ while squeue -j "$WORKER_JOB_ID" -h >/dev/null 2>&1 && [[ -n "$(squeue -j "$WORK
 done
 
 echo "[INFO] Worker array sacct"
-sacct -j "$WORKER_JOB_ID" --format=JobID,State,ExitCode,Elapsed,Reason%50
+if ! sacct -j "$WORKER_JOB_ID" --format=JobID,State,ExitCode,Elapsed,Reason%50; then
+  echo "[WARN] sacct unavailable (slurmdbd down or inaccessible); continuing without accounting report" >&2
+fi
 
 export BC_FG_STAGE="merge"
 if [[ "$HAS_JUPYTER" == "1" ]]; then
