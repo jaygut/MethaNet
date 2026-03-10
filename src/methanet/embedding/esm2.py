@@ -7,6 +7,7 @@ the ESM-2 foundation model (facebook/esm2_t33_650M_UR50D).
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+import warnings
 import numpy as np
 
 try:
@@ -15,8 +16,24 @@ try:
     from transformers import AutoModel, AutoTokenizer
 
     TORCH_AVAILABLE = True
-except ImportError:
+    TORCH_IMPORT_ERROR: Optional[Exception] = None
+except Exception as exc:  # pragma: no cover - depends on local torch/transformers stack
     TORCH_AVAILABLE = False
+    TORCH_IMPORT_ERROR = exc
+
+    class _TorchStub:
+        @staticmethod
+        def no_grad():
+            def _decorator(func):
+                return func
+
+            return _decorator
+
+    torch = _TorchStub()  # type: ignore[assignment]
+    Dataset = object  # type: ignore[assignment]
+    DataLoader = object  # type: ignore[assignment]
+    AutoModel = None  # type: ignore[assignment]
+    AutoTokenizer = None  # type: ignore[assignment]
 
 
 @dataclass
@@ -48,6 +65,43 @@ class EmbeddingConfig:
     def __post_init__(self):
         if self.device == "auto":
             self.device = "cuda" if TORCH_AVAILABLE and torch.cuda.is_available() else "cpu"
+
+
+def resolve_pooling_layers(
+    requested_layers: Tuple[int, ...],
+    total_hidden_states: int,
+    fallback_n_layers: int = 12,
+) -> Tuple[int, ...]:
+    """Resolve configured pooling layers into valid hidden-state indices.
+
+    Args:
+        requested_layers: User-configured layer indices (supports negative indexing).
+        total_hidden_states: Number of hidden-state tensors returned by the model.
+        fallback_n_layers: Number of layers to use when requested layers are invalid.
+
+    Returns:
+        Tuple of valid layer indices.
+    """
+    if total_hidden_states <= 0:
+        raise ValueError("total_hidden_states must be > 0")
+
+    valid: List[int] = []
+    seen: set[int] = set()
+    for idx in requested_layers:
+        resolved = idx if idx >= 0 else total_hidden_states + idx
+        if 0 <= resolved < total_hidden_states and resolved not in seen:
+            valid.append(resolved)
+            seen.add(resolved)
+
+    if valid:
+        return tuple(valid)
+
+    if total_hidden_states == 1:
+        return (0,)
+
+    n_layers = min(max(1, fallback_n_layers), total_hidden_states - 1)
+    start = total_hidden_states - n_layers
+    return tuple(range(start, total_hidden_states))
 
 
 class ProteinDataset(Dataset):
@@ -102,10 +156,13 @@ class ESM2Embedder:
             config: Embedding configuration. Uses defaults if None.
         """
         if not TORCH_AVAILABLE:
-            raise ImportError(
+            msg = (
                 "PyTorch and transformers required. "
                 "Install: pip install torch transformers"
             )
+            if TORCH_IMPORT_ERROR is not None:
+                msg += f". Original import error: {TORCH_IMPORT_ERROR}"
+            raise ImportError(msg) from TORCH_IMPORT_ERROR
 
         self.config = config or EmbeddingConfig()
         self.device = torch.device(self.config.device)
@@ -125,6 +182,27 @@ class ESM2Embedder:
             self.model = self.model.half()
 
         self.model.eval()
+        total_hidden_states = int(getattr(self.model.config, "num_hidden_layers", 0)) + 1
+        requested_layers = tuple(self.config.pooling_layers)
+        self.pooling_layer_indices = resolve_pooling_layers(
+            requested_layers=requested_layers,
+            total_hidden_states=total_hidden_states,
+        )
+        if requested_layers and not set(self.pooling_layer_indices).intersection(
+            {
+                idx if idx >= 0 else total_hidden_states + idx
+                for idx in requested_layers
+                if -(total_hidden_states) <= idx < total_hidden_states
+            }
+        ):
+            warnings.warn(
+                "Configured pooling_layers are out of range for model "
+                f"{self.config.model_name} (hidden_states={total_hidden_states}). "
+                "Falling back to valid terminal layers: "
+                f"{self.pooling_layer_indices}",
+                RuntimeWarning,
+                stacklevel=2,
+            )
 
     @torch.no_grad()
     def embed_proteins(
@@ -166,10 +244,7 @@ class ESM2Embedder:
 
             # Extract hidden states from specified layers
             hidden_states = outputs.hidden_states
-            selected_layers = [
-                hidden_states[i] for i in self.config.pooling_layers
-                if i < len(hidden_states)
-            ]
+            selected_layers = [hidden_states[i] for i in self.pooling_layer_indices]
 
             # Stack and average across layers
             stacked = torch.stack(selected_layers, dim=0)
