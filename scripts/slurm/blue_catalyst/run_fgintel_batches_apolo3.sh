@@ -24,6 +24,8 @@ WORKER_TIME_LIMIT="${WORKER_TIME_LIMIT:-04:00:00}"
 WORKER_MEM="${WORKER_MEM:-24G}"
 WORKER_CPUS="${WORKER_CPUS:-4}"
 
+export HMM_DIR
+
 if [[ -z "$FG_SOURCE_EMBED_RUN_ID" ]]; then
   echo "ERROR: FG_SOURCE_EMBED_RUN_ID is required" >&2
   exit 1
@@ -39,6 +41,7 @@ FG_RUN_ROOT="$RUNS_ROOT/$FG_RUN_ID"
 FG_ART_DIR="$FG_RUN_ROOT/fg_artifacts"
 FG_PLAN_DIR="$FG_ART_DIR"
 mkdir -p "$FG_ART_DIR" "$FG_ART_DIR/batch_results"
+export FG_ART_DIR
 
 if [[ -n "${MODULESHOME:-}" ]] || command -v module >/dev/null 2>&1; then
   module load miniconda3/25.5.1 || true
@@ -65,6 +68,56 @@ conda run -n methanet-annot exec_annotation -h >/dev/null
 conda run -n methanet-fgintel DRAM.py --help >/dev/null
 conda run -n methanet-fgintel hmmsearch -h >/dev/null
 [[ -d "$HMM_DIR" ]] || { echo "ERROR: missing HMM dir $HMM_DIR" >&2; exit 1; }
+
+if ! conda run -n methanet-fgintel python - <<'PY'
+import os
+from pathlib import Path
+import sys
+
+hmm_dir = Path(os.environ["HMM_DIR"])
+required = [
+    "mcrA.hmm", "mcrB.hmm", "mcrG.hmm",
+    "pmoA.hmm", "mmoX.hmm",
+    "dsrA.hmm", "dsrB.hmm",
+    "nifH.hmm", "cbbL.hmm",
+    "mtaB.hmm", "mttB.hmm", "mtbA.hmm",
+]
+
+missing = []
+empty = []
+invalid = []
+
+for name in required:
+    fp = hmm_dir / name
+    if not fp.exists():
+        missing.append(str(fp))
+        continue
+    if fp.stat().st_size == 0:
+        empty.append(str(fp))
+        continue
+    try:
+        first = fp.open("r", encoding="utf-8", errors="ignore").readline().strip()
+    except Exception:
+        first = ""
+    if "HMMER" not in first:
+        invalid.append(str(fp))
+
+if missing or empty or invalid:
+    sys.stderr.write("ERROR: HMM resource integrity check failed\n")
+    if missing:
+        sys.stderr.write("  missing: " + ", ".join(missing[:5]) + (" ..." if len(missing) > 5 else "") + "\n")
+    if empty:
+        sys.stderr.write("  empty: " + ", ".join(empty[:5]) + (" ..." if len(empty) > 5 else "") + "\n")
+    if invalid:
+        sys.stderr.write("  invalid_header: " + ", ".join(invalid[:5]) + (" ..." if len(invalid) > 5 else "") + "\n")
+    sys.exit(1)
+PY
+then
+  echo "Rebuild HMM resources and retry:" >&2
+  echo "  rm -f $HMM_DIR/{mcrA,mcrB,mcrG,pmoA,mmoX,dsrA,dsrB,nifH,cbbL,mtaB,mttB,mtbA}.hmm" >&2
+  echo "  bash workflow/scripts/setup_hmm_resources.sh" >&2
+  exit 1
+fi
 
 if ! conda run -n methanet-fgintel python - <<'PY'
 import importlib.util
@@ -134,6 +187,57 @@ BATCH_PLAN="$FG_PLAN_DIR/fg_batch_plan.tsv"
 N_BATCHES=$(($(wc -l < "$BATCH_PLAN") - 1))
 [[ "$N_BATCHES" -gt 0 ]] || { echo "ERROR: no batches found in $BATCH_PLAN" >&2; exit 1; }
 
+FIRST_BATCH_MANIFEST="$FG_ART_DIR/batches/batch_0000.tsv"
+[[ -f "$FIRST_BATCH_MANIFEST" ]] || {
+  echo "ERROR: missing first batch manifest $FIRST_BATCH_MANIFEST" >&2
+  exit 1
+}
+
+SMOKE_DIR="$FG_ART_DIR/preflight_smoke"
+SMOKE_MANIFEST="$SMOKE_DIR/batch_0000_smoke.tsv"
+mkdir -p "$SMOKE_DIR"
+export SMOKE_DIR
+head -n 2 "$FIRST_BATCH_MANIFEST" > "$SMOKE_MANIFEST"
+
+conda run -n methanet-fgintel python "$MROOT/scripts/blue_catalyst_fg_batch_pipeline.py" process-batch \
+  --batch-manifest "$SMOKE_MANIFEST" \
+  --hmm-dir "$HMM_DIR" \
+  --output-features "$SMOKE_DIR/fg_features.tsv" \
+  --output-failures "$SMOKE_DIR/fg_failures.tsv" \
+  --threads 1
+
+if ! conda run -n methanet-fgintel python - <<'PY'
+import os
+from pathlib import Path
+import pandas as pd
+import sys
+
+smoke_dir = Path(os.environ["SMOKE_DIR"])
+feat = pd.read_csv(smoke_dir / "fg_features.tsv", sep="\t")
+fail = pd.read_csv(smoke_dir / "fg_failures.tsv", sep="\t")
+
+if not fail.empty:
+    top_messages = fail["error_message"].fillna("unknown").astype(str).value_counts().head(5).to_dict()
+    top_types = fail["error_type"].fillna("unknown").value_counts().head(5).to_dict()
+    sys.stderr.write(
+        "ERROR: preflight smoke quantification failed. "
+        f"error_types={top_types} top_error_messages={top_messages}\n"
+    )
+    sys.exit(1)
+
+if feat.empty:
+    sys.stderr.write("ERROR: preflight smoke produced empty features without explicit failures\n")
+    sys.exit(1)
+
+print(f"[OK] Preflight smoke: features={int(feat.shape[0])} failures={int(fail.shape[0])}")
+PY
+then
+  echo "Inspect preflight artifacts:" >&2
+  echo "  $SMOKE_DIR/fg_features.tsv" >&2
+  echo "  $SMOKE_DIR/fg_failures.tsv" >&2
+  exit 1
+fi
+
 ARRAY_MAX=$((N_BATCHES - 1))
 WORKER_SCRIPT="$MROOT/scripts/slurm/blue_catalyst/run_fgintel_batch_worker_apolo3.sh"
 [[ -f "$WORKER_SCRIPT" ]] || { echo "ERROR: missing worker script $WORKER_SCRIPT" >&2; exit 1; }
@@ -196,9 +300,15 @@ if feature_rows == 0:
     if failure_frames:
         merged = pd.concat(failure_frames, ignore_index=True)
         top = merged["error_type"].fillna("unknown").value_counts().head(8).to_dict()
+        top_messages = (
+            merged["error_message"].fillna("unknown").astype(str).value_counts().head(5).to_dict()
+            if "error_message" in merged.columns
+            else {}
+        )
         raise SystemExit(
             "No functional feature rows were produced by workers. "
             f"failure_rows={int(merged.shape[0])}, top_error_types={top}. "
+            f"top_error_messages={top_messages}. "
             "Inspect batch_*/fg_failures.tsv to fix upstream inputs/env before merge."
         )
     raise SystemExit(

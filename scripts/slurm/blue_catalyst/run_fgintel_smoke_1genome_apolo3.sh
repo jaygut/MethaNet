@@ -2,7 +2,7 @@
 #SBATCH --job-name=bc-fg-smoke-1g
 #SBATCH --output=%x.%j.out
 #SBATCH --error=%x.%j.err
-#SBATCH --time=02:00:00
+#SBATCH --time=06:00:00
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=16G
 #SBATCH --partition=accel
@@ -21,6 +21,9 @@ RUNS_ROOT="${RUNS_ROOT:-$MROOT/results/blue_catalyst_poc/runs}"
 DB_ROOT="${DB_ROOT:-$HOME/scratch/methanet_db}"
 SLURM_PARTITION="${SLURM_PARTITION:-accel}"
 SOURCE_RUN_ID="${SOURCE_RUN_ID:-}"
+OUTER_TIME_LIMIT="${OUTER_TIME_LIMIT:-06:00:00}"
+OUTER_CPUS_PER_TASK="${OUTER_CPUS_PER_TASK:-2}"
+OUTER_MEM_PER_NODE="${OUTER_MEM_PER_NODE:-16G}"
 
 if [[ -z "$SOURCE_RUN_ID" ]]; then
   SOURCE_RUN_ID="$(find "$RUNS_ROOT" -mindepth 2 -maxdepth 2 -type f -name prjeb31266_selected_subset.tsv \
@@ -40,6 +43,8 @@ source "$(conda info --base)/etc/profile.d/conda.sh"
 
 echo "[INFO] SOURCE_RUN_ID=$SOURCE_RUN_ID"
 echo "[INFO] SMOKE_RUN_ID=$SMOKE_RUN_ID"
+echo "[INFO] OUTER resources: time=${OUTER_TIME_LIMIT} cpus=${OUTER_CPUS_PER_TASK} mem=${OUTER_MEM_PER_NODE}"
+echo "[INFO] INNER resources: time=${INNER_TIME_LIMIT:-06:00:00} cpus=${INNER_CPUS_PER_TASK:-2} mem=${INNER_MEM_PER_NODE:-16G}"
 
 # Build 1-genome subset (header + first data row)
 head -n 2 "$SOURCE_SUBSET" > "$SMOKE_DIR/prjeb31266_selected_subset_1genome.tsv"
@@ -95,7 +100,7 @@ SBATCH_CMD=(
   sbatch
   --parsable
   --partition="${SLURM_PARTITION}"
-  --time="${INNER_TIME_LIMIT:-02:00:00}"
+  --time="${INNER_TIME_LIMIT:-06:00:00}"
   --cpus-per-task="${INNER_CPUS_PER_TASK:-2}"
   --mem="${INNER_MEM_PER_NODE:-16G}"
   --export="$EXPORTS"
@@ -115,7 +120,9 @@ while squeue -j "$JOB_ID" -h >/dev/null 2>&1 && [[ -n "$(squeue -j "$JOB_ID" -h)
 done
 
 echo "[INFO] Final sacct for inner job"
-sacct -j "$JOB_ID" --format=JobID,State,ExitCode,Elapsed,Reason%50
+if ! sacct -j "$JOB_ID" --format=JobID,State,ExitCode,Elapsed,Reason%50; then
+  echo "[WARN] sacct unavailable (slurmdbd down or inaccessible); continuing without accounting report" >&2
+fi
 
 conda activate methanet-fgintel
 python "$MROOT/scripts/validate_blue_catalyst_artifacts.py" --artifacts-dir "$SMOKE_DIR"

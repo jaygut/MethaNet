@@ -253,13 +253,15 @@ def run_process_batch(args: argparse.Namespace) -> int:
             )
             feature_rows.append(row_payload)
         except Exception as exc:  # pragma: no cover - external tool/runtime behavior
+            error_message = str(exc).strip() or repr(exc)
             failure_rows.append(
                 {
                     "canonical_genome_id": canonical_id,
                     "sample": sample,
                     "proteome_faa": str(proteome_fp),
                     "error_type": "quantification_error",
-                    "error_message": str(exc),
+                    "error_class": type(exc).__name__,
+                    "error_message": error_message,
                 }
             )
 
@@ -289,6 +291,7 @@ def run_process_batch(args: argparse.Namespace) -> int:
                 "sample",
                 "proteome_faa",
                 "error_type",
+                "error_class",
                 "error_message",
             ]
         )
@@ -301,6 +304,39 @@ def run_process_batch(args: argparse.Namespace) -> int:
         f" manifest={batch_manifest_fp}"
         f" features={features_df.shape[0]} failures={failures_df.shape[0]}"
     )
+    if not failures_df.empty:
+        top_types = (
+            failures_df["error_type"].fillna("unknown").value_counts().head(5).to_dict()
+        )
+        top_classes = (
+            failures_df["error_class"].fillna("unknown").value_counts().head(5).to_dict()
+            if "error_class" in failures_df.columns
+            else {}
+        )
+        top_messages = (
+            failures_df["error_message"].fillna("unknown").astype(str).value_counts().head(3).to_dict()
+        )
+        print(
+            "[WARN] Batch failure summary "
+            f"error_types={top_types} error_classes={top_classes} top_error_messages={top_messages}"
+        )
+    if features_df.empty and not failures_df.empty:
+        top_types = failures_df["error_type"].fillna("unknown").value_counts().head(5).to_dict()
+        top_classes = (
+            failures_df["error_class"].fillna("unknown").value_counts().head(5).to_dict()
+            if "error_class" in failures_df.columns
+            else {}
+        )
+        top_messages = (
+            failures_df["error_message"].fillna("unknown").astype(str).value_counts().head(5).to_dict()
+        )
+        raise SystemExit(
+            "batch produced zero features; "
+            f"n_failures={int(failures_df.shape[0])}, "
+            f"top_error_types={top_types}, "
+            f"top_error_classes={top_classes}, "
+            f"top_error_messages={top_messages}"
+        )
     return 0
 
 

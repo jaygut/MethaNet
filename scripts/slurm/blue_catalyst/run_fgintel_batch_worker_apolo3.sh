@@ -37,10 +37,9 @@ if [[ -n "${MODULESHOME:-}" ]] || command -v module >/dev/null 2>&1; then
 fi
 
 source "$(conda info --base)/etc/profile.d/conda.sh"
-conda activate methanet-fgintel
 export PYTHONPATH="$MROOT/src:${PYTHONPATH:-}"
 
-if ! python - <<'PY'
+if ! conda run -n methanet-fgintel python - <<'PY'
 import importlib.util
 import sys
 
@@ -57,7 +56,40 @@ then
   exit 1
 fi
 
-python "$MROOT/scripts/blue_catalyst_fg_batch_pipeline.py" process-batch \
+conda run -n methanet-fgintel hmmsearch -h >/dev/null
+[[ -d "$HMM_DIR" ]] || { echo "ERROR: missing HMM dir $HMM_DIR" >&2; exit 1; }
+
+if ! conda run -n methanet-fgintel python - <<'PY'
+import os
+from pathlib import Path
+import sys
+
+hmm_dir = Path(os.environ["HMM_DIR"])
+required = [
+    "mcrA.hmm", "mcrB.hmm", "mcrG.hmm",
+    "pmoA.hmm", "mmoX.hmm",
+    "dsrA.hmm", "dsrB.hmm",
+    "nifH.hmm", "cbbL.hmm",
+    "mtaB.hmm", "mttB.hmm", "mtbA.hmm",
+]
+
+missing = [str(hmm_dir / name) for name in required if not (hmm_dir / name).exists()]
+if missing:
+    sys.stderr.write(
+        "ERROR: missing required HMM marker files for worker node: "
+        + ", ".join(missing[:6])
+        + (" ..." if len(missing) > 6 else "")
+        + "\n"
+    )
+    sys.exit(1)
+PY
+then
+  echo "Rebuild HMM resources and retry:" >&2
+  echo "  bash workflow/scripts/setup_hmm_resources.sh" >&2
+  exit 1
+fi
+
+conda run -n methanet-fgintel python "$MROOT/scripts/blue_catalyst_fg_batch_pipeline.py" process-batch \
   --batch-manifest "$BATCH_MANIFEST" \
   --hmm-dir "$HMM_DIR" \
   --output-features "$BATCH_OUT_DIR/fg_features.tsv" \
