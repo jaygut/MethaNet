@@ -25,19 +25,21 @@ pilot:
 databases:
   db_root: /home/rsg-jcorre38/scratch/methanet_db
   checkm2: /home/rsg-jcorre38/scratch/methanet_db/checkm2
-  gtdbtk: /home/rsg-jcorre38/scratch/methanet_db/gtdbtk_r232
+  gtdbtk: /home/rsg-jcorre38/scratch/methanet_db/gtdbtk_r232/release232
   gunc_db: /home/rsg-jcorre38/scratch/methanet_db/gunc/progenomes_3.dmnd
   eggnog_v2: /home/rsg-jcorre38/scratch/methanet_db/eggnog_v2
   eggnog_v3_preview: /home/rsg-jcorre38/scratch/methanet_db/eggnog_v3_preview
   kofam_profiles: /home/rsg-jcorre38/scratch/methanet_db/kofam/profiles/prokaryote.hal
   kofam_ko_list: /home/rsg-jcorre38/scratch/methanet_db/kofam/ko_list
   mcycdb_diamond: /home/rsg-jcorre38/scratch/methanet_db/mcycdb/MCycDB_2021.dmnd
-  mcycdb_id2gene: /home/rsg-jcorre38/scratch/methanet_db/mcycdb/MCycDB/id2gene.map
+  mcycdb_id2gene: /home/rsg-jcorre38/scratch/methanet_db/mcycdb/repo/id2gene.map
   scycdb_diamond: /home/rsg-jcorre38/scratch/methanet_db/scycdb/SCycDB_2020Mar.dmnd
-  scycdb_id2gene: /home/rsg-jcorre38/scratch/methanet_db/scycdb/SCycDB/id2gene.2020Mar.map
+  scycdb_id2gene: /home/rsg-jcorre38/scratch/methanet_db/scycdb/repo/id2gene.2020Mar.map
   dbcan: /home/rsg-jcorre38/scratch/methanet_db/dbcan
   dram: /home/rsg-jcorre38/scratch/methanet_db/dram
   metabolic: /home/rsg-jcorre38/scratch/methanet_db/metabolic
+  metabolic_repo: /home/rsg-jcorre38/scratch/methanet_db/metabolic/METABOLIC
+  gapseq: /home/rsg-jcorre38/scratch/methanet_db/gapseq
 
 params:
   fasta_extension: fa
@@ -50,8 +52,10 @@ params:
   diamond_subject_cover: 50
   diamond_identity: 35
   run_eggnog_v3_preview: false
-  run_dram: true
+  run_dram: false
+  run_dram2_beta: false
   run_metabolic: true
+  run_gapseq_optional: false
   run_dbcan_cgc: true
 
 threads:
@@ -65,4 +69,3 @@ resources:
   mem_medium_mb: 64000
   mem_heavy_mb: 256000
   mem_bigmem_mb: 0
-

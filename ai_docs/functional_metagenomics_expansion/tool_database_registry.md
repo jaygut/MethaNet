@@ -17,10 +17,10 @@ Policy: pin exact tool versions, database releases, install paths, and validatio
 | Orthology | eggNOG-mapper | eggNOG data | Official repo says v3 targets eggNOG v7 but is under heavy testing; for production, install stable v2 release. Source: https://github.com/eggnogdb/eggnog-mapper | Production: stable v2; optional gated v3 comparison |
 | Methane cycling | MCycDB | MCycDB_2021 | MCycDB contains 298 methane cycling gene families across 10 methane metabolism pathways and 610,208 representative sequences. Source: https://github.com/qichao1984/MCycDB | Default methane-specific database |
 | Sulfur cycling | SCycDB | SCycDB_2020Mar / mapping files | SCycDB contains 207 sulfur cycling gene families and 585,055 representative sequences; supports DIAMOND/usearch/blast profiling. Source: https://github.com/qichao1984/SCycDB | Default sulfur-competition/coupling layer |
-| CAZymes/substrate | run_dbCAN | dbCAN V5 databases | Official current repo moved to `bcb-unl/run_dbcan`; latest shown release v5.2.9 on 2026-05-27; database command supports HTTP/AWS S3 and CGC resources. Source: https://github.com/bcb-unl/run_dbcan | Default CAZyme/CGC/substrate layer |
-| Metabolic distillation | DRAM / DRAM2 | KOfam, Pfam, dbCAN, MEROPS, VOGDB, UniRef, optional KEGG | DRAM2 docs describe annotation then distillation and custom databases, but public availability has been evolving. Sources: https://dram2beta.readthedocs.io/en/latest/index.html and https://github.com/WrightonLabCSU/DRAM | Gate DRAM2; keep DRAM-compatible fallback |
+| CAZymes/substrate | run_dbCAN | dbCAN V5 databases | Official install docs recommend conda/PyPI/Docker and building the DB with `dbcan_build --cpus 8 --db-dir db --clean`. Source: https://dbcan.readthedocs.io/en/latest/installation.html | Default CAZyme/CGC/substrate layer; use a dedicated env |
+| Metabolic distillation | DRAM / DRAM2 | KOfam, Pfam, dbCAN, MEROPS, VOGDB, UniRef, optional KEGG | DRAM upstream now describes DRAM v2 as public beta on the dev branch; DRAM2 requires Nextflow/container support and preformatted databases via Globus. Sources: https://dramit.readthedocs.io/en/latest/installation.html and https://github.com/WrightonLabCSU/DRAM | Production: METABOLIC-G now; repaired DRAM1 or DRAM2 beta only after validation |
 | Biogeochemical traits | METABOLIC-G | METABOLIC temp/db resources | METABOLIC-G profiles MAG/SAG/isolate genomes without reads; METABOLIC-C adds read coverage/community metabolism. Source: https://github.com/AnantharamanLab/METABOLIC | Default biogeochemical trait summarizer |
-| Search/clustering | MMseqs2, DIAMOND, HMMER | per-tool DBs | Required by eggNOG/dbCAN/DRAM/custom searches; GTDB-Tk docs list HMMER as dependency. | Use for custom marker and novelty layers |
+| Search/clustering/modeling | MMseqs2, DIAMOND, HMMER, optional gapseq | per-tool DBs | Required by eggNOG/dbCAN/DRAM/custom searches; gapseq can add metabolic pathway/model reconstruction and transporter inference. Source: https://github.com/jotech/gapseq | Use DIAMOND/HMMER/MMseqs2 for annotation; gapseq as optional modeling add-on |
 
 ## Production Pinning Rules
 
@@ -77,7 +77,7 @@ If Apollo already has a validated GUNC database, record the exact path and do no
 
 ```bash
 # Use the official GTDB-Tk R232 reference package for GTDB-Tk 2.7.x.
-export GTDBTK_DATA_PATH="$DB_ROOT/gtdbtk_r232"
+export GTDBTK_DATA_PATH="$DB_ROOT/gtdbtk_r232/release232"
 gtdbtk check_install
 ```
 
@@ -117,40 +117,79 @@ download_eggnog_data.py --data_dir "$DB_ROOT/eggnog_v3_preview"
 ```bash
 git clone https://github.com/qichao1984/MCycDB.git "$DB_ROOT/mcycdb/MCycDB"
 diamond makedb \
-  --in "$DB_ROOT/mcycdb/MCycDB/MCycDB_2021.fa" \
+  --in "$DB_ROOT/mcycdb/MCycDB/MCycDB_2021.faa" \
   -d "$DB_ROOT/mcycdb/MCycDB_2021"
 ```
 
-The exact FASTA name may differ after unzipping the split archives; record the resolved filename.
+The exact FASTA name may differ after unzipping the split archives; record the
+resolved filename. On Apollo-3, direct ordered concatenation of split parts
+worked reliably, while `zip -s 0` produced truncated combined archives. The
+repair script normalizes FASTA and then builds the DIAMOND DB.
+
+Validated Apollo-3 DB:
+
+```bash
+diamond dbinfo --db "$DB_ROOT/mcycdb/MCycDB_2021.dmnd"
+# Sequences: 923871; letters: 327226703
+```
 
 ### SCycDB
 
 ```bash
 git clone https://github.com/qichao1984/SCycDB.git "$DB_ROOT/scycdb/SCycDB"
 diamond makedb \
-  --in "$DB_ROOT/scycdb/SCycDB/SCycDB_2020Mar.fa" \
+  --in "$DB_ROOT/scycdb/SCycDB/SCycDB_2020Mar.faa" \
   -d "$DB_ROOT/scycdb/SCycDB_2020Mar"
 ```
 
 The exact FASTA name may differ after unzipping; record the resolved filename.
+Keep `id2gene.2020Mar.map` with the parsed DIAMOND output.
+
+Validated Apollo-3 DB:
+
+```bash
+diamond dbinfo --db "$DB_ROOT/scycdb/SCycDB_2020Mar.dmnd"
+# Sequences: 911805; letters: 306406976
+```
 
 ### run_dbCAN
 
 ```bash
-conda install -c conda-forge -c bioconda dbcan
-run_dbcan database --db_dir "$DB_ROOT/dbcan" --aws_s3
-run_dbcan -h
+conda activate methanet-fgx
+run_dbcan database \
+  --db_dir "$DB_ROOT/dbcan" \
+  --aws_s3 \
+  --retries 4 \
+  --timeout 120 \
+  --log-level INFO
+run_dbcan --help
+run_dbcan database --help
 ```
 
-The official docs also mention `dbcan_build`; use whichever command is supported by the installed V5 package and record it.
+Validated Apollo-3 DB:
+
+```bash
+diamond dbinfo --db "$DB_ROOT/dbcan/CAZy.dmnd"
+# Sequences: 4098879; letters: 2011582247
+diamond dbinfo --db "$DB_ROOT/dbcan/peptidase_db.dmnd"
+# Sequences: 1227939; letters: 287283028
+diamond dbinfo --db "$DB_ROOT/dbcan/sulfatlas_db.dmnd"
+# Sequences: 151467; letters: 81529053
+```
+
+If a future package exposes `dbcan_build` but not `run_dbcan database`, use
+`dbcan_build --cpus 16 --db-dir "$DB_ROOT/dbcan" --clean` and record that
+alternate command in the manifest.
 
 ### DRAM / DRAM2
 
 Recommended approach:
 
-1. Use DRAM stable or the DRAM Nextflow/dev route available on Apollo.
-2. Treat DRAM2-specific output as gated until the installed version is validated.
-3. Record all included databases because DRAM results are database-composition dependent.
+1. Use METABOLIC-G as the immediate biogeochemical distillation layer.
+2. Repair DRAM1 in a fresh official env if DRAM-specific distillates are needed.
+3. Treat DRAM2 as public beta: use Nextflow plus a supported container runtime
+   and preformatted databases from Globus before enabling it in production.
+4. Record all included databases because DRAM results are database-composition dependent.
 
 Minimum validation:
 
@@ -173,6 +212,18 @@ Validation:
 perl METABOLIC-G.pl -h
 ```
 
+### gapseq Optional Add-On
+
+```bash
+conda create -y -n methanet-gapseq -c conda-forge -c bioconda gapseq
+conda activate methanet-gapseq
+gapseq update-sequences -t Bacteria
+gapseq update-sequences -t Archaea
+```
+
+Use for pathway/model reconstruction and transporter inference, not as a
+replacement for curated methane/sulfur marker evidence.
+
 ## Stability Cautions
 
 - eggNOG v2/v3 are not database-compatible; keep them separate.
@@ -180,4 +231,3 @@ perl METABOLIC-G.pl -h
 - MCycDB and SCycDB are older but methane/sulfur-specific; their value is specificity, not recency.
 - DRAM/DRAM2 database setup is heavy and prone to HPC mirror/certificate issues; use pre-provisioned database bundles where possible.
 - run_dbCAN database URLs changed recently; prefer the V5 `database` command or AWS S3 mirror.
-
