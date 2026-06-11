@@ -10,6 +10,10 @@ All heavy tools are disabled by default in `configs/pipeline.yaml` under
 `functional_metagenomics`. A gate can be marked complete only when its required
 tables exist, join to every bridge candidate, and pass the stated checks.
 
+Operational setup, Apollo-3 database paths, repair commands, and end-to-end MAG
+annotation commands are recorded in
+`docs/apollo3_functional_mag_runbook.md`.
+
 ## Phase A: MAG QC And Identity Layer
 
 Purpose: prevent bridge rankings from being driven by low-quality assemblies,

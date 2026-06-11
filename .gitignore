@@ -48,6 +48,11 @@ data/*
 # Pipeline outputs
 features/
 
+# HPC scheduler logs
+/logs/
+/*.out
+/*.err
+
 # AI assistant rules
 .windsurfrules
 .cursor/
