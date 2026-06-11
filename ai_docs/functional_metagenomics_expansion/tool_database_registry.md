@@ -206,11 +206,20 @@ Install from the official repository and record:
 - accessory script path
 - KEGG/KOfam resource path used internally
 
-Validation:
+Validated Apollo-3 runtime:
 
 ```bash
+conda activate methanet-metabolic
+perl -MStatistics::Descriptive -e 'print "Statistics::Descriptive OK\n"'
+perl -MParallel::ForkManager -e 'print "Parallel::ForkManager OK\n"'
 perl METABOLIC-G.pl -h
 ```
+
+The `methanet-metabolic` env needs `libnsl` plus, on the current Apolo-3 image,
+a compatibility symlink from `$CONDA_PREFIX/lib/libnsl.so.1` to
+`$CONDA_PREFIX/lib/libnsl.so.3` for the older conda Perl build. The upstream
+`-test true` mode is not a production gate here because the cloned repository
+does not include the `METABOLIC_test_files/Guaymas_Basin_genome_files` FASTAs.
 
 ### gapseq Optional Add-On
 

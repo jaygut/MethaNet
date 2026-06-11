@@ -21,10 +21,11 @@ Original setup manifest:
 $DB_ROOT/manifests/tool_db_manifest.fgx_db_setup_20260611_160901.tsv
 ```
 
-Manual repair manifest for the solved MCycDB, SCycDB, and dbCAN gates:
+Manual repair manifest for the solved MCycDB, SCycDB, dbCAN, and METABOLIC
+runtime gates:
 
 ```bash
-$DB_ROOT/manifests/tool_db_manifest.manual_repair_20260611_221323.tsv
+$DB_ROOT/manifests/tool_db_manifest.manual_repair_20260611_222352.tsv
 ```
 
 ## Installed And Gated Resources
@@ -39,7 +40,7 @@ $DB_ROOT/manifests/tool_db_manifest.manual_repair_20260611_221323.tsv
 | MCycDB | installed | `$DB_ROOT/mcycdb/MCycDB_2021.dmnd` | Repaired from split archive by ordered concatenation, FASTA normalization, and DIAMOND validation. |
 | SCycDB | installed | `$DB_ROOT/scycdb/SCycDB_2020Mar.dmnd` | Repaired from split archive by ordered concatenation, FASTA normalization, and DIAMOND validation. |
 | dbCAN | installed | `$DB_ROOT/dbcan` | Repaired with `run_dbcan database --db_dir "$DB_ROOT/dbcan" --aws_s3`; DIAMOND and CLI validation passed. |
-| METABOLIC | gated until validated | `$DB_ROOT/metabolic/METABOLIC` | Repository/resources present; validate Perl/R dependencies before use. |
+| METABOLIC | installed, runtime validated | `$DB_ROOT/metabolic/METABOLIC` | `METABOLIC-G.pl -h` passes in `methanet-metabolic`; bundled upstream test FASTAs are absent from this clone. |
 | DRAM | gated | `$DB_ROOT/dram` | Existing env has a broken `DRAM-setup.py`; rebuild from official env or use a prebuilt config bundle. |
 | MMseqs2 | runtime registered | `$DB_ROOT/mmseqs` | Binary only; no generic database is required yet. |
 
@@ -69,6 +70,7 @@ Use this as the default MAG analytics stack:
 | MCycDB | Split zip parts were present, but `zip -s 0` created truncated archives on Apollo. | Use ordered concatenation of `.z01 ... .zNN + .zip`, extract, normalize FASTA, and require `diamond dbinfo`. This is now repaired locally. |
 | SCycDB | Same split-zip issue as MCycDB; partial extraction also created malformed FASTA records. | Use ordered concatenation, extract, normalize FASTA, and require `diamond dbinfo`. This is now repaired locally. |
 | dbCAN | The first setup used an unsupported/older database path. | Use the modern `run_dbcan database --db_dir DIR --aws_s3` command with retries/timeouts, or `dbcan_build` if that command is the one exposed by the installed package. This is now repaired locally. |
+| METABOLIC | Initial runtime env missed Perl modules and the older `libnsl.so.1` ABI expected by the conda Perl build. | Use `methanet-metabolic` with Perl/R/HMMER/DIAMOND/BLAST/KOfamScan dependencies plus `libnsl`; on Apolo-3, create a compatibility symlink from `libnsl.so.1` to the available `libnsl.so.3` inside the env. This is now repaired locally for CLI/runtime validation. |
 | DRAM | Existing `methanet-fgintel` has a broken `DRAM-setup.py`. | Do not make DRAM a production blocker. Use METABOLIC-G for biogeochemical summaries now, repair DRAM1 in a fresh official env if needed, and treat DRAM2 as optional public beta requiring Nextflow/container runtime and Globus-provisioned preformatted DBs. |
 | Alternatives | DRAM is brittle and eggNOG data staging may remain slow. | Add optional gapseq for genome-scale metabolic pathway/model reconstruction when the project needs transporters or metabolic network predictions beyond annotation matrices. |
 
@@ -192,22 +194,27 @@ run_dbcan database --help
 
 ### METABOLIC
 
-METABOLIC is useful for biogeochemical trait summaries, but the runtime depends
-on Perl and R modules. The patched setup script creates
-`METABOLIC_ENV=methanet-metabolic` and does not mark METABOLIC installed unless
-`perl METABOLIC-G.pl -h` succeeds.
+METABOLIC is useful for biogeochemical trait summaries, and it is now the
+production fallback for DRAM-specific biogeochemical summaries on Apolo-3. The
+validated runtime is `METABOLIC_ENV=methanet-metabolic`.
 
-Manual repair:
+Runtime repair and validation:
 
 ```bash
 conda create -y -n methanet-metabolic -c conda-forge -c bioconda \
-  perl perl-statistics-descriptive perl-parallel-forkmanager perl-list-util perl-getopt-long \
+  perl perl-statistics-descriptive perl-parallel-forkmanager perl-list-util perl-getopt-long libnsl \
   r-base r-ggplot2 r-data.table hmmer diamond blast kofamscan
 conda activate methanet-metabolic
+ln -s libnsl.so.3 "$CONDA_PREFIX/lib/libnsl.so.1"  # only if libnsl.so.1 is missing
 cd "$DB_ROOT/metabolic/METABOLIC"
 bash run_to_setup.sh
+perl -MStatistics::Descriptive -e 'print "Statistics::Descriptive OK\n"'
+perl -MParallel::ForkManager -e 'print "Parallel::ForkManager OK\n"'
 perl METABOLIC-G.pl -h
 ```
+
+The upstream `-test true` mode was not used as a completion gate because this
+clone does not include `METABOLIC_test_files/Guaymas_Basin_genome_files`.
 
 ### DRAM
 

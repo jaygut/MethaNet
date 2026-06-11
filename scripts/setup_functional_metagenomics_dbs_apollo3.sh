@@ -186,6 +186,14 @@ conda_activate() {
   activate_env "$TOOL_ENV"
 }
 
+ensure_metabolic_runtime_link() {
+  local prefix="${CONDA_PREFIX:-}"
+  if [[ -n "$prefix" && -e "${prefix}/lib/libnsl.so.3" && ! -e "${prefix}/lib/libnsl.so.1" ]]; then
+    ln -s libnsl.so.3 "${prefix}/lib/libnsl.so.1"
+    log "created METABOLIC Perl compatibility symlink: ${prefix}/lib/libnsl.so.1 -> libnsl.so.3"
+  fi
+}
+
 binary_version() {
   local cmd="$1"
   shift || true
@@ -371,7 +379,7 @@ step_create_env() {
   if ! env_exists "$METABOLIC_ENV"; then
     log "creating METABOLIC runtime env ${METABOLIC_ENV}"
     if ! conda create -y -n "$METABOLIC_ENV" -c conda-forge -c bioconda \
-      perl perl-statistics-descriptive perl-parallel-forkmanager perl-list-util perl-getopt-long \
+      perl perl-statistics-descriptive perl-parallel-forkmanager perl-list-util perl-getopt-long libnsl \
       r-base r-ggplot2 r-data.table hmmer diamond blast kofamscan; then
       log "METABOLIC env creation failed; METABOLIC validation will remain gated"
       conda env remove -y -n "$METABOLIC_ENV" >/dev/null 2>&1 || true
@@ -702,6 +710,7 @@ step_dram() {
 step_metabolic() {
   if env_exists "$METABOLIC_ENV"; then
     activate_env "$METABOLIC_ENV"
+    ensure_metabolic_runtime_link
   else
     conda_activate
   fi
