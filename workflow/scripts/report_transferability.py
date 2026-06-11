@@ -15,15 +15,15 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import (
     mean_absolute_error,
     mean_squared_error,
+    pairwise_distances,
     r2_score,
 )
 from sklearn.model_selection import StratifiedKFold, cross_val_score
-from sklearn.metrics import pairwise_distances
 
 
 @dataclass(frozen=True)

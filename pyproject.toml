@@ -123,7 +123,7 @@ api = [
     "skl2onnx>=1.16",
 ]
 all = [
-    "methanet[ml,bioinformatics,prediction,api]",
+    "methanet[ml,bioinformatics,prediction,api,pipeline]",
 ]
 
 [project.urls]
@@ -141,6 +141,19 @@ target-version = "py39"
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
 
+[tool.ruff.lint.per-file-ignores]
+"src/api_bridge/inference.py" = ["N803", "N806"]
+"src/methanet/classification/ensemble.py" = ["N803", "N806"]
+"src/methanet/domain_adapt/losses.py" = ["N806"]
+"src/methanet/domain_adapt/mcw.py" = ["N803", "N806"]
+"src/methanet/functional/quantify.py" = ["N802", "N815"]
+"scripts/**" = ["E402", "E501", "E701", "N806"]
+"tests/**" = ["N806"]
+"workflow/scripts/**" = ["E501", "N803", "N806"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = [
+    "slow: marks tests that run expensive bootstrap/refit loops",
+]

@@ -5,7 +5,7 @@ to ONNX format for production deployment.
 """
 
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional
 
 try:
     import torch
@@ -167,12 +167,13 @@ def export_sklearn_pipeline_to_onnx(
 ) -> Path:
     """Export a scaler + sklearn model pipeline to ONNX."""
     try:
-        from sklearn.pipeline import Pipeline
         from skl2onnx import convert_sklearn
         from skl2onnx.common.data_types import FloatTensorType
+        from sklearn.pipeline import Pipeline
     except ImportError:
         raise ImportError(
-            "skl2onnx and scikit-learn required. Install: pip install skl2onnx scikit-learn"
+            "skl2onnx and scikit-learn required. "
+            "Install: pip install skl2onnx scikit-learn"
         )
 
     output_path = Path(output_path)
@@ -252,11 +253,17 @@ def get_onnx_metadata(model_path: Path) -> dict:
 
     # Input/output info
     metadata["inputs"] = [
-        {"name": inp.name, "shape": [d.dim_value for d in inp.type.tensor_type.shape.dim]}
+        {
+            "name": inp.name,
+            "shape": [d.dim_value for d in inp.type.tensor_type.shape.dim],
+        }
         for inp in onnx_model.graph.input
     ]
     metadata["outputs"] = [
-        {"name": out.name, "shape": [d.dim_value for d in out.type.tensor_type.shape.dim]}
+        {
+            "name": out.name,
+            "shape": [d.dim_value for d in out.type.tensor_type.shape.dim],
+        }
         for out in onnx_model.graph.output
     ]
 

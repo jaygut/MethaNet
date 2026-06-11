@@ -5,24 +5,20 @@ import numpy as np
 import pandas as pd
 
 from methanet.embedding.fusion import FeatureFusion, FusionConfig
+from methanet.schema import FUNCTIONAL_FEATURE_COLUMNS
 
 
-def read_functional(path: Path) -> np.ndarray:
+def read_functional(path: Path) -> np.ndarray | None:
     df = pd.read_csv(path, sep="\t")
     if df.empty:
         return None
+    missing = [col for col in FUNCTIONAL_FEATURE_COLUMNS if col not in df.columns]
+    if missing:
+        raise ValueError(
+            f"Functional feature file {path} is missing required columns: {missing}"
+        )
     row = df.iloc[0]
-    return np.array(
-        [
-            row["mcrA"],
-            row["pmoA"],
-            row["dsrA"],
-            row["nifH"],
-            row["cbbL"],
-            row["mcrA_pmoA_ratio"],
-        ],
-        dtype=float,
-    )
+    return row.loc[list(FUNCTIONAL_FEATURE_COLUMNS)].to_numpy(dtype=float)
 
 
 def load_embedding(path: Path, expected_dim: int) -> np.ndarray:
@@ -33,13 +29,16 @@ def load_embedding(path: Path, expected_dim: int) -> np.ndarray:
         arr = arr.mean(axis=0)
     if arr.shape[0] != expected_dim:
         raise ValueError(
-            f"Unexpected embedding dim {arr.shape[0]} for {path} (expected {expected_dim})"
+            f"Unexpected embedding dim {arr.shape[0]} for {path} "
+            f"(expected {expected_dim})"
         )
     return arr
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Fuse functional and embedding features.")
+    parser = argparse.ArgumentParser(
+        description="Fuse functional and embedding features."
+    )
     parser.add_argument("--metadata", required=True)
     parser.add_argument("--functional-dir", required=True)
     parser.add_argument("--esm2-dir", required=True)
@@ -65,7 +64,11 @@ def main() -> None:
     for _, row in meta.iterrows():
         sample_id = row["sample_id"]
         functional_path = Path(args.functional_dir) / f"{sample_id}.tsv"
-        functional = read_functional(functional_path) if functional_path.exists() else None
+        functional = (
+            read_functional(functional_path)
+            if functional_path.exists()
+            else None
+        )
 
         esm2_path = Path(args.esm2_dir) / f"{sample_id}_esm2.npy"
         genome_path = Path(args.genome_dir) / f"{sample_id}_{args.genome_backend}.npy"

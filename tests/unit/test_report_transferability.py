@@ -4,12 +4,12 @@ import importlib.util
 import json
 import subprocess
 import sys
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
-
 
 PARQUET_AVAILABLE = importlib.util.find_spec("pyarrow") is not None
 
@@ -158,3 +158,25 @@ def test_report_transferability_generates_poc_report(tmp_path: Path) -> None:
     assert (out_dir / "feature_finiteness_by_group.csv").exists()
     assert (out_dir / "cross_domain_transfer_by_group.csv").exists()
     assert (out_dir / "transferability_summary.json").exists()
+
+
+def test_real_fused_layout_group_slices_do_not_overlap() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    module_path = repo_root / "workflow" / "scripts" / "report_transferability.py"
+    spec = spec_from_file_location("report_transferability", module_path)
+    assert spec and spec.loader
+    module = module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+
+    groups = module._build_groups(
+        total_dim=13 + 1280 + 768,
+        functional_dim=13,
+        esm2_dim=1280,
+        genome_dim=768,
+    )
+    group_map = {group.name: group for group in groups}
+
+    assert group_map["functional"].slices == (slice(0, 13),)
+    assert group_map["esm2"].slices == (slice(13, 1293),)
+    assert group_map["genome"].slices == (slice(1293, 2061),)

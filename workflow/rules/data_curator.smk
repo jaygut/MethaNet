@@ -2,10 +2,12 @@ rule sra_download:
     output:
         r1=f"{RAW_SRA}/{{acc}}/{{acc}}_1.fastq",
         r2=f"{RAW_SRA}/{{acc}}/{{acc}}_2.fastq",
+    log:
+        f"{REPORTS}/logs/sra_download/{{acc}}.log",
     threads: THREADS.get("download", 8)
     params:
         out_dir=lambda wc: f"{RAW_SRA}/{wc.acc}",
-        raw_root=RAW_SRA,
+        raw_root=lambda wc, output: str(Path(output.r1).parents[1]),
     run:
         if SIMULATE:
             ensure_outputs(output)
@@ -21,6 +23,8 @@ rule sra_download:
 rule ena_download:
     output:
         out_dir=directory(f"{RAW_ENA}/{{acc}}"),
+    log:
+        f"{REPORTS}/logs/ena_download/{{acc}}.log",
     run:
         if SIMULATE:
             ensure_outputs(output)
@@ -37,6 +41,8 @@ rule fastp_qc:
         r2=f"{QC_READS}/{{acc}}_R2.fq.gz",
         html=f"{QC_READS}/{{acc}}_fastp.html",
         json=f"{QC_READS}/{{acc}}_fastp.json",
+    log:
+        f"{REPORTS}/logs/fastp_qc/{{acc}}.log",
     threads: THREADS.get("qc", 8)
     run:
         if SIMULATE:
@@ -56,6 +62,8 @@ rule fastqc:
         r2=f"{QC_READS}/{{acc}}_R2.fq.gz",
     output:
         qc_dir=directory(f"{QC_READS}/fastqc/{{acc}}"),
+    log:
+        f"{REPORTS}/logs/fastqc/{{acc}}.log",
     threads: THREADS.get("qc", 8)
     run:
         if SIMULATE:
@@ -73,6 +81,8 @@ rule multiqc:
         fastp_jsons=expand(f"{QC_READS}/{{acc}}_fastp.json", acc=SRA_ACCESSIONS),
     output:
         report=f"{QC_REPORTS}/multiqc_report.html",
+    log:
+        f"{REPORTS}/logs/multiqc.log",
     run:
         if SIMULATE:
             ensure_outputs(output)
@@ -85,6 +95,8 @@ rule assembly_qc:
         fasta=f"{ASSEMBLIES}/{{sample}}.fasta",
     output:
         out_dir=directory(f"{QC_ASSEMBLIES}/{{sample}}"),
+    log:
+        f"{REPORTS}/logs/assembly_qc/{{sample}}.log",
     threads: THREADS.get("qc", 8)
     run:
         if SIMULATE:
@@ -98,6 +110,8 @@ rule mag_qc:
         mags=lambda wc: f"{MAGS}/{wc.mag_set}",
     output:
         out_dir=directory(f"{QC_MAGS}/{{mag_set}}"),
+    log:
+        f"{REPORTS}/logs/mag_qc/{{mag_set}}.log",
     threads: THREADS.get("qc", 8)
     run:
         if SIMULATE:

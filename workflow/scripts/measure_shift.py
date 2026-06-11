@@ -5,9 +5,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import cross_val_score
 from sklearn.metrics import pairwise_distances
+from sklearn.model_selection import StratifiedKFold, cross_val_score
 
 
 def load_features(path: Path) -> pd.DataFrame:

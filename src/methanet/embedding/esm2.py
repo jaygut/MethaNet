@@ -4,10 +4,11 @@ This module provides protein-level and genome-level embeddings using
 the ESM-2 foundation model (facebook/esm2_t33_650M_UR50D).
 """
 
+import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-import warnings
+
 import numpy as np
 
 try:
@@ -54,9 +55,7 @@ class EmbeddingConfig:
     model_name: str = "facebook/esm2_t33_650M_UR50D"
     batch_size: int = 8
     max_length: int = 1024
-    pooling_layers: Tuple[int, ...] = field(
-        default_factory=lambda: tuple(range(20, 34))  # layers 20-33
-    )
+    pooling_layers: Tuple[int, ...] = field(default_factory=lambda: (33,))
     pooling_strategy: str = "mean"
     device: str = "auto"
     fp16: bool = True
@@ -64,7 +63,11 @@ class EmbeddingConfig:
 
     def __post_init__(self):
         if self.device == "auto":
-            self.device = "cuda" if TORCH_AVAILABLE and torch.cuda.is_available() else "cpu"
+            self.device = (
+                "cuda"
+                if TORCH_AVAILABLE and torch.cuda.is_available()
+                else "cpu"
+            )
 
 
 def resolve_pooling_layers(
@@ -182,7 +185,9 @@ class ESM2Embedder:
             self.model = self.model.half()
 
         self.model.eval()
-        total_hidden_states = int(getattr(self.model.config, "num_hidden_layers", 0)) + 1
+        total_hidden_states = (
+            int(getattr(self.model.config, "num_hidden_layers", 0)) + 1
+        )
         requested_layers = tuple(self.config.pooling_layers)
         self.pooling_layer_indices = resolve_pooling_layers(
             requested_layers=requested_layers,

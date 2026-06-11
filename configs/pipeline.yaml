@@ -202,6 +202,65 @@ functional:
   # Normalization method
   normalization: per_1k_proteins  # per_1k_proteins or raw
 
+# Functional metagenomics expansion contracts.
+# Heavy external tools remain disabled by default and are promoted only when
+# their required outputs pass the documented gates in
+# docs/functional_metagenomics_expansion.md.
+functional_metagenomics:
+  enabled: false
+  output_dir: results/functional_metagenomics
+  tools:
+    checkm2:
+      enabled: false
+      output: results/functional_metagenomics/checkm2/quality_report.tsv
+    gunc:
+      enabled: false
+      output: results/functional_metagenomics/gunc/gunc_output.tsv
+    gtdbtk:
+      enabled: false
+      output: results/functional_metagenomics/gtdbtk/gtdbtk.bac120.summary.tsv
+    drep:
+      enabled: false
+      output: results/functional_metagenomics/drep/data_tables/Cdb.csv
+    mcycdb:
+      enabled: false
+      family_hits: results/functional_metagenomics/mcycdb/family_hits.tsv
+      pathway_completeness: results/functional_metagenomics/mcycdb/pathway_completeness.tsv
+    kofamscan:
+      enabled: false
+      ko_matrix: results/functional_metagenomics/kofamscan/ko_matrix.tsv
+    eggnog_mapper:
+      enabled: false
+      annotations: results/functional_metagenomics/eggnog/annotations.tsv
+      ec_matrix: results/functional_metagenomics/eggnog/ec_matrix.tsv
+    dram2:
+      enabled: false
+      distillate: results/functional_metagenomics/dram2/distillate.tsv
+    metabolic:
+      enabled: false
+      distillate: results/functional_metagenomics/metabolic/distillate.tsv
+    dbcan:
+      enabled: false
+      cazyme_matrix: results/functional_metagenomics/dbcan/cazyme_matrix.tsv
+  contracts:
+    mag_qc_integrated: results/functional_metagenomics/mag_qc_integrated.tsv
+    methane_marker_panel: results/functional_metagenomics/methane_marker_panel.tsv
+    methanogenesis_operon_completeness: results/functional_metagenomics/methanogenesis_operon_completeness.tsv
+    mcycdb_family_hits: results/functional_metagenomics/mcycdb_family_hits.tsv
+    mcycdb_pathway_completeness: results/functional_metagenomics/mcycdb_pathway_completeness.tsv
+    bridge_mechanism_cards: results/functional_metagenomics/bridge_mechanism_cards.tsv
+    ko_matrix: results/functional_metagenomics/ko_matrix.tsv
+    ec_matrix: results/functional_metagenomics/ec_matrix.tsv
+    module_matrix: results/functional_metagenomics/module_matrix.tsv
+    annotation_coverage: results/functional_metagenomics/annotation_coverage.tsv
+    latent_function_stability: results/functional_metagenomics/latent_function_stability.tsv
+    source_aware_validation: results/functional_metagenomics/source_aware_validation.tsv
+  gates:
+    mag_qc_identity: false
+    methane_mechanism: false
+    broad_functional: false
+    latent_function_deconfounding: false
+
 # Domain adaptation parameters
 domain_adaptation:
   method: mcw  # mcw (MMD-CORAL Weighted), dann, coral, or mmd
@@ -274,6 +333,7 @@ training:
 feature_dims:
   functional: 13  # 12 markers + 1 ratio
   esm2: 1280
+  genome: 768
   dnabert2: 768
   genomeocean: 3072
   total_fused: 2061  # Functional + ESM2 + DNABERT-2 (default)

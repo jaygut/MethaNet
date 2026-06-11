@@ -9,8 +9,11 @@ This module provides utilities for combining:
 Total fused dimension depends on genome embedding backend.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
+
 import numpy as np
 
 from methanet.functional.quantify import FunctionalProfile
@@ -18,10 +21,17 @@ from methanet.schema import (
     DEFAULT_FUNCTIONAL_PATHWAYS,
     DEFAULT_GENOME_DIM,
     DNABERT2_DIM,
+    FUNCTIONAL_VECTOR_DIM,
+)
+from methanet.schema import (
     ESM2_DIM as SCHEMA_ESM2_DIM,
-    FUNCTIONAL_BASE_DIM,
+)
+from methanet.schema import (
     GENOMEOCEAN_DIM as SCHEMA_GENOMEOCEAN_DIM,
 )
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 
 @dataclass
@@ -92,7 +102,8 @@ class FusionConfig:
     include_genomeocean: bool = True
     include_metadata: bool = True
     normalize: bool = True
-    functional_pathways: int = DEFAULT_FUNCTIONAL_PATHWAYS  # KEGG pathway completeness scores
+    # KEGG or broader pathway completeness scores appended after the 13-vector.
+    functional_pathways: int = DEFAULT_FUNCTIONAL_PATHWAYS
     genome_dim: int = DEFAULT_GENOME_DIM
 
 
@@ -107,7 +118,7 @@ class FeatureFusion:
     """
 
     # Feature dimensions
-    BASE_FUNCTIONAL_DIM = FUNCTIONAL_BASE_DIM
+    BASE_FUNCTIONAL_DIM = FUNCTIONAL_VECTOR_DIM
     ESM2_DIM = SCHEMA_ESM2_DIM
     GENOMEOCEAN_DIM = SCHEMA_GENOMEOCEAN_DIM
     DNABERT2_DIM = DNABERT2_DIM
@@ -154,7 +165,7 @@ class FeatureFusion:
                 else:
                     func_vec = functional
             else:
-                func_vec = np.full(self.BASE_FUNCTIONAL_DIM + 1, np.nan)
+                func_vec = np.full(self.BASE_FUNCTIONAL_DIM, np.nan)
 
             # Add pathway scores if provided
             if pathway_scores is not None:
@@ -225,7 +236,7 @@ class FeatureFusion:
         functional_profiles: Optional[List[FunctionalProfile]] = None,
         esm2_embeddings: Optional[Dict[str, np.ndarray]] = None,
         genomeocean_embeddings: Optional[Dict[str, np.ndarray]] = None,
-        metadata_df: Optional["pd.DataFrame"] = None,
+        metadata_df: Optional[pd.DataFrame] = None,
     ) -> List[FusedFeatures]:
         """Fuse features for multiple samples.
 
@@ -290,7 +301,7 @@ class FeatureFusion:
         """Expected total feature dimension based on config."""
         dim = 0
         if self.config.include_functional:
-            dim += self.BASE_FUNCTIONAL_DIM + 1 + self.config.functional_pathways
+            dim += self.BASE_FUNCTIONAL_DIM + self.config.functional_pathways
         if self.config.include_esm2:
             dim += self.ESM2_DIM
         if self.config.include_genomeocean:

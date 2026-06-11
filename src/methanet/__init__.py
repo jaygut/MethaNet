@@ -22,14 +22,15 @@ __author__ = "Philosof, Alon and Gutierrez, Jay"
 
 # Core classification
 from methanet.classification import (
-    MethaNetEnsemble,
-    EnsembleConfig,
-    RiskTier,
     ClassificationResult,
+    EnsembleConfig,
+    MethaNetEnsemble,
+    RiskTier,
 )
 
 # Functional gene quantification
-from methanet.functional import FunctionalQuantifier, FunctionalProfile
+from methanet.functional import FunctionalProfile, FunctionalQuantifier
+
 
 # Embeddings (lazy import for optional dependencies)
 def get_embedder(model_type: str = "esm2"):

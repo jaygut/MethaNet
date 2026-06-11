@@ -8,12 +8,13 @@ as a domain-expert agentic system for cross-ecosystem methanogenic microbiology.
 References verified via web search March 2026.
 """
 
-from docx import Document
-from docx.shared import Inches, Pt, Cm, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx.oxml.ns import qn
 import os
+
+from docx import Document
+from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml.ns import qn
+from docx.shared import Cm, Pt, RGBColor
 
 # --- Configuration ---
 OUTPUT_DIR = os.path.join(

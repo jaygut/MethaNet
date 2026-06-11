@@ -6,7 +6,8 @@ for deployed MethaNet models.
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
+
 import numpy as np
 
 try:
@@ -16,7 +17,7 @@ try:
 except ImportError:
     ORT_AVAILABLE = False
 
-from methanet.classification.risk_tiers import RiskTier, TIER_MIDPOINTS
+from methanet.classification.risk_tiers import TIER_MIDPOINTS, RiskTier
 
 
 @dataclass
@@ -280,7 +281,11 @@ class ONNXEnsembleInference:
 
     @property
     def providers(self) -> Dict[str, List[str]]:
-        return {name: session.get_providers() for name, session in self.sessions.items()}
+        return {
+            name: session.get_providers()
+            for name, session in self.sessions.items()
+        }
+
 
 def batch_inference(
     model_path: Path,

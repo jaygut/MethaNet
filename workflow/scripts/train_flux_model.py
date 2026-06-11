@@ -4,11 +4,10 @@ from pathlib import Path
 
 import joblib
 import numpy as np
+from flux_utils import load_labeled_flux_data
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-
-from flux_utils import load_labeled_flux_data
 
 
 def build_model(name: str, random_state: int):

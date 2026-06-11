@@ -3,6 +3,8 @@ rule prepare_dna_sequences:
         fasta=f"{ASSEMBLIES}/{{sample}}.fasta",
     output:
         fasta=f"{DNA_SEQS}/{{sample}}.fasta",
+    log:
+        f"{REPORTS}/logs/prepare_dna_sequences/{{sample}}.log",
     threads: THREADS.get("qc", 1)
     run:
         if SIMULATE:
@@ -19,6 +21,8 @@ rule embed_esm2:
         fasta=f"{MARKER_SEQS}/{{sample}}.fasta",
     output:
         npy=f"{EMBEDDINGS}/{{sample}}_esm2.npy",
+    log:
+        f"{REPORTS}/logs/embed_esm2/{{sample}}.log",
     threads: THREADS.get("embedding", 1)
     params:
         model=MODELS_CFG.get("esm2", "facebook/esm2_t33_650M_UR50D"),
@@ -43,6 +47,8 @@ rule embed_dnabert2:
     output:
         npy=f"{EMBEDDINGS}/{{sample}}_dnabert2.npy",
         metrics=f"{EMBEDDINGS}/{{sample}}_dnabert2_metrics.json",
+    log:
+        f"{REPORTS}/logs/embed_dnabert2/{{sample}}.log",
     threads: THREADS.get("embedding", 1)
     params:
         model=MODELS_CFG.get("dnabert2", "zhihan1996/DNABERT-2-117M"),

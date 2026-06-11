@@ -164,7 +164,8 @@ For a proposal-focused, end-to-end reproducible run using MUCC + PRJEB31266 prot
 sbatch scripts/submit_blue_catalyst_poc_apolo3.sh
 
 # After package export on Apolo, fetch artifacts locally
-./scripts/fetch_apolo_blue_catalyst_artifacts.sh --stamp 20260226_194505
+./scripts/fetch_apolo_blue_catalyst_artifacts.sh \
+  --stamp apolo_full_20260228_080644_embed_20260305_061952
 ```
 
 #### Option B — Local offline execution (advanced analytics only; requires downloaded artifacts)
@@ -188,15 +189,35 @@ uv run jupyter nbconvert \
 ```
 
 Validated run:
-- `results/blue_catalyst_poc/runs/apolo_20260226_194505/`
-- extracted outputs: `results/blue_catalyst_poc/runs/apolo_20260226_194505/artifacts/` (28 files)
+- `results/blue_catalyst_poc/runs/apolo_full_20260228_080644_embed_20260305_061952/`
+- extracted outputs:
+  `results/blue_catalyst_poc/runs/apolo_full_20260228_080644_embed_20260305_061952/artifacts/`
 
 Validated metrics snapshot:
-- `n_samples=40`, `silhouette_non_noise=0.433`, `cluster_purity~0.99`
-- **PERMANOVA**: F=40.6, p=0.001, R²=0.517
-- **PCA**: PC1=62.9%, PC1+PC2=78.0%, 3 PCs for 80% variance
-- **Trajectory t-test**: t=13.97, p=1.5e-16
-- **Bridge genome**: `rumen__10674_0001_idba_bin.23` mixing_coeff=1.0
+- Final embedded cohort: **662 genomes = 555 rumen + 107 wetland**.
+- Pre-final/source denominator: `sample_source_counts.tsv` reports 555 rumen +
+  108 MUCC wetland before one wetland coassembly/input record is excluded from
+  the primary final embedding denominator.
+- Embedding: `662 x 1280` ESM2-650M vectors, layer 33 mean pooled, zero
+  attrition and zero non-finite vectors.
+- **Silhouette**: 0.398.
+- **PERMANOVA**: F=167.05, p=0.001, R2=0.202.
+- **PCA**: PC1=44.4%, PC2=21.8%, PC3=11.0%.
+- **Classifier separability**: wetland-vs-rumen AUC=1.0 and balanced
+  accuracy=0.999, with source-ecosystem confounding explicitly retained as a
+  caveat.
+
+Validate the current local artifact copy:
+
+```bash
+uv run python scripts/validate_blue_catalyst_poc.py --strict \
+  --output-json reports/poc/blue_catalyst_denominator_qc.json \
+  --output-md reports/poc/blue_catalyst_denominator_qc.md
+```
+
+The functional-metagenomics expansion remains gated and disabled by default.
+Required output contracts and promotion gates are tracked in
+`docs/functional_metagenomics_expansion.md`.
 
 Expected core outputs (Apolo-3 pipeline):
 - `poc_metrics.json` / `embedding_stats.json`
@@ -220,6 +241,8 @@ Operational notes from validated execution:
 - Analysis stage handles zero/insufficient sample sizes without crashing.
 - Artifact fetch normalizes checksum entries when remote SHA files include absolute paths.
 - `nbconvert` requires absolute paths for both input and output to avoid directory prefix doubling.
+- The initial 40-genome run remains useful as a historical smoke validation,
+  but the canonical POC denominator is the 662-genome embedded cohort above.
 
 ### 4.1 Configure Pipeline
 
@@ -403,11 +426,11 @@ joblib.dump(final_ensemble.models, "models/trained/ensemble.joblib")
 # Export neural net to ONNX
 export_neural_net_to_onnx(
     final_ensemble.models["neural_net"],
-    input_dim=2125,
+    input_dim=2061,
     output_path="models/onnx/neural_net.onnx"
 )
 
-# Use input_dim=4429 if GenomeOcean embeddings are enabled.
+# Use input_dim=4365 if GenomeOcean embeddings are enabled.
 ```
 
 ---

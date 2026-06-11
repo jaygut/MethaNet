@@ -10,8 +10,8 @@ Output: Risk scores (0-100) with 95% confidence intervals,
 mapped to risk tiers A-E.
 """
 
-from methanet.classification.risk_tiers import RiskTier, ClassificationResult
-from methanet.classification.ensemble import MethaNetEnsemble, EnsembleConfig
+from methanet.classification.ensemble import EnsembleConfig, MethaNetEnsemble
+from methanet.classification.risk_tiers import ClassificationResult, RiskTier
 
 __all__ = [
     "MethaNetEnsemble",

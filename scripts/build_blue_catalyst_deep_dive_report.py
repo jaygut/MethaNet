@@ -12,32 +12,27 @@ from __future__ import annotations
 
 import io
 import json
-import textwrap
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-import matplotlib.ticker as mtick
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+
+# python-docx imports
+from docx import Document
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Inches, Pt, RGBColor
 from matplotlib.patches import FancyBboxPatch
+from PIL import Image
 from scipy import stats
 from scipy.stats import gaussian_kde
 from sklearn.decomposition import PCA
 from sklearn.metrics.pairwise import cosine_distances
-from sklearn.neighbors import NearestNeighbors
-from PIL import Image
-
-# python-docx imports
-from docx import Document
-from docx.shared import Inches, Pt, RGBColor, Cm
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.table import WD_TABLE_ALIGNMENT, WD_ALIGN_VERTICAL
-from docx.oxml.ns import qn
-from docx.oxml import OxmlElement
 
 # ── Paths ──────────────────────────────────────────────────────────────
 PROJECT = Path(__file__).resolve().parent.parent
@@ -315,6 +310,7 @@ ax.set_title("Transfer Readiness Ranking — Top 20 Bridge Candidates\n"
 
 # Legend
 from matplotlib.patches import Patch
+
 legend_elements = [Patch(facecolor=PAL["rumen"], label="rumen"),
                    Patch(facecolor=PAL["wetland"], label="wetland")]
 ax.legend(handles=legend_elements, loc="lower right", fontsize=9)
@@ -628,22 +624,22 @@ page_break(doc)
 # ── Section 3: Statistical Validation ─────────────────────────────────
 add_heading_styled(doc, "3. Statistical Validation", size=11)
 add_body(doc, (
-    f"PERMANOVA on the full 1,280-dimensional cosine distance matrix (999 permutations) confirms "
-    f"that ecosystem identity is a statistically significant predictor of embedding structure "
-    f"(pseudo-F=167.0, p=0.001, R\u00b2=0.202). The R\u00b2 of 0.202 means ecosystem explains approximately "
-    f"one-fifth of total variance — a meaningful but not overwhelming fraction, consistent with "
-    f"the presence of substantial within-ecosystem diversity (particularly among rumen Bacteria). "
-    f"This is expected and desirable: if ecosystem explained ~100% of variance, the embedding "
-    f"would encode only batch identity, not biological signal."
+    "PERMANOVA on the full 1,280-dimensional cosine distance matrix (999 permutations) confirms "
+    "that ecosystem identity is a statistically significant predictor of embedding structure "
+    "(pseudo-F=167.0, p=0.001, R\u00b2=0.202). The R\u00b2 of 0.202 means ecosystem explains approximately "
+    "one-fifth of total variance — a meaningful but not overwhelming fraction, consistent with "
+    "the presence of substantial within-ecosystem diversity (particularly among rumen Bacteria). "
+    "This is expected and desirable: if ecosystem explained ~100% of variance, the embedding "
+    "would encode only batch identity, not biological signal."
 ))
 add_body(doc, (
-    f"Per-genome silhouette analysis reveals an asymmetric separation structure. Wetland genomes "
-    f"achieve high silhouette scores (mean ~0.85, tight unimodal distribution), indicating a "
-    f"homogeneous, well-separated cluster. Rumen genomes show a broad, bimodal silhouette "
-    f"distribution (mean ~0.31) with a long negative tail, reflecting the fragmented sub-cluster "
-    f"structure visible in UMAP/t-SNE. This asymmetry is biologically plausible: the rumen "
-    f"archaeome comprises diverse functional guilds (methanogens, acetogens, syntrophs), while "
-    f"the wetland MUCC genomes represent a more environmentally constrained community."
+    "Per-genome silhouette analysis reveals an asymmetric separation structure. Wetland genomes "
+    "achieve high silhouette scores (mean ~0.85, tight unimodal distribution), indicating a "
+    "homogeneous, well-separated cluster. Rumen genomes show a broad, bimodal silhouette "
+    "distribution (mean ~0.31) with a long negative tail, reflecting the fragmented sub-cluster "
+    "structure visible in UMAP/t-SNE. This asymmetry is biologically plausible: the rumen "
+    "archaeome comprises diverse functional guilds (methanogens, acetogens, syntrophs), while "
+    "the wetland MUCC genomes represent a more environmentally constrained community."
 ))
 add_body(doc, (
     f"Ecosystem trajectory analysis projects each genome onto the rumen-to-wetland centroid axis. "
@@ -664,8 +660,8 @@ add_figure(doc, FIGURES_DIR / "fig2_statistical_validation_panel.png", 6.5,
            f"(Cohen's d = {cohens_d:.2f}; large effect). (D) Boundary neighborhood diagnostic: "
            f"most genomes lie well above the equality line (nearest opposite > nearest same), "
            f"confirming ecosystem-coherent neighborhoods.",
-           f"PERMANOVA R\u00b2 = 0.202 includes source confounding. The true ecological component "
-           f"may be smaller. Bootstrap CI uses stratified resampling (150 iterations).")
+           "PERMANOVA R\u00b2 = 0.202 includes source confounding. The true ecological component "
+           "may be smaller. Bootstrap CI uses stratified resampling (150 iterations).")
 
 page_break(doc)
 
