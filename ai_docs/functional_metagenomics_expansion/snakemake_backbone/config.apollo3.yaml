@@ -26,7 +26,7 @@ databases:
   db_root: $METHANET_SCRATCH/methanet_db
   checkm2: $METHANET_SCRATCH/methanet_db/checkm2
   gtdbtk: $METHANET_SCRATCH/methanet_db/gtdbtk_r232/release232
-  gunc_db: $METHANET_SCRATCH/methanet_db/gunc/progenomes_3.dmnd
+  gunc_db: $METHANET_SCRATCH/methanet_db/gunc/gunc_db_progenomes3.dmnd
   eggnog_v2: $METHANET_SCRATCH/methanet_db/eggnog_v2
   eggnog_v3_preview: $METHANET_SCRATCH/methanet_db/eggnog_v3_preview
   kofam_profiles: $METHANET_SCRATCH/methanet_db/kofam/profiles/prokaryote.hal
@@ -37,9 +37,10 @@ databases:
   scycdb_id2gene: $METHANET_SCRATCH/methanet_db/scycdb/repo/id2gene.2020Mar.map
   dbcan: $METHANET_SCRATCH/methanet_db/dbcan
   dram: $METHANET_SCRATCH/methanet_db/dram
-  metabolic: $METHANET_SCRATCH/methanet_db/metabolic
+  metabolic: $METHANET_SCRATCH/methanet_db/metabolic/METABOLIC
   metabolic_repo: $METHANET_SCRATCH/methanet_db/metabolic/METABOLIC
   gapseq: $METHANET_SCRATCH/methanet_db/gapseq
+  bakta_light: $METHANET_SCRATCH/methanet_db/bakta/db-light
 
 params:
   fasta_extension: fa
@@ -55,6 +56,7 @@ params:
   run_dram: false
   run_dram2_beta: false
   run_metabolic: true
+  run_bakta_optional: true
   run_gapseq_optional: false
   run_dbcan_cgc: true
 

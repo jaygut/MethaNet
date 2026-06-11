@@ -13,6 +13,8 @@ tables exist, join to every bridge candidate, and pass the stated checks.
 Operational setup, Apollo-3 database paths, repair commands, and end-to-end MAG
 annotation commands are recorded in
 `docs/apollo3_functional_mag_runbook.md`.
+For executable Apollo-3 run commands, readiness checks, and gated-tool decisions,
+use `docs/apollo3_mag_functional_analytics_ops.md`.
 
 ## Phase A: MAG QC And Identity Layer
 
