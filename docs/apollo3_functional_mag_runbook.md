@@ -133,6 +133,20 @@ path is to stage the three required files from a network that completes large
 transfers, or to place them on a local institutional mirror, then validate them
 in `$DB_ROOT`.
 
+Additional Apolo-3 checks after user-supplied research:
+
+- `eggnog6.embl.de` resolves to `194.94.44.170`, but on Apolo-3 it also returns
+  `Accept-Ranges: none` for `emapperdb-5.0.2/eggnog.db.gz`.
+- Explicit `Range: bytes=1086180734-` requests to `eggnog6.embl.de` return
+  `416 Requested Range Not Satisfiable`, so `wget --continue` and segmented
+  clients cannot resume this file from Apolo.
+- A bounded `wget --continue --user-agent="Mozilla/5.0"` probe against
+  `eggnog6.embl.de` closed at byte `1,087,214,606`; `wget` then printed
+  `416 Requested Range Not Satisfiable` and misleadingly exited `0` with only a
+  partial file.
+- A bounded `curl --http1.0` probe against `eggnog6.embl.de` closed at byte
+  `1,086,719,390`, so forcing HTTP/1.0 does not bypass the local transfer gate.
+
 Recommended path:
 
 1. Create an isolated stable env:
