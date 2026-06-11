@@ -4,6 +4,8 @@ rule train_flux_model:
     output:
         model=f"{MODELS}/flux_predictor/model.pkl",
         metrics=f"{REPORTS}/flux_predictor/train_metrics.json",
+    log:
+        f"{REPORTS}/logs/train_flux_model.log",
     params:
         target=TRAINING.get("label_column", "flux_value"),
         model_type=TRAINING.get("flux", {}).get("model", "linear"),
@@ -28,6 +30,8 @@ rule validate_flux_model:
     output:
         metrics=f"{REPORTS}/flux_predictor/validation_metrics.json",
         predictions=f"{REPORTS}/flux_predictor/predictions.csv",
+    log:
+        f"{REPORTS}/logs/validate_flux_model.log",
     params:
         target=TRAINING.get("label_column", "flux_value"),
         method="loocv",
@@ -50,6 +54,8 @@ rule bootstrap_ci:
         model=f"{MODELS}/flux_predictor/model.pkl",
     output:
         intervals=f"{REPORTS}/flux_predictor/bootstrap_intervals.csv",
+    log:
+        f"{REPORTS}/logs/bootstrap_ci.log",
     params:
         target=TRAINING.get("label_column", "flux_value"),
         n_boot=TRAINING.get("flux", {}).get("bootstrap_samples", 1000),
@@ -73,6 +79,8 @@ rule explain_model:
         model=f"{MODELS}/flux_predictor/model.pkl",
     output:
         plot=f"{FIGURES}/flux_predictor/shap_summary.png",
+    log:
+        f"{REPORTS}/logs/explain_model.log",
     params:
         target=TRAINING.get("label_column", "flux_value"),
     threads: THREADS.get("training", 1)

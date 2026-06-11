@@ -1,0 +1,27 @@
+# Minimal simulation config used by CI to keep rule all nonempty without
+# requiring external read archives, assemblies, HMM databases, or model weights.
+
+simulate: true
+
+stages:
+  data_curator: true
+  marker_annotator: false
+  embedding_generator: false
+  poc_report: false
+  domain_adapter: false
+  flux_predictor: false
+
+sra_accessions:
+  - SMOKE_SRA
+
+ena_accessions: []
+assembly_samples: []
+mag_sets: []
+marker_samples: []
+embedding_samples: []
+dna_embedding_samples: []
+fraggenescan_inputs: {}
+
+threads:
+  download: 1
+  qc: 1

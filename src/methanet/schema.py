@@ -3,12 +3,21 @@
 FEATURE_SCHEMA_VERSION = "1.1"
 
 FUNCTIONAL_MARKERS = (
-    "mcrA", "mcrB", "mcrG",
-    "pmoA", "mmoX",
-    "dsrA", "dsrB",
-    "mtaB", "mttB", "mtbA",
-    "nifH", "cbbL"
+    "mcrA",
+    "mcrB",
+    "mcrG",
+    "pmoA",
+    "mmoX",
+    "dsrA",
+    "dsrB",
+    "mtaB",
+    "mttB",
+    "mtbA",
+    "nifH",
+    "cbbL",
 )
+FUNCTIONAL_RATIO_FEATURE = "mcrA_pmoA_ratio"
+FUNCTIONAL_FEATURE_COLUMNS = FUNCTIONAL_MARKERS + (FUNCTIONAL_RATIO_FEATURE,)
 FUNCTIONAL_BASE_DIM = len(FUNCTIONAL_MARKERS)
 FUNCTIONAL_RATIO_DIM = 1
 DEFAULT_FUNCTIONAL_PATHWAYS = 0

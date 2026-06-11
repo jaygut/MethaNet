@@ -10,12 +10,12 @@ Methods implemented:
 - MCW (MMD-CORAL Weighted): Combined approach with neural adaptation
 """
 
-from methanet.domain_adapt.losses import MMDLoss, CORALLoss
+from methanet.domain_adapt.losses import CORALLoss, MMDLoss
 from methanet.domain_adapt.mcw import (
-    DomainAdapter,
     DomainAdaptConfig,
-    FeatureEncoder,
+    DomainAdapter,
     DomainAdaptiveClassifier,
+    FeatureEncoder,
 )
 
 __all__ = [

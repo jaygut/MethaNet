@@ -4,11 +4,10 @@ from pathlib import Path
 
 import joblib
 import numpy as np
+from flux_utils import load_labeled_flux_data
 from sklearn.base import clone
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import LeaveOneOut
-
-from flux_utils import load_labeled_flux_data
 
 
 def loocv_predictions(model, X, y):

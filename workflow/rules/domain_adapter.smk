@@ -4,6 +4,8 @@ rule measure_shift:
         target=TARGET_FEATURES,
     output:
         metrics=f"{REPORTS}/domain_shift/shift_metrics.json",
+    log:
+        f"{REPORTS}/logs/measure_shift.log",
     run:
         if SIMULATE:
             ensure_outputs(output)
@@ -22,6 +24,8 @@ rule train_coral:
         transform=f"{MODELS}/adapted/coral_transform.npy",
         source_aligned=f"{ADAPTED_FEATURES}/source_coral.parquet",
         target_aligned=f"{ADAPTED_FEATURES}/target_coral.parquet",
+    log:
+        f"{REPORTS}/logs/train_coral.log",
     run:
         if SIMULATE:
             ensure_outputs(output)
@@ -40,6 +44,8 @@ rule measure_shift_adapted:
         target=f"{ADAPTED_FEATURES}/target_coral.parquet",
     output:
         metrics=f"{REPORTS}/domain_shift/shift_metrics_adapted.json",
+    log:
+        f"{REPORTS}/logs/measure_shift_adapted.log",
     run:
         if SIMULATE:
             ensure_outputs(output)
@@ -57,6 +63,8 @@ rule train_dann:
     output:
         model=f"{MODELS}/adapted/dann.pt",
         metrics=f"{REPORTS}/domain_shift/dann_metrics.json",
+    log:
+        f"{REPORTS}/logs/train_dann.log",
     params:
         label_column=TRAINING.get("label_column", "flux_value"),
         epochs=TRAINING.get("dann", {}).get("epochs", 20),
@@ -85,6 +93,8 @@ rule select_transferable:
         target=TARGET_FEATURES,
     output:
         csv=f"{REPORTS}/domain_shift/transferable_features.csv",
+    log:
+        f"{REPORTS}/logs/select_transferable.log",
     params:
         top_k=TRAINING.get("dann", {}).get("top_k", 50),
     run:
@@ -107,13 +117,18 @@ rule report_transferability:
         finiteness=f"{REPORTS}/poc/feature_finiteness_by_group.csv",
         transfer=f"{REPORTS}/poc/cross_domain_transfer_by_group.csv",
         summary=f"{REPORTS}/poc/transferability_summary.json",
+    log:
+        f"{REPORTS}/logs/report_transferability.log",
     params:
         source_domain="rumen",
         target_domain="coastal",
         target_col=TRAINING.get("label_column", "flux_value"),
-        functional_dim=config.get("feature_dims", {}).get("functional", 77),
+        functional_dim=config.get("feature_dims", {}).get("functional", 13),
         esm2_dim=config.get("feature_dims", {}).get("esm2", 1280),
-        genome_dim=EMBEDDING_CFG.get("genome_dim", 768),
+        genome_dim=config.get("feature_dims", {}).get(
+            "genome",
+            EMBEDDING_CFG.get("genome_dim", 768),
+        ),
         bootstrap_samples=TRAINING.get("flux", {}).get("bootstrap_samples", 500),
     threads: THREADS.get("training", 1)
     run:

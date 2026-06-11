@@ -1,12 +1,13 @@
 """Unit tests for risk tier classification."""
 
 import pytest
+
 from methanet.classification.risk_tiers import (
-    RiskTier,
     ClassificationResult,
-    score_to_tier,
+    RiskTier,
     get_monitoring_interval,
     get_tier_thresholds,
+    score_to_tier,
 )
 
 

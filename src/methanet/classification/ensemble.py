@@ -11,14 +11,15 @@ with optimized weights for coastal ecosystem prediction:
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+
 import numpy as np
 
 try:
     import joblib
+    from sklearn.calibration import CalibratedClassifierCV
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.neural_network import MLPClassifier
     from sklearn.preprocessing import StandardScaler
-    from sklearn.calibration import CalibratedClassifierCV
 
     SKLEARN_AVAILABLE = True
 except ImportError:
@@ -44,9 +45,9 @@ except ImportError:
     FAISS_AVAILABLE = False
 
 from methanet.classification.risk_tiers import (
-    RiskTier,
-    ClassificationResult,
     TIER_MIDPOINTS,
+    ClassificationResult,
+    RiskTier,
 )
 
 
@@ -278,7 +279,9 @@ class MethaNetEnsemble:
 
         # Random Forest
         if "random_forest" in self.models:
-            probs["random_forest"] = self.models["random_forest"].predict_proba(X_scaled)
+            probs["random_forest"] = self.models["random_forest"].predict_proba(
+                X_scaled
+            )
 
         # FAISS k-NN (or sklearn fallback)
         if "faiss_knn" in self._active_models:
@@ -399,8 +402,8 @@ class MethaNetEnsemble:
 
             # Compute confidence interval via bootstrap
             if compute_ci:
-                ci_lower_i = float(ci_lower[i])
-                ci_upper_i = float(ci_upper[i])
+                ci_lower_i = min(float(ci_lower[i]), risk_score)
+                ci_upper_i = max(float(ci_upper[i]), risk_score)
             else:
                 ci_lower_i = max(0, risk_score - 5)
                 ci_upper_i = min(100, risk_score + 5)
@@ -657,7 +660,10 @@ class MethaNetEnsemble:
         # Load FAISS index
         if FAISS_AVAILABLE and (path / "faiss.index").exists():
             ensemble.faiss_index = faiss.read_index(str(path / "faiss.index"))
-        if metadata.get("has_train_labels", False) and (path / "train_labels.npy").exists():
+        if (
+            metadata.get("has_train_labels", False)
+            and (path / "train_labels.npy").exists()
+        ):
             ensemble.train_labels = np.load(path / "train_labels.npy")
         else:
             ensemble.train_labels = None

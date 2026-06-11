@@ -4,12 +4,15 @@ This module implements HMM-based quantification of methane-related
 functional gene markers in metagenome-assembled genomes (MAGs).
 """
 
+import subprocess
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Union
-import subprocess
-import tempfile
+
 import numpy as np
+
+from methanet.schema import FUNCTIONAL_FEATURE_COLUMNS, FUNCTIONAL_MARKERS
 
 
 @dataclass
@@ -61,18 +64,8 @@ class FunctionalProfile:
     def marker_abundances(self) -> Dict[str, float]:
         """Return marker abundances as a dictionary."""
         return {
-            "mcrA": self.mcrA,
-            "mcrB": self.mcrB,
-            "mcrG": self.mcrG,
-            "pmoA": self.pmoA,
-            "mmoX": self.mmoX,
-            "dsrA": self.dsrA,
-            "dsrB": self.dsrB,
-            "nifH": self.nifH,
-            "cbbL": self.cbbL,
-            "mtaB": self.mtaB,
-            "mttB": self.mttB,
-            "mtbA": self.mtbA,
+            marker: float(getattr(self, marker))
+            for marker in FUNCTIONAL_MARKERS
         }
 
     @property
@@ -112,30 +105,21 @@ class FunctionalProfile:
         """Convert profile to feature vector for ML models.
 
         Returns:
-            Array of [mcrA, pmoA, dsrA, nifH, cbbL, ratio, ...new_markers]
+            Array ordered as methanet.schema.FUNCTIONAL_FEATURE_COLUMNS.
         """
-        return np.array([
-            self.mcrA,
-            self.pmoA,
-            self.dsrA,
-            self.nifH,
-            self.cbbL,
-            self.mcrA_pmoA_ratio,
-            # New markers added to end of vector
-            self.mcrB,
-            self.mcrG,
-            self.mmoX,
-            self.dsrB,
-            self.mtaB,
-            self.mttB,
-            self.mtbA,
-        ])
+        values = []
+        for column in FUNCTIONAL_FEATURE_COLUMNS:
+            values.append(float(getattr(self, column)))
+        return np.array(values, dtype=float)
 
     def to_array(self) -> np.ndarray:
         """Alias for to_vector."""
         return self.to_vector()
 
-    def get_normalized_abundances(self, method: str = "per_1k_proteins") -> Dict[str, float]:
+    def get_normalized_abundances(
+        self,
+        method: str = "per_1k_proteins",
+    ) -> Dict[str, float]:
         """Return normalized abundances using a supported method."""
         method = method.lower()
         if method in {"per_1k_proteins", "raw"}:
@@ -189,13 +173,7 @@ GENE_MAPPING = {
     "TIGR01168": "cbbL",
 }
 
-DEFAULT_MARKERS = (
-    "mcrA", "mcrB", "mcrG",
-    "pmoA", "mmoX",
-    "dsrA", "dsrB",
-    "nifH", "cbbL",
-    "mtaB", "mttB", "mtbA"
-)
+DEFAULT_MARKERS = FUNCTIONAL_MARKERS
 
 
 class FunctionalQuantifier:
@@ -292,7 +270,11 @@ class FunctionalQuantifier:
             mtbA=normalized.get("mtbA", 0.0),
         )
 
-    def quantify_mag(self, protein_fasta: Path, sample_id: Optional[str] = None) -> FunctionalProfile:
+    def quantify_mag(
+        self,
+        protein_fasta: Path,
+        sample_id: Optional[str] = None,
+    ) -> FunctionalProfile:
         """Convenience wrapper for MAG quantification."""
         inferred_id = sample_id or Path(protein_fasta).stem
         return self.quantify(protein_fasta, inferred_id)
@@ -342,7 +324,9 @@ class FunctionalQuantifier:
         """
         if not self.hmm_db_path:
             raise RuntimeError("hmm_db_path is required for database searches.")
-        tblout_path = Path(tempfile.mkstemp(prefix="methanet_hmm_db_", suffix=".tbl")[1])
+        tblout_path = Path(
+            tempfile.mkstemp(prefix="methanet_hmm_db_", suffix=".tbl")[1]
+        )
         cmd = [
             "hmmsearch",
             "--tblout",
@@ -372,7 +356,12 @@ class FunctionalQuantifier:
             tblout_path.unlink(missing_ok=True)
 
     def _run_hmmsearch_marker(self, protein_fasta: Path, marker: MarkerGene) -> int:
-        tblout_path = Path(tempfile.mkstemp(prefix=f"methanet_{marker.name}_", suffix=".tbl")[1])
+        tblout_path = Path(
+            tempfile.mkstemp(
+                prefix=f"methanet_{marker.name}_",
+                suffix=".tbl",
+            )[1]
+        )
         cmd = [
             "hmmsearch",
             "--tblout",
@@ -397,7 +386,9 @@ class FunctionalQuantifier:
             return self._count_unique_targets(hits)
         except subprocess.CalledProcessError as e:
             err = (e.stderr or e.stdout or "").strip()
-            raise RuntimeError(f"hmmsearch failed for marker {marker.name}: {err}") from e
+            raise RuntimeError(
+                f"hmmsearch failed for marker {marker.name}: {err}"
+            ) from e
         except FileNotFoundError:
             raise RuntimeError(
                 "hmmsearch not found. Install HMMER: conda install -c bioconda hmmer"
@@ -405,7 +396,11 @@ class FunctionalQuantifier:
         finally:
             tblout_path.unlink(missing_ok=True)
 
-    def _parse_hmm_output(self, output: str, score_threshold: Optional[float] = None) -> List[Dict]:
+    def _parse_hmm_output(
+        self,
+        output: str,
+        score_threshold: Optional[float] = None,
+    ) -> List[Dict]:
         """Parse hmmsearch tabular output.
 
         Args:

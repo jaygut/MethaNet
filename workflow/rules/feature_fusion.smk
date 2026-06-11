@@ -8,6 +8,8 @@ rule fuse_features:
         all=FLUX_FEATURES,
         source=SOURCE_FEATURES,
         target=TARGET_FEATURES,
+    log:
+        f"{REPORTS}/logs/fuse_features.log",
     params:
         genome_backend=GENOME_BACKEND,
         genome_dim=EMBEDDING_CFG.get("genome_dim", 768),

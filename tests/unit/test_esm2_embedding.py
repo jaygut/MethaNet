@@ -14,7 +14,16 @@ def _load_esm2_module():
     return module
 
 
-resolve_pooling_layers = _load_esm2_module().resolve_pooling_layers
+_esm2_module = _load_esm2_module()
+EmbeddingConfig = _esm2_module.EmbeddingConfig
+resolve_pooling_layers = _esm2_module.resolve_pooling_layers
+
+
+def test_embedding_config_defaults_to_final_layer_mean_pooling() -> None:
+    config = EmbeddingConfig()
+    assert config.model_name == "facebook/esm2_t33_650M_UR50D"
+    assert config.pooling_layers == (33,)
+    assert config.pooling_strategy == "mean"
 
 
 def test_resolve_pooling_layers_keeps_valid_indices() -> None:

@@ -59,20 +59,34 @@ The methods in this section were exercised end-to-end in the Blue Catalyst noteb
 Validated run context:
 - Source notebook: `notebooks/blue_catalyst_esm2_poc.ipynb`
 - Executed output: `notebooks/blue_catalyst_esm2_poc.executed.ipynb`
-- Run directory: `results/blue_catalyst_poc/runs/apolo_20260226_194505/`
-- Extracted artifacts: `results/blue_catalyst_poc/runs/apolo_20260226_194505/artifacts/` (28 files)
+- Current canonical run directory:
+  `results/blue_catalyst_poc/runs/apolo_full_20260228_080644_embed_20260305_061952/`
+- Current canonical artifacts:
+  `results/blue_catalyst_poc/runs/apolo_full_20260228_080644_embed_20260305_061952/artifacts/`
+- Current analytics summary:
+  `results/blue_catalyst_poc/interim_snapshots/apolo_full_20260228_080644_embed_20260305_061952_notebook_interim_20260306_055012/analytics/analytics_summary.json`
 
-Observed run metrics from this implementation pass:
-- `n_samples=40`, `samples_embedded=40` (no non-finite vectors)
-- `silhouette_non_noise=0.433`, cluster purity ~0.99
-- `n_clusters_excluding_noise=5`, `noise_fraction=0.1`
-- **PERMANOVA** (999 permutations, Euclidean distance): F=40.63, p=0.001, R²=0.517 — ecosystem label explains 51.7% of total embedding variance
-- **PCA**: PC1=62.9%, PC1+PC2=78.0% cumulative variance; 3 PCs capture ≥80% variance
-- **Ecosystem trajectory t-test** (projection onto rumen→wetland centroid axis): t=13.97, p=1.5e-16
-- **Key bridge genome**: `rumen__10674_0001_idba_bin.23` (mixing_coeff=1.0, all k-NN neighbors in wetland cluster)
-- Machine-readable summary: `advanced_analytics_summary.json`
+Observed 662-genome metrics:
+- Final embedded cohort: **662 genomes = 555 rumen + 107 wetland**.
+- Input/source denominator: `sample_source_counts.tsv` reports 555 rumen +
+  108 MUCC wetland before the final embedded cohort; one wetland coassembly/input
+  record is excluded from the primary embedding denominator.
+- Embedding matrix: `662 x 1280`, ESM2-650M layer 33 mean-pooled, zero attrition
+  and zero non-finite vectors.
+- **Silhouette**: 0.398.
+- **PERMANOVA** (999 permutations, Euclidean distance): F=167.05, p=0.001,
+  R2=0.202.
+- **PCA**: PC1=44.4%, PC2=21.8%, PC3=11.0%.
+- **Classifier separability**: wetland-vs-rumen AUC=1.0 and balanced
+  accuracy=0.999 in cross-validation.
+- **Bridge candidates**: top candidates are emitted in `bridging_genomes_top.tsv`
+  with k=15 neighbor mixing metrics.
 
-This provides a concrete, reproducible reference implementation for proposal materials while broader MethaNet training and adaptation stages continue to evolve.
+This is the current reproducible baseline for proposal and engineering work.
+The earlier 40-genome run remains a historical smoke validation, not the
+canonical denominator. The 662-genome interpretation must retain the caveat
+that source and ecosystem are perfectly confounded: all rumen genomes come from
+PRJEB31266 and all wetland genomes come from MUCC.
 
 #### ESM-2 Protein Embeddings (1280 dimensions)
 
@@ -87,8 +101,11 @@ Output: 1280-dimensional embedding per protein
 ```
 
 **Genome-level aggregation:**
-1. Extract embeddings for all marker proteins in a MAG
-2. Aggregate using mean pooling (default; max pooling optional)
+1. Extract embeddings for all proteins or marker proteins in a MAG.
+2. Aggregate using final-layer mean pooling for POC/workflow parity.
+
+Package-level multi-layer pooling remains configurable, but it is not the
+default used for the 662-genome POC.
 
 #### Genome Embeddings (DNABERT-2 default, GenomeOcean optional)
 
@@ -112,11 +129,11 @@ Output: 3072-dimensional genome embedding
 
 ### 1.3 Feature Fusion
 
-Total feature dimensionality: **2125** (DNABERT-2 default) or **4429** (GenomeOcean)
+Total feature dimensionality: **2061** (DNABERT-2 default) or **4365** (GenomeOcean)
 
 | Component | Dimensions | Description |
 |-----------|------------|-------------|
-| Functional | 77 | HMM-based marker quantification |
+| Functional | 13 | 12 marker abundances plus `mcrA_pmoA_ratio` |
 | ESM-2 | 1280 | Protein language model embeddings |
 | DNABERT-2 | 768 | Genomic foundation model embeddings (default) |
 | GenomeOcean | 3072 | Genomic foundation model embeddings (optional) |
@@ -183,7 +200,7 @@ Default hyperparameters:
 ### 2.3 Network Architecture
 
 ```
-Input (D-dim; 2125 default with DNABERT-2)
+Input (D-dim; 2061 default with DNABERT-2)
     │
     ▼
 Linear(D → 1024) + BatchNorm + ReLU + Dropout(0.3)
@@ -345,7 +362,7 @@ ONNX Configuration:
   - Output: "probabilities" (batch_size, 5)
 ```
 
-D = 2125 by default (DNABERT-2); D = 4429 when using GenomeOcean embeddings.
+D = 2061 by default (DNABERT-2); D = 4365 when using GenomeOcean embeddings.
 
 ### 5.2 Inference Pipeline
 

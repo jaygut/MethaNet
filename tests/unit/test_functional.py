@@ -1,7 +1,7 @@
 """Unit tests for functional gene quantification."""
 
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -12,6 +12,7 @@ try:
         FunctionalQuantifier,
         MarkerGene,
     )
+    from methanet.schema import FUNCTIONAL_FEATURE_COLUMNS
     IMPORTS_AVAILABLE = True
 except ImportError:
     IMPORTS_AVAILABLE = False
@@ -120,6 +121,32 @@ class TestFunctionalProfile:
         # 12 markers + 1 ratio = 13 features
         assert len(arr) == 13
 
+    def test_to_array_uses_schema_order(self):
+        """Functional vector order follows the public schema."""
+        profile = FunctionalProfile(
+            sample_id="ordered",
+            mcrA=1.0,
+            mcrB=2.0,
+            mcrG=3.0,
+            pmoA=4.0,
+            mmoX=5.0,
+            dsrA=6.0,
+            dsrB=7.0,
+            mtaB=8.0,
+            mttB=9.0,
+            mtbA=10.0,
+            nifH=11.0,
+            cbbL=12.0,
+        )
+
+        observed = dict(zip(FUNCTIONAL_FEATURE_COLUMNS, profile.to_array()))
+
+        for index, marker in enumerate(FUNCTIONAL_FEATURE_COLUMNS[:-1], start=1):
+            assert observed[marker] == pytest.approx(float(index))
+        assert observed["mcrA_pmoA_ratio"] == pytest.approx(
+            profile.mcrA_pmoA_ratio
+        )
+
     def test_to_dict(self, sample_profile):
         """Test conversion to dictionary."""
         d = sample_profile.to_dict()
@@ -200,9 +227,8 @@ MLSLLLNTALLASAAASPGQKAHFADACLAALAQHGGTGFAAALSNAASPAAQNRSGIAP
             "nifH",
             "cbbL",
         ]
-        assert all(
-            m in [marker.name for marker in quantifier.markers] for m in expected_markers
-        )
+        observed_markers = [marker.name for marker in quantifier.markers]
+        assert all(m in observed_markers for m in expected_markers)
 
     def test_quantifier_missing_hmm(self, tmp_path):
         """Test error when HMM file is missing."""

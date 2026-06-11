@@ -5,6 +5,7 @@ including both standard ML metrics and domain-specific ones.
 """
 
 from typing import Dict, Optional
+
 import numpy as np
 
 try:
@@ -159,7 +160,10 @@ def compute_transfer_metrics(
     }
 
     # Performance drop
-    if source_metrics.get("balanced_accuracy") and target_metrics.get("balanced_accuracy"):
+    if (
+        source_metrics.get("balanced_accuracy")
+        and target_metrics.get("balanced_accuracy")
+    ):
         transfer_metrics["accuracy_drop"] = (
             source_metrics["balanced_accuracy"] - target_metrics["balanced_accuracy"]
         )

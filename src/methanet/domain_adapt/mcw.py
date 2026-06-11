@@ -5,8 +5,9 @@ approach with neural network feature encoding for transfer learning
 from rumen to coastal ecosystems.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional, Tuple
+
 import numpy as np
 
 try:
@@ -18,7 +19,7 @@ try:
 except ImportError:
     TORCH_AVAILABLE = False
 
-from methanet.domain_adapt.losses import MMDLoss, CORALLoss
+from methanet.domain_adapt.losses import CORALLoss, MMDLoss
 
 
 @dataclass
@@ -297,7 +298,10 @@ if TORCH_AVAILABLE:
                         break
 
                 if verbose and (epoch + 1) % 10 == 0:
-                    print(f"Epoch {epoch + 1}/{self.config.epochs}, Loss: {epoch_loss:.4f}")
+                    print(
+                        f"Epoch {epoch + 1}/{self.config.epochs}, "
+                        f"Loss: {epoch_loss:.4f}"
+                    )
 
             self._is_fitted = True
             return self

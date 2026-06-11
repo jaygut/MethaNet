@@ -87,7 +87,11 @@ def test_merge_reconciles_embeddings_and_features(tmp_path):
             "embedding_metadata_path": ["emb.tsv"] * 3,
         }
     )
-    embedding_index.to_csv(plan_dir / "embedding_index_frozen.tsv", sep="\t", index=False)
+    embedding_index.to_csv(
+        plan_dir / "embedding_index_frozen.tsv",
+        sep="\t",
+        index=False,
+    )
 
     batch_plan = pd.DataFrame(
         {
@@ -130,8 +134,18 @@ def test_merge_reconciles_embeddings_and_features(tmp_path):
     pd.DataFrame(feat_cols).to_csv(
         results_dir / "batch_0000" / "fg_features.tsv", sep="\t", index=False
     )
-    pd.DataFrame(columns=["canonical_genome_id", "sample", "proteome_faa", "error_type", "error_message"]).to_csv(
-        results_dir / "batch_0000" / "fg_failures.tsv", sep="\t", index=False
+    pd.DataFrame(
+        columns=[
+            "canonical_genome_id",
+            "sample",
+            "proteome_faa",
+            "error_type",
+            "error_message",
+        ]
+    ).to_csv(
+        results_dir / "batch_0000" / "fg_failures.tsv",
+        sep="\t",
+        index=False,
     )
     pd.DataFrame(columns=list(feat_cols.keys())).to_csv(
         results_dir / "batch_0001" / "fg_features.tsv", sep="\t", index=False

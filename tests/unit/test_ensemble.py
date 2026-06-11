@@ -1,12 +1,12 @@
 """Unit tests for ensemble classification."""
 
-import pytest
 import numpy as np
+import pytest
 
 try:
     from methanet.classification.ensemble import (
-        MethaNetEnsemble,
         EnsembleConfig,
+        MethaNetEnsemble,
     )
     from methanet.classification.risk_tiers import RiskTier
     IMPORTS_AVAILABLE = True
@@ -78,6 +78,16 @@ class TestMethaNetEnsemble:
             model_weights={"random_forest": 1.0},  # Single model for speed
             bootstrap_iterations=10,  # Reduced for testing
             random_state=42,
+            rf_params={
+                "n_estimators": 10,
+                "max_depth": 5,
+                "min_samples_split": 2,
+                "min_samples_leaf": 1,
+                "max_features": "sqrt",
+                "bootstrap": True,
+                "oob_score": False,
+                "n_jobs": -1,
+            },
         )
 
     def test_ensemble_init(self, simple_config):
@@ -129,13 +139,31 @@ class TestMethaNetEnsemble:
         ensemble = MethaNetEnsemble(simple_config)
         ensemble.fit(X, y)
 
-        results = ensemble.classify_risk(X[:5])
+        results = ensemble.classify_risk(X[:5], compute_ci=False)
 
         assert len(results) == 5
         for result in results:
             assert isinstance(result.risk_tier, RiskTier)
             # Risk scores are expressed as percentages (0-100).
             assert 0 <= result.score <= 100
+            assert result.ci_lower <= result.score <= result.ci_upper
+
+    @pytest.mark.slow
+    def test_ensemble_classify_risk_with_bootstrap_ci(
+        self,
+        sample_data,
+        simple_config,
+    ):
+        """Test risk classification with bootstrap confidence intervals."""
+        X, y = sample_data
+        simple_config.bootstrap_iterations = 3
+        ensemble = MethaNetEnsemble(simple_config)
+        ensemble.fit(X, y)
+
+        results = ensemble.classify_risk(X[:2], compute_ci=True)
+
+        assert len(results) == 2
+        for result in results:
             assert result.ci_lower <= result.score <= result.ci_upper
 
     def test_ensemble_not_fitted_error(self, simple_config):

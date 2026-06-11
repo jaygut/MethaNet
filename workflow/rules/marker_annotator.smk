@@ -1,11 +1,17 @@
 # Get list of markers from config
-MARKERS = [m["name"] for m in config["functional"]["markers"]]
+MARKERS = [
+    marker["name"]
+    for marker in config.get("functional", {}).get("markers", [])
+    if "name" in marker
+]
 
 rule orf_prodigal:
     input:
         fasta=f"{ASSEMBLIES}/{{sample}}.fasta",
     output:
         proteins=f"{ORFS}/{{sample}}.faa",
+    log:
+        f"{REPORTS}/logs/orf_prodigal/{{sample}}.log",
     threads: THREADS.get("qc", 8)
     run:
         if SIMULATE:
@@ -19,6 +25,8 @@ rule orf_fraggenescan:
         fasta=lambda wc: FRAGGENE_INPUTS[wc.sample],
     output:
         proteins=f"{ORFS}/fraggenescan/{{sample}}.faa",
+    log:
+        f"{REPORTS}/logs/orf_fraggenescan/{{sample}}.log",
     params:
         out_prefix=lambda wc: f"{ORFS}/fraggenescan/{wc.sample}",
     threads: THREADS.get("qc", 8)
@@ -36,6 +44,8 @@ rule hmmsearch_marker:
         hmm=f"{HMM_DIR}/{{marker}}.hmm",
     output:
         hits=f"{MARKER_HITS}/{{sample}}/{{marker}}.tbl",
+    log:
+        f"{REPORTS}/logs/hmmsearch_marker/{{sample}}_{{marker}}.log",
     threads: THREADS.get("hmmer", 4)
     run:
         if SIMULATE:
@@ -53,6 +63,8 @@ rule mmseqs_search:
         db=MARKER_DB,
     output:
         hits=f"{MARKER_HITS}/{{sample}}/mmseqs.tsv",
+    log:
+        f"{REPORTS}/logs/mmseqs_search/{{sample}}.log",
     params:
         tmp_dir=lambda wc: f"{MARKER_HITS}/{wc.sample}/tmp",
     threads: THREADS.get("mmseqs", 8)
@@ -76,6 +88,8 @@ rule extract_marker_sequences:
         )
     output:
         fasta=f"{MARKER_SEQS}/{{sample}}.fasta",
+    log:
+        f"{REPORTS}/logs/extract_marker_sequences/{{sample}}.log",
     params:
         evalue_threshold=FUNCTIONAL_CFG.get("evalue_threshold", 1e-10),
     threads: THREADS.get("hmmer", 4)
@@ -104,26 +118,24 @@ rule build_functional_features:
         )
     output:
         features=f"{FUNCTIONAL_FEATURES}/{{sample}}.tsv",
+    log:
+        f"{REPORTS}/logs/build_functional_features/{{sample}}.log",
     params:
         evalue_threshold=FUNCTIONAL_CFG.get("evalue_threshold", 1e-10),
-        markers=MARKERS
+        marker_args=lambda wc, input: " ".join(
+            f"--{marker_name} {hit_path}"
+            for marker_name, hit_path in zip(MARKERS, input.hits)
+        ),
     threads: THREADS.get("hmmer", 4)
     run:
         if SIMULATE:
             ensure_outputs(output)
         else:
-            # Construct arguments like --mcrA path/to/mcrA.tbl
-            marker_args = []
-            for marker_name, hit_path in zip(params.markers, input.hits):
-                marker_args.append(f"--{marker_name} {hit_path}")
-            
-            cmd_args = " ".join(marker_args)
-            
             shell(
                 "python workflow/scripts/build_functional_features.py "
                 "--sample-id {wildcards.sample} "
                 "--proteins {input.proteins} "
-                "{cmd_args} "
+                "{params.marker_args} "
                 "--evalue-threshold {params.evalue_threshold} "
                 "--output {output.features}"
             )

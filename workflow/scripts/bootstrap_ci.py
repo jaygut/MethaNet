@@ -4,9 +4,8 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.base import clone
-
 from flux_utils import load_labeled_flux_data
+from sklearn.base import clone
 
 
 def main() -> None:

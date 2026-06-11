@@ -1,7 +1,9 @@
 import argparse
 import csv
-from pathlib import Path
 import math
+from pathlib import Path
+
+from methanet.schema import FUNCTIONAL_MARKERS, FUNCTIONAL_RATIO_FEATURE
 
 
 def count_hits(path: Path, evalue_threshold: float) -> int:
@@ -38,7 +40,7 @@ def main() -> None:
     parser.add_argument("--proteins", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--evalue-threshold", type=float, default=1e-10)
-    
+
     # Marker inputs
     parser.add_argument("--mcrA", required=True)
     parser.add_argument("--mcrB", required=False)
@@ -58,15 +60,8 @@ def main() -> None:
     total_proteins = count_proteins(Path(args.proteins))
     normalization_factor = total_proteins / 1000 if total_proteins > 0 else 1
 
-    # Initialize all potential markers
-    markers = [
-        "mcrA", "mcrB", "mcrG", 
-        "pmoA", "mmoX", 
-        "dsrA", "dsrB", 
-        "nifH", "cbbL", 
-        "mtaB", "mttB", "mtbA"
-    ]
-    
+    markers = list(FUNCTIONAL_MARKERS)
+
     counts = {}
     for marker in markers:
         # Get path from args if present
@@ -77,27 +72,30 @@ def main() -> None:
             counts[marker] = 0
 
     normalized = {k: v / normalization_factor for k, v in counts.items()}
-    
+
     # Robust ratio calculation
     pseudocount = 1e-6
     # Use primary markers for the main ratio, consistent with FunctionalProfile
-    ratio = math.log2((normalized["mcrA"] + pseudocount) / (normalized["pmoA"] + pseudocount))
+    ratio = math.log2(
+        (normalized["mcrA"] + pseudocount)
+        / (normalized["pmoA"] + pseudocount)
+    )
 
     out_path = Path(args.output)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     with out_path.open("w", newline="") as handle:
-        fieldnames = ["sample_id"] + markers + ["mcrA_pmoA_ratio"]
+        fieldnames = ["sample_id"] + markers + [FUNCTIONAL_RATIO_FEATURE]
         writer = csv.DictWriter(
             handle,
             fieldnames=fieldnames,
             delimiter="\t",
         )
         writer.writeheader()
-        
-        row = {"sample_id": args.sample_id, "mcrA_pmoA_ratio": ratio}
+
+        row = {"sample_id": args.sample_id, FUNCTIONAL_RATIO_FEATURE: ratio}
         row.update(normalized)
-        
+
         writer.writerow(row)
 
 
