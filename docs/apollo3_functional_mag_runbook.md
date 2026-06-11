@@ -110,6 +110,14 @@ served the expected `emapperdb-5.0.2` files. Keep
 `EGGNOG_BASE_URL=http://eggnog5.embl.de/download/emapperdb-5.0.2` unless DNS
 behavior changes.
 
+Current Apolo-3 transfer note: retry job `8439` reached the correct host, but
+the first `eggnog.db.gz` transfer failed with `curl: (18) transfer closed with
+5689944197 bytes remaining to read`. This confirms that the remaining eggNOG
+gate is not disk capacity or script syntax; it is large-file transfer stability
+from the eggNOG HTTP server to the cluster. The next reliable path is to stage
+the three required files from a network that completes large transfers, or to
+place them on a local institutional mirror, then validate them in `$DB_ROOT`.
+
 Recommended path:
 
 1. Create an isolated stable env:
@@ -123,7 +131,13 @@ Recommended path:
    mirror:
 
    ```bash
-   download_eggnog_data.py --data_dir "$DB_ROOT/eggnog_v2"
+   export EGGNOG_BASE_URL=http://eggnog5.embl.de/download/emapperdb-5.0.2
+   wget "$EGGNOG_BASE_URL/eggnog.db.gz"
+   wget "$EGGNOG_BASE_URL/eggnog.taxa.tar.gz"
+   wget "$EGGNOG_BASE_URL/eggnog_proteins.dmnd.gz"
+   gunzip eggnog.db.gz
+   tar -xzf eggnog.taxa.tar.gz
+   gunzip eggnog_proteins.dmnd.gz
    ```
 
 3. Validate before production:
@@ -377,6 +391,7 @@ Before claiming mechanism-level readiness:
 ## Source Notes
 
 - eggNOG-mapper upstream: https://github.com/eggnogdb/eggnog-mapper
+- eggNOG v2 data index: https://eggnog5.embl.de/download/emapperdb-5.0.2/
 - dbCAN installation docs: https://dbcan.readthedocs.io/en/latest/installation.html
 - run_dbCAN upstream: https://github.com/bcb-unl/run_dbcan
 - MCycDB upstream: https://github.com/qichao1984/MCycDB

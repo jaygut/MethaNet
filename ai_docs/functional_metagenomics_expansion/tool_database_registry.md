@@ -101,8 +101,19 @@ Production:
 
 ```bash
 pip install eggnog-mapper==2.1.15
-download_eggnog_data.py --data_dir "$DB_ROOT/eggnog_v2"
+export EGGNOG_BASE_URL=http://eggnog5.embl.de/download/emapperdb-5.0.2
+wget "$EGGNOG_BASE_URL/eggnog.db.gz"
+wget "$EGGNOG_BASE_URL/eggnog.taxa.tar.gz"
+wget "$EGGNOG_BASE_URL/eggnog_proteins.dmnd.gz"
+gunzip eggnog.db.gz
+tar -xzf eggnog.taxa.tar.gz
+gunzip eggnog_proteins.dmnd.gz
 ```
+
+On Apolo-3, `eggnog5.embl.de` resolves and serves `emapperdb-5.0.2`, but direct
+compute-node HTTP transfers can terminate early (`curl: (18)` on
+`eggnog.db.gz`). Treat eggNOG as an out-of-band staging/local-mirror gate unless
+the full files validate in `$DB_ROOT/eggnog_v2`.
 
 Preview:
 
