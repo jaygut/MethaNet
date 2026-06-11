@@ -1,0 +1,19 @@
+name: methanet-fgx-annotation
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.11
+  - prodigal
+  - hmmer
+  - diamond
+  - mmseqs2
+  - kofamscan
+  - eggnog-mapper=2.1.15
+  - dbcan
+  - pandas
+  - pyarrow
+  - biopython
+  - pyyaml
+

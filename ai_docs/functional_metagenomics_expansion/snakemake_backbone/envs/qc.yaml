@@ -1,0 +1,20 @@
+name: methanet-fgx-qc
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.11
+  - quast
+  - checkm2
+  - gunc
+  - gtdbtk
+  - drep
+  - mash
+  - mummer
+  - fastani
+  - prodigal
+  - diamond
+  - pandas
+  - pyyaml
+

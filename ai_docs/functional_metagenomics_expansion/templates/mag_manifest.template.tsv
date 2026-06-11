@@ -1,0 +1,2 @@
+mag_id	fasta_path	source	ecosystem	domain_prior	source_analysis_accession	poc_embedding_id	is_bridge_candidate	alpha_transfer_score	bridge_entropy	opp_neighbor_fraction
+REPLACE_WITH_MAG_ID	/absolute/path/to/mag.fna	mucc	wetland	Unknown	REPLACE_WITH_ACCESSION	REPLACE_WITH_POC_ID	true	0.0	0.0	0.0
