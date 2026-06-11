@@ -20,6 +20,7 @@ Policy: pin exact tool versions, database releases, install paths, and validatio
 | CAZymes/substrate | run_dbCAN | dbCAN V5 databases | Official install docs recommend conda/PyPI/Docker and building the DB with `dbcan_build --cpus 8 --db-dir db --clean`. Source: https://dbcan.readthedocs.io/en/latest/installation.html | Default CAZyme/CGC/substrate layer; use a dedicated env |
 | Metabolic distillation | DRAM / DRAM2 | KOfam, Pfam, dbCAN, MEROPS, VOGDB, UniRef, optional KEGG | DRAM upstream now describes DRAM v2 as public beta on the dev branch; DRAM2 requires Nextflow/container support and preformatted databases via Globus. Sources: https://dramit.readthedocs.io/en/latest/installation.html and https://github.com/WrightonLabCSU/DRAM | Production: METABOLIC-G now; repaired DRAM1 or DRAM2 beta only after validation |
 | Biogeochemical traits | METABOLIC-G | METABOLIC temp/db resources | METABOLIC-G profiles MAG/SAG/isolate genomes without reads; METABOLIC-C adds read coverage/community metabolism. Source: https://github.com/AnantharamanLab/METABOLIC | Default biogeochemical trait summarizer |
+| Standardized genome annotation | Bakta | Bakta DB v6.0 | Bakta supports bacterial genomes, MAGs, and plasmids and recommends `bakta_db download --output <output-path> --type [light|full]`. Source: https://github.com/oschwengers/bakta | Optional first-pass broad annotation; light DB installed, full DB can be added later |
 | Search/clustering/modeling | MMseqs2, DIAMOND, HMMER, optional gapseq | per-tool DBs | Required by eggNOG/dbCAN/DRAM/custom searches; gapseq can add metabolic pathway/model reconstruction and transporter inference. Source: https://github.com/jotech/gapseq | Use DIAMOND/HMMER/MMseqs2 for annotation; gapseq as optional modeling add-on |
 
 ## Production Pinning Rules
@@ -52,7 +53,7 @@ Columns:
 
 ```bash
 export DB_ROOT="$HOME/scratch/methanet_db"
-mkdir -p "$DB_ROOT"/{checkm2,gtdbtk_r232,gunc,eggnog_v2,eggnog_v3_preview,kofam,mcycdb,scycdb,dbcan,dram,metabolic,pfam,tigrfam,mmseqs}
+mkdir -p "$DB_ROOT"/{checkm2,gtdbtk_r232,gunc,eggnog_v2,eggnog_v3_preview,kofam,mcycdb,scycdb,dbcan,dram,metabolic,bakta,pfam,tigrfam,mmseqs}
 ```
 
 ## Database Provisioning Commands
@@ -233,6 +234,25 @@ a compatibility symlink from `$CONDA_PREFIX/lib/libnsl.so.1` to
 `$CONDA_PREFIX/lib/libnsl.so.3` for the older conda Perl build. The upstream
 `-test true` mode is not a production gate here because the cloned repository
 does not include the `METABOLIC_test_files/Guaymas_Basin_genome_files` FASTAs.
+
+### Bakta Optional Add-On
+
+```bash
+conda create -y -n methanet-bakta -c conda-forge -c bioconda bakta=1.12.0
+conda activate methanet-bakta
+bakta_db download --output "$DB_ROOT/bakta" --type light
+bakta --db "$DB_ROOT/bakta/db-light" --help
+```
+
+Validated Apollo-3 DB:
+
+```bash
+$DB_ROOT/bakta/db-light
+# Bakta 1.12.0; DB schema 6.0, type light, DOI 10.5281/zenodo.14916843
+```
+
+Use `--type full` only when the run needs deeper UniRef-backed annotation and
+the additional IO/runtime cost is acceptable.
 
 ### gapseq Optional Add-On
 

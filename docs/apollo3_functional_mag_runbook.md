@@ -41,6 +41,7 @@ $DB_ROOT/manifests/tool_db_manifest.manual_repair_20260611_222352.tsv
 | SCycDB | installed | `$DB_ROOT/scycdb/SCycDB_2020Mar.dmnd` | Repaired from split archive by ordered concatenation, FASTA normalization, and DIAMOND validation. |
 | dbCAN | installed | `$DB_ROOT/dbcan` | Repaired with `run_dbcan database --db_dir "$DB_ROOT/dbcan" --aws_s3`; DIAMOND and CLI validation passed. |
 | METABOLIC | installed, runtime validated | `$DB_ROOT/metabolic/METABOLIC` | `METABOLIC-G.pl -h` passes in `methanet-metabolic`; bundled upstream test FASTAs are absent from this clone. |
+| Bakta light DB | installed, optional | `$DB_ROOT/bakta/db-light` | `methanet-bakta` has Bakta 1.12.0; light DB v6.0 downloaded from Zenodo and AMRFinderPlus DB updated. |
 | DRAM | gated | `$DB_ROOT/dram` | Existing env has a broken `DRAM-setup.py`; rebuild from official env or use a prebuilt config bundle. |
 | MMseqs2 | runtime registered | `$DB_ROOT/mmseqs` | Binary only; no generic database is required yet. |
 
@@ -60,6 +61,7 @@ Use this as the default MAG analytics stack:
 | Methane cycling | MCycDB_2021 | Curated methane pathway specificity. |
 | Sulfur cycling | SCycDB_2020Mar | Curated sulfur pathway specificity. |
 | Metabolic summary | METABOLIC-G, plus DRAM if repaired | METABOLIC-G handles MAG/SAG/isolate genomes; DRAM remains useful when its DB bundle is validated. |
+| Standardized genome annotation | Bakta 1.12.0 + light DB v6.0 | Optional first-pass standardized MAG annotation while eggNOG/DRAM remain gated. |
 | Search/clustering | DIAMOND, HMMER, MMseqs2 | Backing engines for custom marker panels and novelty searches. |
 
 ## Research-Backed Decisions For Gated Tools
@@ -73,6 +75,7 @@ Use this as the default MAG analytics stack:
 | METABOLIC | Initial runtime env missed Perl modules and the older `libnsl.so.1` ABI expected by the conda Perl build. | Use `methanet-metabolic` with Perl/R/HMMER/DIAMOND/BLAST/KOfamScan dependencies plus `libnsl`; on Apolo-3, create a compatibility symlink from `libnsl.so.1` to the available `libnsl.so.3` inside the env. This is now repaired locally for CLI/runtime validation. |
 | DRAM | Existing `methanet-fgintel` has a broken `DRAM-setup.py`. | Do not make DRAM a production blocker. Use METABOLIC-G for biogeochemical summaries now, repair DRAM1 in a fresh official env if needed, and treat DRAM2 as optional public beta requiring Nextflow/container runtime and Globus-provisioned preformatted DBs. |
 | Alternatives | DRAM is brittle and eggNOG data staging may remain slow. | Add optional gapseq for genome-scale metabolic pathway/model reconstruction when the project needs transporters or metabolic network predictions beyond annotation matrices. |
+| Bakta | Broad standardized genome annotation is useful while eggNOG is staged out-of-band. | Bakta 1.12.0 and the v6.0 light database are installed and registered as an optional add-on. Use the full DB later if the cohort needs deeper UniRef-backed annotation. |
 
 ## Repair Rerun
 
@@ -269,6 +272,35 @@ DRAM-setup.py print_config
 Use gapseq when the question needs metabolic network reconstruction, transporter
 inference, or growth-medium/phenotype hypotheses beyond KO/EC/module matrices.
 It is not a replacement for methane/sulfur curated marker databases.
+
+### Optional Bakta
+
+Bakta is installed as a practical standardized annotation add-on:
+
+```bash
+conda activate methanet-bakta
+bakta --version
+bakta_db list
+bakta \
+  --db "$DB_ROOT/bakta/db-light" \
+  --meta \
+  --threads 16 \
+  --output results/functional_metagenomics/manual/MAG001/bakta \
+  --prefix MAG001 \
+  --force \
+  /abs/path/MAG001.fa
+```
+
+Live Apollo-3 validation:
+
+```bash
+$DB_ROOT/manifests/tool_db_manifest.fgx_bakta_light_20260611_231310.tsv
+$DB_ROOT/bakta/db-light/bakta.db
+```
+
+Use the light DB for first-pass cohort annotation. Use the full DB only when the
+run needs deeper UniRef-backed annotations and the additional IO/runtime cost is
+acceptable.
 
 ```bash
 conda create -y -n methanet-gapseq -c conda-forge -c bioconda gapseq

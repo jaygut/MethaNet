@@ -26,7 +26,7 @@ databases:
   db_root: /home/rsg-jcorre38/scratch/methanet_db
   checkm2: /home/rsg-jcorre38/scratch/methanet_db/checkm2
   gtdbtk: /home/rsg-jcorre38/scratch/methanet_db/gtdbtk_r232/release232
-  gunc_db: /home/rsg-jcorre38/scratch/methanet_db/gunc/progenomes_3.dmnd
+  gunc_db: /home/rsg-jcorre38/scratch/methanet_db/gunc/gunc_db_progenomes3.dmnd
   eggnog_v2: /home/rsg-jcorre38/scratch/methanet_db/eggnog_v2
   eggnog_v3_preview: /home/rsg-jcorre38/scratch/methanet_db/eggnog_v3_preview
   kofam_profiles: /home/rsg-jcorre38/scratch/methanet_db/kofam/profiles/prokaryote.hal
@@ -37,9 +37,10 @@ databases:
   scycdb_id2gene: /home/rsg-jcorre38/scratch/methanet_db/scycdb/repo/id2gene.2020Mar.map
   dbcan: /home/rsg-jcorre38/scratch/methanet_db/dbcan
   dram: /home/rsg-jcorre38/scratch/methanet_db/dram
-  metabolic: /home/rsg-jcorre38/scratch/methanet_db/metabolic
+  metabolic: /home/rsg-jcorre38/scratch/methanet_db/metabolic/METABOLIC
   metabolic_repo: /home/rsg-jcorre38/scratch/methanet_db/metabolic/METABOLIC
   gapseq: /home/rsg-jcorre38/scratch/methanet_db/gapseq
+  bakta_light: /home/rsg-jcorre38/scratch/methanet_db/bakta/db-light
 
 params:
   fasta_extension: fa
@@ -55,6 +56,7 @@ params:
   run_dram: false
   run_dram2_beta: false
   run_metabolic: true
+  run_bakta_optional: true
   run_gapseq_optional: false
   run_dbcan_cgc: true
 

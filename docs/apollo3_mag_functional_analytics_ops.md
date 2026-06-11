@@ -1,0 +1,279 @@
+# Apollo-3 MAG Functional Analytics Operations
+
+Date: 2026-06-11
+
+This page is the operational path for running MethaNet MAG functional analytics
+on Apolo-3 with the databases that are actually installed and validated under:
+
+```bash
+export REPO_ROOT=/home/rsg-jcorre38/Jay_Proyects/MethaNet
+export DB_ROOT=/home/rsg-jcorre38/scratch/methanet_db
+```
+
+## Current Readiness
+
+Run this before launching MAG jobs:
+
+```bash
+cd "$REPO_ROOT"
+scripts/check_functional_mag_db_readiness_apollo3.sh | column -t -s $'\t'
+```
+
+As of `fgx_bakta_light_20260611_231310`, the production-ready stack is:
+
+| Layer | Status | Production use |
+| --- | --- | --- |
+| CheckM2 | ready | MAG completeness/contamination |
+| GUNC ProGenomes3 | ready | chimerism/artifact screening |
+| GTDB-Tk R232 | ready | taxonomy |
+| KOfam | ready | KO/module evidence |
+| MCycDB | ready | curated methane cycling genes |
+| SCycDB | ready | curated sulfur cycling genes |
+| dbCAN V5 | ready | CAZyme/CGC/substrate evidence |
+| METABOLIC-G | ready | biogeochemical distillation fallback for DRAM |
+| Bakta 1.12.0 + light DB v6.0 | ready | optional standardized MAG annotation add-on |
+| eggNOG v2 | gated | stage full files from a network/mirror that completes large transfers |
+| DRAM/DRAM2 | gated | use only after fresh official provisioning; not a production blocker |
+
+## Source-Backed Tool Decisions
+
+- eggNOG-mapper upstream says v3 is still under heavy testing and production
+  should use stable v2; v3 targets eggNOG v7 and is not database-compatible
+  with v2. Source: https://github.com/eggnogdb/eggnog-mapper
+- dbCAN upstream recommends `run_dbcan database --db_dir db --aws_s3` after the
+  2026 online database outage, and the local dbCAN V5 install uses that path.
+  Source: https://github.com/bcb-unl/run_dbcan
+- DRAM2 is a public beta, Nextflow-based, and requires preformatted databases
+  transferred via Globus plus Conda or a container runtime. Source:
+  https://dramit.readthedocs.io/en/latest/installation.html
+- Bakta supports isolates, MAGs, and plasmids; its recommended database command
+  is `bakta_db download --output <path> --type [light|full]`. Source:
+  https://github.com/oschwengers/bakta
+- anvi'o metabolism is a strong optional pathway-completeness layer when KEGG
+  module estimation and custom modules are needed. It reconstructs metabolic
+  pathways and estimates pathway completeness from KEGG functions/modules.
+  Source: https://anvio.org/help/main/programs/anvi-estimate-metabolism/
+
+## Minimal Production Workflow
+
+Use this stack for actual MAG analytics now:
+
+1. QC and identity:
+   CheckM2, GUNC, GTDB-Tk R232, dRep if dereplication is required.
+2. Gene prediction:
+   Prodigal `-p meta`, one `.faa`, `.ffn`, and `.gff` per MAG.
+3. Functional evidence:
+   KOfam, MCycDB, SCycDB, dbCAN, METABOLIC-G.
+4. Optional broad standardized annotation:
+   Bakta light DB for first-pass MAG annotations; use full DB later if the
+   cohort needs deeper UniRef-backed annotations and the throughput budget is
+   acceptable.
+5. Gated broad orthology/EC/COG:
+   eggNOG-mapper v2 only after the full v2 files are staged into
+   `$DB_ROOT/eggnog_v2`.
+
+## MAG Manifest
+
+Create a TSV with at least:
+
+```text
+mag_id	fasta_path	ecosystem	source
+MAG001	/abs/path/MAG001.fa	rumen	project_a
+```
+
+Paths must be absolute or resolvable from `$REPO_ROOT`. Use stable MAG IDs
+without spaces because downstream file names use `mag_id`.
+
+## Per-MAG Commands
+
+The commands below are intentionally explicit. They are suitable for pilots,
+debugging, and translating into SLURM arrays.
+
+```bash
+export MAG_ID=MAG001
+export FASTA=/abs/path/MAG001.fa
+export OUT="$REPO_ROOT/results/functional_metagenomics/manual/$MAG_ID"
+export THREADS=16
+mkdir -p "$OUT"/{genes,kofam,mcycdb,scycdb,dbcan,bakta}
+```
+
+Gene prediction:
+
+```bash
+conda activate methanet-fgx
+prodigal \
+  -i "$FASTA" \
+  -a "$OUT/genes/$MAG_ID.faa" \
+  -d "$OUT/genes/$MAG_ID.ffn" \
+  -o "$OUT/genes/$MAG_ID.gff" \
+  -f gff \
+  -p meta
+```
+
+KOfam:
+
+```bash
+exec_annotation \
+  --cpu "$THREADS" \
+  --profile "$DB_ROOT/kofam/profiles/prokaryote.hal" \
+  --ko-list "$DB_ROOT/kofam/ko_list" \
+  --format detail-tsv \
+  -o "$OUT/kofam/$MAG_ID.kofam.detail.tsv" \
+  "$OUT/genes/$MAG_ID.faa"
+```
+
+MCycDB:
+
+```bash
+diamond blastp \
+  -q "$OUT/genes/$MAG_ID.faa" \
+  -d "$DB_ROOT/mcycdb/MCycDB_2021.dmnd" \
+  -o "$OUT/mcycdb/$MAG_ID.diamond.tsv" \
+  -f 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp scovhsp \
+  --evalue 1e-10 \
+  --query-cover 70 \
+  --subject-cover 50 \
+  --threads "$THREADS"
+```
+
+SCycDB:
+
+```bash
+diamond blastp \
+  -q "$OUT/genes/$MAG_ID.faa" \
+  -d "$DB_ROOT/scycdb/SCycDB_2020Mar.dmnd" \
+  -o "$OUT/scycdb/$MAG_ID.diamond.tsv" \
+  -f 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp scovhsp \
+  --evalue 1e-10 \
+  --query-cover 70 \
+  --subject-cover 50 \
+  --threads "$THREADS"
+```
+
+dbCAN:
+
+```bash
+run_dbcan "$FASTA" prok \
+  --db_dir "$DB_ROOT/dbcan" \
+  --out_dir "$OUT/dbcan" \
+  --dia_cpu "$THREADS" \
+  --hmm_cpu "$THREADS"
+```
+
+Bakta optional annotation:
+
+```bash
+conda activate methanet-bakta
+bakta \
+  --db "$DB_ROOT/bakta/db-light" \
+  --meta \
+  --threads "$THREADS" \
+  --output "$OUT/bakta" \
+  --prefix "$MAG_ID" \
+  --force \
+  "$FASTA"
+```
+
+## Cohort-Level Commands
+
+Stage MAGs into one folder for tools that run by genome directory:
+
+```bash
+export STAGED="$REPO_ROOT/results/functional_metagenomics/manual/staged_genomes"
+mkdir -p "$STAGED"
+awk 'NR > 1 {print $1 "\t" $2}' mag_manifest.tsv |
+while IFS=$'\t' read -r mag_id fasta; do
+  ln -sf "$(readlink -f "$fasta")" "$STAGED/$mag_id.fa"
+done
+```
+
+CheckM2:
+
+```bash
+conda activate checkm2_py38
+checkm2 predict \
+  --input "$STAGED" \
+  --output-directory "$REPO_ROOT/results/functional_metagenomics/manual/checkm2" \
+  --threads 32 \
+  --extension fa \
+  --database_path "$DB_ROOT/checkm2"
+```
+
+GUNC:
+
+```bash
+conda activate methanet-gunc3
+gunc run \
+  -d "$STAGED" \
+  -o "$REPO_ROOT/results/functional_metagenomics/manual/gunc" \
+  -t 32 \
+  -e .fa \
+  --db_file "$DB_ROOT/gunc/gunc_db_progenomes3.dmnd"
+```
+
+GTDB-Tk:
+
+```bash
+conda activate methanet-gtdbtk272
+export GTDBTK_DATA_PATH="$DB_ROOT/gtdbtk_r232/release232"
+gtdbtk classify_wf \
+  --genome_dir "$STAGED" \
+  --out_dir "$REPO_ROOT/results/functional_metagenomics/manual/gtdbtk" \
+  --extension fa \
+  --cpus 64
+```
+
+METABOLIC-G:
+
+```bash
+conda activate methanet-metabolic
+export METABOLIC_DIR="$DB_ROOT/metabolic/METABOLIC"
+find "$STAGED" -name '*.fa' | sort > "$REPO_ROOT/results/functional_metagenomics/manual/metabolic_genomes.txt"
+perl "$METABOLIC_DIR/METABOLIC-G.pl" \
+  -in-gn "$REPO_ROOT/results/functional_metagenomics/manual/metabolic_genomes.txt" \
+  -o "$REPO_ROOT/results/functional_metagenomics/manual/metabolic" \
+  -t 64
+```
+
+## Gated Tools
+
+### eggNOG
+
+Do not direct-download `eggnog.db.gz` from Apolo compute nodes. The server
+reports `Accept-Ranges=none`, range resume fails, and direct transfers truncate
+near 1.1 GB. Stage these files externally or from a local mirror:
+
+```bash
+$DB_ROOT/eggnog_v2/eggnog.db
+$DB_ROOT/eggnog_v2/eggnog.taxa.db
+$DB_ROOT/eggnog_v2/eggnog_proteins.dmnd
+```
+
+Validate:
+
+```bash
+conda activate methanet-fgx
+test -s "$DB_ROOT/eggnog_v2/eggnog.db"
+diamond dbinfo --db "$DB_ROOT/eggnog_v2/eggnog_proteins.dmnd"
+emapper.py -h >/dev/null
+```
+
+### DRAM
+
+Do not use the broken local DRAM env for production. Use METABOLIC-G and Bakta
+now. If DRAM is required, provision DRAM2 with Nextflow plus Singularity or a
+fresh Conda runtime, then transfer preformatted databases from Globus as
+described in the official DRAM2 installation docs.
+
+## Completion Gates
+
+A MAG functional analytics run is complete only when:
+
+- every MAG has QC rows from CheckM2 and GUNC,
+- every MAG has GTDB-Tk taxonomy or an explicit unresolved status,
+- every MAG has Prodigal proteins,
+- KOfam, MCycDB, SCycDB, and dbCAN outputs exist per MAG,
+- METABOLIC-G cohort output exists,
+- Bakta outputs exist if `run_bakta_optional` was enabled,
+- eggNOG outputs exist only if the v2 database was staged and validated,
+- bridge candidates have explicit mechanism labels or missing-evidence reasons.

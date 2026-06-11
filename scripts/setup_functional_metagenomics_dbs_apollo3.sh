@@ -22,9 +22,11 @@ GTDBTK_ENV="${GTDBTK_ENV:-methanet-gtdbtk272}"
 DBCAN_ENV="${DBCAN_ENV:-methanet-dbcan}"
 DRAM_ENV="${DRAM_ENV:-methanet-fgintel}"
 METABOLIC_ENV="${METABOLIC_ENV:-methanet-metabolic}"
+BAKTA_ENV="${BAKTA_ENV:-methanet-bakta}"
+BAKTA_DB_TYPE="${BAKTA_DB_TYPE:-light}"
 MIN_FREE_GB="${MIN_FREE_GB:-1200}"
 THREADS="${THREADS:-16}"
-SETUP_STEPS="${SETUP_STEPS:-preflight,create_env,checkm2,gtdbtk_r232,gunc_progenomes3,kofam,eggnog_v2,mcycdb,scycdb,dbcan,dram,metabolic,mmseqs}"
+SETUP_STEPS="${SETUP_STEPS:-preflight,create_env,checkm2,gtdbtk_r232,gunc_progenomes3,kofam,eggnog_v2,mcycdb,scycdb,dbcan,dram,metabolic,mmseqs,bakta}"
 CONDA_SH="${CONDA_SH:-/opt/ohpc/pub/apps/miniconda3/etc/profile.d/conda.sh}"
 REPO_ROOT="${REPO_ROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
 
@@ -321,7 +323,7 @@ step_preflight() {
   require_cmd sha256sum
   require_cmd conda
   [[ -r "$CONDA_SH" ]] || die "conda hook missing: $CONDA_SH"
-  mkdir -p "$DB_ROOT"/{checkm2,gtdbtk_r232,gunc,eggnog_v2,kofam,mcycdb,scycdb,dbcan,dram,metabolic,mmseqs,manifests}
+  mkdir -p "$DB_ROOT"/{checkm2,gtdbtk_r232,gunc,eggnog_v2,kofam,mcycdb,scycdb,dbcan,dram,metabolic,mmseqs,bakta,manifests}
   touch "${DB_ROOT}/.write_test" && rm "${DB_ROOT}/.write_test"
   ensure_space
   df -hT "$DB_ROOT" /tmp || true
@@ -331,6 +333,8 @@ step_preflight() {
   log "TOOL_ENV=${TOOL_ENV}"
   log "DBCAN_ENV=${DBCAN_ENV}"
   log "METABOLIC_ENV=${METABOLIC_ENV}"
+  log "BAKTA_ENV=${BAKTA_ENV}"
+  log "BAKTA_DB_TYPE=${BAKTA_DB_TYPE}"
   log "THREADS=${THREADS}"
   log "SETUP_STEPS=${SETUP_STEPS}"
   log "SLURM_JOB_ID=${SLURM_JOB_ID:-not_slurm}"
@@ -436,6 +440,13 @@ step_create_env() {
     fi
   else
     log "METABOLIC env exists: ${METABOLIC_ENV}"
+  fi
+
+  if ! env_exists "$BAKTA_ENV"; then
+    log "creating Bakta env ${BAKTA_ENV}"
+    conda create -y -n "$BAKTA_ENV" -c conda-forge -c bioconda bakta=1.12.0
+  else
+    log "Bakta env exists: ${BAKTA_ENV}"
   fi
 }
 
@@ -807,6 +818,26 @@ step_mmseqs() {
     "Placeholder for future custom novelty/search databases."
 }
 
+step_bakta() {
+  activate_env "$BAKTA_ENV"
+  local root="${DB_ROOT}/bakta"
+  mkdir -p "$root"
+  local db_dir
+  db_dir="$(find "$root" -maxdepth 2 -type f -name 'bakta.db' -printf '%h\n' 2>/dev/null | sort | tail -1 || true)"
+  if [[ -z "$db_dir" ]]; then
+    retry 3 bakta_db download --output "$root" --type "$BAKTA_DB_TYPE"
+    db_dir="$(find "$root" -maxdepth 2 -type f -name 'bakta.db' -printf '%h\n' 2>/dev/null | sort | tail -1 || true)"
+  fi
+  [[ -n "$db_dir" && -s "${db_dir}/bakta.db" ]] || die "Bakta database missing after download under ${root}"
+  bakta --version >/dev/null
+  bakta_db list >/dev/null
+  manifest_row bakta "$(binary_version bakta --version)" \
+    "Bakta ${BAKTA_DB_TYPE} database" "schema 6 compatible; $(basename "$db_dir")" "$db_dir" "BAKTA_DB/--db" \
+    "file_count:$(find "$db_dir" -type f | wc -l); bakta_db_sha256:$(sha256sum "${db_dir}/bakta.db" | awk '{print $1}')" \
+    "bakta --version; bakta_db list; test -s ${db_dir}/bakta.db" \
+    "Optional standardized MAG annotation add-on; use light DB for first-pass cohort annotation and full DB when throughput/storage budget allows."
+}
+
 main() {
   manifest_header
   local step
@@ -825,6 +856,7 @@ main() {
       dram) run_step dram step_dram ;;
       metabolic) run_step metabolic step_metabolic ;;
       mmseqs) run_step mmseqs step_mmseqs ;;
+      bakta) run_step bakta step_bakta ;;
       *) die "unknown setup step requested in SETUP_STEPS: ${step}" ;;
     esac
   done
