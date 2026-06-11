@@ -24,6 +24,7 @@ DRAM_ENV="${DRAM_ENV:-methanet-fgintel}"
 METABOLIC_ENV="${METABOLIC_ENV:-methanet-metabolic}"
 MIN_FREE_GB="${MIN_FREE_GB:-1200}"
 THREADS="${THREADS:-16}"
+SETUP_STEPS="${SETUP_STEPS:-preflight,create_env,checkm2,gtdbtk_r232,gunc_progenomes3,kofam,eggnog_v2,mcycdb,scycdb,dbcan,dram,metabolic,mmseqs}"
 CONDA_SH="${CONDA_SH:-/opt/ohpc/pub/apps/miniconda3/etc/profile.d/conda.sh}"
 REPO_ROOT="${REPO_ROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
 
@@ -92,24 +93,62 @@ retry() {
   done
 }
 
+remote_header_value() {
+  local url="$1"
+  local header="$2"
+  curl -fsSIL --max-time 60 --connect-timeout 20 --http1.1 "$url" \
+    | awk -F ':' -v h="$header" 'tolower($1)==tolower(h) {gsub(/^[ \t]+|[ \t\r]+$/, "", $2); value=$2} END {print value}'
+}
+
+large_download_can_resume() {
+  local url="$1"
+  local dest="$2"
+  local max_nonresumable_bytes="${MAX_NONRESUMABLE_DOWNLOAD_BYTES:-1073741824}"
+  local content_length
+  local accept_ranges
+  DOWNLOAD_FAILURE_REASON=""
+  content_length="$(remote_header_value "$url" "Content-Length" || true)"
+  accept_ranges="$(remote_header_value "$url" "Accept-Ranges" || true)"
+  log "remote download metadata for ${url}: content_length=${content_length:-unknown} accept_ranges=${accept_ranges:-unknown}"
+  if [[ "${ALLOW_NONRESUMABLE_LARGE_DOWNLOAD:-0}" == "1" ]]; then
+    return 0
+  fi
+  if [[ "$content_length" =~ ^[0-9]+$ && "$content_length" -gt "$max_nonresumable_bytes" && "${accept_ranges,,}" != "bytes" ]]; then
+    DOWNLOAD_FAILURE_REASON="remote file is ${content_length} bytes but does not support HTTP range resume (Accept-Ranges=${accept_ranges:-unknown}); refusing non-resumable large download to avoid repeated truncation"
+    log "${DOWNLOAD_FAILURE_REASON}; destination=${dest}"
+    return 1
+  fi
+  return 0
+}
+
 download_gzip_checked() {
   local url="$1"
   local dest="$2"
   local tmp="${dest}.part"
+  local max_attempts="${DOWNLOAD_RESUME_ATTEMPTS:-24}"
   local attempt
-  for attempt in 1 2 3 4; do
-    rm -f "$tmp"
-    log "download attempt ${attempt}/4: ${url}"
-    if curl -L --fail --retry 4 --retry-all-errors --retry-delay 20 \
+  if [[ -s "$dest" ]] && gzip -t "$dest"; then
+    log "validated existing gzip: ${dest}"
+    return 0
+  fi
+  if [[ -s "$tmp" ]] && gzip -t "$tmp"; then
+    log "validated existing partial gzip; promoting to final: ${tmp}"
+    mv -f "$tmp" "$dest"
+    return 0
+  fi
+  large_download_can_resume "$url" "$dest" || return 1
+  for attempt in $(seq 1 "$max_attempts"); do
+    log "resumable download attempt ${attempt}/${max_attempts}: ${url} current_bytes=$(stat -c '%s' "$tmp" 2>/dev/null || echo 0)"
+    if curl -L --fail --retry 0 --continue-at - \
       --connect-timeout 60 --speed-time 300 --speed-limit 1024 \
       --http1.1 --no-keepalive -o "$tmp" "$url" && gzip -t "$tmp"; then
       mv -f "$tmp" "$dest"
       return 0
     fi
-    rm -f "$tmp"
-    log "download or gzip validation failed for ${url}"
-    sleep $((30 * attempt))
+    log "download still incomplete or gzip validation failed for ${url}; keeping partial for resume"
+    sleep $((20 * attempt))
   done
+  rm -f "$tmp"
   return 1
 }
 
@@ -117,20 +156,30 @@ download_targz_checked() {
   local url="$1"
   local dest="$2"
   local tmp="${dest}.part"
+  local max_attempts="${DOWNLOAD_RESUME_ATTEMPTS:-24}"
   local attempt
-  for attempt in 1 2 3 4; do
-    rm -f "$tmp"
-    log "download attempt ${attempt}/4: ${url}"
-    if curl -L --fail --retry 4 --retry-all-errors --retry-delay 20 \
+  if [[ -s "$dest" ]] && tar -tzf "$dest" >/dev/null; then
+    log "validated existing tar.gz: ${dest}"
+    return 0
+  fi
+  if [[ -s "$tmp" ]] && tar -tzf "$tmp" >/dev/null; then
+    log "validated existing partial tar.gz; promoting to final: ${tmp}"
+    mv -f "$tmp" "$dest"
+    return 0
+  fi
+  large_download_can_resume "$url" "$dest" || return 1
+  for attempt in $(seq 1 "$max_attempts"); do
+    log "resumable download attempt ${attempt}/${max_attempts}: ${url} current_bytes=$(stat -c '%s' "$tmp" 2>/dev/null || echo 0)"
+    if curl -L --fail --retry 0 --continue-at - \
       --connect-timeout 60 --speed-time 300 --speed-limit 1024 \
       --http1.1 --no-keepalive -o "$tmp" "$url" && tar -tzf "$tmp" >/dev/null; then
       mv -f "$tmp" "$dest"
       return 0
     fi
-    rm -f "$tmp"
-    log "download or tar.gz validation failed for ${url}"
-    sleep $((30 * attempt))
+    log "download still incomplete or tar.gz validation failed for ${url}; keeping partial for resume"
+    sleep $((20 * attempt))
   done
+  rm -f "$tmp"
   return 1
 }
 
@@ -283,6 +332,7 @@ step_preflight() {
   log "DBCAN_ENV=${DBCAN_ENV}"
   log "METABOLIC_ENV=${METABOLIC_ENV}"
   log "THREADS=${THREADS}"
+  log "SETUP_STEPS=${SETUP_STEPS}"
   log "SLURM_JOB_ID=${SLURM_JOB_ID:-not_slurm}"
   log "PATH=${PATH}"
 }
@@ -507,15 +557,15 @@ step_eggnog_v2() {
       "${dir}/eggnog.taxa.tar.gz" \
       "${dir}/eggnog_proteins.dmnd.gz" "${dir}/eggnog_proteins.dmnd.tmp"
     if ! download_gzip_checked "${base_url}/eggnog.db.gz" "${dir}/eggnog.db.gz"; then
-      gate_eggnog "eggnog.db.gz failed gzip-validated download"
+      gate_eggnog "${DOWNLOAD_FAILURE_REASON:-eggnog.db.gz failed gzip-validated download}"
       return 0
     fi
     if ! download_targz_checked "${base_url}/eggnog.taxa.tar.gz" "${dir}/eggnog.taxa.tar.gz"; then
-      gate_eggnog "eggnog.taxa.tar.gz failed tar-validated download"
+      gate_eggnog "${DOWNLOAD_FAILURE_REASON:-eggnog.taxa.tar.gz failed tar-validated download}"
       return 0
     fi
     if ! download_gzip_checked "${base_url}/eggnog_proteins.dmnd.gz" "${dir}/eggnog_proteins.dmnd.gz"; then
-      gate_eggnog "eggnog_proteins.dmnd.gz failed gzip-validated download"
+      gate_eggnog "${DOWNLOAD_FAILURE_REASON:-eggnog_proteins.dmnd.gz failed gzip-validated download}"
       return 0
     fi
     if ! gunzip -c "${dir}/eggnog.db.gz" > "${dir}/eggnog.db.tmp"; then
@@ -759,19 +809,25 @@ step_mmseqs() {
 
 main() {
   manifest_header
-  run_step preflight step_preflight
-  run_step create_env step_create_env
-  run_step checkm2 step_checkm2
-  run_step gtdbtk_r232 step_gtdbtk_r232
-  run_step gunc_progenomes3 step_gunc
-  run_step kofam step_kofam
-  run_step eggnog_v2 step_eggnog_v2
-  run_step mcycdb step_mcycdb
-  run_step scycdb step_scycdb
-  run_step dbcan step_dbcan
-  run_step dram step_dram
-  run_step metabolic step_metabolic
-  run_step mmseqs step_mmseqs
+  local step
+  for step in ${SETUP_STEPS//,/ }; do
+    case "$step" in
+      preflight) run_step preflight step_preflight ;;
+      create_env) run_step create_env step_create_env ;;
+      checkm2) run_step checkm2 step_checkm2 ;;
+      gtdbtk_r232) run_step gtdbtk_r232 step_gtdbtk_r232 ;;
+      gunc_progenomes3) run_step gunc_progenomes3 step_gunc ;;
+      kofam) run_step kofam step_kofam ;;
+      eggnog_v2) run_step eggnog_v2 step_eggnog_v2 ;;
+      mcycdb) run_step mcycdb step_mcycdb ;;
+      scycdb) run_step scycdb step_scycdb ;;
+      dbcan) run_step dbcan step_dbcan ;;
+      dram) run_step dram step_dram ;;
+      metabolic) run_step metabolic step_metabolic ;;
+      mmseqs) run_step mmseqs step_mmseqs ;;
+      *) die "unknown setup step requested in SETUP_STEPS: ${step}" ;;
+    esac
+  done
   log "All requested setup steps completed or reached gated/manual status."
   log "Manifest: ${MANIFEST}"
   log "State dir: ${STATE_DIR}"

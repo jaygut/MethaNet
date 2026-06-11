@@ -111,9 +111,11 @@ gunzip eggnog_proteins.dmnd.gz
 ```
 
 On Apolo-3, `eggnog5.embl.de` resolves and serves `emapperdb-5.0.2`, but direct
-compute-node HTTP transfers can terminate early (`curl: (18)` on
-`eggnog.db.gz`). Treat eggNOG as an out-of-band staging/local-mirror gate unless
-the full files validate in `$DB_ROOT/eggnog_v2`.
+compute-node HTTP transfers terminate early (`curl: (18)` on `eggnog.db.gz`).
+The endpoint reports `Accept-Ranges=none` for the 6,776,977,123-byte
+`eggnog.db.gz`, so range resume is not available from this source. Treat eggNOG
+as an out-of-band staging/local-mirror gate unless the full files validate in
+`$DB_ROOT/eggnog_v2`.
 
 Preview:
 
