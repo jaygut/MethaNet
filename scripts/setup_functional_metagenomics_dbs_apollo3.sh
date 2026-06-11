@@ -483,7 +483,7 @@ step_kofam() {
 step_eggnog_v2() {
   conda_activate
   local dir="${DB_ROOT}/eggnog_v2"
-  local base_url="${EGGNOG_BASE_URL:-http://eggnog5.embl.de/download/emapperdb-5.0.2}"
+  local base_url="${EGGNOG_BASE_URL:-http://eggnogdb.embl.de/download/emapperdb-5.0.2}"
   local gated_reason
   gate_eggnog() {
     gated_reason="$1"
