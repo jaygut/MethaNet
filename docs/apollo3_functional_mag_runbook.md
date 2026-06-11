@@ -104,6 +104,12 @@ the legacy v2 data endpoint. The server does not reliably support resumable
 range downloads for these large files, so `curl -C -` or `aria2c` is not a full
 fix.
 
+Current Apolo-3 DNS note: `eggnogdb.embl.de` did not resolve during the
+2026-06-11 retry, while `eggnog5.embl.de` resolved to `194.94.44.170` and
+served the expected `emapperdb-5.0.2` files. Keep
+`EGGNOG_BASE_URL=http://eggnog5.embl.de/download/emapperdb-5.0.2` unless DNS
+behavior changes.
+
 Recommended path:
 
 1. Create an isolated stable env:
