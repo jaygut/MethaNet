@@ -1,0 +1,18 @@
+name: methanet-fgx-integration
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.11
+  - pandas
+  - numpy
+  - scipy
+  - scikit-learn
+  - statsmodels
+  - pyarrow
+  - pyyaml
+  - jinja2
+  - matplotlib
+  - seaborn
+

@@ -1,0 +1,68 @@
+# Apollo 3 configuration scaffold for MethaNet functional-metagenomics expansion.
+# Replace placeholder paths before execution.
+
+run_id: fgx_20260611_apollo3_r232
+
+paths:
+  project_root: /home/rsg-jcorre38/Jay_Proyects/MethaNet
+  workdir: /home/rsg-jcorre38/Jay_Proyects/MethaNet
+  scratch: /scratch/${USER}/methanet_fgx
+  results: results/functional_metagenomics/fgx_20260611_apollo3_r232
+  logs: logs/functional_metagenomics/fgx_20260611_apollo3_r232
+
+inputs:
+  # Required: one row per MAG.
+  mag_manifest: ai_docs/functional_metagenomics_expansion/templates/mag_manifest.template.tsv
+  # Existing POC artifacts used for latent-function joins.
+  embedding_metadata: results/blue_catalyst_poc/runs/apolo_full_20260228_080644_embed_20260305_061952/artifacts/embedding_metadata.tsv
+  bridge_metrics: results/blue_catalyst_poc/interim_snapshots/apolo_full_20260228_080644_embed_20260305_061952_notebook_interim_20260306_055012/tables/embedding_projection_partial.tsv
+  bridge_candidates: results/blue_catalyst_poc/interim_snapshots/apolo_full_20260228_080644_embed_20260305_061952_notebook_interim_20260306_055012/tables/alpha_transfer_candidates_top40.tsv
+
+pilot:
+  # Override at runtime with --config pilot_mag_id=<MAG_ID>.
+  pilot_mag_id: null
+
+databases:
+  db_root: /home/rsg-jcorre38/scratch/methanet_db
+  checkm2: /home/rsg-jcorre38/scratch/methanet_db/checkm2
+  gtdbtk: /home/rsg-jcorre38/scratch/methanet_db/gtdbtk_r232
+  gunc_db: /home/rsg-jcorre38/scratch/methanet_db/gunc/progenomes_3.dmnd
+  eggnog_v2: /home/rsg-jcorre38/scratch/methanet_db/eggnog_v2
+  eggnog_v3_preview: /home/rsg-jcorre38/scratch/methanet_db/eggnog_v3_preview
+  kofam_profiles: /home/rsg-jcorre38/scratch/methanet_db/kofam/profiles/prokaryote.hal
+  kofam_ko_list: /home/rsg-jcorre38/scratch/methanet_db/kofam/ko_list
+  mcycdb_diamond: /home/rsg-jcorre38/scratch/methanet_db/mcycdb/MCycDB_2021.dmnd
+  mcycdb_id2gene: /home/rsg-jcorre38/scratch/methanet_db/mcycdb/MCycDB/id2gene.map
+  scycdb_diamond: /home/rsg-jcorre38/scratch/methanet_db/scycdb/SCycDB_2020Mar.dmnd
+  scycdb_id2gene: /home/rsg-jcorre38/scratch/methanet_db/scycdb/SCycDB/id2gene.2020Mar.map
+  dbcan: /home/rsg-jcorre38/scratch/methanet_db/dbcan
+  dram: /home/rsg-jcorre38/scratch/methanet_db/dram
+  metabolic: /home/rsg-jcorre38/scratch/methanet_db/metabolic
+
+params:
+  fasta_extension: fa
+  prodigal_mode: meta
+  gtdbtk_release: R232
+  derep_ani_species: 0.95
+  derep_ani_mapping_catalog: 0.98
+  diamond_evalue: 1e-10
+  diamond_query_cover: 70
+  diamond_subject_cover: 50
+  diamond_identity: 35
+  run_eggnog_v3_preview: false
+  run_dram: true
+  run_metabolic: true
+  run_dbcan_cgc: true
+
+threads:
+  light: 4
+  medium: 16
+  heavy: 32
+  gtdbtk: 64
+
+resources:
+  mem_light_mb: 8000
+  mem_medium_mb: 64000
+  mem_heavy_mb: 256000
+  mem_bigmem_mb: 0
+
