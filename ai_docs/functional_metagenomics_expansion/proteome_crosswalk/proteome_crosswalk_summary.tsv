@@ -1,0 +1,12 @@
+metric	value
+input_proteome_manifest_rows	663
+final_embedded_proteomes	662
+final_embedded_rumen	555
+final_embedded_wetland_mucc	107
+input_rumen	555
+input_wetland_mucc	108
+input_not_embedded	1
+duplicate_input_proteome_ids	0
+duplicate_embedded_proteome_ids	0
+rumen_with_analysis_accession	555
+wetland_with_analysis_accession	0
