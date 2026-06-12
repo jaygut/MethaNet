@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://methanet.local/schemas/functional_run_record.schema.json",
+  "title": "MethaNet Functional MAG Run Record",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "cohort_run_id",
+    "run_id",
+    "proteome_id",
+    "mag_id",
+    "status",
+    "inputs",
+    "job",
+    "summary_metrics",
+    "qc",
+    "taxonomy",
+    "outputs",
+    "retention"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "cohort_run_id": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "proteome_id": {
+      "type": "string"
+    },
+    "mag_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["complete", "failed", "partial", "skipped"]
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mag_fasta": {"type": ["string", "null"]},
+        "proteome_faa": {"type": ["string", "null"]},
+        "work_fasta": {"type": ["string", "null"]},
+        "input_sha256": {"type": ["string", "null"]}
+      }
+    },
+    "job": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "scheduler": {"type": ["string", "null"]},
+        "job_id": {"type": ["string", "null"]},
+        "cpus": {"type": ["integer", "null"]},
+        "elapsed_seconds": {"type": ["number", "null"]},
+        "exit_code": {"type": ["string", "null"]}
+      }
+    },
+    "summary_metrics": {
+      "type": "object",
+      "additionalProperties": {"type": ["string", "number", "integer", "boolean", "null"]}
+    },
+    "qc": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "completeness": {"type": ["number", "null"]},
+        "contamination": {"type": ["number", "null"]},
+        "gunc_pass": {"type": ["boolean", "null"]},
+        "gunc_css": {"type": ["number", "null"]},
+        "gunc_rrs": {"type": ["number", "null"]},
+        "qc_tier": {"type": ["string", "null"]},
+        "caveats": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "taxonomy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "gtdb_release": {"type": ["string", "null"]},
+        "classification": {"type": ["string", "null"]},
+        "domain": {"type": ["string", "null"]},
+        "phylum": {"type": ["string", "null"]},
+        "class": {"type": ["string", "null"]},
+        "order": {"type": ["string", "null"]},
+        "family": {"type": ["string", "null"]},
+        "genus": {"type": ["string", "null"]},
+        "species": {"type": ["string", "null"]},
+        "ani": {"type": ["number", "null"]},
+        "af": {"type": ["number", "null"]}
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": {"type": "string"},
+          "rows": {"type": ["integer", "null"]},
+          "bytes": {"type": ["integer", "null"]},
+          "warehouse_table": {"type": ["string", "null"]},
+          "retention_class": {"type": "string"}
+        },
+        "required": ["path", "retention_class"]
+      }
+    },
+    "retention": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "retain_success_raw": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "delete_after_extraction": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "logs_to_keep": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "checks": [
+    {
+      "detail": "results/functional_metagenomics/proteome_crosswalk_audit_20260612_0255/poc_662_functional_mag_manifest.proposed.tsv",
+      "gate": "manifest_exists",
+      "status": "pass"
+    },
+    {
+      "detail": "all required columns present",
+      "gate": "manifest_columns",
+      "status": "pass"
+    },
+    {
+      "detail": "included=662 expected=662",
+      "gate": "included_mag_count",
+      "status": "pass"
+    },
+    {
+      "detail": "unique=662 total=662",
+      "gate": "unique_proteome_id",
+      "status": "pass"
+    },
+    {
+      "detail": "unique=662 total=662",
+      "gate": "unique_mag_id",
+      "status": "pass"
+    },
+    {
+      "detail": "matched=662 included=662",
+      "gate": "all_included_rows_matched",
+      "status": "pass"
+    },
+    {
+      "detail": "checked=662 missing=0",
+      "gate": "mag_fasta_files_exist",
+      "status": "pass"
+    },
+    {
+      "detail": "checked=662 missing=0",
+      "gate": "proteome_faa_files_exist",
+      "status": "pass"
+    },
+    {
+      "detail": "scripts/slurm/run_one_mag_functional_smoke_apollo3.sh",
+      "gate": "script_ready:scripts/slurm/run_one_mag_functional_smoke_apollo3.sh",
+      "status": "pass"
+    },
+    {
+      "detail": "scripts/slurm/run_functional_mag_array_apollo3.sh",
+      "gate": "script_ready:scripts/slurm/run_functional_mag_array_apollo3.sh",
+      "status": "pass"
+    },
+    {
+      "detail": "scripts/submit_functional_mag_batches_apollo3.sh",
+      "gate": "script_ready:scripts/submit_functional_mag_batches_apollo3.sh",
+      "status": "pass"
+    },
+    {
+      "detail": "scripts/curate_functional_mag_run.py",
+      "gate": "script_ready:scripts/curate_functional_mag_run.py",
+      "status": "pass"
+    },
+    {
+      "detail": "scripts/prepare_dbcan_compat_cache_apollo3.sh",
+      "gate": "script_ready:scripts/prepare_dbcan_compat_cache_apollo3.sh",
+      "status": "pass"
+    },
+    {
+      "detail": "path=/home/rsg-jcorre38/scratch/methanet_db/dbcan_compat_pressed; missing=[]; du_bytes=5873287168",
+      "gate": "dbcan_shared_cache_ready",
+      "status": "pass"
+    },
+    {
+      "detail": "runner uses DBCAN_COMPAT_DIR and curation prunes dbcan_db_compat if legacy outputs exist",
+      "gate": "no_per_run_dbcan_cache_required",
+      "status": "pass"
+    },
+    {
+      "detail": "results/functional_metagenomics/one_mag_smoke/one_mag_fgx_rumen__10674_0002_idba_bin.8_20260611_231754/curated/parquet_manifest.tsv",
+      "gate": "curated_parquet_manifest_fixture",
+      "status": "pass"
+    },
+    {
+      "detail": "all required fixture tables present",
+      "gate": "curated_parquet_fixture_tables",
+      "status": "pass"
+    }
+  ],
+  "failures": [],
+  "status": "pass",
+  "warnings": []
+}
