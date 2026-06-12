@@ -1,0 +1,13 @@
+file_kind	key	total_matches	mucc_matches	rumen_matches
+mag_fasta	proteome_id	0	0	0
+mag_fasta	mag_id_candidate	662	107	555
+mag_fasta	proteome_faa_stem	0	0	0
+mag_fasta	source_analysis_accession	0	0	0
+mag_fasta	analysis_alias	0	0	0
+mag_fasta	filename	555	0	555
+protein_faa	proteome_id	662	107	555
+protein_faa	mag_id_candidate	0	0	0
+protein_faa	proteome_faa_stem	662	107	555
+protein_faa	source_analysis_accession	0	0	0
+protein_faa	analysis_alias	0	0	0
+protein_faa	filename	0	0	0

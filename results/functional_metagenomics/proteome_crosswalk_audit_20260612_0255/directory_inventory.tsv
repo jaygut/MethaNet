@@ -1,0 +1,8 @@
+file_kind	directory	file_count
+mag_fasta	data/assemblies	108
+mag_fasta	data/blue_catalyst_poc/mucc/extracted/Methanoregula_MAGs_DB	108
+mag_fasta	data/blue_catalyst_poc/proteomes/_tmp_rumen	435
+mag_fasta	data/blue_catalyst_poc/proteomes/_tmp_rumen_nuc	127
+mag_fasta	data/blue_catalyst_poc/rumen/raw	566
+mag_fasta	data/mucc/Methanoregula_MAGs_DB/Methanoregula_MAGs_DB	108
+protein_faa	data/blue_catalyst_poc/proteomes	669
