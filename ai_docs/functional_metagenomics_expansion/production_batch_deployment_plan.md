@@ -94,18 +94,30 @@ Smoke run:
 | elapsed | 40m 53s |
 | dbCAN press now removed from per-run path | yes |
 
-The smoke MAG is small and moderately incomplete, so production walltime must allow substantially larger MAGs. The recommended per-task allocation is:
+The smoke MAG and 24-MAG calibration tranche are small relative to the largest
+rumen records. The calibration tranche completed cleanly, but the full 662-MAG
+manifest includes much larger rumen inputs, with the largest compressed MAG
+FASTA around 333 MB and the largest proteome FAA around 474 MB. Production
+walltime must therefore be sized for the full manifest, not the calibration
+median. The recommended per-task allocation is:
 
 ```text
 cpus-per-task = 16
 memory = 128G
-time = 08:00:00
+time = 24:00:00
 partition = longjobs
 ```
 
 Rationale:
 
-- 8 hours gives roughly 8-12x margin over the completed smoke walltime.
+- 24 hours gives margin for the largest rumen records and avoids avoidable
+  requeues if METABOLIC, GUNC, or GTDB-Tk scale nonlinearly with input size.
+- 128G remains conservative because Slurm accounting and per-step time logs did
+  not expose reliable RSS for calibration; do not reduce memory until a large
+  rumen tranche has measured memory telemetry.
+- 16 CPUs remains reasonable because the longest tools accept thread arguments
+  and the calibration runtime was dominated by METABOLIC, GUNC, dbCAN, and
+  GTDB-Tk.
 - One MAG per array task limits failure blast radius.
 - Per-MAG closeout prunes avoidable scratch after successful extraction.
 - Failed MAGs keep enough local state for debugging.
@@ -115,15 +127,15 @@ Rationale:
 Use a SLURM array with capped concurrency:
 
 ```text
---array=1-662%24
+--array=1-662%12
 ```
 
 Default full-cohort dry-run command:
 
 ```bash
 DRY_RUN=1 \
-CONCURRENCY=24 \
-TIME_LIMIT=08:00:00 \
+CONCURRENCY=12 \
+TIME_LIMIT=24:00:00 \
 MEM=128G \
 THREADS=16 \
 scripts/submit_functional_mag_batches_apollo3.sh
@@ -132,24 +144,24 @@ scripts/submit_functional_mag_batches_apollo3.sh
 This currently resolves to:
 
 ```text
-sbatch --partition=longjobs --cpus-per-task=16 --mem=128G --time=08:00:00 --array=1-662%24 ...
+sbatch --partition=longjobs --cpus-per-task=16 --mem=128G --time=24:00:00 --array=1-662%12 ...
 ```
 
 Expected completion envelope:
 
 | assumption | approximate full-cohort elapsed |
 | --- | ---: |
-| average 1 hour/MAG, concurrency 24 | 28 hours |
-| average 1.5 hours/MAG, concurrency 24 | 42 hours |
-| average 2 hours/MAG, concurrency 24 | 56 hours |
-| pessimistic every MAG reaches 8h limit, concurrency 24 | 224 hours |
+| average 1 hour/MAG, concurrency 12 | 55 hours |
+| average 1.5 hours/MAG, concurrency 12 | 83 hours |
+| average 2 hours/MAG, concurrency 12 | 111 hours |
+| pessimistic every MAG reaches 24h limit, concurrency 12 | 1324 hours |
 
 Operational recommendation:
 
 1. Run one final no-submit preflight.
-2. Launch a calibration tranche of 24 MAGs with `--array=1-24%6` or equivalent override.
-3. Review elapsed time, memory, failure modes, and curated Parquet/log size.
-4. If clean, launch the full array with `1-662%24`.
+2. Calibration tranche of 24 MAGs with `--array=1-24%6` has completed cleanly.
+3. Review elapsed time, failure modes, curated Parquet/log size, and full-manifest input sizes.
+4. If launch is approved, launch the full array with `1-662%12` and 24h walltime.
 5. Requeue only failed task indices after diagnosis.
 
 The submit helper currently prepares the full array command by default. For a calibration tranche, either pass a manually edited `sbatch --array=1-24%6` command or temporarily run the helper output through a checked wrapper. Do not alter the manifest to create a pilot subset unless the subset manifest is explicitly named and archived.
@@ -184,8 +196,8 @@ Recommended full production submission, after calibration passes:
 
 ```bash
 DRY_RUN=0 \
-CONCURRENCY=24 \
-TIME_LIMIT=08:00:00 \
+CONCURRENCY=12 \
+TIME_LIMIT=24:00:00 \
 MEM=128G \
 THREADS=16 \
 scripts/submit_functional_mag_batches_apollo3.sh

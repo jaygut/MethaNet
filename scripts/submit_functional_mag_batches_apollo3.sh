@@ -9,9 +9,14 @@ RESULT_ROOT="${RESULT_ROOT:-${REPO_ROOT}/results/functional_metagenomics/${COHOR
 ARRAY_WORKER="${ARRAY_WORKER:-${REPO_ROOT}/scripts/slurm/run_functional_mag_array_apollo3.sh}"
 THREADS="${THREADS:-16}"
 MEM="${MEM:-128G}"
-TIME_LIMIT="${TIME_LIMIT:-08:00:00}"
+# The 24-MAG calibration finished in <1h per MAG, but it only covered
+# wetland/MUCC genomes. The full cohort includes much larger rumen inputs, so
+# default to 24h for production and override down only for calibration tranches.
+TIME_LIMIT="${TIME_LIMIT:-24:00:00}"
 PARTITION="${PARTITION:-longjobs}"
-CONCURRENCY="${CONCURRENCY:-24}"
+# 12-way concurrency fits two longjobs nodes at 16 CPUs/task without saturating
+# all 64 cores on each node, leaving headroom for tool-level I/O and memory.
+CONCURRENCY="${CONCURRENCY:-12}"
 START_INDEX="${START_INDEX:-1}"
 END_INDEX="${END_INDEX:-}"
 ARRAY_SPEC="${ARRAY_SPEC:-}"
