@@ -1,0 +1,82 @@
+gate	status	detail
+selected_completed_mag_count	pass	selected=24; expected=24
+one_row_per_proteome_id_dim_mag	pass	duplicates=0; rows=24
+identity_columns:dim_gene	pass	missing=[]; rows=47187
+primary_key_duplicates:dim_gene	pass	key=['cohort_run_id', 'proteome_id', 'gene_id']; duplicate_rows=0
+identity_columns:dim_mag	pass	missing=[]; rows=24
+primary_key_duplicates:dim_mag	pass	key=['cohort_run_id', 'proteome_id']; duplicate_rows=0
+identity_columns:fact_bakta_features	pass	missing=[]; rows=48267
+identity_columns:fact_cazy_hits	pass	missing=[]; rows=48
+primary_key_duplicates:fact_cazy_hits	pass	key=['cohort_run_id', 'proteome_id', 'cazy_family']; duplicate_rows=0
+identity_columns:fact_dbcan_hits	pass	missing=[]; rows=909
+identity_columns:fact_input_stats	pass	missing=[]; rows=96
+identity_columns:fact_kofam_hits	pass	missing=[]; rows=945792
+primary_key_duplicates:fact_kofam_hits	pass	key=['cohort_run_id', 'proteome_id', 'gene_id', 'ko_id']; duplicate_rows=0
+identity_columns:fact_mcycdb_hits	pass	missing=[]; rows=55443
+primary_key_duplicates:fact_mcycdb_hits	pass	key=['cohort_run_id', 'proteome_id', 'gene_id', 'subject_id']; duplicate_rows=0
+identity_columns:fact_merops_hits	pass	missing=[]; rows=410
+primary_key_duplicates:fact_merops_hits	pass	key=['cohort_run_id', 'proteome_id', 'merops_peptidase_id']; duplicate_rows=0
+identity_columns:fact_metabolic_function_presence	pass	missing=[]; rows=2496
+primary_key_duplicates:fact_metabolic_function_presence	pass	key=['cohort_run_id', 'proteome_id', 'function_category', 'function_name', 'gene_abbreviation']; duplicate_rows=0
+identity_columns:fact_metabolic_hmm_hits	pass	missing=[]; rows=7560
+primary_key_duplicates:fact_metabolic_hmm_hits	pass	key=['cohort_run_id', 'proteome_id', 'function_category', 'function_name', 'gene_abbreviation', 'hmm_file']; duplicate_rows=0
+identity_columns:fact_metabolic_module_presence	pass	missing=[]; rows=11280
+primary_key_duplicates:fact_metabolic_module_presence	pass	key=['cohort_run_id', 'proteome_id', 'module_id']; duplicate_rows=0
+identity_columns:fact_metabolic_module_step_presence	pass	missing=[]; rows=48024
+primary_key_duplicates:fact_metabolic_module_step_presence	pass	key=['cohort_run_id', 'proteome_id', 'module_step_id', 'ko_id']; duplicate_rows=0
+identity_columns:fact_qc_checkm2	pass	missing=[]; rows=24
+primary_key_duplicates:fact_qc_checkm2	pass	key=['cohort_run_id', 'proteome_id', 'Name']; duplicate_rows=0
+identity_columns:fact_qc_gunc	pass	missing=[]; rows=24
+primary_key_duplicates:fact_qc_gunc	pass	key=['cohort_run_id', 'proteome_id']; duplicate_rows=0
+identity_columns:fact_run_status	pass	missing=[]; rows=49
+primary_key_duplicates:fact_run_status	pass	key=['cohort_run_id', 'proteome_id', 'run_id']; duplicate_rows=0
+identity_columns:fact_scycdb_hits	pass	missing=[]; rows=54328
+primary_key_duplicates:fact_scycdb_hits	pass	key=['cohort_run_id', 'proteome_id', 'gene_id', 'subject_id']; duplicate_rows=0
+identity_columns:fact_taxonomy_gtdbtk	pass	missing=[]; rows=24
+primary_key_duplicates:fact_taxonomy_gtdbtk	pass	key=['cohort_run_id', 'proteome_id']; duplicate_rows=0
+identity_columns:fact_tool_timing	pass	missing=[]; rows=360
+primary_key_duplicates:fact_tool_timing	pass	key=['cohort_run_id', 'proteome_id', 'run_id', 'step']; duplicate_rows=0
+identity_columns:feature_annotation_coverage	pass	missing=[]; rows=264
+primary_key_duplicates:feature_annotation_coverage	pass	key=['cohort_run_id', 'proteome_id', 'annotation_tool']; duplicate_rows=0
+identity_columns:feature_methane_mechanism	pass	missing=[]; rows=24
+primary_key_duplicates:feature_methane_mechanism	pass	key=['cohort_run_id', 'proteome_id']; duplicate_rows=0
+identity_columns:feature_mrv_mag_level	pass	missing=[]; rows=24
+primary_key_duplicates:feature_mrv_mag_level	pass	key=['cohort_run_id', 'proteome_id']; duplicate_rows=0
+identity_columns:feature_sulfur_competition	pass	missing=[]; rows=24
+primary_key_duplicates:feature_sulfur_competition	pass	key=['cohort_run_id', 'proteome_id']; duplicate_rows=0
+identity_columns:run_summary_metrics	pass	missing=[]; rows=528
+no_tool_native_wide_columns:fact_metabolic_hmm_hits	pass	wide_columns=[]
+no_tool_native_wide_columns:fact_metabolic_function_presence	pass	wide_columns=[]
+no_tool_native_wide_columns:fact_metabolic_module_presence	pass	wide_columns=[]
+no_tool_native_wide_columns:fact_metabolic_module_step_presence	pass	wide_columns=[]
+no_tool_native_wide_columns:fact_cazy_hits	pass	wide_columns=[]
+no_tool_native_wide_columns:fact_merops_hits	pass	wide_columns=[]
+kofam_accepted_hit_flag	pass	accepted_hit column present
+diamond_best_hit_rank:fact_mcycdb_hits	pass	hit_rank_bitscore present
+diamond_best_hit_rank:fact_scycdb_hits	pass	hit_rank_bitscore present
+annotation_coverage_measured	pass	rows=264; expected_min=264
+complete_mag_required_tables:mucc__2162886008_15	pass	missing=[]
+complete_mag_required_tables:mucc__3300001784_29	pass	missing=[]
+complete_mag_required_tables:mucc__3300004775_9	pass	missing=[]
+complete_mag_required_tables:mucc__3300005325_23	pass	missing=[]
+complete_mag_required_tables:mucc__3300005326_54	pass	missing=[]
+complete_mag_required_tables:mucc__3300009053_19	pass	missing=[]
+complete_mag_required_tables:mucc__3300009081_10	pass	missing=[]
+complete_mag_required_tables:mucc__3300009153_19	pass	missing=[]
+complete_mag_required_tables:mucc__3300010293_30	pass	missing=[]
+complete_mag_required_tables:mucc__3300013126_82	pass	missing=[]
+complete_mag_required_tables:mucc__3300013126_97	pass	missing=[]
+complete_mag_required_tables:mucc__3300014199_19	pass	missing=[]
+complete_mag_required_tables:mucc__3300014205_53	pass	missing=[]
+complete_mag_required_tables:mucc__3300016725_15	pass	missing=[]
+complete_mag_required_tables:mucc__3300017643_20	pass	missing=[]
+complete_mag_required_tables:mucc__3300017947_8	pass	missing=[]
+complete_mag_required_tables:mucc__3300017959_16	pass	missing=[]
+complete_mag_required_tables:mucc__3300017975_11	pass	missing=[]
+complete_mag_required_tables:mucc__3300018012_6	pass	missing=[]
+complete_mag_required_tables:mucc__3300018019_17	pass	missing=[]
+complete_mag_required_tables:mucc__3300021071_20	pass	missing=[]
+complete_mag_required_tables:mucc__3300025858_29	pass	missing=[]
+complete_mag_required_tables:mucc__3300025963_1	pass	missing=[]
+complete_mag_required_tables:mucc__3300025975_1	pass	missing=[]
+failed_partial_attempts_preserved	pass	attempts=49; status_rows=49; noncomplete=25

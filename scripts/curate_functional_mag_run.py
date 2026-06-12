@@ -266,12 +266,41 @@ def write_tsv(path: Path, rows: list[dict[str, Any]]) -> None:
 
 
 def add_identity_columns(df: Any, record: dict[str, Any], table_name: str) -> Any:
+    df.insert(0, "source_tool", source_tool_for_table(table_name))
     df.insert(0, "table_name", table_name)
     df.insert(0, "mag_id", record["mag_id"])
     df.insert(0, "proteome_id", record["proteome_id"])
     df.insert(0, "run_id", record["run_id"])
     df.insert(0, "cohort_run_id", record["cohort_run_id"])
     return df
+
+
+def source_tool_for_table(table_name: str) -> str:
+    if table_name.startswith("fact_cazy_") or table_name.startswith("fact_merops_"):
+        return "METABOLIC-G"
+    if table_name.startswith("fact_metabolic_"):
+        return "METABOLIC-G"
+    if table_name.startswith("fact_kofam_"):
+        return "KOfam"
+    if table_name.startswith("fact_mcycdb_"):
+        return "MCycDB"
+    if table_name.startswith("fact_scycdb_"):
+        return "SCycDB"
+    if table_name.startswith("fact_dbcan_"):
+        return "dbCAN"
+    if table_name.startswith("fact_bakta_") or table_name == "dim_gene":
+        return "Bakta"
+    if table_name.startswith("fact_qc_checkm2"):
+        return "CheckM2"
+    if table_name.startswith("fact_qc_gunc"):
+        return "GUNC"
+    if table_name.startswith("fact_taxonomy_gtdbtk"):
+        return "GTDB-Tk"
+    if table_name.startswith("fact_tool_timing"):
+        return "MethaNet"
+    if table_name.startswith("fact_input_stats") or table_name.startswith("run_summary"):
+        return "MethaNet"
+    return "MethaNet"
 
 
 def write_parquet_shards(run_dir: Path, record: dict[str, Any]) -> list[dict[str, Any]]:
@@ -318,7 +347,124 @@ def write_parquet_shards(run_dir: Path, record: dict[str, Any]) -> list[dict[str
             "path": str(target),
             "rows": int(len(df)),
             "bytes": target.stat().st_size,
-        })
+            })
+
+    def prefixed_col(df: Any, suffix: str) -> str | None:
+        matches = [col for col in df.columns if str(col).endswith(suffix)]
+        return matches[0] if matches else None
+
+    def clean_optional_text(value: Any) -> Any:
+        if value is None:
+            return None
+        text = str(value)
+        if text in {"", "nan", "None", "NA"}:
+            return None
+        return text
+
+    def split_gene_list(value: Any) -> Any:
+        text = clean_optional_text(value)
+        if text is None:
+            return None
+        return ";".join(part for part in (item.strip() for item in text.split(";")) if part and part != "None")
+
+    def parse_hit_count(value: Any) -> Any:
+        if value is None:
+            return None
+        try:
+            return int(float(value))
+        except (TypeError, ValueError):
+            return value
+
+    def normalize_metabolic_sheet(sheet_name: str, df: Any) -> tuple[str, Any] | None:
+        safe_name = "".join(ch.lower() if ch.isalnum() else "_" for ch in str(sheet_name)).strip("_")
+        if df is None or df.empty:
+            return None
+        df = df.copy()
+        df = df.dropna(how="all")
+        if df.empty:
+            return None
+
+        if safe_name == "hmmhitnum":
+            presence_col = prefixed_col(df, ".Hmm.presence")
+            hit_count_col = prefixed_col(df, ".Hit.numbers")
+            hits_col = prefixed_col(df, ".Hits")
+            out = pd.DataFrame({
+                "function_category": df.get("Category"),
+                "function_name": df.get("Function"),
+                "gene_abbreviation": df.get("Gene.abbreviation"),
+                "gene_name": df.get("Gene.name"),
+                "hmm_file": df.get("Hmm.file"),
+                "ko_id": df.get("Corresponding.KO"),
+                "reaction": df.get("Reaction"),
+                "substrate": df.get("Substrate"),
+                "product": df.get("Product"),
+                "hmm_detecting_threshold": df.get("Hmm.detecting.threshold"),
+                "presence": df[presence_col] if presence_col else None,
+                "hit_count": df[hit_count_col].map(parse_hit_count) if hit_count_col else None,
+                "hit_genes": df[hits_col].map(split_gene_list) if hits_col else None,
+                "evidence_source": "METABOLIC_result.xlsx:HMMHitNum",
+            })
+            return "fact_metabolic_hmm_hits", out
+
+        if safe_name == "functionhit":
+            presence_col = prefixed_col(df, ".Function.presence")
+            out = pd.DataFrame({
+                "function_category": df.get("Category"),
+                "function_name": df.get("Function"),
+                "gene_abbreviation": df.get("Gene.abbreviation"),
+                "presence": df[presence_col] if presence_col else None,
+                "evidence_source": "METABOLIC_result.xlsx:FunctionHit",
+            })
+            return "fact_metabolic_function_presence", out
+
+        if safe_name == "keggmodulehit":
+            presence_col = prefixed_col(df, ".Module.presence")
+            out = pd.DataFrame({
+                "module_id": df.get("Module.ID"),
+                "module_name": df.get("Module"),
+                "module_category": df.get("Module.Category"),
+                "presence": df[presence_col] if presence_col else None,
+                "hit_count": None,
+                "hit_genes": None,
+                "evidence_source": "METABOLIC_result.xlsx:KEGGModuleHit",
+            })
+            return "fact_metabolic_module_presence", out
+
+        if safe_name == "keggmodulestephit":
+            presence_col = prefixed_col(df, ".Module.step.presence")
+            out = pd.DataFrame({
+                "module_step_id": df.get("Module.step"),
+                "module_name": df.get("Module"),
+                "ko_id": df.get("KO.id"),
+                "module_category": df.get("Module.Category"),
+                "presence": df[presence_col] if presence_col else None,
+                "evidence_source": "METABOLIC_result.xlsx:KEGGModuleStepHit",
+            })
+            return "fact_metabolic_module_step_presence", out
+
+        if safe_name == "dbcan2hit":
+            hit_count_col = prefixed_col(df, ".Hit.numbers")
+            hits_col = prefixed_col(df, ".Hits")
+            out = pd.DataFrame({
+                "cazy_family": df.get("CAZyme.ID"),
+                "hit_count": df[hit_count_col].map(parse_hit_count) if hit_count_col else None,
+                "hit_genes": df[hits_col].map(split_gene_list) if hits_col else None,
+                "evidence_source": "METABOLIC_result.xlsx:dbCAN2Hit",
+            })
+            return "fact_cazy_hits", out
+
+        if safe_name == "meropshit":
+            hit_count_col = prefixed_col(df, ".Hit.numbers")
+            hits_col = prefixed_col(df, ".Hits")
+            out = pd.DataFrame({
+                "merops_peptidase_id": df.get("MEROPS.peptidase.ID"),
+                "hit_count": df[hit_count_col].map(parse_hit_count) if hit_count_col else None,
+                "hit_genes": df[hits_col].map(split_gene_list) if hits_col else None,
+                "evidence_source": "METABOLIC_result.xlsx:MEROPSHit",
+            })
+            return "fact_merops_hits", out
+
+        return f"fact_metabolic_{safe_name}", df
 
     summary_path = run_dir / "summary.tsv"
     if summary_path.exists():
@@ -374,8 +520,10 @@ def write_parquet_shards(run_dir: Path, record: dict[str, Any]) -> list[dict[str
     if metabolic_xlsx.exists():
         sheets = pd.read_excel(metabolic_xlsx, sheet_name=None)
         for sheet_name, sheet_df in sheets.items():
-            safe_name = "".join(ch.lower() if ch.isalnum() else "_" for ch in str(sheet_name)).strip("_")
-            write_df(f"fact_metabolic_{safe_name}", sheet_df)
+            normalized = normalize_metabolic_sheet(sheet_name, sheet_df)
+            if normalized:
+                table_name, table_df = normalized
+                write_df(table_name, table_df)
 
     return written
 
