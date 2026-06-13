@@ -69,7 +69,10 @@ AGENTS.md
 .snakemake/
 
 # Project-specific excludes
-ai_docs/
+ai_docs/*
+!ai_docs/functional_metagenomics_expansion/
+ai_docs/functional_metagenomics_expansion/*
+!ai_docs/functional_metagenomics_expansion/pipeline_reproducibility_contract.md
 grants/
 docs/papers/
 results/

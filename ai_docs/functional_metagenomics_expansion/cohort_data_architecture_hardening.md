@@ -1,5 +1,7 @@
 # Functional MAG Cohort Data Architecture Hardening
 
+Date: 2026-06-13
+
 ## Purpose
 
 This note defines the hardened data architecture for the MethaNet
@@ -10,13 +12,18 @@ The design goal is a compact, reproducible, Parquet-first functional atlas that
 can be queried from Python, R, SQL/DuckDB, dashboards, and future MRV workflows
 without re-reading large tool-native output bundles.
 
-## Current Calibration State
+This document describes data architecture and validation contracts. It is not a
+live scheduler-status report. During active Apollo-3 runs, refresh Slurm and
+per-MAG sentinel state separately before making operational decisions.
 
-The calibration tranche contains multiple attempts per MAG:
+## Historical Calibration State
+
+The initial calibration tranche contained multiple attempts per MAG:
 
 - Initial attempts failed at KOfam because the runtime did not expose
   `exec_annotation`.
-- Retry attempts are completing successfully.
+- Retry attempts completed successfully enough to validate the curation and
+  cohort-consolidation model.
 - Per-MAG closeout writes `curated/run_record.json`,
   `curated/file_manifest.tsv`, `curated/parquet_manifest.tsv`, and Parquet
   shards.
@@ -37,6 +44,11 @@ This gives two layers of protection:
 
 - Future per-MAG outputs are normalized at closeout.
 - Already completed per-MAG outputs are normalized at consolidation.
+
+While production jobs are active, avoid editing runner behavior, pruning
+per-MAG folders, or regenerating cohort warehouses unless that is the explicit
+operational task. Documentation and standalone read-only/reporting utilities are
+safe to update.
 
 ## Cohort Warehouse
 
@@ -193,22 +205,26 @@ Quarantine or remove failed first-attempt calibration folders only after their
 failure mode is confirmed and the status rows are present in the cohort
 warehouse.
 
-## Current Launch Decision
+## Launch Decision Semantics
 
-For the active 24-MAG calibration tranche, the current decision is:
+Validation reports encode a dated decision for the outputs they inspected.
+Historical calibration reports may contain:
 
 ```text
 CONDITIONAL NO-LAUNCH
 ```
 
-The data model gates pass, but the calibration tranche should not be treated as
-complete until all 24 retry tasks have completed and the consolidation command
-is rerun with `--expected-complete-count 24`.
+That means the data model can be structurally sound while the inspected tranche
+is incomplete or still carrying accepted warnings. It should not be interpreted
+as a permanent production-launch state.
 
-For the full 662-MAG production launch, proceed only after:
+For full-cohort scientific analysis, proceed only after:
 
-1. The 24-MAG calibration tranche reports 24 selected completed curated MAGs.
-2. `validation_gates.tsv` has no `fail` rows.
-3. Any `warn` rows are either resolved or explicitly accepted.
-4. The final cohort warehouse contains normalized METABOLIC long tables and no
+1. The intended tranche or cohort reports the expected selected completed
+   curated MAG count.
+2. `validation_gates.tsv` has no `fail` rows for that dated warehouse.
+3. Any `warn` rows are either resolved or explicitly accepted in a report.
+4. The cohort warehouse contains normalized METABOLIC long tables and no
    tool-native wide MAG columns.
+5. Metadata joins preserve `metadata_resolution` and do not inflate source/site
+   provenance into sample-level environmental covariates.
