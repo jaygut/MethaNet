@@ -33,6 +33,7 @@ RETAIN_SUCCESS_RAW = [
     "mcycdb/*.diamond.tsv",
     "scycdb/*.diamond.tsv",
     "dbcan/overview.txt",
+    "eggnog/*.emapper.annotations",
     "bakta/*.tsv",
     "bakta/*.json",
     "bakta/*.gff3",
@@ -219,6 +220,7 @@ def build_outputs(run_dir: Path, repo_root: Path, mag_id: str) -> dict[str, dict
         "mcycdb_diamond": (run_dir / f"mcycdb/{mag_id}.diamond.tsv", False, "fact_mcycdb_hits", "raw_selected_keep"),
         "scycdb_diamond": (run_dir / f"scycdb/{mag_id}.diamond.tsv", False, "fact_scycdb_hits", "raw_selected_keep"),
         "dbcan_overview": (run_dir / "dbcan/overview.txt", True, "fact_dbcan_hits", "raw_selected_keep"),
+        "eggnog_annotations": (run_dir / f"eggnog/{mag_id}.emapper.annotations", False, "fact_eggnog_annotations", "raw_selected_keep"),
         "bakta_tsv": (run_dir / f"bakta/{mag_id}.tsv", True, "fact_bakta_features", "raw_selected_keep"),
         "bakta_json": (run_dir / f"bakta/{mag_id}.json", True, None, "raw_selected_keep_compress"),
         "metabolic_workbook": (run_dir / "metabolic/METABOLIC_result.xlsx", True, "fact_metabolic_tables", "raw_selected_keep"),
@@ -288,6 +290,8 @@ def source_tool_for_table(table_name: str) -> str:
         return "SCycDB"
     if table_name.startswith("fact_dbcan_"):
         return "dbCAN"
+    if table_name.startswith("fact_eggnog_"):
+        return "eggNOG-mapper"
     if table_name.startswith("fact_bakta_") or table_name == "dim_gene":
         return "Bakta"
     if table_name.startswith("fact_qc_checkm2"):
@@ -335,6 +339,59 @@ def write_parquet_shards(run_dir: Path, record: dict[str, Any]) -> list[dict[str
         if header is None:
             return pd.DataFrame()
         return pd.DataFrame(rows, columns=header)
+
+    def read_eggnog_annotations(path: Path) -> Any:
+        header: list[str] | None = None
+        rows: list[list[str]] = []
+        with path.open(errors="replace") as handle:
+            for line in handle:
+                line = line.rstrip("\n")
+                if not line:
+                    continue
+                if line.startswith("##"):
+                    continue
+                if line.startswith("#"):
+                    candidate = line.lstrip("#").split("\t")
+                    if candidate and candidate[0] in {"query", "query_name"}:
+                        header = candidate
+                    continue
+                if header is None:
+                    continue
+                parts = line.split("\t")
+                if len(parts) < len(header):
+                    parts.extend([""] * (len(header) - len(parts)))
+                rows.append(parts[:len(header)])
+        if header is None:
+            return pd.DataFrame()
+        out = pd.DataFrame(rows, columns=header)
+        rename = {
+            "query": "gene_id",
+            "seed_ortholog": "seed_ortholog",
+            "evalue": "evalue",
+            "score": "score",
+            "eggNOG_OGs": "eggnog_ogs",
+            "max_annot_lvl": "max_annotation_level",
+            "COG_category": "cog_category",
+            "Description": "description",
+            "Preferred_name": "preferred_name",
+            "GOs": "go_terms",
+            "EC": "ec_numbers",
+            "KEGG_ko": "kegg_ko",
+            "KEGG_Pathway": "kegg_pathway",
+            "KEGG_Module": "kegg_module",
+            "KEGG_Reaction": "kegg_reaction",
+            "KEGG_rclass": "kegg_rclass",
+            "BRITE": "brite",
+            "KEGG_TC": "kegg_tc",
+            "CAZy": "cazy",
+            "BiGG_Reaction": "bigg_reaction",
+            "PFAMs": "pfams",
+        }
+        out = out.rename(columns={old: new for old, new in rename.items() if old in out.columns})
+        for col in ("evalue", "score"):
+            if col in out.columns:
+                out[col] = pd.to_numeric(out[col], errors="coerce")
+        return out
 
     def write_df(name: str, df: Any) -> None:
         if df is None or df.empty:
@@ -511,6 +568,10 @@ def write_parquet_shards(run_dir: Path, record: dict[str, Any]) -> list[dict[str
     dbcan_path = run_dir / "dbcan/overview.txt"
     if dbcan_path.exists():
         write_df("fact_dbcan_hits", pd.read_csv(dbcan_path, sep="\t"))
+
+    eggnog_path = run_dir / f"eggnog/{mag_id}.emapper.annotations"
+    if eggnog_path.exists():
+        write_df("fact_eggnog_annotations", read_eggnog_annotations(eggnog_path))
 
     bakta_path = run_dir / f"bakta/{mag_id}.tsv"
     if bakta_path.exists():

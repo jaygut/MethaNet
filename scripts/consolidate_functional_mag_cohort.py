@@ -52,6 +52,7 @@ PRIMARY_KEYS = {
     "fact_qc_gunc": ["cohort_run_id", "proteome_id"],
     "fact_taxonomy_gtdbtk": ["cohort_run_id", "proteome_id"],
     "fact_kofam_hits": ["cohort_run_id", "proteome_id", "gene_id", "ko_id"],
+    "fact_eggnog_annotations": ["cohort_run_id", "proteome_id", "gene_id"],
     "fact_mcycdb_hits": ["cohort_run_id", "proteome_id", "gene_id", "subject_id"],
     "fact_scycdb_hits": ["cohort_run_id", "proteome_id", "gene_id", "subject_id"],
     "fact_metabolic_hmm_hits": ["cohort_run_id", "proteome_id", "function_category", "function_name", "gene_abbreviation", "hmm_file"],
@@ -78,6 +79,8 @@ def source_tool_for_table(table_name: str) -> str:
         return "SCycDB"
     if table_name.startswith("fact_dbcan_"):
         return "dbCAN"
+    if table_name.startswith("fact_eggnog_"):
+        return "eggNOG-mapper"
     if table_name.startswith("fact_bakta_") or table_name == "dim_gene":
         return "Bakta"
     if table_name.startswith("fact_qc_checkm2"):
@@ -475,6 +478,7 @@ def build_coverage(pd: Any, dim_mag: Any, tables: dict[str, Any]) -> Any:
     }
     specs = [
         ("KOfam", "fact_kofam_hits", "gene_id"),
+        ("eggNOG", "fact_eggnog_annotations", "gene_id"),
         ("MCycDB", "fact_mcycdb_hits", "gene_id"),
         ("SCycDB", "fact_scycdb_hits", "gene_id"),
         ("dbCAN", "fact_dbcan_hits", None),

@@ -136,7 +136,7 @@ Every top bridge candidate must be classified as:
 | `ko_matrix.tsv` | MAG x KO | KOfam/eggNOG KO presence or copy count |
 | `ec_matrix.tsv` | MAG x EC | enzyme feature layer |
 | `module_completeness.tsv` | MAG x module | KEGG/curated module completeness |
-| `eggnog_annotations.tsv` | gene | orthology, COG category, GO/EC/KO/Pfam where available |
+| `fact_eggnog_annotations` | gene | optional eggNOG-mapper orthology, COG category, GO/EC/KO/Pfam where available |
 | `dram_distillate.tsv` | MAG x trait | genome metabolism distillation |
 | `metabolic_traits.tsv` | MAG x trait | METABOLIC-G biogeochemical profile |
 | `dbcan_overview.tsv` | gene/MAG | CAZyme overview |
@@ -152,7 +152,7 @@ Every top bridge candidate must be classified as:
 | column | meaning |
 | --- | --- |
 | `mag_id` | genome |
-| `tool` | KOfam, eggNOG, MCycDB, dbCAN, etc. |
+| `tool` | KOfam, optional eggNOG, MCycDB, dbCAN, etc. |
 | `protein_count` | canonical protein count |
 | `annotated_proteins` | proteins with accepted calls |
 | `coverage_fraction` | annotated / protein count |
@@ -226,4 +226,3 @@ The minimal demo should consume only reviewed artifacts:
 4. Never compare eggNOG v2 and v3 outputs without version columns.
 5. Never hide QC-failed bridge candidates; mark them blocked.
 6. Never claim source-independent transfer from the current single-source-per-ecosystem design.
-

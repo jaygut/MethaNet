@@ -1,633 +1,397 @@
 """
-MethaNet functional-metagenomics expansion backbone.
+MethaNet functional-metagenomics production-contract backbone.
 
-This scaffold is designed for:
-1. single-MAG pilot mode via --config pilot_mag_id=<MAG_ID>
-2. bridge-panel mode via a filtered manifest
-3. full-cohort mode across the 662-genome POC MAG/proteome set
-
-Promotion requirement:
-Implement the parser/integration scripts referenced under
-workflow/scripts/functional_metagenomics/ before treating this as production.
+This Snakemake scaffold treats the current Apollo-3 Slurm production runner,
+curator, and cohort consolidator as the source of truth. It is deliberately
+orchestration-focused: Snakemake schedules the same per-MAG evidence bundle
+contract instead of inventing a parallel output layout.
 """
 
-import os
 from pathlib import Path
+import csv
 
 import pandas as pd
 
 
+shell.executable("/bin/bash")
+
+PROJECT_ROOT = Path(config["paths"]["project_root"]).resolve()
 RESULTS = config["paths"]["results"]
 LOGS = config["paths"]["logs"]
 DB = config["databases"]
 PARAMS = config["params"]
 THREADS = config["threads"]
+RESOURCES = config["resources"]
 
+COHORT_RUN_ID = config.get("cohort_run_id") or config.get("run_id") or Path(RESULTS).name
 MANIFEST = config["inputs"]["mag_manifest"]
 PILOT_MAG_ID = config.get("pilot_mag_id") or config.get("pilot", {}).get("pilot_mag_id")
 
+RUNNER = config["paths"].get("runner", "scripts/slurm/run_one_mag_functional_smoke_apollo3.sh")
+CURATOR = config["paths"].get("curator", "scripts/curate_functional_mag_run.py")
+CONSOLIDATOR = config["paths"].get("consolidator", "scripts/consolidate_functional_mag_cohort.py")
+CONDA_SH = config["paths"].get("conda_sh", "/opt/ohpc/pub/apps/miniconda3/etc/profile.d/conda.sh")
+
+
+def config_bool(value):
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def repo_path(value):
+    path = Path(str(value))
+    if path.is_absolute():
+        return path
+    return PROJECT_ROOT / path
+
+
+RUN_EGGNOG_V2 = config_bool(config.get("run_eggnog_v2", PARAMS.get("run_eggnog_v2", True)))
+PRUNE_SUCCESS = config_bool(PARAMS.get("prune_success", True))
+COMPRESS_LOGS = config_bool(PARAMS.get("compress_logs", True))
+PREPARE_DBCAN_CACHE = config_bool(PARAMS.get("prepare_dbcan_cache", True))
+
+
+def resolve_existing_path(value):
+    return str(repo_path(value))
+
 
 def load_manifest():
-    manifest = pd.read_csv(MANIFEST, sep="\t", dtype=str)
-    required = {"mag_id", "fasta_path", "ecosystem", "source"}
+    manifest = pd.read_csv(repo_path(MANIFEST), sep="\t", dtype=str).fillna("")
+    if "fasta_path" not in manifest.columns and "mag_fasta" in manifest.columns:
+        manifest["fasta_path"] = manifest["mag_fasta"]
+    if "proteome_id" not in manifest.columns:
+        if "sample" in manifest.columns:
+            manifest["proteome_id"] = manifest["sample"]
+        else:
+            manifest["proteome_id"] = manifest["mag_id"]
+    if "functional_run_include" in manifest.columns:
+        include_mask = manifest["functional_run_include"].str.lower()
+        manifest = manifest.loc[include_mask.isin({"true", "1", "yes"})].copy()
+    required = {"proteome_id", "mag_id", "fasta_path", "ecosystem", "source"}
     missing = required - set(manifest.columns)
     if missing:
         raise ValueError(f"mag_manifest missing required columns: {sorted(missing)}")
+    if "proteome_faa" not in manifest.columns:
+        manifest["proteome_faa"] = ""
+    if manifest["proteome_id"].duplicated().any():
+        dupes = sorted(manifest.loc[manifest["proteome_id"].duplicated(), "proteome_id"].unique())
+        raise ValueError(f"mag_manifest contains duplicate proteome_id values: {dupes[:10]}")
+    if manifest["mag_id"].duplicated().any():
+        dupes = sorted(manifest.loc[manifest["mag_id"].duplicated(), "mag_id"].unique())
+        raise ValueError(f"mag_manifest contains duplicate mag_id values: {dupes[:10]}")
     if PILOT_MAG_ID:
-        manifest = manifest.loc[manifest["mag_id"] == str(PILOT_MAG_ID)].copy()
+        pilot = str(PILOT_MAG_ID)
+        manifest = manifest.loc[
+            (manifest["mag_id"] == pilot) | (manifest["proteome_id"] == pilot)
+        ].copy()
         if manifest.empty:
             raise ValueError(f"pilot_mag_id not found in manifest: {PILOT_MAG_ID}")
     return manifest
 
 
 MAG_TABLE = load_manifest()
-MAGS = MAG_TABLE["mag_id"].tolist()
-FASTA_BY_MAG = dict(zip(MAG_TABLE["mag_id"], MAG_TABLE["fasta_path"]))
+PROTEOMES = MAG_TABLE["proteome_id"].tolist()
+MAG_BY_PROTEOME = dict(zip(MAG_TABLE["proteome_id"], MAG_TABLE["mag_id"]))
+FASTA_BY_PROTEOME = dict(zip(MAG_TABLE["proteome_id"], MAG_TABLE["fasta_path"]))
+FAA_BY_PROTEOME = dict(zip(MAG_TABLE["proteome_id"], MAG_TABLE["proteome_faa"]))
 
 
-def mag_fasta(wildcards):
-    return FASTA_BY_MAG[wildcards.mag_id]
+def snakemake_run_id(proteome_id):
+    return f"snakemake_{proteome_id}"
+
+
+def run_dir(proteome_id):
+    return f"{RESULTS}/per_mag/{proteome_id}/{snakemake_run_id(proteome_id)}"
+
+
+def run_dir_abs(proteome_id):
+    return str(repo_path(run_dir(proteome_id)))
+
+
+def mag_id_for_proteome(wildcards):
+    return MAG_BY_PROTEOME[wildcards.proteome_id]
+
+
+def mag_fasta_for_proteome(wildcards):
+    return resolve_existing_path(FASTA_BY_PROTEOME[wildcards.proteome_id])
+
+
+def proteome_faa_for_proteome(wildcards):
+    value = FAA_BY_PROTEOME.get(wildcards.proteome_id, "")
+    return resolve_existing_path(value) if value else resolve_existing_path(FASTA_BY_PROTEOME[wildcards.proteome_id])
+
+
+def eggnog_path_for_proteome(proteome_id):
+    mag_id = MAG_BY_PROTEOME[proteome_id]
+    return f"{run_dir(proteome_id)}/eggnog/{mag_id}.emapper.annotations"
+
+
+def optional_eggnog_input(wildcards):
+    return [eggnog_path_for_proteome(wildcards.proteome_id)] if RUN_EGGNOG_V2 else []
+
+
+def flag(enabled, text):
+    return text if enabled else ""
+
+
+PER_MAG_COMPLETE = expand(
+    f"{RESULTS}/per_mag/{{proteome_id}}/snakemake_{{proteome_id}}/COMPLETE",
+    proteome_id=PROTEOMES,
+)
+CURATED_RUN_RECORDS = expand(
+    f"{RESULTS}/per_mag/{{proteome_id}}/snakemake_{{proteome_id}}/curated/run_record.json",
+    proteome_id=PROTEOMES,
+)
+CURATED_FILE_MANIFESTS = expand(
+    f"{RESULTS}/per_mag/{{proteome_id}}/snakemake_{{proteome_id}}/curated/file_manifest.tsv",
+    proteome_id=PROTEOMES,
+)
+CURATED_PARQUET_MANIFESTS = expand(
+    f"{RESULTS}/per_mag/{{proteome_id}}/snakemake_{{proteome_id}}/curated/parquet_manifest.tsv",
+    proteome_id=PROTEOMES,
+)
+EGGNOG_OUTPUTS = [eggnog_path_for_proteome(proteome_id) for proteome_id in PROTEOMES] if RUN_EGGNOG_V2 else []
 
 
 rule all:
     input:
         f"{RESULTS}/manifests/mag_manifest.resolved.tsv",
         f"{RESULTS}/manifests/tool_db_manifest.tsv",
-        f"{RESULTS}/cohort/qc_taxonomy/mag_qc_integrated.tsv",
-        f"{RESULTS}/cohort/qc_taxonomy/taxonomy_resolved.tsv",
-        f"{RESULTS}/cohort/qc_taxonomy/derep_clusters.tsv",
-        f"{RESULTS}/cohort/functional_matrices/methane_marker_panel.tsv",
-        f"{RESULTS}/cohort/functional_matrices/methane_pathway_completeness.tsv",
-        f"{RESULTS}/cohort/functional_matrices/annotation_coverage_qc.tsv",
-        f"{RESULTS}/cohort/bridge_cards/bridge_mechanism_cards.json",
-        f"{RESULTS}/cohort/latent_function/latent_function_joined_features.parquet",
-        f"{RESULTS}/cohort/platform_demo/mrv_feature_table.parquet",
-        f"{RESULTS}/cohort/platform_demo/platform_dashboard_snapshot.json",
+        CURATED_RUN_RECORDS,
+        CURATED_FILE_MANIFESTS,
+        CURATED_PARQUET_MANIFESTS,
+        EGGNOG_OUTPUTS,
+        f"{RESULTS}/cohort_warehouse/DATA_ARCHITECTURE_VALIDATION.md",
+        f"{RESULTS}/cohort_warehouse/cohort_table_manifest.tsv",
+        f"{RESULTS}/cohort_warehouse/validation_gates.tsv",
+        f"{RESULTS}/cohort_warehouse/functional_atlas.duckdb",
 
 
 rule resolve_manifest:
     input:
-        manifest=MANIFEST,
-        embedding_metadata=config["inputs"]["embedding_metadata"],
-        bridge_metrics=config["inputs"]["bridge_metrics"],
+        manifest=resolve_existing_path(MANIFEST),
     output:
         f"{RESULTS}/manifests/mag_manifest.resolved.tsv",
-    conda:
-        "envs/integration.yaml"
-    shell:
-        """
-        mkdir -p {RESULTS}/manifests
-        python workflow/scripts/functional_metagenomics/resolve_mag_manifest.py \
-          --manifest {input.manifest} \
-          --embedding-metadata {input.embedding_metadata} \
-          --bridge-metrics {input.bridge_metrics} \
-          --out {output}
-        """
+    run:
+        out = MAG_TABLE.copy()
+        out.insert(0, "cohort_run_id", COHORT_RUN_ID)
+        out["snakemake_run_id"] = out["proteome_id"].map(snakemake_run_id)
+        out["snakemake_run_dir"] = out["proteome_id"].map(run_dir)
+        for col in ("fasta_path", "mag_fasta", "proteome_faa"):
+            if col in out.columns:
+                out[f"{col}_abs"] = out[col].map(lambda value: resolve_existing_path(value) if value else "")
+        Path(output[0]).parent.mkdir(parents=True, exist_ok=True)
+        out.to_csv(output[0], sep="\t", index=False)
 
 
 rule write_tool_db_manifest:
     output:
         f"{RESULTS}/manifests/tool_db_manifest.tsv",
-    params:
-        configfile="ai_docs/functional_metagenomics_expansion/snakemake_backbone/config.apollo3.yaml",
-    conda:
-        "envs/integration.yaml"
-    shell:
-        """
-        mkdir -p {RESULTS}/manifests
-        python workflow/scripts/functional_metagenomics/write_tool_db_manifest.py \
-          --config {params.configfile} \
-          --out {output}
-        """
-
-
-rule stage_mag_set:
-    output:
-        directory(f"{RESULTS}/staged_genomes"),
     run:
-        outdir = Path(output[0])
-        outdir.mkdir(parents=True, exist_ok=True)
-        for mag_id, fasta in FASTA_BY_MAG.items():
-            target = outdir / f"{mag_id}.{PARAMS['fasta_extension']}"
-            if target.exists() or target.is_symlink():
-                target.unlink()
-            os.symlink(Path(fasta).resolve(), target)
+        rows = []
+        for name, value in sorted(DB.items()):
+            path = repo_path(value)
+            rows.append({
+                "cohort_run_id": COHORT_RUN_ID,
+                "database": name,
+                "path": str(path),
+                "exists": path.exists(),
+                "is_file": path.is_file(),
+                "is_dir": path.is_dir(),
+                "bytes": path.stat().st_size if path.exists() and path.is_file() else "",
+            })
+        Path(output[0]).parent.mkdir(parents=True, exist_ok=True)
+        with open(output[0], "w", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()), delimiter="\t")
+            writer.writeheader()
+            writer.writerows(rows)
 
 
-rule quast:
-    input:
-        fasta=mag_fasta,
+rule validate_eggnog_v2_db:
     output:
-        report=f"{RESULTS}/per_mag/{{mag_id}}/qc/quast/report.tsv",
+        touch(f"{RESULTS}/manifests/eggnog_v2.ready"),
     threads:
         THREADS["light"]
     resources:
-        mem_mb=config["resources"]["mem_light_mb"]
-    conda:
-        "envs/qc.yaml"
-    shell:
-        """
-        mkdir -p $(dirname {output.report}) {LOGS}/quast
-        quast.py {input.fasta} \
-          -o {RESULTS}/per_mag/{wildcards.mag_id}/qc/quast \
-          -t {threads} \
-          > {LOGS}/quast/{wildcards.mag_id}.out \
-          2> {LOGS}/quast/{wildcards.mag_id}.err
-        """
-
-
-rule checkm2_all:
-    input:
-        genomes=rules.stage_mag_set.output,
-    output:
-        report=f"{RESULTS}/cohort/qc_taxonomy/checkm2/quality_report.tsv",
-    threads:
-        THREADS["heavy"]
-    resources:
-        mem_mb=config["resources"]["mem_bigmem_mb"]
-    conda:
-        "envs/qc.yaml"
-    shell:
-        """
-        mkdir -p {RESULTS}/cohort/qc_taxonomy/checkm2 {LOGS}/checkm2
-        checkm2 predict \
-          --input {input.genomes} \
-          --output-directory {RESULTS}/cohort/qc_taxonomy/checkm2 \
-          --threads {threads} \
-          --extension {PARAMS[fasta_extension]} \
-          --database_path {DB[checkm2]} \
-          > {LOGS}/checkm2/checkm2.out \
-          2> {LOGS}/checkm2/checkm2.err
-        """
-
-
-rule gunc_all:
-    input:
-        genomes=rules.stage_mag_set.output,
-    output:
-        report=f"{RESULTS}/cohort/qc_taxonomy/gunc/GUNC.progenomes_3.maxCSS_level.tsv",
-    threads:
-        THREADS["heavy"]
-    resources:
-        mem_mb=config["resources"]["mem_bigmem_mb"]
-    conda:
-        "envs/qc.yaml"
-    shell:
-        """
-        mkdir -p {RESULTS}/cohort/qc_taxonomy/gunc {LOGS}/gunc
-        gunc run \
-          -d {input.genomes} \
-          -o {RESULTS}/cohort/qc_taxonomy/gunc \
-          -t {threads} \
-          -e .{PARAMS[fasta_extension]} \
-          --db_file {DB[gunc_db]} \
-          > {LOGS}/gunc/gunc.out \
-          2> {LOGS}/gunc/gunc.err
-        """
-
-
-rule gtdbtk_all:
-    input:
-        genomes=rules.stage_mag_set.output,
-    output:
-        bac=f"{RESULTS}/cohort/qc_taxonomy/gtdbtk/gtdbtk.bac120.summary.tsv",
-        ar=f"{RESULTS}/cohort/qc_taxonomy/gtdbtk/gtdbtk.ar53.summary.tsv",
-    threads:
-        THREADS["gtdbtk"]
-    resources:
-        mem_mb=config["resources"]["mem_bigmem_mb"]
-    conda:
-        "envs/qc.yaml"
-    shell:
-        """
-        mkdir -p {RESULTS}/cohort/qc_taxonomy/gtdbtk {LOGS}/gtdbtk
-        export GTDBTK_DATA_PATH={DB[gtdbtk]}
-        gtdbtk classify_wf \
-          --genome_dir {input.genomes} \
-          --out_dir {RESULTS}/cohort/qc_taxonomy/gtdbtk \
-          --extension {PARAMS[fasta_extension]} \
-          --cpus {threads} \
-          > {LOGS}/gtdbtk/gtdbtk.out \
-          2> {LOGS}/gtdbtk/gtdbtk.err
-        """
-
-
-rule drep_all:
-    input:
-        genomes=rules.stage_mag_set.output,
-        checkm2=rules.checkm2_all.output.report,
-    output:
-        cdb=f"{RESULTS}/cohort/qc_taxonomy/drep/data_tables/Cdb.csv",
-        wdb=f"{RESULTS}/cohort/qc_taxonomy/drep/data_tables/Wdb.csv",
-    threads:
-        THREADS["heavy"]
-    resources:
-        mem_mb=config["resources"]["mem_bigmem_mb"]
-    conda:
-        "envs/qc.yaml"
-    shell:
-        """
-        mkdir -p {RESULTS}/cohort/qc_taxonomy/drep {LOGS}/drep
-        dRep dereplicate {RESULTS}/cohort/qc_taxonomy/drep \
-          -g {input.genomes}/*.{PARAMS[fasta_extension]} \
-          -p {threads} \
-          -sa {PARAMS[derep_ani_species]} \
-          --S_algorithm fastANI \
-          > {LOGS}/drep/drep.out \
-          2> {LOGS}/drep/drep.err
-        """
-
-
-rule integrate_qc_taxonomy:
-    input:
-        manifest=rules.resolve_manifest.output,
-        quast=expand(f"{RESULTS}/per_mag/{{mag_id}}/qc/quast/report.tsv", mag_id=MAGS),
-        checkm2=rules.checkm2_all.output.report,
-        gunc=rules.gunc_all.output.report,
-        gtdb_bac=rules.gtdbtk_all.output.bac,
-        gtdb_ar=rules.gtdbtk_all.output.ar,
-        drep_cdb=rules.drep_all.output.cdb,
-        drep_wdb=rules.drep_all.output.wdb,
-    output:
-        qc=f"{RESULTS}/cohort/qc_taxonomy/mag_qc_integrated.tsv",
-        taxonomy=f"{RESULTS}/cohort/qc_taxonomy/taxonomy_resolved.tsv",
-        derep=f"{RESULTS}/cohort/qc_taxonomy/derep_clusters.tsv",
-    conda:
-        "envs/integration.yaml"
-    shell:
-        """
-        mkdir -p {RESULTS}/cohort/qc_taxonomy
-        python workflow/scripts/functional_metagenomics/integrate_qc_taxonomy.py \
-          --manifest {input.manifest} \
-          --checkm2 {input.checkm2} \
-          --gunc {input.gunc} \
-          --gtdb-bac {input.gtdb_bac} \
-          --gtdb-ar {input.gtdb_ar} \
-          --drep-cdb {input.drep_cdb} \
-          --drep-wdb {input.drep_wdb} \
-          --out-qc {output.qc} \
-          --out-taxonomy {output.taxonomy} \
-          --out-derep {output.derep}
-        """
-
-
-rule prodigal:
-    input:
-        fasta=mag_fasta,
-    output:
-        faa=f"{RESULTS}/per_mag/{{mag_id}}/genes/{{mag_id}}.faa",
-        ffn=f"{RESULTS}/per_mag/{{mag_id}}/genes/{{mag_id}}.ffn",
-        gff=f"{RESULTS}/per_mag/{{mag_id}}/genes/{{mag_id}}.gff",
-    threads:
-        THREADS["light"]
-    resources:
-        mem_mb=config["resources"]["mem_light_mb"]
+        mem_mb=RESOURCES["mem_light_mb"]
     conda:
         "envs/annotation.yaml"
     shell:
         """
-        mkdir -p {RESULTS}/per_mag/{wildcards.mag_id}/genes {LOGS}/prodigal
-        prodigal \
-          -i {input.fasta} \
-          -a {output.faa} \
-          -d {output.ffn} \
-          -o {output.gff} \
-          -f gff \
-          -p {PARAMS[prodigal_mode]} \
-          > {LOGS}/prodigal/{wildcards.mag_id}.out \
-          2> {LOGS}/prodigal/{wildcards.mag_id}.err
+        set -euo pipefail
+        mkdir -p {RESULTS}/manifests {LOGS}/eggnog
+        test -s {DB[eggnog_v2]}/eggnog.db
+        test -s {DB[eggnog_v2]}/eggnog.taxa.db
+        test -s {DB[eggnog_v2]}/eggnog.taxa.db.traverse.pkl
+        test -s {DB[eggnog_v2]}/eggnog_proteins.dmnd
+        diamond dbinfo --db {DB[eggnog_v2]}/eggnog_proteins.dmnd \
+          > {LOGS}/eggnog/eggnog_v2_dbinfo.out \
+          2> {LOGS}/eggnog/eggnog_v2_dbinfo.err
+        emapper.py --data_dir {DB[eggnog_v2]} --version \
+          > {LOGS}/eggnog/eggnog_v2_emapper_version.out \
+          2> {LOGS}/eggnog/eggnog_v2_emapper_version.err
         """
 
 
-rule kofam:
+rule run_one_mag_tools:
     input:
-        faa=rules.prodigal.output.faa,
+        fasta=mag_fasta_for_proteome,
+        proteome_faa=proteome_faa_for_proteome,
+        runner=resolve_existing_path(RUNNER),
     output:
-        f"{RESULTS}/per_mag/{{mag_id}}/annotation/kofam/{{mag_id}}.kofam.detail.tsv",
+        complete=f"{RESULTS}/per_mag/{{proteome_id}}/snakemake_{{proteome_id}}/COMPLETE",
+    params:
+        mag_id=mag_id_for_proteome,
+        run_id=lambda wildcards: snakemake_run_id(wildcards.proteome_id),
+        run_dir=lambda wildcards: run_dir_abs(wildcards.proteome_id),
+        dbcan_compat_dir=str(repo_path(PARAMS.get("dbcan_compat_dir", f"{DB['db_root']}/dbcan_compat_pressed"))),
+        prepare_dbcan_cache="1" if PREPARE_DBCAN_CACHE else "0",
     threads:
         THREADS["medium"]
     resources:
-        mem_mb=config["resources"]["mem_medium_mb"]
-    conda:
-        "envs/annotation.yaml"
+        mem_mb=RESOURCES.get("mem_production_mb", 128000)
     shell:
         """
-        mkdir -p {RESULTS}/per_mag/{wildcards.mag_id}/annotation/kofam {LOGS}/kofam
-        exec_annotation \
-          --cpu {threads} \
-          --profile {DB[kofam_profiles]} \
-          --ko-list {DB[kofam_ko_list]} \
-          --format detail-tsv \
-          -o {output} \
-          {input.faa} \
-          > {LOGS}/kofam/{wildcards.mag_id}.out \
-          2> {LOGS}/kofam/{wildcards.mag_id}.err
+        set -euo pipefail
+        mkdir -p {params.run_dir:q}
+        export REPO_ROOT={PROJECT_ROOT:q}
+        export DB_ROOT={DB[db_root]:q}
+        export FASTA={input.fasta:q}
+        export PROTEOME_FAA={input.proteome_faa:q}
+        export PROTEOME_ID={wildcards.proteome_id:q}
+        export MAG_ID={params.mag_id:q}
+        export THREADS={threads}
+        export RUN_ID={params.run_id:q}
+        export RESULT_ROOT={params.run_dir:q}
+        export COHORT_RUN_ID={COHORT_RUN_ID:q}
+        export DBCAN_COMPAT_DIR={params.dbcan_compat_dir:q}
+        export PREPARE_DBCAN_CACHE={params.prepare_dbcan_cache:q}
+        export CURATE_RUN=0
+        export PRUNE_SUCCESS=0
+        export COMPRESS_LOGS=0
+        export CONDA_SH={CONDA_SH:q}
+        {input.runner:q}
+        test -s {output.complete:q}
+        test -s {params.run_dir:q}/genes/{params.mag_id:q}.faa
         """
 
 
-rule eggnog_v2:
+rule eggnog_v2_contract:
     input:
-        faa=rules.prodigal.output.faa,
+        complete=f"{RESULTS}/per_mag/{{proteome_id}}/snakemake_{{proteome_id}}/COMPLETE",
+        db_ready=rules.validate_eggnog_v2_db.output,
     output:
-        annotations=f"{RESULTS}/per_mag/{{mag_id}}/annotation/eggnog/{{mag_id}}.emapper.annotations",
+        annotations=f"{RESULTS}/per_mag/{{proteome_id}}/snakemake_{{proteome_id}}/eggnog/{{mag_id}}.emapper.annotations",
+    params:
+        run_dir=lambda wildcards: run_dir_abs(wildcards.proteome_id),
+        expected_mag_id=mag_id_for_proteome,
     threads:
         THREADS["medium"]
     resources:
-        mem_mb=config["resources"]["mem_medium_mb"]
+        mem_mb=RESOURCES.get("mem_eggnog_mb", RESOURCES["mem_medium_mb"])
     conda:
         "envs/annotation.yaml"
     shell:
         """
-        mkdir -p {RESULTS}/per_mag/{wildcards.mag_id}/annotation/eggnog {LOGS}/eggnog
+        set -euo pipefail
+        if [[ {wildcards.mag_id:q} != {params.expected_mag_id:q} ]]; then
+          echo "MAG wildcard does not match manifest for {wildcards.proteome_id}: {wildcards.mag_id} != {params.expected_mag_id}" >&2
+          exit 2
+        fi
+        mkdir -p {params.run_dir:q}/eggnog {LOGS}/eggnog
         emapper.py \
           -m diamond \
           --itype proteins \
-          -i {input.faa} \
-          --data_dir {DB[eggnog_v2]} \
+          -i {params.run_dir:q}/genes/{wildcards.mag_id:q}.faa \
+          --data_dir {DB[eggnog_v2]:q} \
           --cpu {threads} \
-          -o {wildcards.mag_id} \
-          --output_dir {RESULTS}/per_mag/{wildcards.mag_id}/annotation/eggnog \
-          > {LOGS}/eggnog/{wildcards.mag_id}.out \
-          2> {LOGS}/eggnog/{wildcards.mag_id}.err
+          -o {wildcards.mag_id:q} \
+          --output_dir {params.run_dir:q}/eggnog \
+          --override \
+          > {LOGS}/eggnog/{wildcards.proteome_id}.out \
+          2> {LOGS}/eggnog/{wildcards.proteome_id}.err
+        test -s {output.annotations:q}
         """
 
 
-rule mcycdb:
+rule curate_mag_contract:
     input:
-        faa=rules.prodigal.output.faa,
+        complete=f"{RESULTS}/per_mag/{{proteome_id}}/snakemake_{{proteome_id}}/COMPLETE",
+        eggnog=optional_eggnog_input,
+        fasta=mag_fasta_for_proteome,
+        proteome_faa=proteome_faa_for_proteome,
+        curator=resolve_existing_path(CURATOR),
     output:
-        raw=f"{RESULTS}/per_mag/{{mag_id}}/annotation/mcycdb/{{mag_id}}.diamond.tsv",
-        parsed=f"{RESULTS}/per_mag/{{mag_id}}/annotation/mcycdb/{{mag_id}}.mcycdb_hits.tsv",
+        run_record=f"{RESULTS}/per_mag/{{proteome_id}}/snakemake_{{proteome_id}}/curated/run_record.json",
+        file_manifest=f"{RESULTS}/per_mag/{{proteome_id}}/snakemake_{{proteome_id}}/curated/file_manifest.tsv",
+        parquet_manifest=f"{RESULTS}/per_mag/{{proteome_id}}/snakemake_{{proteome_id}}/curated/parquet_manifest.tsv",
+    params:
+        mag_id=mag_id_for_proteome,
+        run_dir=lambda wildcards: run_dir_abs(wildcards.proteome_id),
+        compress_logs=flag(COMPRESS_LOGS, "--compress-logs"),
+        prune_success=flag(PRUNE_SUCCESS, "--prune-success"),
     threads:
-        THREADS["medium"]
+        THREADS["light"]
     resources:
-        mem_mb=config["resources"]["mem_medium_mb"]
-    conda:
-        "envs/annotation.yaml"
+        mem_mb=RESOURCES["mem_light_mb"]
     shell:
         """
-        mkdir -p {RESULTS}/per_mag/{wildcards.mag_id}/annotation/mcycdb {LOGS}/mcycdb
-        diamond blastp \
-          -q {input.faa} \
-          -d {DB[mcycdb_diamond]} \
-          -o {output.raw} \
-          -f 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp scovhsp \
-          --evalue {PARAMS[diamond_evalue]} \
-          --query-cover {PARAMS[diamond_query_cover]} \
-          --subject-cover {PARAMS[diamond_subject_cover]} \
-          --threads {threads} \
-          > {LOGS}/mcycdb/{wildcards.mag_id}.out \
-          2> {LOGS}/mcycdb/{wildcards.mag_id}.err
-        python workflow/scripts/functional_metagenomics/parse_mcycdb_hits.py \
-          --diamond {output.raw} \
-          --id2gene {DB[mcycdb_id2gene]} \
-          --identity {PARAMS[diamond_identity]} \
-          --out {output.parsed}
+        set -euo pipefail
+        source {CONDA_SH:q}
+        conda activate methanet-fgx
+        python {input.curator:q} \
+          --run-dir {params.run_dir:q} \
+          --repo-root {PROJECT_ROOT:q} \
+          --proteome-id {wildcards.proteome_id:q} \
+          --mag-id {params.mag_id:q} \
+          --cohort-run-id {COHORT_RUN_ID:q} \
+          --cpus {threads} \
+          --mag-fasta {input.fasta:q} \
+          --proteome-faa {input.proteome_faa:q} \
+          --write-parquet \
+          {params.compress_logs} \
+          {params.prune_success}
+        test -s {output.run_record:q}
+        test -s {output.file_manifest:q}
+        test -s {output.parquet_manifest:q}
         """
 
 
-rule scycdb:
-    input:
-        faa=rules.prodigal.output.faa,
-    output:
-        raw=f"{RESULTS}/per_mag/{{mag_id}}/annotation/scycdb/{{mag_id}}.diamond.tsv",
-        parsed=f"{RESULTS}/per_mag/{{mag_id}}/annotation/scycdb/{{mag_id}}.scycdb_hits.tsv",
-    threads:
-        THREADS["medium"]
-    resources:
-        mem_mb=config["resources"]["mem_medium_mb"]
-    conda:
-        "envs/annotation.yaml"
-    shell:
-        """
-        mkdir -p {RESULTS}/per_mag/{wildcards.mag_id}/annotation/scycdb {LOGS}/scycdb
-        diamond blastp \
-          -q {input.faa} \
-          -d {DB[scycdb_diamond]} \
-          -o {output.raw} \
-          -f 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp scovhsp \
-          --evalue {PARAMS[diamond_evalue]} \
-          --query-cover {PARAMS[diamond_query_cover]} \
-          --subject-cover {PARAMS[diamond_subject_cover]} \
-          --threads {threads}
-        python workflow/scripts/functional_metagenomics/parse_scycdb_hits.py \
-          --diamond {output.raw} \
-          --id2gene {DB[scycdb_id2gene]} \
-          --identity {PARAMS[diamond_identity]} \
-          --out {output.parsed}
-        """
-
-
-rule dbcan:
-    input:
-        fasta=mag_fasta,
-    output:
-        overview=f"{RESULTS}/per_mag/{{mag_id}}/annotation/dbcan/overview.txt",
-    threads:
-        THREADS["medium"]
-    resources:
-        mem_mb=config["resources"]["mem_medium_mb"]
-    conda:
-        "envs/annotation.yaml"
-    shell:
-        """
-        mkdir -p {RESULTS}/per_mag/{wildcards.mag_id}/annotation/dbcan {LOGS}/dbcan
-        run_dbcan {input.fasta} prok \
-          --db_dir {DB[dbcan]} \
-          --out_dir {RESULTS}/per_mag/{wildcards.mag_id}/annotation/dbcan \
-          --dia_cpu {threads} \
-          --hmm_cpu {threads} \
-          > {LOGS}/dbcan/{wildcards.mag_id}.out \
-          2> {LOGS}/dbcan/{wildcards.mag_id}.err
-        """
-
-
-rule dram_all:
-    input:
-        genomes=rules.stage_mag_set.output,
-    output:
-        annotations=f"{RESULTS}/cohort/functional_matrices/dram/annotations.tsv",
-        metabolism=f"{RESULTS}/cohort/functional_matrices/dram/metabolism_summary.xlsx",
-    threads:
-        THREADS["heavy"]
-    resources:
-        mem_mb=config["resources"]["mem_bigmem_mb"]
-    conda:
-        "envs/annotation.yaml"
-    shell:
-        """
-        mkdir -p {RESULTS}/cohort/functional_matrices/dram {LOGS}/dram
-        DRAM.py annotate \
-          -i '{input.genomes}/*.{PARAMS[fasta_extension]}' \
-          -o {RESULTS}/cohort/functional_matrices/dram/annotation \
-          --threads {threads} \
-          > {LOGS}/dram/annotate.out \
-          2> {LOGS}/dram/annotate.err
-        DRAM.py distill \
-          -i {RESULTS}/cohort/functional_matrices/dram/annotation/annotations.tsv \
-          -o {RESULTS}/cohort/functional_matrices/dram/distill \
-          > {LOGS}/dram/distill.out \
-          2> {LOGS}/dram/distill.err
-        cp {RESULTS}/cohort/functional_matrices/dram/annotation/annotations.tsv {output.annotations}
-        cp {RESULTS}/cohort/functional_matrices/dram/distill/metabolism_summary.xlsx {output.metabolism}
-        """
-
-
-rule metabolic_g_all:
-    input:
-        genomes=rules.stage_mag_set.output,
-    output:
-        summary=f"{RESULTS}/cohort/functional_matrices/metabolic/METABOLIC_result.xlsx",
-    threads:
-        THREADS["gtdbtk"]
-    resources:
-        mem_mb=config["resources"]["mem_bigmem_mb"]
-    conda:
-        "envs/annotation.yaml"
-    shell:
-        """
-        mkdir -p {RESULTS}/cohort/functional_matrices/metabolic {LOGS}/metabolic
-        ls {input.genomes}/*.{PARAMS[fasta_extension]} > {RESULTS}/cohort/functional_matrices/metabolic/genome_list.txt
-        perl {DB[metabolic]}/METABOLIC-G.pl \
-          -in-gn {RESULTS}/cohort/functional_matrices/metabolic/genome_list.txt \
-          -o {RESULTS}/cohort/functional_matrices/metabolic \
-          -t {threads} \
-          > {LOGS}/metabolic/metabolic_g.out \
-          2> {LOGS}/metabolic/metabolic_g.err
-        """
-
-
-rule aggregate_functional_matrices:
+rule consolidate_cohort_contract:
     input:
         manifest=rules.resolve_manifest.output,
-        qc=rules.integrate_qc_taxonomy.output.qc,
-        taxonomy=rules.integrate_qc_taxonomy.output.taxonomy,
-        derep=rules.integrate_qc_taxonomy.output.derep,
-        kofam=expand(f"{RESULTS}/per_mag/{{mag_id}}/annotation/kofam/{{mag_id}}.kofam.detail.tsv", mag_id=MAGS),
-        eggnog=expand(f"{RESULTS}/per_mag/{{mag_id}}/annotation/eggnog/{{mag_id}}.emapper.annotations", mag_id=MAGS),
-        mcycdb=expand(f"{RESULTS}/per_mag/{{mag_id}}/annotation/mcycdb/{{mag_id}}.mcycdb_hits.tsv", mag_id=MAGS),
-        scycdb=expand(f"{RESULTS}/per_mag/{{mag_id}}/annotation/scycdb/{{mag_id}}.scycdb_hits.tsv", mag_id=MAGS),
-        dbcan=expand(f"{RESULTS}/per_mag/{{mag_id}}/annotation/dbcan/overview.txt", mag_id=MAGS),
-        dram=rules.dram_all.output.annotations,
-        metabolic=rules.metabolic_g_all.output.summary,
+        parquet_manifests=CURATED_PARQUET_MANIFESTS,
+        run_records=CURATED_RUN_RECORDS,
     output:
-        methane_panel=f"{RESULTS}/cohort/functional_matrices/methane_marker_panel.tsv",
-        methane_completeness=f"{RESULTS}/cohort/functional_matrices/methane_pathway_completeness.tsv",
-        coverage=f"{RESULTS}/cohort/functional_matrices/annotation_coverage_qc.tsv",
-        ko=f"{RESULTS}/cohort/functional_matrices/ko_matrix.tsv",
-        cazy=f"{RESULTS}/cohort/functional_matrices/cazy_family_matrix.tsv",
-    conda:
-        "envs/integration.yaml"
+        validation=f"{RESULTS}/cohort_warehouse/DATA_ARCHITECTURE_VALIDATION.md",
+        table_manifest=f"{RESULTS}/cohort_warehouse/cohort_table_manifest.tsv",
+        gates=f"{RESULTS}/cohort_warehouse/validation_gates.tsv",
+        duckdb=f"{RESULTS}/cohort_warehouse/functional_atlas.duckdb",
+    params:
+        cohort_dir=str(repo_path(RESULTS)),
+        output_dir=str(repo_path(f"{RESULTS}/cohort_warehouse")),
+        expected=len(PROTEOMES),
+        consolidator=resolve_existing_path(CONSOLIDATOR),
+    threads:
+        THREADS["light"]
+    resources:
+        mem_mb=RESOURCES.get("mem_consolidate_mb", RESOURCES["mem_medium_mb"])
     shell:
         """
-        mkdir -p {RESULTS}/cohort/functional_matrices
-        python workflow/scripts/functional_metagenomics/aggregate_functional_matrices.py \
-          --manifest {input.manifest} \
-          --qc {input.qc} \
-          --taxonomy {input.taxonomy} \
-          --derep {input.derep} \
-          --kofam-dir {RESULTS}/per_mag \
-          --eggnog-dir {RESULTS}/per_mag \
-          --mcycdb-dir {RESULTS}/per_mag \
-          --scycdb-dir {RESULTS}/per_mag \
-          --dbcan-dir {RESULTS}/per_mag \
-          --dram {input.dram} \
-          --metabolic {input.metabolic} \
-          --out-methane-panel {output.methane_panel} \
-          --out-methane-completeness {output.methane_completeness} \
-          --out-coverage {output.coverage} \
-          --out-ko {output.ko} \
-          --out-cazy {output.cazy}
-        """
-
-
-rule build_bridge_cards:
-    input:
-        manifest=rules.resolve_manifest.output,
-        qc=rules.integrate_qc_taxonomy.output.qc,
-        taxonomy=rules.integrate_qc_taxonomy.output.taxonomy,
-        derep=rules.integrate_qc_taxonomy.output.derep,
-        methane_panel=rules.aggregate_functional_matrices.output.methane_panel,
-        methane_completeness=rules.aggregate_functional_matrices.output.methane_completeness,
-        coverage=rules.aggregate_functional_matrices.output.coverage,
-        bridge_metrics=config["inputs"]["bridge_metrics"],
-    output:
-        cards=f"{RESULTS}/cohort/bridge_cards/bridge_mechanism_cards.json",
-        summary=f"{RESULTS}/cohort/bridge_cards/bridge_mechanism_summary.tsv",
-    conda:
-        "envs/integration.yaml"
-    shell:
-        """
-        mkdir -p {RESULTS}/cohort/bridge_cards
-        python workflow/scripts/functional_metagenomics/build_bridge_mechanism_cards.py \
-          --manifest {input.manifest} \
-          --qc {input.qc} \
-          --taxonomy {input.taxonomy} \
-          --derep {input.derep} \
-          --methane-panel {input.methane_panel} \
-          --methane-completeness {input.methane_completeness} \
-          --coverage {input.coverage} \
-          --bridge-metrics {input.bridge_metrics} \
-          --out-json {output.cards} \
-          --out-summary {output.summary}
-        """
-
-
-rule latent_function_join:
-    input:
-        embedding_metadata=config["inputs"]["embedding_metadata"],
-        bridge_metrics=config["inputs"]["bridge_metrics"],
-        qc=rules.integrate_qc_taxonomy.output.qc,
-        taxonomy=rules.integrate_qc_taxonomy.output.taxonomy,
-        derep=rules.integrate_qc_taxonomy.output.derep,
-        methane_panel=rules.aggregate_functional_matrices.output.methane_panel,
-        methane_completeness=rules.aggregate_functional_matrices.output.methane_completeness,
-        coverage=rules.aggregate_functional_matrices.output.coverage,
-        bridge_cards=rules.build_bridge_cards.output.cards,
-    output:
-        features=f"{RESULTS}/cohort/latent_function/latent_function_joined_features.parquet",
-        associations=f"{RESULTS}/cohort/latent_function/bridge_function_associations.tsv",
-    conda:
-        "envs/integration.yaml"
-    shell:
-        """
-        mkdir -p {RESULTS}/cohort/latent_function
-        python workflow/scripts/functional_metagenomics/build_latent_function_features.py \
-          --embedding-metadata {input.embedding_metadata} \
-          --bridge-metrics {input.bridge_metrics} \
-          --qc {input.qc} \
-          --taxonomy {input.taxonomy} \
-          --derep {input.derep} \
-          --methane-panel {input.methane_panel} \
-          --methane-completeness {input.methane_completeness} \
-          --coverage {input.coverage} \
-          --bridge-cards {input.bridge_cards} \
-          --out-features {output.features} \
-          --out-associations {output.associations}
-        """
-
-
-rule platform_demo_artifacts:
-    input:
-        features=rules.latent_function_join.output.features,
-        cards=rules.build_bridge_cards.output.cards,
-        summary=rules.build_bridge_cards.output.summary,
-        coverage=rules.aggregate_functional_matrices.output.coverage,
-    output:
-        mrv=f"{RESULTS}/cohort/platform_demo/mrv_feature_table.parquet",
-        dashboard=f"{RESULTS}/cohort/platform_demo/platform_dashboard_snapshot.json",
-        recommendations=f"{RESULTS}/cohort/platform_demo/candidate_recommendation_table.tsv",
-    conda:
-        "envs/integration.yaml"
-    shell:
-        """
-        mkdir -p {RESULTS}/cohort/platform_demo
-        python workflow/scripts/functional_metagenomics/build_platform_demo_artifacts.py \
-          --features {input.features} \
-          --cards {input.cards} \
-          --summary {input.summary} \
-          --coverage {input.coverage} \
-          --out-mrv {output.mrv} \
-          --out-dashboard {output.dashboard} \
-          --out-recommendations {output.recommendations}
+        set -euo pipefail
+        source {CONDA_SH:q}
+        conda activate methanet-fgx
+        python {params.consolidator:q} \
+          --repo-root {PROJECT_ROOT:q} \
+          --cohort-run-id {COHORT_RUN_ID:q} \
+          --cohort-dir {params.cohort_dir:q} \
+          --manifest {input.manifest:q} \
+          --output-dir {params.output_dir:q} \
+          --expected-complete-count {params.expected} \
+          --build-duckdb
+        test -s {output.validation:q}
+        test -s {output.table_manifest:q}
+        test -s {output.gates:q}
+        test -s {output.duckdb:q}
         """
