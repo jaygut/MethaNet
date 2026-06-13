@@ -4,6 +4,11 @@ Date: 2026-06-12
 
 Scope: launch strategy for the 662-MAG MethaNet functional-metagenomics cohort on Apollo-3, after the real-MAG smoke run and storage architecture review.
 
+Freshness note, 2026-06-13: this file is a deployment plan and dated launch
+runbook, not a live scheduler-status page. During active production runs, refresh
+Slurm state and per-MAG curated outputs separately before interpreting current
+completion, failure, or queue counts.
+
 ## Current Production Gate Status
 
 Validation command:
@@ -213,4 +218,7 @@ After each tranche:
 4. Copy or compact per-run Parquet shards into the cohort warehouse layout from `run_output_storage_architecture.md`.
 5. Run the scientific gates from `output_contracts_and_gates.md`: QC/taxonomy coverage, annotation coverage, mechanism class, and absent-pathway caveats.
 
-No full-cohort submission has been made in this pass.
+Historical note: earlier versions of this runbook stated that no full-cohort
+submission had been made in that pass. Treat that as a dated observation, not a
+current status assertion. Current production state should be reported from live
+Slurm/accounting outputs and the run directory snapshot used for the report.
