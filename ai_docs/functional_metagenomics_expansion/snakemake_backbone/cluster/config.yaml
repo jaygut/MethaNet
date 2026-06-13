@@ -10,35 +10,44 @@ printshellcmds: true
 use-conda: true
 
 default-resources:
-  slurm_partition: "bigmem"
-  runtime: "12:00:00"
-  mem_mb: 64000
-  cpus_per_task: 8
+  slurm_partition: "longjobs"
+  runtime: "04:00:00"
+  mem_mb: 16000
+  cpus_per_task: 4
 
 set-resources:
-  checkm2_all:
-    slurm_partition: "bigmem"
-    cpus_per_task: 32
-    mem_mb: 0
+  resolve_manifest:
+    slurm_partition: "longjobs"
+    cpus_per_task: 1
+    mem_mb: 8000
+    runtime: "00:15:00"
+  write_tool_db_manifest:
+    slurm_partition: "longjobs"
+    cpus_per_task: 1
+    mem_mb: 8000
+    runtime: "00:15:00"
+  validate_eggnog_v2_db:
+    slurm_partition: "longjobs"
+    cpus_per_task: 4
+    mem_mb: 16000
+    runtime: "01:00:00"
+  run_one_mag_tools:
+    slurm_partition: "longjobs"
+    cpus_per_task: 16
+    mem_mb: 128000
     runtime: "24:00:00"
-  gunc_all:
-    slurm_partition: "bigmem"
-    cpus_per_task: 32
-    mem_mb: 0
-    runtime: "24:00:00"
-  gtdbtk_all:
-    slurm_partition: "bigmem"
-    cpus_per_task: 64
-    mem_mb: 0
-    runtime: "48:00:00"
-  drep_all:
-    slurm_partition: "bigmem"
-    cpus_per_task: 32
-    mem_mb: 0
-    runtime: "36:00:00"
-  metabolic_g_all:
-    slurm_partition: "bigmem"
-    cpus_per_task: 64
-    mem_mb: 0
-    runtime: "48:00:00"
-
+  eggnog_v2_contract:
+    slurm_partition: "longjobs"
+    cpus_per_task: 16
+    mem_mb: 64000
+    runtime: "12:00:00"
+  curate_mag_contract:
+    slurm_partition: "longjobs"
+    cpus_per_task: 4
+    mem_mb: 8000
+    runtime: "01:00:00"
+  consolidate_cohort_contract:
+    slurm_partition: "longjobs"
+    cpus_per_task: 4
+    mem_mb: 64000
+    runtime: "02:00:00"

@@ -344,24 +344,29 @@ export UV_CACHE_DIR=$HOME/.cache/uv
 mkdir -p "$DB_ROOT" "$XDG_CACHE_HOME" "$TMPDIR" "$UV_CACHE_DIR"
 ```
 
-### Single-MAG dry run
+### Single-MAG Snakemake contract dry run
 
 ```bash
-snakemake -n \
+conda run -n methanet-fgx snakemake -n \
   -s ai_docs/functional_metagenomics_expansion/snakemake_backbone/Snakefile \
   --configfile ai_docs/functional_metagenomics_expansion/snakemake_backbone/config.apollo3.yaml \
-  --config pilot_mag_id=<MAG_ID>
+  --config pilot_mag_id='"<MAG_ID_OR_PROTEOME_ID>"' \
+  --cores 1 \
+  --printshellcmds
 ```
 
-### Single-MAG execution
+Quote IDs containing underscores. Without quotes, Snakemake/Python can parse
+numeric MAG IDs such as `2162886008_15` as numbers with digit separators.
+
+### Single-MAG Snakemake contract execution
 
 ```bash
 snakemake \
   -s ai_docs/functional_metagenomics_expansion/snakemake_backbone/Snakefile \
   --configfile ai_docs/functional_metagenomics_expansion/snakemake_backbone/config.apollo3.yaml \
-  --config pilot_mag_id=<MAG_ID> \
+  --config pilot_mag_id='"<MAG_ID_OR_PROTEOME_ID>"' \
   --use-conda \
-  --cores 32 \
+  --cores 16 \
   --rerun-incomplete
 ```
 
@@ -381,10 +386,15 @@ snakemake \
 
 The expansion is complete when:
 
-1. every top bridge candidate has QC/taxonomy/derep status,
-2. every top bridge candidate has a methane mechanism card,
-3. annotation coverage is quantified and comparable across ecosystems,
-4. pathway/marker features are joined with the ESM2 latent space,
-5. source-confounding caveats remain explicit,
-6. investor-demo artifacts can be generated from run outputs without manual curation.
-
+1. every included MAG has a curated `run_record.json`, `file_manifest.tsv`,
+   `parquet_manifest.tsv`, and normalized Parquet shards,
+2. the cohort warehouse has `dim_mag`, `dim_gene`, QC, taxonomy, KOfam, MCycDB,
+   SCycDB, dbCAN, Bakta, METABOLIC, optional eggNOG, coverage, methane/sulfur,
+   and MRV feature tables,
+3. every top bridge candidate has QC/taxonomy status and a methane/sulfur
+   mechanism card or explicit missing-evidence reason,
+4. annotation coverage is quantified and comparable across ecosystems,
+5. pathway/marker features are joined with the ESM2 latent space,
+6. source-confounding caveats remain explicit,
+7. investor-demo artifacts can be generated from the cohort warehouse without
+   manual curation.

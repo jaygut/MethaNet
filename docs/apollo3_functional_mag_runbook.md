@@ -36,7 +36,7 @@ $DB_ROOT/manifests/tool_db_manifest.manual_repair_20260611_222352.tsv
 | GTDB-Tk R232 | installed, path-sensitive | `$DB_ROOT/gtdbtk_r232/release232` | Set `GTDBTK_DATA_PATH` to `release232`, not the parent directory. |
 | GUNC ProGenomes3 | installed | `$DB_ROOT/gunc/gunc_db_progenomes3.dmnd` | DIAMOND validation passed. |
 | KOfam | installed | `$DB_ROOT/kofam` | `ko_list` and `profiles/prokaryote.hal` present. |
-| eggNOG-mapper v2 data | gated | `$DB_ROOT/eggnog_v2` | Apollo HTTP downloads repeatedly truncate near 1.1 GB; the source advertises `Accept-Ranges=none`, so compute-node resume is not possible from this endpoint. |
+| eggNOG-mapper v2 data | installed, validated, optional | `$DB_ROOT/eggnog_v2` | Local files are staged and integrity-checked as of 2026-06-13. Do not re-download from Apollo compute nodes; direct HTTP transfers repeatedly truncated and are not resumable. |
 | MCycDB | installed | `$DB_ROOT/mcycdb/MCycDB_2021.dmnd` | Repaired from split archive by ordered concatenation, FASTA normalization, and DIAMOND validation. |
 | SCycDB | installed | `$DB_ROOT/scycdb/SCycDB_2020Mar.dmnd` | Repaired from split archive by ordered concatenation, FASTA normalization, and DIAMOND validation. |
 | dbCAN | installed | `$DB_ROOT/dbcan` | Repaired with `run_dbcan database --db_dir "$DB_ROOT/dbcan" --aws_s3`; DIAMOND and CLI validation passed. |
@@ -68,7 +68,7 @@ Use this as the default MAG analytics stack:
 
 | Gate | Root cause on Apollo-3 | Decision |
 | --- | --- | --- |
-| eggNOG | Legacy v2 HTTP downloads repeatedly truncated around 1.1 GB on compute-node network paths, and the server reports `Accept-Ranges=none` for the 6.8 GB `eggnog.db.gz`. | Keep stable eggNOG-mapper v2.1.15 as production, but stage data via `download_eggnog_data.py` from a network path that completes full files or from a trusted mirror. Keep v3/v7 isolated as preview because upstream warns v3 is still heavy testing. |
+| eggNOG | Legacy v2 HTTP downloads repeatedly truncated around 1.1 GB on compute-node network paths, and the server reports `Accept-Ranges=none` for the 6.8 GB `eggnog.db.gz`. | Stable eggNOG-mapper v2.1.15 is now staged locally and validated under `$DB_ROOT/eggnog_v2`; reuse that directory for optional sidecar/Snakemake annotation. Keep v3/v7 isolated as preview because upstream warns v3 is still heavy testing. |
 | MCycDB | Split zip parts were present, but `zip -s 0` created truncated archives on Apollo. | Use ordered concatenation of `.z01 ... .zNN + .zip`, extract, normalize FASTA, and require `diamond dbinfo`. This is now repaired locally. |
 | SCycDB | Same split-zip issue as MCycDB; partial extraction also created malformed FASTA records. | Use ordered concatenation, extract, normalize FASTA, and require `diamond dbinfo`. This is now repaired locally. |
 | dbCAN | The first setup used an unsupported/older database path. | Use the modern `run_dbcan database --db_dir DIR --aws_s3` command with retries/timeouts, or `dbcan_build` if that command is the one exposed by the installed package. This is now repaired locally. |
@@ -132,6 +132,22 @@ default instead of wasting scheduler time on repeated truncation. The reliable
 path is to stage the three required files from a network that completes large
 transfers, or to place them on a local institutional mirror, then validate them
 in `$DB_ROOT`.
+
+Current 2026-06-13 status: the required eggNOG v2 files are staged under
+`$DB_ROOT/eggnog_v2` and passed integrity/readiness checks:
+
+- `eggnog.db`, `eggnog.taxa.db`, `eggnog.taxa.db.traverse.pkl`, and
+  `eggnog_proteins.dmnd` are non-empty.
+- `sqlite3 ... 'PRAGMA quick_check;'` returned `ok` for the SQLite databases.
+- `diamond dbinfo --db "$DB_ROOT/eggnog_v2/eggnog_proteins.dmnd"` reports
+  21,841,973 sequences.
+- `emapper.py --data_dir "$DB_ROOT/eggnog_v2" --version` reports expected and
+  installed DB version `5.0.2`.
+- The project readiness script reports `eggnog_v2 ready`.
+
+Operational implication: eggNOG is no longer a database-staging blocker, but it
+should remain an optional sidecar/Snakemake lane unless explicitly included in a
+future production annotation run.
 
 Additional Apolo-3 checks after user-supplied research:
 

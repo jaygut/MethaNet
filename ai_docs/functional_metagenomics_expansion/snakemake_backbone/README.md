@@ -1,55 +1,167 @@
-# Snakemake Backbone for Apollo 3
+# Snakemake Production-Contract Backbone for Apollo 3
 
-This is a detailed operational scaffold for the MethaNet functional-metagenomics expansion. It is meant to be copied or promoted into `workflow/` once the parser/integration scripts are implemented.
+This backbone reconciles Snakemake with the artifact contract proven by the
+Apollo-3 functional MAG production run. The source of truth is the existing
+per-MAG Slurm runner plus the tested MethaNet curator and cohort consolidator.
 
-## Why It Lives in `ai_docs`
+## Deployment Status
 
-The current request is to design the expansion plan and backbone, not to force a production workflow into the existing package before the MAG paths and database installations are locked. Keeping it here makes the scientific contract reviewable without breaking current CI.
+The active Apollo-3 662-MAG production run still uses the custom Slurm array:
 
-## Main Files
+```text
+scripts/submit_functional_mag_batches_apollo3.sh
+scripts/slurm/run_functional_mag_array_apollo3.sh
+scripts/slurm/run_one_mag_functional_smoke_apollo3.sh
+```
 
-- `Snakefile` - DAG shape for pilot and cohort runs.
-- `config.apollo3.yaml` - Apollo 3 paths/resources to adapt.
-- `cluster/config.yaml` - SLURM profile skeleton.
-- `envs/*.yaml` - environment sketches for per-rule conda deployment.
+This Snakemake backbone is now structured for the next controlled pilot or full
+deployment. It should reproduce the same durable artifact shape rather than a
+parallel Snakemake-only layout.
+
+## Production Contract
+
+Each MAG is written as an immutable run bundle:
+
+```text
+results/functional_metagenomics/<COHORT_RUN_ID>/per_mag/<PROTEOME_ID>/<RUN_ID>/
+```
+
+Snakemake uses deterministic run IDs:
+
+```text
+snakemake_<PROTEOME_ID>
+```
+
+The required curated outputs are:
+
+```text
+curated/run_record.json
+curated/file_manifest.tsv
+curated/parquet_manifest.tsv
+curated/parquet/*.parquet
+```
+
+The cohort layer is built by `scripts/consolidate_functional_mag_cohort.py`:
+
+```text
+cohort_warehouse/DATA_ARCHITECTURE_VALIDATION.md
+cohort_warehouse/cohort_table_manifest.tsv
+cohort_warehouse/validation_gates.tsv
+cohort_warehouse/functional_atlas.duckdb
+cohort_warehouse/parquet/<table>/cohort_run_id=<COHORT_RUN_ID>/*.parquet
+```
+
+This is the table model consumed by MethaNet atlas analytics, MRV feature
+generation, bridge-candidate interpretation, and dashboard/report workflows.
+
+## DAG Shape
+
+The reconciled DAG is intentionally small:
+
+```text
+resolve_manifest
+write_tool_db_manifest
+run_one_mag_tools
+validate_eggnog_v2_db        optional, only when run_eggnog_v2=true
+eggnog_v2_contract           optional, writes into the same per-MAG bundle
+curate_mag_contract
+consolidate_cohort_contract
+```
+
+`run_one_mag_tools` calls the same production runner with `CURATE_RUN=0`.
+`curate_mag_contract` then runs the curator after optional eggNOG, ensuring all
+available facts land in the same Parquet manifest. `consolidate_cohort_contract`
+selects the latest complete curated run per `proteome_id` and builds the
+cohort warehouse.
 
 ## Pilot Mode
 
-Use one MAG:
+Use one MAG/proteome for a no-execution graph check:
 
 ```bash
-snakemake -n \
+conda run -n methanet-fgx snakemake -n \
   -s ai_docs/functional_metagenomics_expansion/snakemake_backbone/Snakefile \
   --configfile ai_docs/functional_metagenomics_expansion/snakemake_backbone/config.apollo3.yaml \
-  --config pilot_mag_id=<MAG_ID>
+  --config pilot_mag_id='"<MAG_ID_OR_PROTEOME_ID>"' \
+  --cores 1 \
+  --printshellcmds
+```
+
+Quote IDs containing underscores. Without quotes, Snakemake/Python can parse
+numeric IDs such as `2162886008_15` as numbers with digit separators.
+
+To disable eggNOG during a minimal pilot:
+
+```bash
+conda run -n methanet-fgx snakemake -n \
+  -s ai_docs/functional_metagenomics_expansion/snakemake_backbone/Snakefile \
+  --configfile ai_docs/functional_metagenomics_expansion/snakemake_backbone/config.apollo3.yaml \
+  --config pilot_mag_id='"<MAG_ID_OR_PROTEOME_ID>"' run_eggnog_v2=false \
+  --cores 1 \
+  --printshellcmds
 ```
 
 ## Cohort Mode
 
-Use all MAGs in `mag_manifest`:
+Use all `functional_run_include=True` rows in the configured manifest:
 
 ```bash
 snakemake \
   -s ai_docs/functional_metagenomics_expansion/snakemake_backbone/Snakefile \
   --configfile ai_docs/functional_metagenomics_expansion/snakemake_backbone/config.apollo3.yaml \
   --profile ai_docs/functional_metagenomics_expansion/snakemake_backbone/cluster \
-  --use-conda \
   --rerun-incomplete
 ```
 
-## Implementation Hooks Still Needed
+Before a real cohort launch, set a run-specific namespace in
+`config.apollo3.yaml`:
 
-The DAG calls parser/integration scripts under `workflow/scripts/functional_metagenomics/`. These should be implemented when the scaffold is promoted:
+```yaml
+run_id: <NEW_COHORT_RUN_ID>
+paths:
+  results: results/functional_metagenomics/<NEW_COHORT_RUN_ID>
+  logs: logs/functional_metagenomics/<NEW_COHORT_RUN_ID>
+```
 
-- `resolve_mag_manifest.py`
-- `integrate_qc_taxonomy.py`
-- `parse_mcycdb_hits.py`
-- `parse_scycdb_hits.py`
-- `build_methane_pathway_completeness.py`
-- `aggregate_functional_matrices.py`
-- `build_bridge_mechanism_cards.py`
-- `build_latent_function_features.py`
-- `build_platform_demo_artifacts.py`
+Do not point this at an active Slurm-array result directory unless the intent is
+an explicit recovery/reconciliation operation.
 
-Those scripts should be pure, deterministic, and covered by small fixture tests before the Apollo 3 production run.
+## eggNOG v2 Lane
 
+eggNOG v2 is optional and gated by:
+
+```yaml
+params:
+  run_eggnog_v2: true
+  eggnog_mapper_version: 2.1.15
+  eggnog_db_version: 5.0.2
+databases:
+  eggnog_v2: /home/rsg-jcorre38/scratch/methanet_db/eggnog_v2
+```
+
+When enabled, the DAG validates the v2 database, runs `emapper.py` on the
+Prodigal protein FASTA generated by the per-MAG tool bundle, and writes:
+
+```text
+per_mag/<PROTEOME_ID>/snakemake_<PROTEOME_ID>/eggnog/<MAG_ID>.emapper.annotations
+```
+
+The curator parses that file into `fact_eggnog_annotations`, and the
+consolidator carries it into the cohort warehouse and annotation coverage layer.
+
+## Why This Matters
+
+MethaNet's downstream analytics depend on stable identifiers and normalized
+facts:
+
+```text
+cohort_run_id
+run_id
+proteome_id
+mag_id
+source_tool
+```
+
+Keeping Snakemake aligned to the existing curated bundle prevents drift between
+operational runs and the atlas layer used for methane/sulfur mechanism calls,
+CAZy/substrate profiling, bridge-candidate cards, and MRV-style MAG features.

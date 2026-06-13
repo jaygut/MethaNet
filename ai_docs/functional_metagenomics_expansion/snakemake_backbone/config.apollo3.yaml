@@ -1,19 +1,25 @@
-# Apollo 3 configuration scaffold for MethaNet functional-metagenomics expansion.
-# Replace placeholder paths before execution.
+# Apollo 3 configuration scaffold for the Snakemake production-contract runner.
+# Override run_id/paths.results before a real cohort execution if needed.
 
-run_id: fgx_20260611_apollo3_r232
+run_id: fgx_snakemake_apollo3_contract
 
 paths:
   project_root: /home/rsg-jcorre38/Jay_Proyects/MethaNet
   workdir: /home/rsg-jcorre38/Jay_Proyects/MethaNet
   scratch: /scratch/${USER}/methanet_fgx
-  results: results/functional_metagenomics/fgx_20260611_apollo3_r232
-  logs: logs/functional_metagenomics/fgx_20260611_apollo3_r232
+  results: results/functional_metagenomics/fgx_snakemake_apollo3_contract
+  logs: logs/functional_metagenomics/fgx_snakemake_apollo3_contract
+  conda_sh: /opt/ohpc/pub/apps/miniconda3/etc/profile.d/conda.sh
+  runner: scripts/slurm/run_one_mag_functional_smoke_apollo3.sh
+  curator: scripts/curate_functional_mag_run.py
+  consolidator: scripts/consolidate_functional_mag_cohort.py
 
 inputs:
-  # Required: one row per MAG.
-  mag_manifest: ai_docs/functional_metagenomics_expansion/templates/mag_manifest.template.tsv
-  # Existing POC artifacts used for latent-function joins.
+  # Required: one row per MAG. The Snakefile accepts both the template
+  # `fasta_path` column and the production `mag_fasta` column.
+  mag_manifest: results/functional_metagenomics/proteome_crosswalk_audit_20260612_0255/poc_662_functional_mag_manifest.proposed.tsv
+  # Existing POC artifacts used by downstream analytics after the cohort
+  # warehouse is built. They are not required by the production-contract DAG.
   embedding_metadata: results/blue_catalyst_poc/runs/apolo_full_20260228_080644_embed_20260305_061952/artifacts/embedding_metadata.tsv
   bridge_metrics: results/blue_catalyst_poc/interim_snapshots/apolo_full_20260228_080644_embed_20260305_061952_notebook_interim_20260306_055012/tables/embedding_projection_partial.tsv
   bridge_candidates: results/blue_catalyst_poc/interim_snapshots/apolo_full_20260228_080644_embed_20260305_061952_notebook_interim_20260306_055012/tables/alpha_transfer_candidates_top40.tsv
@@ -52,6 +58,14 @@ params:
   diamond_query_cover: 70
   diamond_subject_cover: 50
   diamond_identity: 35
+  # Stable eggNOG-mapper v2 / emapperdb-5.0.2 lane. Keep v3/v7 isolated.
+  run_eggnog_v2: true
+  eggnog_mapper_version: 2.1.15
+  eggnog_db_version: 5.0.2
+  prepare_dbcan_cache: true
+  compress_logs: true
+  prune_success: true
+  dbcan_compat_dir: /home/rsg-jcorre38/scratch/methanet_db/dbcan_compat_pressed
   run_eggnog_v3_preview: false
   run_dram: false
   run_dram2_beta: false
@@ -69,5 +83,8 @@ threads:
 resources:
   mem_light_mb: 8000
   mem_medium_mb: 64000
+  mem_eggnog_mb: 64000
+  mem_production_mb: 128000
+  mem_consolidate_mb: 64000
   mem_heavy_mb: 256000
   mem_bigmem_mb: 0

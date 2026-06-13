@@ -1,6 +1,6 @@
 # MethaNet Functional-Metagenomics Expansion Package
 
-Date: 2026-06-11  
+Date: 2026-06-13
 Scope: Blue Catalyst/MethaNet 662-genome POC expansion from ESM2 latent geometry into mechanistic, source-aware methane functional metagenomics.
 
 ## Purpose
@@ -42,7 +42,10 @@ into a stronger, fundable platform claim:
   Apollo-3 resource model, Slurm array strategy, launch checklist, and post-run aggregation steps. Treat operational counts as dated snapshots, not live scheduler state.
 
 - [snakemake_backbone/](snakemake_backbone/)
-  A concrete Snakemake backbone for Apollo 3. It is intentionally a scaffold: it defines DAG shape, resources, outputs, and integration hooks, while leaving project-specific parser scripts to be implemented in the production workflow.
+  A concrete Snakemake production-contract backbone for Apollo 3. It now
+  orchestrates the current proven Slurm runner, curator, optional eggNOG v2
+  sidecar, and cohort consolidator so future Snakemake runs reproduce the same
+  curated per-MAG Parquet/DuckDB artifact contract.
 
 ## Source-Controlled Utilities
 

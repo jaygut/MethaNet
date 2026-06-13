@@ -1,6 +1,6 @@
 # Apollo-3 MAG Functional Analytics Operations
 
-Date: 2026-06-11
+Date: 2026-06-13
 
 This page is the operational path for running MethaNet MAG functional analytics
 on Apolo-3 with the databases that are actually installed and validated under:
@@ -32,7 +32,7 @@ As of `fgx_bakta_light_20260611_231310`, the production-ready stack is:
 | dbCAN V5 | ready | CAZyme/CGC/substrate evidence |
 | METABOLIC-G | ready | biogeochemical distillation fallback for DRAM |
 | Bakta 1.12.0 + light DB v6.0 | ready | optional standardized MAG annotation add-on |
-| eggNOG v2 | gated | stage full files from a network/mirror that completes large transfers |
+| eggNOG v2 | ready, optional | staged and integrity-validated under `$DB_ROOT/eggnog_v2`; keep out of the active Slurm run unless explicitly launching the sidecar |
 | DRAM/DRAM2 | gated | use only after fresh official provisioning; not a production blocker |
 
 ## Source-Backed Tool Decisions
@@ -68,9 +68,10 @@ Use this stack for actual MAG analytics now:
    Bakta light DB for first-pass MAG annotations; use full DB later if the
    cohort needs deeper UniRef-backed annotations and the throughput budget is
    acceptable.
-5. Gated broad orthology/EC/COG:
-   eggNOG-mapper v2 only after the full v2 files are staged into
-   `$DB_ROOT/eggnog_v2`.
+5. Optional broad orthology/EC/COG:
+   eggNOG-mapper v2 is staged and validated under `$DB_ROOT/eggnog_v2`, but
+   should run as a future sidecar/Snakemake lane rather than disrupting the
+   active production Slurm array.
 
 ## MAG Manifest
 
@@ -241,7 +242,9 @@ perl "$METABOLIC_DIR/METABOLIC-G.pl" \
 
 Do not direct-download `eggnog.db.gz` from Apolo compute nodes. The server
 reports `Accept-Ranges=none`, range resume fails, and direct transfers truncate
-near 1.1 GB. Stage these files externally or from a local mirror:
+near 1.1 GB. As of 2026-06-13 the required files have been staged locally and
+validated, so future work should reuse this directory rather than attempting a
+fresh compute-node download:
 
 ```bash
 $DB_ROOT/eggnog_v2/eggnog.db
@@ -255,7 +258,7 @@ Validate:
 conda activate methanet-fgx
 test -s "$DB_ROOT/eggnog_v2/eggnog.db"
 diamond dbinfo --db "$DB_ROOT/eggnog_v2/eggnog_proteins.dmnd"
-emapper.py -h >/dev/null
+emapper.py --data_dir "$DB_ROOT/eggnog_v2" --version
 ```
 
 ### DRAM
@@ -275,5 +278,5 @@ A MAG functional analytics run is complete only when:
 - KOfam, MCycDB, SCycDB, and dbCAN outputs exist per MAG,
 - METABOLIC-G cohort output exists,
 - Bakta outputs exist if `run_bakta_optional` was enabled,
-- eggNOG outputs exist only if the v2 database was staged and validated,
+- eggNOG outputs exist only if the optional v2 sidecar/Snakemake lane was run,
 - bridge candidates have explicit mechanism labels or missing-evidence reasons.

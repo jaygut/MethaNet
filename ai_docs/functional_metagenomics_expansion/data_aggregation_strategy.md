@@ -340,7 +340,8 @@ Tools/databases:
 - dbCAN V5
 - Bakta
 - METABOLIC-G
-- eggNOG v2 when staged successfully
+- eggNOG v2 as an optional validated sidecar when broad orthology/EC/COG
+  coverage is needed
 - DRAM/DRAM2 only after repair/provisioning; not a blocker
 
 Required outputs:
@@ -364,7 +365,7 @@ Functional themes to aggregate:
 | CAZyme/substrate degradation | dbCAN |
 | standardized gene products | Bakta |
 | carbon, sulfur, nitrogen, energy traits | METABOLIC-G |
-| broad orthology/EC/COG | eggNOG v2 after staging |
+| broad orthology/EC/COG | eggNOG v2 optional sidecar after DB validation |
 
 Gate:
 
@@ -617,7 +618,7 @@ These cards should be the primary human-review artifact before any platform/demo
 4. Write parser/integration scripts for each tool output.
 5. Build `cohort_identity.tsv`, `mag_qc_integrated.tsv`, `taxonomy_resolved.tsv`, and `gene_calling_summary.tsv`.
 6. Build methane/sulfur mechanism outputs from marker HMMs, MCycDB, SCycDB, KOfam, and METABOLIC-G.
-7. Build broad functional matrices from KOfam, dbCAN, Bakta, METABOLIC-G, and later eggNOG.
+7. Build broad functional matrices from KOfam, dbCAN, Bakta, METABOLIC-G, and optional eggNOG.
 8. Build `mrv_feature_table.parquet` and `feature_dictionary.tsv`.
 9. Build bridge mechanism cards and run manual review.
 10. Run latent-function association and hybrid ranking analyses.
