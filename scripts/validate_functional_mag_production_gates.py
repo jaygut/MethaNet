@@ -24,6 +24,10 @@ REQUIRED_MANIFEST_COLUMNS = {
     "proteome_faa",
     "match_status",
     "functional_run_include",
+    "analysis_unit_type",
+    "mbag_mag_level_include",
+    "claim_scope",
+    "comparability_status",
 }
 
 REQUIRED_SCRIPTS = [
@@ -86,6 +90,16 @@ def included_rows(rows: Iterable[dict[str, str]]) -> list[dict[str, str]]:
     ]
 
 
+def mag_level_rows(rows: Iterable[dict[str, str]], allow_assembly_context: bool = False) -> list[dict[str, str]]:
+    out = []
+    for row in included_rows(rows):
+        unit = row.get("analysis_unit_type", "").strip()
+        mbag = row.get("mbag_mag_level_include", "").strip().lower()
+        if allow_assembly_context or (unit == "mag_bin" and mbag in {"true", "1", "yes"}):
+            out.append(row)
+    return out
+
+
 def file_exists(root: Path, value: str) -> bool:
     path = Path(value)
     if not path.is_absolute():
@@ -117,7 +131,7 @@ def main() -> int:
     parser.add_argument("--repo-root", default=Path.cwd(), type=Path)
     parser.add_argument(
         "--manifest",
-        default=Path("results/functional_metagenomics/proteome_crosswalk_audit_20260612_0255/poc_662_functional_mag_manifest.proposed.tsv"),
+        default=Path("results/functional_metagenomics/proteome_crosswalk_audit_20260612_0255/poc_662_functional_mag_manifest.mag_bin_only.tsv"),
         type=Path,
     )
     parser.add_argument("--db-root", default=Path("/home/rsg-jcorre38/scratch/methanet_db"), type=Path)
@@ -127,8 +141,13 @@ def main() -> int:
         default=Path("results/functional_metagenomics/one_mag_smoke/one_mag_fgx_rumen__10674_0002_idba_bin.8_20260611_231754"),
         type=Path,
     )
-    parser.add_argument("--expected-count", default=662, type=int)
+    parser.add_argument("--expected-count", default=625, type=int)
     parser.add_argument("--sample-file-check-count", default=662, type=int)
+    parser.add_argument(
+        "--allow-assembly-context",
+        action="store_true",
+        help="Allow assembly_context rows for an explicit non-MAG assembly-context tranche.",
+    )
     parser.add_argument("--json-out", type=Path)
     args = parser.parse_args()
 
@@ -154,11 +173,23 @@ def main() -> int:
             "pass" if not missing else "fail",
             "all required columns present" if not missing else f"missing columns: {sorted(missing)}",
         ))
-        included = included_rows(rows)
+        included = mag_level_rows(rows, allow_assembly_context=args.allow_assembly_context)
         checks.append(Check(
             "included_mag_count",
             "pass" if len(included) == args.expected_count else "fail",
             f"included={len(included)} expected={args.expected_count}",
+        ))
+        assembly_included = [row.get("proteome_id", "?") for row in included if row.get("analysis_unit_type") == "assembly_context"]
+        unresolved_included = [row.get("proteome_id", "?") for row in included if row.get("analysis_unit_type") == "unresolved"]
+        checks.append(Check(
+            "mag_level_scope_guard",
+            "pass" if args.allow_assembly_context or not assembly_included else "fail",
+            "no assembly_context rows included" if not assembly_included else f"assembly_context_examples={assembly_included[:5]}",
+        ))
+        checks.append(Check(
+            "unresolved_scope_guard",
+            "pass" if not unresolved_included else "fail",
+            "no unresolved rows included" if not unresolved_included else f"unresolved_examples={unresolved_included[:5]}",
         ))
         proteome_ids = [row.get("proteome_id", "") for row in included]
         mag_ids = [row.get("mag_id", "") for row in included]
