@@ -8,7 +8,7 @@ version = "1.0.0"
 description = "Transfer learning for methane flux prediction from microbiome data"
 readme = "README.md"
 license = "CC-BY-4.0"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 authors = [
     { name = "Alon Philosof", email = "aphilosof@gmail.com" },
     { name = "Jay Gutierrez", email = "jg@graphoflife.com" },
@@ -27,6 +27,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
