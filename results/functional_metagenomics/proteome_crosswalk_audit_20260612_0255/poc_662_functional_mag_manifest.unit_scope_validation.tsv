@@ -1,0 +1,9 @@
+gate	status	detail
+embedded_backbone_rows	pass	rows=662 expected=662
+unique_proteome_id	pass	unique=662 total=662
+one_classification_per_proteome	pass	{'mag_bin': 625, 'assembly_context': 37}
+mag_bin_denom	pass	mag_bin=625 expected_current_rule=625
+remaining_mag_bin_denom	pass	remaining_mag_bin=518
+assembly_context_quarantine	pass	assembly_context=37 expected_current_rule=37
+unresolved_units	pass	unresolved=0
+no_no_bin_rumen_in_mag_bin	pass	examples=[]

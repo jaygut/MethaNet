@@ -32,11 +32,22 @@ into a stronger, fundable platform claim:
 - [pipeline_reproducibility_contract.md](pipeline_reproducibility_contract.md)
   Maintainability contract for source-controlled code/docs, generated outputs, metadata resolution, documentation freshness, and pre-commit checks.
 
+- [dataset_expansion_strategy_20260614/](dataset_expansion_strategy_20260614/)
+  Strategic external-dataset expansion package for mangrove and methane-rich
+  MAG-resolved sources, including the MSM China 2025 staging status and
+  accession-gated ingestion plan.
+
 - [tool_database_registry.md](tool_database_registry.md)
   Web-verified tool/database matrix, current release notes, production/default choices, database provisioning policy, and exact manifest fields to capture.
 
 - [output_contracts_and_gates.md](output_contracts_and_gates.md)
   Required tables, cards, matrices, QC gates, mechanism classes, platform-ready outputs, and completion criteria.
+
+- [final_mrv_risk_scoring_roadmap.md](final_mrv_risk_scoring_roadmap.md)
+  Strategic maturity ladder from current MBAG/MAG-level molecular screening to sample/project-level MRV risk scoring, including required metadata, abundance, environmental, flux-validation, uncertainty, and claim-boundary gates.
+
+- [mag_level_atlas_relaunch_prompt.md](mag_level_atlas_relaunch_prompt.md) and [mag_level_atlas_relaunch_recovery_20260614.md](mag_level_atlas_relaunch_recovery_20260614.md)
+  Recovery contract and dated operational snapshot for separating the 662-proteome ESM2 backbone from the clean 625-row MAG/bin functional-atlas denominator, with 37 no-bin rumen assembly-context records quarantined from MAG-level MBAG. The current operational relaunch manifest is the 518-row remaining MAG/bin subset because 107 comparable MUCC outputs are already preserved as completed evidence.
 
 - [production_batch_deployment_plan.md](production_batch_deployment_plan.md)
   Apollo-3 resource model, Slurm array strategy, launch checklist, and post-run aggregation steps. Treat operational counts as dated snapshots, not live scheduler state.

@@ -2,9 +2,9 @@
 """Consolidate MethaNet per-MAG functional outputs into cohort tables.
 
 This script is intentionally read-only with respect to per-MAG run folders. It
-selects the latest completed curated run per proteome, normalizes legacy
-METABOLIC wide workbook shards, writes cohort-level Parquet tables, and records
-all failed/partial attempts in a status table.
+selects the latest completed curated MAG/bin run per proteome, normalizes
+legacy METABOLIC wide workbook shards, writes cohort-level Parquet tables, and
+records all failed/partial/non-comparable attempts in a status table.
 """
 
 from __future__ import annotations
@@ -20,6 +20,15 @@ from typing import Any
 
 
 IDENTITY_COLUMNS = ["cohort_run_id", "run_id", "proteome_id", "mag_id", "source_tool"]
+SCOPE_COLUMNS = [
+    "analysis_unit_type",
+    "mbag_mag_level_include",
+    "assembly_context_include",
+    "claim_scope",
+    "comparability_status",
+    "comparability_reason",
+    "recommended_action",
+]
 
 EXPECTED_COMPLETE_TABLES = {
     "run_summary_metrics",
@@ -366,6 +375,56 @@ def load_manifest(pd: Any, manifest_path: Path) -> Any:
     return pd.read_csv(manifest_path, sep="\t")
 
 
+def manifest_scope_by_proteome(manifest: Any) -> dict[str, dict[str, Any]]:
+    if manifest.empty or "proteome_id" not in manifest.columns:
+        return {}
+    keep = ["proteome_id", *[col for col in SCOPE_COLUMNS if col in manifest.columns]]
+    return manifest[keep].set_index("proteome_id", drop=False).to_dict(orient="index")
+
+
+def is_mag_level_manifest_row(row: dict[str, Any]) -> bool:
+    unit = str(row.get("analysis_unit_type") or "").strip()
+    include = str(row.get("mbag_mag_level_include") or "").strip().lower()
+    if unit:
+        return unit == "mag_bin" and include in {"true", "1", "yes"}
+    return True
+
+
+def filter_selected_mag_level(selected: dict[str, dict[str, Any]], manifest: Any) -> dict[str, dict[str, Any]]:
+    scope = manifest_scope_by_proteome(manifest)
+    if not scope:
+        return selected
+    return {
+        proteome_id: item
+        for proteome_id, item in selected.items()
+        if is_mag_level_manifest_row(scope.get(proteome_id, {}))
+    }
+
+
+def annotate_scope_columns(pd: Any, df: Any, manifest: Any) -> Any:
+    if df is None or df.empty or manifest.empty or "proteome_id" not in df.columns or "proteome_id" not in manifest.columns:
+        return df
+    scope_cols = [col for col in SCOPE_COLUMNS if col in manifest.columns]
+    if not scope_cols:
+        return df
+    scope = manifest[["proteome_id", *scope_cols]].drop_duplicates("proteome_id")
+    existing_scope = [col for col in scope_cols if col in df.columns]
+    out = df.drop(columns=existing_scope, errors="ignore").merge(scope, on="proteome_id", how="left")
+    return out
+
+
+def annotate_attempts_with_scope(attempts: list[dict[str, Any]], manifest: Any) -> list[dict[str, Any]]:
+    scope = manifest_scope_by_proteome(manifest)
+    if not scope:
+        return attempts
+    out: list[dict[str, Any]] = []
+    for attempt in attempts:
+        row = dict(attempt)
+        row.update({col: scope.get(attempt["proteome_id"], {}).get(col) for col in SCOPE_COLUMNS if col in manifest.columns})
+        out.append(row)
+    return out
+
+
 def build_dim_mag(pd: Any, selected: dict[str, dict[str, Any]], manifest: Any, cohort_run_id: str) -> Any:
     manifest_by_proteome = {}
     if not manifest.empty and "proteome_id" in manifest.columns:
@@ -391,6 +450,13 @@ def build_dim_mag(pd: Any, selected: dict[str, dict[str, Any]], manifest: Any, c
             "source_analysis_accession": manifest_row.get("source_analysis_accession"),
             "analysis_alias": manifest_row.get("analysis_alias"),
             "mucc_img_like_id": manifest_row.get("mucc_img_like_id"),
+            "analysis_unit_type": manifest_row.get("analysis_unit_type"),
+            "mbag_mag_level_include": manifest_row.get("mbag_mag_level_include"),
+            "assembly_context_include": manifest_row.get("assembly_context_include"),
+            "claim_scope": manifest_row.get("claim_scope"),
+            "comparability_status": manifest_row.get("comparability_status"),
+            "comparability_reason": manifest_row.get("comparability_reason"),
+            "recommended_action": manifest_row.get("recommended_action"),
             "input_contigs": summary.get("input_contigs"),
             "input_total_bp": summary.get("input_total_bp"),
             "input_n50_bp": summary.get("input_n50_bp"),
@@ -417,6 +483,7 @@ def build_taxonomy(pd: Any, dim_mag: Any) -> Any:
         "cohort_run_id", "run_id", "proteome_id", "mag_id", "gtdb_release",
         "gtdb_classification", "domain", "phylum", "class", "order", "family",
         "genus", "species",
+        *SCOPE_COLUMNS,
     ]
     cols = [col for col in keep if col in dim_mag.columns]
     out = dim_mag[cols].copy()
@@ -453,6 +520,7 @@ def build_dim_gene(pd: Any, fact_bakta: Any | None) -> Any:
         "proteome_id": rows["proteome_id"],
         "mag_id": rows["mag_id"],
         "source_tool": "Bakta",
+        **{col: rows[col] for col in SCOPE_COLUMNS if col in rows.columns},
         "gene_id": rows["gene_id"],
         "contig_id": rows[seq_col] if seq_col else None,
         "feature_type": rows[type_col] if type_col else None,
@@ -502,6 +570,7 @@ def build_coverage(pd: Any, dim_mag: Any, tables: dict[str, Any]) -> Any:
                     "proteome_id": proteome_id,
                     "mag_id": mag["mag_id"],
                     "source_tool": "MethaNet",
+                    **{col: mag.get(col) for col in SCOPE_COLUMNS if col in mag.index},
                     "annotation_tool": tool,
                     "source_table": table,
                     "row_count": 0,
@@ -520,6 +589,7 @@ def build_coverage(pd: Any, dim_mag: Any, tables: dict[str, Any]) -> Any:
                 "proteome_id": proteome_id,
                 "mag_id": mag["mag_id"],
                 "source_tool": "MethaNet",
+                **{col: mag.get(col) for col in SCOPE_COLUMNS if col in mag.index},
                 "annotation_tool": tool,
                 "source_table": table,
                 "row_count": int(len(sub)),
@@ -563,6 +633,7 @@ def build_mechanism_features(pd: Any, dim_mag: Any, tables: dict[str, Any], cove
             "proteome_id": proteome_id,
             "mag_id": mag["mag_id"],
             "source_tool": "MethaNet",
+            **{col: mag.get(col) for col in SCOPE_COLUMNS if col in mag.index},
         }
         ksub = kofam[kofam["proteome_id"] == proteome_id] if kofam is not None and not kofam.empty else pd.DataFrame()
         accepted_kofam = ksub[ksub["accepted_hit"].astype(bool)] if "accepted_hit" in ksub.columns else ksub
@@ -684,14 +755,28 @@ def validate_tables(tables: dict[str, Any], attempts: list[dict[str, Any]], sele
     if dim_mag is not None and "proteome_id" in dim_mag.columns:
         duplicate = int(dim_mag["proteome_id"].duplicated().sum())
         add("one_row_per_proteome_id_dim_mag", "pass" if duplicate == 0 else "fail", f"duplicates={duplicate}; rows={len(dim_mag)}")
+        if "analysis_unit_type" in dim_mag.columns:
+            non_mag = dim_mag[dim_mag["analysis_unit_type"].astype(str) != "mag_bin"]["proteome_id"].head(10).tolist()
+            add("dim_mag_mag_bin_only", "pass" if not non_mag else "fail", f"non_mag_examples={non_mag}")
 
+    require_scope_columns = dim_mag is not None and "analysis_unit_type" in dim_mag.columns
     for table, df in sorted(tables.items()):
         missing = [col for col in IDENTITY_COLUMNS if col not in df.columns]
         add(f"identity_columns:{table}", "pass" if not missing else "fail", f"missing={missing}; rows={len(df)}")
+        if require_scope_columns:
+            missing_scope = [col for col in ["analysis_unit_type", "claim_scope"] if col not in df.columns]
+            add(f"scope_columns:{table}", "pass" if not missing_scope else "fail", f"missing={missing_scope}; rows={len(df)}")
         key = PRIMARY_KEYS.get(table)
         if key and all(col in df.columns for col in key):
             dup = int(df.duplicated(key).sum())
             add(f"primary_key_duplicates:{table}", "pass" if dup == 0 else "warn", f"key={key}; duplicate_rows={dup}")
+
+    for table in ["feature_methane_mechanism", "feature_sulfur_competition", "feature_mrv_mag_level"]:
+        df = tables.get(table)
+        if df is None or "analysis_unit_type" not in df.columns:
+            continue
+        non_mag = df[df["analysis_unit_type"].astype(str) != "mag_bin"]["proteome_id"].head(10).tolist()
+        add(f"mag_level_feature_scope:{table}", "pass" if not non_mag else "fail", f"non_mag_examples={non_mag}")
 
     wide_pattern = re.compile(r"^X.+\\.(Module|Function|Hmm|Hit|Hits)")
     for table in [
@@ -741,13 +826,16 @@ def validate_tables(tables: dict[str, Any], attempts: list[dict[str, Any]], sele
     run_status = tables.get("fact_run_status")
     preserved = run_status is not None and len(run_status) == len(attempts)
     add("failed_partial_attempts_preserved", "pass" if preserved else "fail", f"attempts={len(attempts)}; status_rows={0 if run_status is None else len(run_status)}; noncomplete={len(partial_or_failed)}")
+    if run_status is not None and "analysis_unit_type" in run_status.columns:
+        assembly_rows = int(run_status["analysis_unit_type"].astype(str).eq("assembly_context").sum())
+        add("assembly_context_attempts_preserved_in_status", "pass" if assembly_rows >= 0 else "fail", f"assembly_context_status_rows={assembly_rows}")
 
     failures = [row for row in checks if row["status"] == "fail"]
     warnings = [row for row in checks if row["status"] == "warn"]
     if failures:
-        decision = "NO-LAUNCH: fix failed data-architecture gates before full 662-MAG launch."
+        decision = "NO-LAUNCH: fix failed data-architecture gates before MAG/bin launch."
     elif warnings:
-        decision = "CONDITIONAL NO-LAUNCH: resolve warnings or explicitly accept them before full 662-MAG launch."
+        decision = "CONDITIONAL NO-LAUNCH: resolve warnings or explicitly accept them before MAG/bin launch."
     else:
         decision = "LAUNCH-READY: data-format gates passed for the inspected calibration outputs."
     return checks, decision
@@ -764,6 +852,7 @@ def markdown_report(
     duckdb_path: Path | None,
 ) -> str:
     status_counts = Counter(row["run_status"] for row in attempts)
+    scope_counts = Counter(str(row.get("analysis_unit_type") or "unscoped") for row in attempts)
     table_lines = "\n".join(
         f"| {row['table']} | {row['rows']} | {row['columns']} | {row['bytes']} |"
         for row in manifest_rows
@@ -783,8 +872,9 @@ Generated: {datetime.now(timezone.utc).isoformat()}
 
 - Cohort run: `{cohort_run_id}`
 - Run attempts inspected: {len(attempts)}
-- Completed curated MAGs selected: {len(selected)}
+- Completed curated MAG/bin runs selected for `dim_mag` and MAG-level features: {len(selected)}
 - Attempt status counts: {dict(status_counts)}
+- Attempt unit-scope counts: {dict(scope_counts)}
 - Output root: `{output_dir}`
 - DuckDB catalog: `{duckdb_path if duckdb_path else 'not built'}`
 
@@ -811,6 +901,7 @@ Generated: {datetime.now(timezone.utc).isoformat()}
 - Per-MAG run folders remain immutable evidence bundles.
 - The cohort layer selects the latest completed curated run per `proteome_id`.
 - Failed, partial, and superseded attempts are preserved in `fact_run_status`.
+- Assembly-context attempts are preserved with `analysis_unit_type` in `fact_run_status` and excluded from `dim_mag`, MAG-level fact loading, `feature_methane_mechanism`, `feature_sulfur_competition`, and `feature_mrv_mag_level` by default. Use `--include-assembly-context-facts` only for an explicit assembly-context evidence lane.
 - Legacy METABOLIC workbook-derived wide columns are normalized into long analytical tables.
 - Cohort tables are written as Parquet-first partitions under `parquet/<table>/cohort_run_id=<id>/`.
 - DuckDB is used as a lightweight SQL catalog over the Parquet files when available.
@@ -829,11 +920,20 @@ def main() -> int:
     )
     parser.add_argument(
         "--manifest",
-        default=Path("results/functional_metagenomics/proteome_crosswalk_audit_20260612_0255/poc_662_functional_mag_manifest.proposed.tsv"),
+        default=Path("results/functional_metagenomics/proteome_crosswalk_audit_20260612_0255/poc_662_functional_mag_manifest.with_unit_scope.tsv"),
         type=Path,
     )
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--expected-complete-count", type=int)
+    parser.add_argument(
+        "--include-assembly-context-facts",
+        action="store_true",
+        help=(
+            "Also load completed assembly_context fact tables. By default, "
+            "assembly-context outputs are preserved in fact_run_status only "
+            "and excluded from MAG-level analytical facts/features."
+        ),
+    )
     parser.add_argument("--build-duckdb", action="store_true")
     args = parser.parse_args()
 
@@ -846,11 +946,16 @@ def main() -> int:
         output_dir = repo_root / output_dir
     manifest_path = args.manifest if args.manifest.is_absolute() else repo_root / args.manifest
 
-    attempts, selected = discover_runs(per_mag_dir, args.cohort_run_id, repo_root)
-    raw_tables = load_selected_tables(pd, selected)
-    tables = concat_tables(pd, raw_tables)
-
+    attempts, selected_all = discover_runs(per_mag_dir, args.cohort_run_id, repo_root)
     manifest = load_manifest(pd, manifest_path)
+    attempts = annotate_attempts_with_scope(attempts, manifest)
+    selected = filter_selected_mag_level(selected_all, manifest)
+
+    fact_selected = selected_all if args.include_assembly_context_facts else selected
+    raw_tables = load_selected_tables(pd, fact_selected)
+    tables = concat_tables(pd, raw_tables)
+    tables = {name: annotate_scope_columns(pd, df, manifest) for name, df in tables.items()}
+
     dim_mag = build_dim_mag(pd, selected, manifest, args.cohort_run_id)
     tables["dim_mag"] = dim_mag
     tables["fact_taxonomy_gtdbtk"] = build_taxonomy(pd, dim_mag)

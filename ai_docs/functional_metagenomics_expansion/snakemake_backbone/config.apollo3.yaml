@@ -15,9 +15,10 @@ paths:
   consolidator: scripts/consolidate_functional_mag_cohort.py
 
 inputs:
-  # Required: one row per MAG. The Snakefile accepts both the template
-  # `fasta_path` column and the production `mag_fasta` column.
-  mag_manifest: results/functional_metagenomics/proteome_crosswalk_audit_20260612_0255/poc_662_functional_mag_manifest.proposed.tsv
+  # Required: one row per comparable MAG/bin. The 662-row ESM2 backbone remains
+  # authoritative for embeddings, but no-bin rumen assembly-context records are
+  # quarantined from MAG-level functional production by this scoped manifest.
+  mag_manifest: results/functional_metagenomics/proteome_crosswalk_audit_20260612_0255/poc_662_functional_mag_manifest.mag_bin_only.tsv
   # Existing POC artifacts used by downstream analytics after the cohort
   # warehouse is built. They are not required by the production-contract DAG.
   embedding_metadata: results/blue_catalyst_poc/runs/apolo_full_20260228_080644_embed_20260305_061952/artifacts/embedding_metadata.tsv
@@ -84,7 +85,7 @@ resources:
   mem_light_mb: 8000
   mem_medium_mb: 64000
   mem_eggnog_mb: 64000
-  mem_production_mb: 128000
+  mem_production_mb: 64000
   mem_consolidate_mb: 64000
   mem_heavy_mb: 256000
   mem_bigmem_mb: 0

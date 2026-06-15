@@ -4,8 +4,8 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
-#SBATCH --mem=128G
-#SBATCH --time=24:00:00
+#SBATCH --mem=64G
+#SBATCH --time=08:00:00
 
 set -Eeuo pipefail
 
@@ -78,6 +78,9 @@ append_status() {
   local step="$1"
   local status="$2"
   local note="${3:-}"
+  note="${note//$'\t'/ }"
+  note="${note//$'\r'/ }"
+  note="${note//$'\n'/ ; }"
   printf '%s\t%s\t%s\t%s\n' "$(date -Is)" "$step" "$status" "$note" >> "$STATUS"
 }
 
@@ -230,7 +233,12 @@ printf 'metric\tvalue\n' > "$SUMMARY"
 ln -sf "$(readlink -f "$WORK_FASTA")" "${STAGED_FA}/${MAG_ID}.fa"
 cp "$WORK_FASTA" "${STAGED_FASTA}/${MAG_ID}.fasta"
 
-run_step_shell input_stats "$(declare -f write_assembly_stats); write_assembly_stats '$WORK_FASTA' '${OUT}/input_stats.tsv'"
+INPUT_STATS_SCRIPT="${LOG_DIR}/write_assembly_stats.sh"
+{
+  declare -f write_assembly_stats
+  printf 'write_assembly_stats "$1" "$2"\n'
+} > "$INPUT_STATS_SCRIPT"
+run_step input_stats bash "$INPUT_STATS_SCRIPT" "$WORK_FASTA" "${OUT}/input_stats.tsv"
 
 activate_env methanet-fgx
 run_step prodigal prodigal \

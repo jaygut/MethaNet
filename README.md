@@ -117,6 +117,16 @@ We completed a cross-ecosystem proteome embedding POC between MUCC wetland genom
 - Numerical stability (NaN/Inf guards at every aggregation step)
 - Portable checksum verification in artifact pulls (normalization of remote-path SHA entries)
 
+### Functional Atlas And MRV Roadmap
+
+The 662-genome ESM2 POC is being expanded into a source-audited functional atlas and MBAG evidence layer for methane-risk screening. The current claim boundary is strict: MAG-level molecular evidence can prioritize bridge candidates and monitoring follow-up, but final sample/project MRV risk scoring requires sample mapping, abundance/read coverage, environmental covariates, uncertainty propagation, and flux/process validation.
+
+Key roadmap and contract documents:
+
+- `ai_docs/functional_metagenomics_expansion/README.md` - functional-metagenomics expansion index.
+- `ai_docs/functional_metagenomics_expansion/final_mrv_risk_scoring_roadmap.md` - maturity ladder from MBAG molecular screening to final MRV risk scoring.
+- `ai_docs/functional_metagenomics_expansion/embedding_functional_transfer_framework/methanet_embedding_functional_transfer_framework.md` - MBAG framework and next-generation MethaNet Intelligence Report blueprint.
+
 ---
 
 ## Feature Engineering
