@@ -332,11 +332,14 @@ def build_joined_table(
             how="left",
             suffixes=("", "_manifest"),
         )
+        joined["in_poc_magbin_manifest"] = joined["analysis_unit_type"].notna()
         for col in ["source", "ecosystem", "domain"]:
             alt = f"{col}_manifest"
             if alt in joined.columns:
                 joined[col] = joined[col].fillna(joined[alt])
                 joined = joined.drop(columns=[alt])
+    else:
+        joined["in_poc_magbin_manifest"] = True
 
     glm_keep = [
         col
@@ -344,8 +347,6 @@ def build_joined_table(
             "proteome_id",
             "mag_id",
             "payload_name",
-            "analysis_unit_type",
-            "claim_scope",
             "native_window_count",
             "shuffled_control_count",
             "all_embeddings_finite",
@@ -363,10 +364,14 @@ def build_joined_table(
     if glm_keep:
         # Prefer MAG-bin rows for the POC view; assembly context remains visible only by status.
         glm_join = glm[glm_keep].copy()
-        glm_join["_glm_priority"] = np.where(
-            glm_join.get("payload_name", "").astype(str).eq("poc_magbin_available"),
-            0,
-            1,
+        payload = glm_join.get("payload_name", "").astype(str)
+        glm_join["_glm_priority"] = np.select(
+            [
+                payload.isin(["poc_magbin_available", "poc_magbin_catchup"]),
+                payload.eq("poc_assembly_context_available"),
+            ],
+            [0, 2],
+            default=1,
         )
         glm_join = glm_join.sort_values(["proteome_id", "_glm_priority"]).drop_duplicates(
             "proteome_id", keep="first"
@@ -439,6 +444,7 @@ def build_joined_table(
 
     joined["has_glm"] = joined["glm_context_delta"].notna()
     joined["has_functional"] = joined["functional_complete"].fillna(False).astype(bool)
+    joined.loc[~joined["in_poc_magbin_manifest"], ["has_glm", "has_functional"]] = False
     joined["has_esm2"] = True
     joined["ecosystem"] = joined.get("ecosystem", "unknown").fillna("unknown").astype(str)
     joined["source"] = joined.get("source", "unknown").fillna("unknown").astype(str)
@@ -449,7 +455,8 @@ def build_joined_table(
     joined.loc[joined["has_glm"] & ~joined["has_functional"], "readiness_class"] = "glm_only_wait_function"
     joined.loc[~joined["has_glm"] & joined["has_functional"], "readiness_class"] = "function_only_wait_glm"
     if "analysis_unit_type" in joined.columns:
-        non_mag = joined["analysis_unit_type"].fillna("mag_bin").astype(str).ne("mag_bin")
+        unit_type = joined["analysis_unit_type"].fillna("non_poc_or_unscoped").astype(str)
+        non_mag = unit_type.ne("mag_bin")
         joined.loc[non_mag, "readiness_class"] = "non_poc_or_unscoped"
 
     delta = joined["glm_context_delta"]
