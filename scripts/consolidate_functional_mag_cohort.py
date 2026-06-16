@@ -236,6 +236,19 @@ def discover_runs(per_mag_dir: Path, cohort_run_id: str, repo_root: Path) -> tup
     return attempts, selected
 
 
+def discover_runs_from_roots(per_mag_dirs: list[Path], cohort_run_id: str, repo_root: Path) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
+    attempts: list[dict[str, Any]] = []
+    selected: dict[str, dict[str, Any]] = {}
+    for per_mag_dir in per_mag_dirs:
+        root_attempts, root_selected = discover_runs(per_mag_dir, cohort_run_id, repo_root)
+        attempts.extend(root_attempts)
+        for proteome_id, item in root_selected.items():
+            current = selected.get(proteome_id)
+            if current is None or item["attempt"]["mtime_epoch"] > current["attempt"]["mtime_epoch"]:
+                selected[proteome_id] = item
+    return attempts, selected
+
+
 def add_missing_identity(pd: Any, df: Any, table_name: str, record: dict[str, Any]) -> Any:
     df = df.copy()
     values = {
@@ -919,6 +932,16 @@ def main() -> int:
         type=Path,
     )
     parser.add_argument(
+        "--per-mag-dir",
+        action="append",
+        type=Path,
+        help=(
+            "Per-MAG directory to inspect. May be repeated to consolidate "
+            "completed runs across relaunch roots without copying outputs. "
+            "Defaults to <cohort-dir>/per_mag when omitted."
+        ),
+    )
+    parser.add_argument(
         "--manifest",
         default=Path("results/functional_metagenomics/proteome_crosswalk_audit_20260612_0255/poc_662_functional_mag_manifest.with_unit_scope.tsv"),
         type=Path,
@@ -940,13 +963,14 @@ def main() -> int:
     pd, _ = import_dataframe_libs()
     repo_root = args.repo_root.resolve()
     cohort_dir = args.cohort_dir if args.cohort_dir.is_absolute() else repo_root / args.cohort_dir
-    per_mag_dir = cohort_dir / "per_mag"
+    per_mag_dirs = args.per_mag_dir or [cohort_dir / "per_mag"]
+    per_mag_dirs = [path if path.is_absolute() else repo_root / path for path in per_mag_dirs]
     output_dir = args.output_dir or cohort_dir / "cohort_warehouse"
     if not output_dir.is_absolute():
         output_dir = repo_root / output_dir
     manifest_path = args.manifest if args.manifest.is_absolute() else repo_root / args.manifest
 
-    attempts, selected_all = discover_runs(per_mag_dir, args.cohort_run_id, repo_root)
+    attempts, selected_all = discover_runs_from_roots(per_mag_dirs, args.cohort_run_id, repo_root)
     manifest = load_manifest(pd, manifest_path)
     attempts = annotate_attempts_with_scope(attempts, manifest)
     selected = filter_selected_mag_level(selected_all, manifest)
