@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import textwrap
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
@@ -38,6 +39,10 @@ DEFAULT_FUNCTIONAL_RUN_DIRS = [
 DEFAULT_POC_MANIFEST = Path(
     "results/functional_metagenomics/proteome_crosswalk_audit_20260612_0255/"
     "poc_662_functional_mag_manifest.mag_bin_only.tsv"
+)
+DEFAULT_MSM_MANIFEST = Path(
+    "results/functional_metagenomics/msm_china_2025_20260615/"
+    "manifests/msm_china_2025_functional_mag_manifest.tsv"
 )
 DEFAULT_OUTPUT_DIR = Path(
     "results/figures/methanet_multiview_signal_map_20260615"
@@ -82,6 +87,7 @@ def parse_args() -> argparse.Namespace:
         help="Optional consolidated functional cohort warehouse with Parquet features.",
     )
     parser.add_argument("--poc-manifest", type=Path, default=DEFAULT_POC_MANIFEST)
+    parser.add_argument("--msm-manifest", type=Path, default=DEFAULT_MSM_MANIFEST)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--top-n", type=int, default=10)
     parser.add_argument(
@@ -190,6 +196,57 @@ def load_manifest(path: Path) -> pd.DataFrame:
         if col in manifest.columns
     ]
     return manifest[keep].drop_duplicates("proteome_id")
+
+
+def build_payload_status_table(
+    manifest: pd.DataFrame,
+    glm: pd.DataFrame,
+    functional: pd.DataFrame,
+    *,
+    payload_name: str,
+    cohort_label: str,
+    has_esm2: bool,
+) -> pd.DataFrame:
+    """Build a cohort-level availability table for non-ESM expansion payloads."""
+
+    if manifest.empty:
+        return pd.DataFrame()
+    status = manifest.copy()
+    status["cohort_label"] = cohort_label
+    status["has_esm2"] = bool(has_esm2)
+    if "ecosystem" not in status.columns:
+        status["ecosystem"] = cohort_label
+    if "source" not in status.columns:
+        status["source"] = cohort_label
+
+    glm_payload = glm[glm.get("payload_name", "").astype(str).eq(payload_name)].copy()
+    if not glm_payload.empty:
+        keep = [
+            col
+            for col in [
+                "proteome_id",
+                "payload_name",
+                "native_window_count",
+                "shuffled_control_count",
+                "glm_context_delta",
+                "glm_context_ratio",
+                "glm_has_native_and_control",
+                "glm_all_finite",
+            ]
+            if col in glm_payload.columns
+        ]
+        status = status.merge(glm_payload[keep].drop_duplicates("proteome_id"), on="proteome_id", how="left")
+    status["has_glm"] = status.get("glm_context_delta", pd.Series(np.nan, index=status.index)).notna()
+
+    if not functional.empty:
+        status = status.merge(functional, on="proteome_id", how="left")
+    status["has_functional"] = status.get("functional_complete", False).fillna(False).astype(bool)
+    status["readiness_class"] = "latent_or_manifest_only"
+    status.loc[status["has_glm"] & status["has_functional"], "readiness_class"] = "triangulated_now"
+    status.loc[status["has_glm"] & ~status["has_functional"], "readiness_class"] = "glm_only_wait_function"
+    status.loc[~status["has_glm"] & status["has_functional"], "readiness_class"] = "function_only_wait_glm"
+    status["claim_boundary"] = "MAG/proteome molecular screening; target-domain expansion is not sample-level risk."
+    return status
 
 
 def discover_functional_status(run_dirs: list[Path]) -> pd.DataFrame:
@@ -501,10 +558,14 @@ def _scatter_context(ax: plt.Axes, joined: pd.DataFrame, top_n: int) -> None:
     y = sub["glm_context_delta"].fillna(0.0)
     med_x = float(np.nanmedian(x)) if len(x) else 0.0
     med_y = float(np.nanmedian(y)) if len(y) else 0.0
+    rng = np.random.default_rng(20260615)
+    sub["mixing_coeff_plot"] = sub.get("mixing_coeff", 0).fillna(0.0).astype(float)
+    zeroish = sub["mixing_coeff_plot"].abs() < 1e-9
+    sub.loc[zeroish, "mixing_coeff_plot"] = rng.uniform(-0.012, 0.012, int(zeroish.sum()))
     for eco, eco_sub in sub.groupby(sub["ecosystem"].str.lower()):
         colors = ECOSYSTEM_COLORS.get(eco, ECOSYSTEM_COLORS["other"])
         ax.scatter(
-            eco_sub.get("mixing_coeff", 0).fillna(0.0),
+            eco_sub["mixing_coeff_plot"],
             eco_sub["glm_context_delta"],
             s=np.where(eco_sub["has_functional"], 54, 30),
             c=colors,
@@ -527,17 +588,18 @@ def _scatter_context(ax: plt.Axes, joined: pd.DataFrame, top_n: int) -> None:
         bbox=dict(boxstyle="round,pad=0.35", fc="#ecfdf5", ec="#a7f3d0", lw=0.8),
     )
     top = joined[joined["is_top_bridge_candidate"] & joined["has_glm"]].sort_values("rank").head(top_n)
+    top = top.merge(sub[["proteome_id", "mixing_coeff_plot"]], on="proteome_id", how="left")
     for _, row in top.iterrows():
         ax.text(
-            float(row.get("mixing_coeff") or 0.0),
+            float(row.get("mixing_coeff_plot") or row.get("mixing_coeff") or 0.0),
             float(row.get("glm_context_delta") or 0.0),
             str(int(row["rank"])),
             fontsize=8,
             weight="bold",
             color="#111827",
         )
-    ax.set_title("B. Orthogonal signal: latent bridge score vs gLM2 order-sensitive context", loc="left", fontsize=12, weight="bold")
-    ax.set_xlabel("ESM-2 mixing coefficient / bridge affinity")
+    ax.set_title("B. Latent bridge affinity vs gLM2 order-sensitive context", loc="left", fontsize=12, weight="bold")
+    ax.set_xlabel("ESM-2 bridge affinity (zero values lightly jittered)")
     ax.set_ylabel("gLM2 native-minus-shuffled context delta")
     ax.grid(color="#e2e8f0", linewidth=0.7, alpha=0.7)
 
@@ -548,25 +610,43 @@ def _bridge_panel(ax: plt.Axes, joined: pd.DataFrame, top_n: int) -> None:
         ax.text(0.5, 0.5, "No bridge candidate table available", ha="center", va="center")
         ax.axis("off")
         return
-    top["display"] = top["proteome_id"].str.replace("rumen__", "r__", regex=False).str.replace("mucc__", "m__", regex=False)
-    top["display"] = top["display"].str.slice(0, 34)
+    top["display"] = (
+        top["proteome_id"]
+        .str.replace("rumen__", "r__", regex=False)
+        .str.replace("mucc__", "m__", regex=False)
+        .str.replace("_idba_bin.", "_bin.", regex=False)
+        .str.replace("_ASM249546v1_genomic", "", regex=False)
+        .str.replace("_genomic", "", regex=False)
+    )
+    top["display"] = top["display"].str.slice(0, 33)
     y = np.arange(len(top))[::-1]
     score = top["triangulation_signal"].fillna(0.0)
     ax.barh(y, score, color=[READINESS_COLORS.get(c, "#94a3b8") for c in top["readiness_class"]], alpha=0.88)
+    labels = [f"#{int(row['rank'])} {row['display']}" for _, row in top.iterrows()]
+    ax.set_yticks(y, labels)
+    ax.tick_params(axis="y", labelsize=8.0, pad=2)
     for yi, (_, row) in zip(y, top.iterrows()):
-        status = []
-        status.append("gLM" if row["has_glm"] else "no gLM")
-        status.append("func" if row["has_functional"] else "no func")
-        label = f"#{int(row['rank'])} {row['display']}  ({', '.join(status)})"
-        ax.text(0.01, yi, label, va="center", ha="left", fontsize=8.2, color="#0f172a", weight="bold")
-    ax.set_yticks([])
-    ax.set_xlim(0, max(1.0, float(score.max() * 1.15 if len(score) else 1.0)))
-    ax.set_xlabel("Provisional triangulation signal")
+        status = [
+            "gLM+" if row["has_glm"] else "gLM-",
+            "func+" if row["has_functional"] else "func-",
+        ]
+        ax.text(
+            float(row["triangulation_signal"] or 0.0) + 0.015,
+            yi,
+            "  ".join(status),
+            va="center",
+            ha="left",
+            fontsize=7.8,
+            color="#334155",
+        )
+    xmax = max(1.25, float(score.max() * 1.33 if len(score) else 1.25))
+    ax.set_xlim(0, xmax)
+    ax.set_xlabel("Provisional triangulation signal", fontsize=9)
     ax.set_title("C. Top latent bridge candidates: where evidence triangulates now", loc="left", fontsize=12, weight="bold")
     ax.grid(axis="x", color="#e2e8f0", linewidth=0.7, alpha=0.7)
 
 
-def _readiness_matrix(ax: plt.Axes, joined: pd.DataFrame) -> None:
+def _readiness_matrix(ax: plt.Axes, joined: pd.DataFrame, msm_status: pd.DataFrame | None = None) -> None:
     categories = ["rumen", "wetland"]
     metrics = [
         ("ESM-2", "has_esm2"),
@@ -589,18 +669,40 @@ def _readiness_matrix(ax: plt.Axes, joined: pd.DataFrame) -> None:
             row.append(value)
         data.append(row)
         labels.append(f"{eco} (n={len(sub)})")
+    if msm_status is not None and not msm_status.empty:
+        sub = msm_status
+        denom = max(len(sub), 1)
+        data.append(
+            [
+                0.0,
+                sub["has_glm"].fillna(False).astype(bool).sum() / denom,
+                sub["has_functional"].fillna(False).astype(bool).sum() / denom,
+                (sub["has_glm"].fillna(False).astype(bool) & sub["has_functional"].fillna(False).astype(bool)).sum()
+                / denom,
+                0.0,
+            ]
+        )
+        labels.append(f"MSM mangrove (n={len(sub)})")
     matrix = np.asarray(data)
     im = ax.imshow(matrix, cmap="YlGnBu", vmin=0, vmax=1, aspect="auto")
-    ax.set_xticks(np.arange(len(metrics)), [m[0] for m in metrics], rotation=30, ha="right")
+    ax.set_xticks(np.arange(len(metrics)), [m[0] for m in metrics], rotation=24, ha="right", fontsize=8.5)
     ax.set_yticks(np.arange(len(labels)), labels)
     for i in range(matrix.shape[0]):
         for j in range(matrix.shape[1]):
-            ax.text(j, i, f"{matrix[i, j]*100:.0f}%", ha="center", va="center", fontsize=9, color="#0f172a", weight="bold")
-    ax.set_title("D. Evidence coverage by ecosystem", loc="left", fontsize=12, weight="bold")
+            text_color = "#ffffff" if matrix[i, j] >= 0.58 else "#0f172a"
+            ax.text(j, i, f"{matrix[i, j]*100:.0f}%", ha="center", va="center", fontsize=9, color=text_color, weight="bold")
+    ax.set_title("D. Evidence coverage by ecosystem / payload", loc="left", fontsize=12, weight="bold")
     plt.colorbar(im, ax=ax, fraction=0.046, pad=0.02, label="coverage fraction")
 
 
-def make_figure(joined: pd.DataFrame, output_png: Path, output_pdf: Path, top_n: int, snapshot_label: str) -> None:
+def make_figure(
+    joined: pd.DataFrame,
+    output_png: Path,
+    output_pdf: Path,
+    top_n: int,
+    snapshot_label: str,
+    msm_status: pd.DataFrame | None = None,
+) -> None:
     plt.rcParams.update(
         {
             "font.family": "DejaVu Sans",
@@ -609,22 +711,22 @@ def make_figure(joined: pd.DataFrame, output_png: Path, output_pdf: Path, top_n:
             "savefig.facecolor": "#ffffff",
         }
     )
-    fig = plt.figure(figsize=(18, 12), constrained_layout=False)
+    fig = plt.figure(figsize=(20, 12.4), constrained_layout=False)
     gs = fig.add_gridspec(
         4,
         6,
-        height_ratios=[0.55, 3.1, 2.6, 0.8],
-        hspace=0.62,
-        wspace=0.58,
+        height_ratios=[0.58, 3.25, 2.65, 0.80],
+        hspace=0.72,
+        wspace=0.70,
     )
 
     title_ax = fig.add_subplot(gs[0, :])
     title_ax.axis("off")
     title_ax.text(
         0.0,
-        0.76,
+        0.80,
         "MethaNet Multi-View Bridge Signal Map",
-        fontsize=24,
+        fontsize=23,
         weight="bold",
         color="#061b3a",
         ha="left",
@@ -632,9 +734,12 @@ def make_figure(joined: pd.DataFrame, output_png: Path, output_pdf: Path, top_n:
     )
     title_ax.text(
         0.0,
-        0.28,
-        "Spotting MAG/proteome candidates where ESM-2 geometry, gLM2 genomic context, and functional readiness converge",
-        fontsize=12.5,
+        0.25,
+        textwrap.fill(
+            "Spotting MAG/proteome candidates where ESM-2 geometry, gLM2 genomic context, and functional readiness converge",
+            width=112,
+        ),
+        fontsize=11.8,
         color="#0f766e",
         style="italic",
         ha="left",
@@ -642,7 +747,7 @@ def make_figure(joined: pd.DataFrame, output_png: Path, output_pdf: Path, top_n:
     )
     title_ax.text(
         1.0,
-        0.52,
+        0.50,
         f"snapshot: {snapshot_label}",
         fontsize=10,
         color="#475569",
@@ -652,14 +757,14 @@ def make_figure(joined: pd.DataFrame, output_png: Path, output_pdf: Path, top_n:
 
     ax_a = fig.add_subplot(gs[1, :3])
     ax_b = fig.add_subplot(gs[1, 3:])
-    ax_c = fig.add_subplot(gs[2, :4])
-    ax_d = fig.add_subplot(gs[2, 4:])
+    ax_c = fig.add_subplot(gs[2, :3])
+    ax_d = fig.add_subplot(gs[2, 3:])
     ax_strip = fig.add_subplot(gs[3, :])
 
     _scatter_esm(ax_a, joined, top_n)
     _scatter_context(ax_b, joined, top_n)
     _bridge_panel(ax_c, joined, top_n)
-    _readiness_matrix(ax_d, joined)
+    _readiness_matrix(ax_d, joined, msm_status)
     _plot_status_strip(ax_strip, Counter(joined["readiness_class"]))
 
     ecosystem_handles = [
@@ -711,7 +816,21 @@ artifact.
 - `methanet_multiview_signal_map.pdf`: vector-backed report figure.
 - `joined_multiview_signal_table.tsv`: joined plotting table keyed by `proteome_id`.
 - `top_bridge_multiview_candidates.tsv`: top bridge candidates with gLM2 and functional status.
+- `msm_mangrove_payload_status.tsv`: MSM target-domain payload status, when provided.
 - `readiness_summary.json`: counts and paths used.
+- `ARTIFACT_REVIEW.md`: layout QA notes, current counts, and claim boundary.
+
+## Reproducible Command
+
+Run from the MethaNet repo root:
+
+```bash
+source /opt/ohpc/pub/apps/miniconda3/etc/profile.d/conda.sh
+conda activate methanet-fgx
+python scripts/reports/build_methanet_multiview_signal_map.py \\
+  --output-dir {args.output_dir} \\
+  --snapshot-label {args.snapshot_label}
+```
 
 ## Strategic Read
 
@@ -734,6 +853,36 @@ methane-risk tiers, measured flux claims, carbon-credit approval, or replacement
 of abundance, environmental, uncertainty, and flux validation layers.
 """
     (output_dir / "README.md").write_text(readme)
+    review = f"""# Artifact Review
+
+## Layout QA
+
+- Re-rendered with wider canvas, expanded grid spacing, shorter axis labels, and y-axis candidate labels to prevent text overflow in the bridge-candidate panel.
+- Bottom row was rebalanced so panel C is narrower and panel D has enough room for ecosystem labels and the colorbar.
+- Panel B now uses compact language for the latent bridge affinity axis.
+- Panel D uses smaller rotated labels and contrast-aware cell text.
+- The legend and claim boundary are separated from the analytical panels.
+
+## Current Counts
+
+```json
+{json.dumps({
+    "esm_rows": summary["esm_rows"],
+    "glm_feature_rows": summary["glm_feature_rows"],
+    "functional_status_rows": summary["functional_status_rows"],
+    "readiness_counts": summary["readiness_counts"],
+    "top_bridge_with_all_three": summary["top_bridge_with_all_three"],
+    "msm_with_glm_and_functional": summary["msm_with_glm_and_functional"],
+}, indent=2)}
+```
+
+## Claim Boundary
+
+This is MAG/proteome molecular screening and bridge prioritization. It does not
+assign final sample-level methane-risk tiers, measured flux, or carbon-credit
+approval.
+"""
+    (output_dir / "ARTIFACT_REVIEW.md").write_text(review)
 
 
 def main() -> int:
@@ -743,6 +892,7 @@ def main() -> int:
     glm_dir = resolve(repo_root, args.glm_integration_dir)
     output_dir = resolve(repo_root, args.output_dir)
     poc_manifest = resolve(repo_root, args.poc_manifest)
+    msm_manifest_path = resolve(repo_root, args.msm_manifest)
     warehouse_dir = resolve(repo_root, args.functional_warehouse_dir)
     run_dirs = [resolve(repo_root, p) for p in (args.functional_run_dir or DEFAULT_FUNCTIONAL_RUN_DIRS)]
     run_dirs = [p for p in run_dirs if p is not None]
@@ -750,7 +900,16 @@ def main() -> int:
     projection, metadata, bridge = load_esm_artifacts(esm_dir)
     glm = load_glm_features(glm_dir)
     manifest = load_manifest(poc_manifest)
+    msm_manifest = load_manifest(msm_manifest_path)
     functional = discover_functional_status(run_dirs)
+    msm_status = build_payload_status_table(
+        msm_manifest,
+        glm,
+        functional,
+        payload_name="msm_magbin_full",
+        cohort_label="MSM mangrove",
+        has_esm2=False,
+    )
 
     joined = build_joined_table(
         projection=projection,
@@ -767,6 +926,8 @@ def main() -> int:
 
     top_bridge = joined[joined["is_top_bridge_candidate"]].sort_values("rank").head(args.top_n)
     top_bridge.to_csv(output_dir / "top_bridge_multiview_candidates.tsv", sep="\t", index=False)
+    if not msm_status.empty:
+        msm_status.to_csv(output_dir / "msm_mangrove_payload_status.tsv", sep="\t", index=False)
 
     summary = {
         "esm_rows": int(len(projection)),
@@ -782,6 +943,14 @@ def main() -> int:
         )
         if not top_bridge.empty
         else 0,
+        "msm_rows": int(len(msm_status)),
+        "msm_with_glm": int(msm_status["has_glm"].sum()) if not msm_status.empty else 0,
+        "msm_with_functional": int(msm_status["has_functional"].sum()) if not msm_status.empty else 0,
+        "msm_with_glm_and_functional": int(
+            (msm_status["has_glm"] & msm_status["has_functional"]).sum()
+        )
+        if not msm_status.empty
+        else 0,
         "claim_boundary": "MAG/proteome molecular screening; not sample-level risk or flux.",
         "inputs": {
             "esm_artifact_dir": str(esm_dir),
@@ -789,6 +958,7 @@ def main() -> int:
             "functional_run_dirs": [str(p) for p in run_dirs],
             "functional_warehouse_dir": str(warehouse_dir) if warehouse_dir else None,
             "poc_manifest": str(poc_manifest),
+            "msm_manifest": str(msm_manifest_path),
         },
     }
     (output_dir / "readiness_summary.json").write_text(json.dumps(summary, indent=2))
@@ -799,6 +969,7 @@ def main() -> int:
         output_pdf=output_dir / "methanet_multiview_signal_map.pdf",
         top_n=args.top_n,
         snapshot_label=args.snapshot_label,
+        msm_status=msm_status,
     )
     write_readme(output_dir, args, summary)
     print(output_dir)
@@ -807,4 +978,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
