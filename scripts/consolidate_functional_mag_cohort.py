@@ -410,7 +410,7 @@ def filter_selected_mag_level(selected: dict[str, dict[str, Any]], manifest: Any
     return {
         proteome_id: item
         for proteome_id, item in selected.items()
-        if is_mag_level_manifest_row(scope.get(proteome_id, {}))
+        if proteome_id in scope and is_mag_level_manifest_row(scope[proteome_id])
     }
 
 
@@ -571,31 +571,26 @@ def build_coverage(pd: Any, dim_mag: Any, tables: dict[str, Any]) -> Any:
         ("METABOLIC-CAZy", "fact_cazy_hits", None),
         ("METABOLIC-MEROPS", "fact_merops_hits", None),
     ]
+    row_counts: dict[str, dict[str, int]] = {}
+    annotated_counts: dict[str, dict[str, int]] = {}
+    for _, table, gene_col in specs:
+        df = tables.get(table)
+        if df is None or df.empty or "proteome_id" not in df.columns:
+            row_counts[table] = {}
+            annotated_counts[table] = {}
+            continue
+        row_counts[table] = df.groupby("proteome_id", sort=False).size().astype(int).to_dict()
+        if gene_col and gene_col in df.columns:
+            annotated_df = df.dropna(subset=[gene_col]).copy()
+            annotated_df[gene_col] = annotated_df[gene_col].astype(str)
+            annotated_counts[table] = annotated_df.groupby("proteome_id", sort=False)[gene_col].nunique().astype(int).to_dict()
+        else:
+            annotated_counts[table] = {}
     for _, mag in dim_mag.iterrows():
         proteome_id = mag["proteome_id"]
         total = total_by_mag.get(proteome_id)
         for tool, table, gene_col in specs:
-            df = tables.get(table)
-            if df is None or df.empty:
-                rows.append({
-                    "cohort_run_id": mag["cohort_run_id"],
-                    "run_id": mag["run_id"],
-                    "proteome_id": proteome_id,
-                    "mag_id": mag["mag_id"],
-                    "source_tool": "MethaNet",
-                    **{col: mag.get(col) for col in SCOPE_COLUMNS if col in mag.index},
-                    "annotation_tool": tool,
-                    "source_table": table,
-                    "row_count": 0,
-                    "annotated_gene_count": None,
-                    "prodigal_proteins": total,
-                    "annotated_gene_fraction": None,
-                })
-                continue
-            sub = df[df["proteome_id"] == proteome_id]
-            annotated = None
-            if gene_col and gene_col in sub.columns:
-                annotated = int(sub[gene_col].dropna().astype(str).nunique())
+            annotated = annotated_counts.get(table, {}).get(proteome_id)
             rows.append({
                 "cohort_run_id": mag["cohort_run_id"],
                 "run_id": mag["run_id"],
@@ -605,7 +600,7 @@ def build_coverage(pd: Any, dim_mag: Any, tables: dict[str, Any]) -> Any:
                 **{col: mag.get(col) for col in SCOPE_COLUMNS if col in mag.index},
                 "annotation_tool": tool,
                 "source_table": table,
-                "row_count": int(len(sub)),
+                "row_count": int(row_counts.get(table, {}).get(proteome_id, 0)),
                 "annotated_gene_count": annotated,
                 "prodigal_proteins": total,
                 "annotated_gene_fraction": (annotated / total) if annotated is not None and total else None,
@@ -638,6 +633,79 @@ def build_mechanism_features(pd: Any, dim_mag: Any, tables: dict[str, Any], cove
     cazy = tables.get("fact_cazy_hits")
     merops = tables.get("fact_merops_hits")
 
+    accepted_kofam = pd.DataFrame()
+    if kofam is not None and not kofam.empty:
+        if "accepted_hit" in kofam.columns:
+            accepted_kofam = kofam[present_mask(kofam["accepted_hit"])]
+        else:
+            accepted_kofam = kofam
+
+    def count_by_proteome(df: Any | None) -> dict[str, int]:
+        if df is None or df.empty or "proteome_id" not in df.columns:
+            return {}
+        return df.groupby("proteome_id", sort=False).size().astype(int).to_dict()
+
+    def keyword_counts(df: Any | None, columns: list[str], pattern: str) -> dict[str, int]:
+        if df is None or df.empty:
+            return {}
+        mask = text_contains(df, columns, pattern)
+        if mask is None:
+            return {}
+        return count_by_proteome(df[mask])
+
+    methane_kofam_counts = keyword_counts(
+        accepted_kofam,
+        ["ko_definition", "gene_id", "ko_id"],
+        r"methan|methyl.?coenzyme|mcr|hdr|f420|formylmethanofuran",
+    )
+    sulfur_kofam_counts = keyword_counts(
+        accepted_kofam,
+        ["ko_definition", "gene_id", "ko_id"],
+        r"sulfur|sulfate|sulfite|sulfide|thiosulfate|sulfonate|sulfurtransferase",
+    )
+    scycdb_counts = count_by_proteome(scycdb)
+
+    methane_hmm_counts: dict[str, int] = {}
+    if metabolic_hmm is not None and not metabolic_hmm.empty:
+        mhmm_mask = text_contains(
+            metabolic_hmm,
+            ["function_category", "function_name", "gene_abbreviation", "gene_name", "reaction"],
+            r"methan|methyl.?coenzyme|mcr|hdr|f420|formylmethanofuran",
+        )
+        if mhmm_mask is not None and "presence" in metabolic_hmm.columns:
+            methane_hmm_counts = count_by_proteome(metabolic_hmm[mhmm_mask & present_mask(metabolic_hmm["presence"])])
+
+    sulfur_metabolic_counts: dict[str, int] = {}
+    if metabolic_function is not None and not metabolic_function.empty:
+        mfunc_mask = text_contains(
+            metabolic_function,
+            ["function_category", "function_name", "gene_abbreviation"],
+            r"sulfur|sulfate|sulfite|sulfide|thiosulfate|sulfonate",
+        )
+        if mfunc_mask is not None and "presence" in metabolic_function.columns:
+            sulfur_metabolic_counts = count_by_proteome(
+                metabolic_function[mfunc_mask & present_mask(metabolic_function["presence"])]
+            )
+
+    module_present_counts: dict[str, int] = {}
+    if metabolic_module is not None and not metabolic_module.empty and "presence" in metabolic_module.columns:
+        module_present_counts = count_by_proteome(metabolic_module[present_mask(metabolic_module["presence"])])
+
+    def unique_counts(df: Any | None, column: str) -> dict[str, int]:
+        if df is None or df.empty or column not in df.columns:
+            return {}
+        unique_df = df.dropna(subset=[column]).copy()
+        unique_df[column] = unique_df[column].astype(str)
+        return unique_df.groupby("proteome_id", sort=False)[column].nunique().astype(int).to_dict()
+
+    cazy_family_counts = unique_counts(cazy, "cazy_family")
+    merops_family_counts = unique_counts(merops, "merops_peptidase_id")
+    kofam_coverage = {}
+    if coverage is not None and not coverage.empty:
+        kcov = coverage[coverage["annotation_tool"] == "KOfam"]
+        if not kcov.empty and "annotated_gene_fraction" in kcov.columns:
+            kofam_coverage = kcov.set_index("proteome_id")["annotated_gene_fraction"].to_dict()
+
     for _, mag in dim_mag.iterrows():
         proteome_id = mag["proteome_id"]
         ident = {
@@ -648,54 +716,39 @@ def build_mechanism_features(pd: Any, dim_mag: Any, tables: dict[str, Any], cove
             "source_tool": "MethaNet",
             **{col: mag.get(col) for col in SCOPE_COLUMNS if col in mag.index},
         }
-        ksub = kofam[kofam["proteome_id"] == proteome_id] if kofam is not None and not kofam.empty else pd.DataFrame()
-        accepted_kofam = ksub[ksub["accepted_hit"].astype(bool)] if "accepted_hit" in ksub.columns else ksub
-        methane_kofam_mask = text_contains(accepted_kofam, ["ko_definition", "gene_id", "ko_id"], r"methan|methyl.?coenzyme|mcr|hdr|f420|formylmethanofuran")
-        methane_kofam = accepted_kofam[methane_kofam_mask] if methane_kofam_mask is not None else pd.DataFrame()
-        mhmm = metabolic_hmm[metabolic_hmm["proteome_id"] == proteome_id] if metabolic_hmm is not None and not metabolic_hmm.empty else pd.DataFrame()
-        mhmm_mask = text_contains(mhmm, ["function_category", "function_name", "gene_abbreviation", "gene_name", "reaction"], r"methan|methyl.?coenzyme|mcr|hdr|f420|formylmethanofuran")
-        mhmm_present = mhmm[mhmm_mask & present_mask(mhmm["presence"])] if mhmm_mask is not None and "presence" in mhmm.columns else pd.DataFrame()
+        methane_kofam = int(methane_kofam_counts.get(proteome_id, 0))
+        methane_hmm = int(methane_hmm_counts.get(proteome_id, 0))
         methane_rows.append({
             **ident,
-            "accepted_kofam_methane_hits": int(len(methane_kofam)),
-            "metabolic_methane_hmm_present": int(len(mhmm_present)),
-            "methane_evidence_score": int(len(methane_kofam) + len(mhmm_present)),
+            "accepted_kofam_methane_hits": methane_kofam,
+            "metabolic_methane_hmm_present": methane_hmm,
+            "methane_evidence_score": int(methane_kofam + methane_hmm),
             "evidence_basis": "keyword screen over accepted KOfam definitions and present METABOLIC HMM functions",
         })
 
-        ssub = scycdb[scycdb["proteome_id"] == proteome_id] if scycdb is not None and not scycdb.empty else pd.DataFrame()
-        sulfur_scyc = int(len(ssub))
-        sulfur_kofam_mask = text_contains(accepted_kofam, ["ko_definition", "gene_id", "ko_id"], r"sulfur|sulfate|sulfite|sulfide|thiosulfate|sulfonate|sulfurtransferase")
-        sulfur_kofam = accepted_kofam[sulfur_kofam_mask] if sulfur_kofam_mask is not None else pd.DataFrame()
-        mfunc = metabolic_function[metabolic_function["proteome_id"] == proteome_id] if metabolic_function is not None and not metabolic_function.empty else pd.DataFrame()
-        mfunc_mask = text_contains(mfunc, ["function_category", "function_name", "gene_abbreviation"], r"sulfur|sulfate|sulfite|sulfide|thiosulfate|sulfonate")
-        mfunc_present = mfunc[mfunc_mask & present_mask(mfunc["presence"])] if mfunc_mask is not None and "presence" in mfunc.columns else pd.DataFrame()
+        sulfur_scyc = int(scycdb_counts.get(proteome_id, 0))
+        sulfur_kofam = int(sulfur_kofam_counts.get(proteome_id, 0))
+        sulfur_metabolic = int(sulfur_metabolic_counts.get(proteome_id, 0))
         sulfur_rows.append({
             **ident,
             "scycdb_hit_count": sulfur_scyc,
-            "accepted_kofam_sulfur_hits": int(len(sulfur_kofam)),
-            "metabolic_sulfur_function_present": int(len(mfunc_present)),
-            "sulfur_competition_score": int(sulfur_scyc + len(sulfur_kofam) + len(mfunc_present)),
+            "accepted_kofam_sulfur_hits": sulfur_kofam,
+            "metabolic_sulfur_function_present": sulfur_metabolic,
+            "sulfur_competition_score": int(sulfur_scyc + sulfur_kofam + sulfur_metabolic),
             "evidence_basis": "SCycDB hits plus keyword screen over accepted KOfam and present METABOLIC functions",
         })
 
-        cov_sub = coverage[coverage["proteome_id"] == proteome_id]
-        kcov = cov_sub[cov_sub["annotation_tool"] == "KOfam"]["annotated_gene_fraction"].dropna()
-        cazy_sub = cazy[cazy["proteome_id"] == proteome_id] if cazy is not None and not cazy.empty else pd.DataFrame()
-        merops_sub = merops[merops["proteome_id"] == proteome_id] if merops is not None and not merops.empty else pd.DataFrame()
-        module_sub = metabolic_module[metabolic_module["proteome_id"] == proteome_id] if metabolic_module is not None and not metabolic_module.empty else pd.DataFrame()
-        module_present = int(present_mask(module_sub["presence"]).sum()) if "presence" in module_sub.columns else 0
         mrv_rows.append({
             **ident,
             "checkm2_completeness": mag.get("checkm2_completeness"),
             "checkm2_contamination": mag.get("checkm2_contamination"),
             "gunc_pass": mag.get("gunc_pass"),
-            "kofam_annotated_gene_fraction": float(kcov.iloc[0]) if len(kcov) else None,
-            "metabolic_modules_present": module_present,
-            "cazy_family_count": int(cazy_sub["cazy_family"].nunique()) if "cazy_family" in cazy_sub.columns else 0,
-            "merops_family_count": int(merops_sub["merops_peptidase_id"].nunique()) if "merops_peptidase_id" in merops_sub.columns else 0,
-            "methane_evidence_score": int(len(methane_kofam) + len(mhmm_present)),
-            "sulfur_competition_score": int(sulfur_scyc + len(sulfur_kofam) + len(mfunc_present)),
+            "kofam_annotated_gene_fraction": kofam_coverage.get(proteome_id),
+            "metabolic_modules_present": int(module_present_counts.get(proteome_id, 0)),
+            "cazy_family_count": int(cazy_family_counts.get(proteome_id, 0)),
+            "merops_family_count": int(merops_family_counts.get(proteome_id, 0)),
+            "methane_evidence_score": int(methane_kofam + methane_hmm),
+            "sulfur_competition_score": int(sulfur_scyc + sulfur_kofam + sulfur_metabolic),
             "absence_interpretation_caveat": "absence requires QC and annotation coverage review",
         })
 
@@ -820,18 +873,23 @@ def validate_tables(tables: dict[str, Any], attempts: list[dict[str, Any]], sele
         expected_pairs = len(dim_mag) * coverage["annotation_tool"].nunique()
         add("annotation_coverage_measured", "pass" if len(coverage) >= expected_pairs else "warn", f"rows={len(coverage)}; expected_min={expected_pairs}")
 
-    required_by_run = EXPECTED_COMPLETE_TABLES | {
+    sparse_event_tables = {"fact_dbcan_hits", "fact_cazy_hits", "fact_merops_hits"}
+    required_by_run = (EXPECTED_COMPLETE_TABLES - sparse_event_tables) | {
         "fact_metabolic_hmm_hits",
         "fact_metabolic_function_presence",
         "fact_metabolic_module_presence",
         "fact_metabolic_module_step_presence",
         "fact_taxonomy_gtdbtk",
     }
+    present_by_table = {
+        table: set(df["proteome_id"].dropna().astype(str).unique())
+        for table, df in tables.items()
+        if df is not None and not df.empty and "proteome_id" in df.columns
+    }
     for proteome_id in selected:
         missing = []
         for table in required_by_run:
-            df = tables.get(table)
-            if df is None or df[df["proteome_id"] == proteome_id].empty:
+            if proteome_id not in present_by_table.get(table, set()):
                 missing.append(table)
         add(f"complete_mag_required_tables:{proteome_id}", "pass" if not missing else "fail", f"missing={missing}")
 
