@@ -17,6 +17,8 @@ import argparse
 import base64
 import json
 import math
+import re
+import subprocess
 import textwrap
 from datetime import datetime, timezone
 from pathlib import Path
@@ -48,6 +50,9 @@ DEFAULT_GLM_DIR = Path(
 )
 DEFAULT_SIGNAL_DIR = Path(
     "results/figures/methanet_multiview_signal_map_20260616_poc_closed_v2"
+)
+DEFAULT_MSM_ESM_DIR = Path(
+    "results/blue_catalyst_poc/runs/msm_china_2025_esm2_20260616_082112/artifacts"
 )
 DEFAULT_OUTPUT_DIR = Path(
     "results/reports/mbag_poc_core_molecular_intelligence_20260616"
@@ -125,6 +130,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--warehouse-dir", type=Path, default=DEFAULT_WAREHOUSE_DIR)
     parser.add_argument("--glm-dir", type=Path, default=DEFAULT_GLM_DIR)
     parser.add_argument("--signal-dir", type=Path, default=DEFAULT_SIGNAL_DIR)
+    parser.add_argument("--msm-esm-dir", type=Path, default=DEFAULT_MSM_ESM_DIR)
+    parser.add_argument("--msm-esm-job-id", default="9332")
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--top-n", type=int, default=10)
     parser.add_argument(
@@ -398,12 +405,99 @@ def build_citations() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _read_json(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text())
+    except json.JSONDecodeError:
+        return {}
+
+
+def read_slurm_job_status(job_id: str | None) -> dict[str, Any]:
+    if not job_id:
+        return {}
+    try:
+        proc = subprocess.run(
+            ["squeue", "-h", "-j", str(job_id), "-o", "%T|%M|%l|%D|%C|%m|%R"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return {}
+    text = proc.stdout.strip().splitlines()
+    if not text:
+        return {"job_id": str(job_id), "state": "not_in_squeue"}
+    state, elapsed, limit, nodes, cpus, mem, reason = (text[0].split("|") + [""] * 7)[:7]
+    return {
+        "job_id": str(job_id),
+        "state": state,
+        "elapsed": elapsed,
+        "time_limit": limit,
+        "nodes": nodes,
+        "cpus": cpus,
+        "memory": mem,
+        "reason_or_node": reason,
+    }
+
+
+def read_msm_esm_status(msm_esm_dir: Path, job_id: str | None) -> dict[str, Any]:
+    stats = _read_json(msm_esm_dir / "embedding_stats.json")
+    partial = _read_json(msm_esm_dir / "embedding_checkpoints" / "embedding_stats_partial.json")
+    inventory = msm_esm_dir / "embedding_input_inventory.tsv"
+    out_log = REPO_ROOT / "logs" / f"methanet_msm_esm2_{job_id}.out" if job_id else None
+    progress_index = None
+    progress_total = None
+    progress_sample = None
+    if out_log and out_log.exists():
+        for match in re.finditer(
+            r"\[PROGRESS\]\s+pending_idx=(\d+)/(\d+)\s+sample=([^\s]+)",
+            out_log.read_text(errors="replace"),
+        ):
+            progress_index = int(match.group(1))
+            progress_total = int(match.group(2))
+            progress_sample = match.group(3)
+    rows_from_inventory = None
+    if inventory.exists():
+        with inventory.open() as handle:
+            rows_from_inventory = max(sum(1 for _ in handle) - 1, 0)
+    slurm = read_slurm_job_status(job_id)
+    candidate_total = int(partial.get("candidate_total") or stats.get("candidate_total") or rows_from_inventory or 0)
+    embedded = int(partial.get("embedded_new_this_run") or stats.get("embedded_new_this_run") or 0)
+    return {
+        "dir": str(msm_esm_dir),
+        "job_id": str(job_id) if job_id else "",
+        "job_state": slurm.get("state", "unknown"),
+        "job_elapsed": slurm.get("elapsed", ""),
+        "job_time_limit": slurm.get("time_limit", ""),
+        "job_cpus": slurm.get("cpus", ""),
+        "job_memory": slurm.get("memory", ""),
+        "job_reason_or_node": slurm.get("reason_or_node", ""),
+        "candidate_total": candidate_total,
+        "faa_present": int(partial.get("proteome_faa_present") or stats.get("proteome_faa_present") or 0),
+        "faa_missing": int(partial.get("proteome_faa_missing") or stats.get("proteome_faa_missing") or 0),
+        "cap_applies": int(partial.get("manifest_cap_applies_count") or stats.get("manifest_cap_applies_count") or 0),
+        "embedded_new_this_run": embedded,
+        "progress_index": progress_index,
+        "progress_total": progress_total or candidate_total,
+        "progress_sample": progress_sample or "",
+        "model_name": partial.get("model_name") or stats.get("model_name") or "facebook/esm2_t33_650M_UR50D",
+        "max_proteins_per_proteome": int(
+            partial.get("max_proteins_per_proteome") or stats.get("max_proteins_per_proteome") or 6000
+        ),
+        "dry_run": bool(partial.get("dry_run", stats.get("dry_run", False))),
+    }
+
+
 def load_sources(args: argparse.Namespace) -> dict[str, Any]:
     repo_root = args.repo_root.resolve()
     esm_dir = resolve(repo_root, args.esm_dir)
     warehouse_dir = resolve(repo_root, args.warehouse_dir)
     glm_dir = resolve(repo_root, args.glm_dir)
     signal_dir = resolve(repo_root, args.signal_dir)
+    msm_esm_dir = resolve(repo_root, args.msm_esm_dir)
 
     joined = pd.read_csv(signal_dir / "joined_multiview_signal_table.tsv", sep="\t")
     top_bridge = pd.read_csv(signal_dir / "top_bridge_multiview_candidates.tsv", sep="\t")
@@ -497,6 +591,7 @@ def load_sources(args: argparse.Namespace) -> dict[str, Any]:
         "warehouse_dir": warehouse_dir,
         "glm_dir": glm_dir,
         "signal_dir": signal_dir,
+        "msm_esm_dir": msm_esm_dir,
         "joined": joined,
         "poc": poc,
         "top_bridge": top_bridge,
@@ -512,6 +607,7 @@ def load_sources(args: argparse.Namespace) -> dict[str, Any]:
         "sulfur": sulfur,
         "coverage": coverage,
         "taxonomy": taxonomy,
+        "msm_esm_status": read_msm_esm_status(msm_esm_dir, args.msm_esm_job_id),
         "citations": build_citations(),
     }
 
@@ -522,6 +618,7 @@ def summarize(data: dict[str, Any]) -> dict[str, Any]:
     top = data["top"]
     validation = data["validation_gates"]
     msm = data["msm_status"]
+    msm_esm = data["msm_esm_status"]
     warehouse_manifest = data["warehouse_manifest"]
 
     source_counts = poc["source"].value_counts().to_dict()
@@ -557,6 +654,14 @@ def summarize(data: dict[str, Any]) -> dict[str, Any]:
         "msm_glm": int(msm["has_glm"].fillna(False).astype(bool).sum()),
         "msm_functional": int(msm["has_functional"].fillna(False).astype(bool).sum()),
         "msm_glm_functional": int((msm["has_glm"].fillna(False).astype(bool) & msm["has_functional"].fillna(False).astype(bool)).sum()),
+        "msm_esm_candidate_total": int(msm_esm.get("candidate_total") or 0),
+        "msm_esm_faa_present": int(msm_esm.get("faa_present") or 0),
+        "msm_esm_embedded_new": int(msm_esm.get("embedded_new_this_run") or 0),
+        "msm_esm_progress_index": int(msm_esm.get("progress_index") or 0),
+        "msm_esm_cap_applies": int(msm_esm.get("cap_applies") or 0),
+        "msm_esm_job_state": str(msm_esm.get("job_state") or "unknown"),
+        "msm_esm_job_elapsed": str(msm_esm.get("job_elapsed") or ""),
+        "msm_esm_job_time_limit": str(msm_esm.get("job_time_limit") or ""),
     }
 
 
@@ -575,15 +680,26 @@ def plot_evidence_ledger(data: dict[str, Any], summary: dict[str, Any], path: Pa
             {"cohort": "POC ESM-2 context", "state": "Quarantined non-MAG/unscoped", "count": summary["quarantined_esm_rows"]},
             {"cohort": "MSM mangrove expansion", "state": "gLM2 + functional", "count": summary["msm_glm_functional"]},
             {"cohort": "MSM mangrove expansion", "state": "gLM2 only, awaiting function", "count": summary["msm_glm"] - summary["msm_glm_functional"]},
+            {"cohort": "MSM ESM-2 expansion", "state": "ESM-2 inputs staged/running", "count": summary["msm_esm_candidate_total"]},
+            {"cohort": "MSM ESM-2 expansion", "state": "ESM-2 embedded checkpoint", "count": summary["msm_esm_embedded_new"]},
         ]
     )
-    order = ["POC MAG-bin core", "POC ESM-2 context", "MSM mangrove expansion"]
-    state_order = ["ESM-2 + gLM2 + functional", "Quarantined non-MAG/unscoped", "gLM2 + functional", "gLM2 only, awaiting function"]
+    order = ["POC MAG-bin core", "POC ESM-2 context", "MSM mangrove expansion", "MSM ESM-2 expansion"]
+    state_order = [
+        "ESM-2 + gLM2 + functional",
+        "Quarantined non-MAG/unscoped",
+        "gLM2 + functional",
+        "gLM2 only, awaiting function",
+        "ESM-2 inputs staged/running",
+        "ESM-2 embedded checkpoint",
+    ]
     palette = {
         "ESM-2 + gLM2 + functional": COLORS["olive"]["base"],
         "Quarantined non-MAG/unscoped": NEUTRAL["base"],
         "gLM2 + functional": COLORS["blue"]["base"],
         "gLM2 only, awaiting function": COLORS["gold"]["base"],
+        "ESM-2 inputs staged/running": COLORS["pink"]["light"],
+        "ESM-2 embedded checkpoint": COLORS["pink"]["dark"],
     }
     wide = rows.pivot_table(index="cohort", columns="state", values="count", fill_value=0).reindex(order).fillna(0)
     fig, ax = plt.subplots(figsize=(10.6, 4.6))
@@ -604,7 +720,7 @@ def plot_evidence_ledger(data: dict[str, Any], summary: dict[str, Any], path: Pa
         fig,
         ax,
         "Evidence ledger for the closed POC core and mangrove expansion",
-        "Counts are analysis units, not samples. The 625-unit POC core is fully triangulated; mangrove/MSM is gLM2-complete but still functionally in progress.",
+        "Counts are analysis units, not samples. The 625-unit POC core is fully triangulated; mangrove/MSM has gLM2, partial functional evidence, and an active ESM-2 GPU lane.",
     )
     return save_figure(fig, path)
 
@@ -754,7 +870,8 @@ def plot_bridge_heatmap(data: dict[str, Any], path: Path) -> Path:
     labels = [f"#{int(r['rank'])} {short_id(r['proteome_id'], 30)}" for _, r in top.iterrows()]
     fig, ax = plt.subplots(figsize=(11.2, 6.5))
     cmap = sns.color_palette("crest", as_cmap=True)
-    im = ax.imshow(matrix, aspect="auto", vmin=0, vmax=1, cmap=cmap)
+    im = ax.imshow(matrix, aspect="auto", vmin=0, vmax=1, cmap=cmap, interpolation="nearest")
+    ax.grid(False)
     ax.set_yticks(np.arange(len(labels)), labels)
     ax.set_xticks(np.arange(len(metrics)), [label for _, label in metrics])
     ax.tick_params(axis="x", labelsize=8.5)
@@ -1087,6 +1204,7 @@ def write_tables(data: dict[str, Any], summary: dict[str, Any], output_dir: Path
             {"source": "Functional warehouse", "path": str(data["warehouse_dir"]), "role": "Parquet/DuckDB functional facts and feature tables"},
             {"source": "gLM2 integration", "path": str(data["glm_dir"]), "role": "Contextual genomic MAG/window feature layer"},
             {"source": "Corrected signal map", "path": str(data["signal_dir"]), "role": "Joined POC multiview readiness and MSM status"},
+            {"source": "MSM ESM-2 embedding lane", "path": str(data["msm_esm_dir"]), "role": "Mangrove ESM-2 input inventory, partial stats, and active GPU-lane status"},
         ]
     )
     source_path = source_dir / "source_inventory.tsv"
@@ -1151,7 +1269,14 @@ def build_html(
             render_metric_card("Validation gates", f"{summary['gates_pass']} pass", f"{summary['gates_warn']} warnings / {summary['gates_fail']} failures"),
             render_metric_card("Functional evidence scale", fmt_int(summary["kofam_rows"]), "KOfam hit rows in the POC warehouse"),
             render_metric_card("Median QC", f"{summary['median_completeness']:.1f}% / {summary['median_contamination']:.1f}%", "CheckM2 completeness / contamination"),
-            render_metric_card("MSM expansion", f"{summary['msm_functional']:,}/{summary['msm_rows']:,}", "mangrove MAGs with functional + gLM2 so far"),
+            render_metric_card(
+                "MSM expansion",
+                f"{summary['msm_functional']:,}/{summary['msm_rows']:,}",
+                (
+                    "mangrove MAGs with functional + gLM2; ESM-2 GPU job "
+                    f"{summary['msm_esm_job_state'].lower()} for {summary['msm_esm_candidate_total']:,} staged proteomes"
+                ),
+            ),
         ]
     )
 
@@ -1182,6 +1307,35 @@ def build_html(
     candidate_table["gLM2 context delta"] = candidate_table["gLM2 context delta"].map(lambda x: f"{float(x):.2f}")
     candidate_table["Methane signal"] = candidate_table["Methane signal"].map(fmt_int)
     candidate_table["Sulfur context"] = candidate_table["Sulfur context"].map(fmt_int)
+
+    candidate_metric_notes = pd.DataFrame(
+        [
+            {
+                "Field": "gLM2 context delta",
+                "Meaning": "Native-minus-shuffled gene-window context score.",
+                "Evidence source": "gLM2 contextual-genomics payload",
+                "Interpretation boundary": "Genomic organization support; not expression or flux.",
+            },
+            {
+                "Field": "Methane signal",
+                "Meaning": "Screening count/intensity of methane-cycle evidence.",
+                "Evidence source": "MCycDB best hits, accepted KOfam/METABOLIC methane-related evidence",
+                "Interpretation boundary": "Methane functional potential; not methane production rate.",
+            },
+            {
+                "Field": "Sulfur context",
+                "Meaning": "Screening count/intensity of sulfur-cycle or sulfur-competition evidence.",
+                "Evidence source": "SCycDB best hits, KOfam/METABOLIC sulfur-related evidence",
+                "Interpretation boundary": "Ecological redox/competition context; not sulfate concentration or process dominance.",
+            },
+            {
+                "Field": "Report status",
+                "Meaning": "Conservative candidate-card readiness label.",
+                "Evidence source": "ESM-2 bridge rank + gLM2 + functional facts + CheckM2/GUNC QC",
+                "Interpretation boundary": "Prioritization status; not final MRV risk tier.",
+            },
+        ]
+    )
 
     references_html = "\n".join(
         f"""<li id="ref-{row.id}"><a href="{row.url}">{row.label}</a>: {row.citation} <em>Used for:</em> {row.report_use}</li>"""
@@ -1338,6 +1492,36 @@ def build_html(
       color: #1E3A8A;
       margin: 18px 0;
     }
+    .context-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin: 18px 0 10px;
+    }
+    .context-card {
+      border: 1px solid var(--line);
+      background: #F8FAFC;
+      border-radius: 18px;
+      padding: 16px 17px;
+    }
+    .context-card h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+    .context-card p {
+      font-size: 0.92rem;
+      margin-bottom: 0;
+    }
+    .formula {
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      background: #F8FAFC;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      color: #1F2937;
+      margin: 16px 0;
+    }
     .warning {
       border-color: #FDBA74;
       background: #FFF7ED;
@@ -1418,7 +1602,7 @@ def build_html(
       .page { padding: 22px 14px 42px; }
       header.hero { padding: 36px 24px 30px; }
       section { padding: 25px 18px; }
-      .metric-grid, .two-col { grid-template-columns: 1fr; }
+      .metric-grid, .two-col, .context-grid { grid-template-columns: 1fr; }
       .refs { columns: 1; }
     }
     """
@@ -1465,9 +1649,23 @@ def build_html(
 
   <section>
     <h2>The approach: three molecular views, one auditable bridge layer</h2>
-    <p><strong>ESM-2 gives the latent proteome geometry.</strong> It asks which MAG/proteome units look similar in learned protein-sequence/function space. This is useful for discovering bridge candidates but cannot prove mechanism by itself.</p>
-    <p><strong>Functional annotation explains the mechanism.</strong> KOfam, MCycDB, SCycDB, dbCAN/CAZy, METABOLIC, MEROPS, Bakta, CheckM2, GUNC, and GTDB-Tk convert each MAG into methane, sulfur, substrate, QC, and taxonomy evidence.</p>
-    <p><strong>gLM2 asks whether genomic context supports the signal.</strong> Native gene-window embeddings are compared against shuffled controls so the report can distinguish ordered genomic architecture from a simple bag of genes.</p>
+    <p><strong>The report deliberately combines learned representations with old-school curated biology.</strong> Protein and genome language models are powerful because they detect latent structure in sequences at a scale that manual pathway curation cannot match. But for a methane-risk product, latent structure is not enough. A partner, validator, or scientific reviewer needs named mechanisms: methyl-coenzyme M reductase and related methane routes, sulfate/sulfur competition, carbohydrate-active enzymes, genome completeness, taxonomy, and missing-evidence flags.</p>
+    <div class="context-grid">
+      <div class="context-card">
+        <h3>1. ESM-2 proteome geometry</h3>
+        <p>ESM-2 embeds protein sequences into a 1280-dimensional learned representation. MethaNet summarizes each MAG/proteome into a geometry layer that asks: which proteomes are close to the wetland-rumen boundary, and which look like cross-domain bridge candidates?</p>
+      </div>
+      <div class="context-card">
+        <h3>2. Curated functional annotation</h3>
+        <p>Alignment/HMM tools remain essential because they attach biological names to genes. Here they convert latent candidates into methane, sulfur, CAZy/substrate, METABOLIC, MEROPS, taxonomy, and QC evidence that can be audited gene by gene.</p>
+      </div>
+      <div class="context-card">
+        <h3>3. gLM2 genomic context</h3>
+        <p>gLM2 adds an order-sensitive test: does the native gene neighborhood carry more contextual structure than a shuffled control? That helps distinguish plausible genome architecture from a mere list of detected proteins.</p>
+      </div>
+    </div>
+    <p><strong>The database layer is intentionally broad.</strong> The local functional-genomics stack uses KOfam ({27_532:,} HMM profiles; about 7.6 GB locally) for KO-scale enzymatic breadth; MCycDB (923,871 sequences; 327,226,703 letters) for methane cycling; SCycDB (911,805 sequences; 306,406,976 letters) for sulfur cycling; dbCAN/CAZy (4,098,879 CAZy sequences plus dbCAN-HMM, dbCAN-sub, peptidase, and SulfAtlas resources) for carbohydrate and substrate processing; METABOLIC for genome-scale biogeochemical modules, HMM hits, CAZy, and MEROPS summaries; Bakta for standardized gene features; CheckM2/GUNC for genome quality; and GTDB-Tk for taxonomy.</p>
+    <p><strong>The POC evidence scale is already substantial.</strong> The 625-MAG warehouse contains {summary['dim_gene_rows']:,} genes, {summary['kofam_rows']:,} KOfam hit rows, {summary['mcycdb_rows']:,} MCycDB rows, {summary['scycdb_rows']:,} SCycDB rows, {summary['dbcan_rows']:,} dbCAN rows, and {summary['metabolic_hmm_rows']:,} METABOLIC HMM rows. The point is not raw volume; the point is that every candidate can now be explained with independently named molecular evidence.</p>
     <div class="pill-row">
       <span class="pill">ESM-2 proteome geometry</span>
       <span class="pill">gLM2 genomic context</span>
@@ -1479,7 +1677,7 @@ def build_html(
     </div>
     {render_figure_block(
         "ESM-2 bridge geometry",
-        "The original 2D geometry is a communication layer; statistical and biological interpretation must use the full multiview feature system.",
+        "Bridge candidates are MAG/proteome units that sit near or across the source-domain boundary in learned proteome space, with unusually mixed cross-domain neighborhoods or bridge scores. The plot communicates the geometry, but candidate nomination should be audited against the high-dimensional embeddings and the functional/gLM2 layers.",
         figure_uri["esm2_geometry"],
         "ESM-2 geometry with top bridge candidates"
     )}
@@ -1490,18 +1688,21 @@ def build_html(
     <p><strong>The previous smoke-test weakness is gone.</strong> The top bridge candidates are no longer missing functional or gLM2 evidence. Each can now be represented as a candidate card with latent bridge rank, gLM2 context, methane/sulfur/substrate features, QC, taxonomy, claim boundary, and next validation action.</p>
     {render_figure_block(
         "Bridge candidate signature matrix",
-        "The matrix is normalized within the top-candidate set for review prioritization. It is not calibrated methane risk.",
+        "Columns combine ESM-2 bridge affinity, gLM2 native-vs-shuffled context, methane-cycle evidence from MCycDB/KOfam/METABOLIC, sulfur context from SCycDB/KOfam/METABOLIC, substrate breadth from dbCAN/CAZy and METABOLIC, broad functional coverage, and QC confidence. The values are within-report normalized review signals, not calibrated risk.",
         figure_uri["bridge_heatmap"],
         "Top bridge candidate signature heatmap"
     )}
     <h3>Top bridge candidate audit table</h3>
-    <p>This table is deliberately conservative: it shows review status and direct evidence fields, not a final risk tier.</p>
+    <p>This table is deliberately conservative: it shows review status and direct evidence fields, not a final risk tier. The numeric columns are candidate-card inputs: <strong>gLM2 context delta</strong> asks whether native gene order has more contextual structure than a shuffled control; <strong>Methane signal</strong> summarizes detected methane-cycle molecular evidence; and <strong>Sulfur context</strong> summarizes sulfur-cycle or sulfur-competition signatures that could modify methane relevance in anaerobic carbon-rich systems.</p>
     {render_table_html(candidate_table, max_rows=10)}
+    <h3>How to read the audit columns</h3>
+    {render_table_html(candidate_metric_notes, max_rows=8)}
   </section>
 
   <section>
     <h2>gLM2 adds a genomic-context test that ESM-2 alone cannot provide</h2>
-    <p><strong>Protein similarity can nominate a bridge; gene order can make the nomination more biologically plausible.</strong> The gLM2 native-minus-shuffled feature is a compact check that the native gene-window context carries structure beyond randomized gene order. It does not prove expression or flux, but it makes the bridge card more interpretable.</p>
+    <p><strong>Protein similarity can nominate a bridge; gene order can make the nomination more biologically plausible.</strong> In this report, the gLM2 metric is a <strong>native-minus-shuffled context delta</strong>. For each MAG/window summary, the native gene neighborhood is embedded and compared to a control where local order is shuffled. A positive delta means the observed genome context carries more model-recognized structure than the randomized control under this summary. That matters because many microbial functions are organized in operons, cassettes, or pathway neighborhoods.</p>
+    <p>The boundary is just as important: this is not RNA expression, protein abundance, enzyme activity, or methane flux. It is an extra evidence layer saying that the candidate's genomic architecture deserves review alongside ESM-2 similarity and named functional markers.</p>
     {render_figure_block(
         "gLM2 context by ecosystem",
         "Top bridge candidates are highlighted on the source distributions. Positive deltas are contextual evidence, not activity evidence.",
@@ -1551,12 +1752,19 @@ def build_html(
   </section>
 
   <section>
+    <h2>The MBAG scoring system is the product roadmap, not a hidden claim</h2>
+    <p><strong>The strategically important next layer is a transparent Bridge Attestation Score.</strong> MBAG should not be a black-box methane-risk oracle. It should be an auditable scoring system that ranks candidates by convergent molecular evidence while reporting uncertainty, missingness, and source-confounding locks.</p>
+    <div class="formula">Bridge Attestation Score = f(ESM-2 bridge affinity, gLM2 context support, methane mechanism evidence, sulfur/redox context, substrate breadth, QC confidence, annotation coverage) - penalties(source leakage, low completeness, high contamination, missing sample/abundance/environment data)</div>
+    <p>In the current report, this remains a <strong>candidate-prioritization score concept</strong>. It becomes a true MRV risk score only after sample mapping, MAG/read abundance, environmental covariates, repeated observations, uncertainty propagation, and field/process validation are integrated. This distinction is commercially useful: it gives MethaNet a crisp product roadmap without pretending the POC has already solved credit-grade MRV.</p>
+  </section>
+
+  <section>
     <h2>Recommended next steps</h2>
     <ol>
       <li><strong>Use this POC report as the core fundraising artifact.</strong> It is now complete enough to show MethaNet's differentiated molecular-intelligence architecture.</li>
       <li><strong>Build candidate cards from the top bridge table.</strong> Pair each candidate with mechanism evidence, QC, taxonomy, gLM2 context, allowed wording, and validation action.</li>
       <li><strong>Finish MSM/mangrove functional processing and build the MSM warehouse.</strong> MSM currently has gLM2 for all {summary['msm_rows']:,} MAGs but functional completion is still partial.</li>
-      <li><strong>Generate MSM ESM-2 embeddings if mangrove tri-view parity is needed.</strong> Until then, MSM remains a target-domain expansion layer rather than a full POC-equivalent ESM-2/function/gLM cohort.</li>
+      <li><strong>Monitor the MSM ESM-2 GPU lane to completion.</strong> Job {data['msm_esm_status'].get('job_id', '')} is currently {summary['msm_esm_job_state'].lower()} with {summary['msm_esm_faa_present']:,}/{summary['msm_esm_candidate_total']:,} FAA inputs staged and {summary['msm_esm_cap_applies']:,} proteomes marked for the 6,000-protein cap. Until embeddings finish, MSM remains an expansion layer in progress rather than a full POC-equivalent tri-view cohort.</li>
       <li><strong>Start the sample risk readiness layer.</strong> Add sample mapping, MAG abundance/read coverage, environmental covariates, and uncertainty fields before any sample-level MRV score.</li>
     </ol>
   </section>
@@ -1580,7 +1788,7 @@ def build_html(
       <li>Functional annotations are genomic potential and database evidence, not expression, activity, or process-rate measurements.</li>
       <li>ESM-2 and gLM2 are learned representation layers; they nominate and contextualize hypotheses, but do not replace direct marker evidence or validation.</li>
       <li>The POC is source-aware but source-confounded: rumen and wetland/MUCC are different source domains.</li>
-      <li>Mangrove/MSM is included as an expansion layer; it does not yet have POC-equivalent ESM-2 parity in this artifact.</li>
+      <li>Mangrove/MSM is included as an expansion layer; ESM-2 embeddings are being computed in parallel and are not yet treated as complete tri-view evidence in this artifact.</li>
     </ul>
   </section>
 
@@ -1631,6 +1839,8 @@ contextual genomics, and the functional cohort warehouse.
 - Quarantined ESM2 non-MAG/unscoped rows: {summary['quarantined_esm_rows']}
 - Top bridge candidates with all three POC layers: {summary['top_bridge_all_three']} / {summary['top_bridge_count']}
 - Validation gates: {summary['gates_pass']} pass, {summary['gates_warn']} warn, {summary['gates_fail']} fail
+- MSM gLM2 + functional so far: {summary['msm_glm_functional']} / {summary['msm_rows']}
+- MSM ESM-2 GPU lane: {summary['msm_esm_job_state']} for {summary['msm_esm_candidate_total']} staged proteomes; {summary['msm_esm_faa_present']} FAA present; {summary['msm_esm_cap_applies']} capped by the 6,000-protein rule
 
 ## Claim Boundary
 
@@ -1667,7 +1877,9 @@ def write_manifest(
             "warehouse_dir": str(data["warehouse_dir"]),
             "glm_dir": str(data["glm_dir"]),
             "signal_dir": str(data["signal_dir"]),
+            "msm_esm_dir": str(data["msm_esm_dir"]),
         },
+        "msm_esm_status": data["msm_esm_status"],
         "figures": {key: str(path) for key, path in figures.items()},
         "tables": {key: str(path) for key, path in table_paths.items()},
         "claim_boundary": "MAG/proteome molecular screening; not final MRV risk scoring.",
