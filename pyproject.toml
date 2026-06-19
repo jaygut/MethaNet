@@ -118,13 +118,19 @@ pipeline = [
     "mlflow>=2.0",
     "pandera>=0.17",
 ]
+attestation = [
+    "pyarrow>=10.0",
+    "duckdb>=1.0",
+    "kuzu==0.11.3",
+    "networkx>=3.0",
+]
 api = [
     "onnx>=1.15",
     "onnxruntime>=1.16",
     "skl2onnx>=1.16",
 ]
 all = [
-    "methanet[ml,bioinformatics,prediction,api,pipeline]",
+    "methanet[ml,bioinformatics,prediction,api,pipeline,attestation]",
 ]
 
 [project.urls]

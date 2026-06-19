@@ -46,6 +46,9 @@ into a stronger, fundable platform claim:
 - [final_mrv_risk_scoring_roadmap.md](final_mrv_risk_scoring_roadmap.md)
   Strategic maturity ladder from current MBAG/MAG-level molecular screening to sample/project-level MRV risk scoring, including required metadata, abundance, environmental, flux-validation, uncertainty, and claim-boundary gates.
 
+- [source_provenance_environmental_metadata_reconciliation.md](source_provenance_environmental_metadata_reconciliation.md)
+  Verified paper/data-object provenance for the rumen, wetland/MUCC, and mangrove lanes; current environmental metadata readiness; resolution tiers; and free API routes for accession, site, flux, soil, weather, and modeled-context enrichment.
+
 - [mag_level_atlas_relaunch_prompt.md](mag_level_atlas_relaunch_prompt.md) and [mag_level_atlas_relaunch_recovery_20260614.md](mag_level_atlas_relaunch_recovery_20260614.md)
   Recovery contract and dated operational snapshot for separating the 662-proteome ESM2 backbone from the clean 625-row MAG/bin functional-atlas denominator, with 37 no-bin rumen assembly-context records quarantined from MAG-level MBAG. The current operational relaunch manifest is the 518-row remaining MAG/bin subset because 107 comparable MUCC outputs are already preserved as completed evidence.
 
