@@ -13,6 +13,7 @@ Then read the immediately relevant supporting contracts:
 - `ai_docs/functional_metagenomics_expansion/mag_level_atlas_relaunch_prompt.md`
 - `ai_docs/functional_metagenomics_expansion/mag_level_atlas_relaunch_recovery_20260614.md`
 - `ai_docs/functional_metagenomics_expansion/data_aggregation_strategy.md`
+- `ai_docs/functional_metagenomics_expansion/source_provenance_environmental_metadata_reconciliation.md`
 - `ai_docs/functional_metagenomics_expansion/cohort_data_architecture_hardening.md`
 - `ai_docs/functional_metagenomics_expansion/output_contracts_and_gates.md`
 - `ai_docs/functional_metagenomics_expansion/pipeline_reproducibility_contract.md`
