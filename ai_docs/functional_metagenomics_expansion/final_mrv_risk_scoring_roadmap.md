@@ -1,6 +1,7 @@
 # MethaNet Final MRV Risk Scoring Roadmap
 
 Date: 2026-06-13
+Documentation refresh: 2026-06-20
 
 Scope: strategic roadmap for moving MethaNet from the current MBAG/functional-atlas molecular screening layer toward defensible sample/project-level methane permanence risk scoring for blue carbon MRV.
 
@@ -21,10 +22,12 @@ This roadmap should be used together with:
 
 MethaNet currently has a strong foundation for molecular methane-risk screening:
 
-- a 662-proteome ESM2 geometry-aware POC;
+- a 662-proteome ESM2 geometry-aware rumen + wetland/MUCC POC;
 - a clean proteome/MAG crosswalk;
 - local MAG/proteome file matching;
 - an Apollo-3 functional-genomics production stack for QC, taxonomy, KOfam, MCycDB, SCycDB, dbCAN, Bakta, CheckM2, GUNC, METABOLIC, CAZy, MEROPS, timing, and status records;
+- a completed POC MAG-bin multi-view layer with 625/625 units carrying ESM2, functional annotation, and gLM2 contextual evidence;
+- a mangrove/MSM expansion lane with 1,428/1,428 ESM2 proteome embeddings and 1,428/1,428 gLM2 contextual units complete, plus a functional annotation tranche that was 1,002/1,428 complete at the 2026-06-20 snapshot;
 - an MBAG design that integrates latent proteome geometry with functional evidence, QC, source leakage, graph structure, and uncertainty.
 
 The current product primitive is not final MRV scoring. It is:
@@ -39,19 +42,34 @@ The next strategic move is not to jump directly to final A-E risk tiers. The nex
 
 ## Current State
 
-This is the current defensible state, based on local MethaNet docs and the MBAG smoke-report contract. Live production counts may move during Apollo-3 runs, so operational status must be refreshed before any external report.
+This is the current defensible state, based on local MethaNet docs, generated functional-atlas warehouses, and the molecular attestation graph snapshot. Live production counts may move during Apollo-3 runs, so operational status must be refreshed before any external report.
 
 | Layer | Current status | What it supports now | What it does not support yet |
 | --- | --- | --- | --- |
-| ESM2 proteome geometry | 662 embedded proteomes, rumen/wetland separation, bridge candidates | hypothesis generation and bridge prioritization | source-independent transfer proof |
-| Proteome/MAG crosswalk | authoritative 662-row mapping | stable joins across embeddings, MAGs, and functional outputs | sample/project-level rollup by itself |
-| Functional atlas | per-MAG production stack and curated Parquet architecture | MAG-level mechanism evidence and QC-aware candidate cards | direct activity or methane flux |
-| MBAG | designed as a graph-based evidence system | provisional bridge attestation, uncertainty, leakage flags | calibrated risk model |
-| Smoke report | 121/662 completed in a dated snapshot; 1/10 top latent bridge candidates complete; source leakage warning | demonstration of report logic and validation gaps | final MRV risk ranking |
-| Sample metadata | incomplete/mixed resolution | provenance context where available | sample-level ecological inference |
+| ESM2 proteome geometry | 662 POC proteomes plus 1,428 mangrove/MSM proteomes embedded locally | hypothesis generation, molecular niche-space mapping, and bridge prioritization | source-independent transfer proof or activity |
+| Proteome/MAG crosswalk | authoritative 662-row POC mapping plus unit-scope manifests; mangrove/MSM integration manifest under `data/external/msm_china_2025/` | stable joins within each lane across embeddings, MAGs, functional outputs, gLM2, attestation, and metadata | sample/project-level rollup by itself |
+| Functional atlas | launch-ready POC Parquet/DuckDB warehouse with 625 selected completed MAG/bin runs; active mangrove/MSM tranche with 1,002/1,428 functional MAGs complete at snapshot | MAG-level mechanism evidence, QC/taxonomy, annotation coverage, run-status audit, and MRV feature primitives | direct activity, abundance-weighted sample capacity, or methane flux |
+| gLM2 context | POC MAG-bin layer 625/625 complete; mangrove/MSM 1,428/1,428 complete | independent genomic-context sidecar for molecular neighborhood interpretation | direct pathway evidence or environmental methane expression |
+| MBAG / attestation | local molecular attestation graph MVP over the 662-unit POC denominator; expanded report artifacts exist but should be rebuilt after mangrove/MSM run completion | provisional bridge attestation, evidence provenance, missingness visibility, and claim-safe querying | calibrated sample/project risk model |
+| Historical smoke reports | dated snapshots such as 121/662 complete, 625 POC complete, and expanded HTML atlas snapshots | demonstration of report logic and validation gaps at the time they were generated | current production denominator unless refreshed |
+| Sample metadata | incomplete/mixed resolution across rumen, wetland/MUCC, and mangrove/MSM; MSM has local sample metadata and exact BioSample rows but unresolved full MAG-to-sample rollup | provenance context where available | sample-level ecological inference |
 | Abundance/coverage | not yet integrated as final rollup layer | future weighting design | community-level capacity estimates |
 | Environmental covariates | not yet joined | future methane permissiveness model | site-specific risk scoring |
 | Flux/process validation | planned/targeted, not integrated | validation roadmap | calibrated A-E risk tiers |
+
+Current generated evidence snapshots that define the implemented state:
+
+| Artifact | Path | Current use |
+| --- | --- | --- |
+| 662 proteome crosswalk | `ai_docs/functional_metagenomics_expansion/proteome_crosswalk/embedded_662_proteome_id_crosswalk.tsv` | canonical ESM2/cohort backbone |
+| Unit-scope manifest | `results/functional_metagenomics/proteome_crosswalk_audit_20260612_0255/poc_662_functional_mag_manifest.with_unit_scope.tsv` | 625 MAG/bin + 37 assembly-context split |
+| Functional atlas warehouse | `results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse_poc_magbin_union_20260616_075022/` | 24 Parquet tables plus DuckDB over 625 selected MAG/bin runs |
+| Metadata recovery | `results/functional_metagenomics/environmental_metadata_recovery_20260612/` | exact/contextual source provenance and environmental metadata tiers |
+| Molecular attestation graph | `results/attestation/mmag_mvp_20260617/` | graph nodes/edges/evidence/artifacts/query/audit snapshot |
+| Mangrove/MSM ESM2 | `results/blue_catalyst_poc/runs/msm_china_2025_esm2_20260616_082112/artifacts/` | 1,428/1,428 local mangrove/MSM proteome embeddings |
+| Mangrove/MSM gLM2 | `results/contextual_genomics/glm2_msm_magbin_full_20260615_092737/` | 1,428/1,428 contextual genome units |
+| Mangrove/MSM functional tranche | `results/functional_metagenomics/msm_china_2025_20260615/` | active target-domain expansion; 1,002/1,428 complete at the 2026-06-20 snapshot |
+| Current payload inventory | `docs/current_artifact_inventory.md` | dated cross-lane status, live-count caveats, and report freshness notes |
 
 ## Definition Of Final MRV Risk Scoring
 
@@ -123,10 +141,21 @@ Blocked output:
 
 Exit criteria:
 
-- complete selected functional runs for all target MAGs;
-- regenerate cohort warehouse;
+- complete selected functional runs for all MAG/bin-comparable target units;
+- regenerate cohort warehouse from curated per-MAG evidence bundles;
 - pass identity, schema, QC, coverage, and no-wide-METABOLIC validation gates;
-- produce candidate cards with direct and missing evidence separated.
+- preserve failed, partial, superseded, and assembly-context evidence as explicit rows;
+- produce candidate cards or graph evidence paths with direct and missing evidence separated.
+
+Current status for Level 0: substantially implemented for the 625
+MAG/bin-comparable POC functional-atlas denominator in
+`cohort_warehouse_poc_magbin_union_20260616_075022`, with an attestation MVP in
+`results/attestation/mmag_mvp_20260617`. The mangrove/MSM expansion is moving
+Level 0 from a two-source POC toward a broader blue-carbon molecular niche atlas:
+ESM2 and gLM2 are complete for 1,428 local candidates, while functional
+annotation was 1,002/1,428 complete at the 2026-06-20 snapshot. This still does
+not advance the system to Level 1 because sample identity, abundance,
+environmental covariates, and validation outcomes remain incomplete.
 
 ### Level 1: Sample Identity And Metadata Resolution
 

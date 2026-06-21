@@ -6,6 +6,37 @@ genomes are mechanistically methane-relevant, source-balanced, or robust to
 annotation missingness. This page defines the gated work needed to move from
 latent geometry to source-aware methane MRV features.
 
+Documentation refresh: 2026-06-20.
+
+The early gates below remain the conceptual contract, but much of the first
+implementation arc now exists as generated local artifacts:
+
+- 662-row ESM2/crosswalk backbone:
+  `ai_docs/functional_metagenomics_expansion/proteome_crosswalk/embedded_662_proteome_id_crosswalk.tsv`
+- unit-scope split:
+  625 MAG/bin-comparable units and 37 assembly-context rumen units;
+- functional-atlas warehouse:
+  `results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse_poc_magbin_union_20260616_075022/`
+- molecular attestation graph:
+  `results/attestation/mmag_mvp_20260617/`
+
+The current implemented product primitive is MAG/proteome-level molecular
+screening and attestation. Sample/project MRV scoring remains blocked pending
+sample mapping, abundance/read coverage, environmental covariates, uncertainty
+propagation, and flux/process validation.
+
+The same contract is now being extended beyond the original 662-row POC. The
+current molecular atlas has three lanes:
+
+| Lane | Current state | Interpretation |
+| --- | --- | --- |
+| Rumen POC | 555 ESM2 proteomes; 518 MAG/bin-comparable multi-view units plus 37 assembly-context units | source reference lane for methane-system bridge hypotheses |
+| Wetland/MUCC POC | 107 ESM2/function/gLM2 MAG-bin units | target wetland POC lane |
+| Mangrove/MSM expansion | 1,428/1,428 ESM2 embeddings and 1,428/1,428 gLM2 units complete; functional annotations actively completing | broader blue-carbon target expansion, not yet a final sample-level MRV layer |
+
+For dated counts, paths, and report freshness, use
+`docs/current_artifact_inventory.md`.
+
 All heavy tools are disabled by default in `configs/pipeline.yaml` under
 `functional_metagenomics`. A gate can be marked complete only when its required
 tables exist, join to every bridge candidate, and pass the stated checks.
@@ -123,11 +154,26 @@ Gate:
 
 ## Immediate Missing Work
 
-The next engineering milestone is Phase A plus a minimal Phase B bridge-card
-prototype. That gives every current bridge candidate a QC/taxonomy/derep status
-and a first mechanistic label before adding broad KO/EC/module matrices.
+The next engineering milestone is no longer just Phase A plus a minimal Phase B
+prototype. Those concepts now exist as a curated warehouse and attestation MVP
+for the current POC denominator. The highest-priority remaining work is:
 
-The project should not claim mechanistic methane MRV readiness until Phases A-D
-pass. Until then, the precise claim remains: the current 662-genome ESM2 POC
-shows strong latent ecosystem structure with cross-ecosystem bridge candidates,
-under a known source-confounding caveat.
+1. Promote gene/marker/pathway-level evidence from the warehouse into richer
+   bridge mechanism cards and graph nodes.
+2. Finish or deliberately snapshot the mangrove/MSM functional tranche, then
+   build a manifest-driven expansion warehouse that preserves complete, partial,
+   failed, duplicate, and not-started status rows.
+3. Reconcile local mangrove/MSM 1,428 processable candidates with the
+   paper-reported 966 final medium/high-quality MAG denominator.
+4. Reconcile sample/MAG links and metadata resolution for sample-level rollups.
+5. Add abundance/read-coverage tables so MAG potential can become
+   community-capacity estimates.
+6. Join environmental covariates and measured/process methane validation.
+7. Add source-replicated cohorts and source-aware controls before claiming
+   transfer beyond the current confounded rumen/MUCC design.
+
+The project should not claim final methane MRV readiness until Phases A-D plus
+the sample, abundance, environment, uncertainty, and validation layers pass. The
+current claim is: MethaNet has a queryable MAG/proteome-level molecular
+attestation and functional-atlas substrate for bridge-candidate prioritization,
+under explicit source-confounding and sample-level MRV caveats.

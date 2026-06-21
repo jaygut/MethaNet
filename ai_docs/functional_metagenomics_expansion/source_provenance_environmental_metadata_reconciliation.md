@@ -20,6 +20,16 @@ The practical metadata rule is:
 
 > Use exact accession metadata where present, use paper/site/project metadata as context, and label modeled environmental covariates as estimates. Do not let estimated covariates masquerade as measured sample metadata.
 
+Operational molecular-payload status is tracked in
+`docs/current_artifact_inventory.md`. As of the 2026-06-20 refresh, the POC
+rumen + wetland/MUCC MAG-bin layer is complete across ESM2, functional
+annotation, and gLM2 for 625 units; the mangrove/MSM lane has complete ESM2 and
+gLM2 coverage for 1,428 local candidates and an active functional tranche that
+was 1,002/1,428 complete. These molecular counts do not change the metadata
+claim boundary: sample-level ecological interpretation still requires
+MAG-to-sample mapping, abundance/read coverage, environmental covariates, and
+validation.
+
 ## Local Sources Checked
 
 Authoritative local files:

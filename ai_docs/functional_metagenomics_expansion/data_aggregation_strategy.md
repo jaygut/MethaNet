@@ -1,8 +1,12 @@
 # Data Aggregation Strategy
 
 Date: 2026-06-12
+Documentation refresh: 2026-06-20
 
-Scope: integrative analysis for the 662-genome MethaNet POC cohort, combining geometry-aware ESM2 protein embeddings with MAG-level functional genomics from the Apollo-3 annotation stack.
+Scope: integrative analysis for the 662-genome MethaNet POC cohort, combining
+geometry-aware ESM2 protein embeddings with MAG-level functional genomics from
+the Apollo-3 annotation stack. The same design is now extended as a multi-lane
+union across rumen, wetland/MUCC, and mangrove/MSM molecular evidence.
 
 ## Purpose
 
@@ -62,6 +66,42 @@ The excluded coassembly must remain excluded from final integrated tables unless
 ```text
 mucc__PPR_1022_P7D_M_E_concat_coassembly_mesocosms_megahit_bin.197
 ```
+
+## Multi-Lane Extension
+
+The original 662-row POC remains the source-audited backbone for rumen +
+wetland/MUCC bridge-candidate interpretation. The expanded MBAG atlas now also
+needs a second target-domain lane for mangrove/MSM MAGs.
+
+| Lane | Backbone rule | Current molecular layers | Special caveat |
+| --- | --- | --- | --- |
+| POC rumen + wetland/MUCC | 662-row ESM2 backbone, with 625 MAG/bin-comparable units and 37 assembly-context units | ESM2, functional warehouse, gLM2, metadata, attestation graph | source and ecosystem are still confounded; assembly-context units are not MAG-bin feature rows |
+| Mangrove/MSM expansion | 1,428 local candidate manifest under `data/external/msm_china_2025/` | ESM2 1,428/1,428, gLM2 1,428/1,428, functional tranche in progress | local 1,428 candidates must be reconciled to the paper-reported 966 final medium/high-quality MAG denominator |
+| Multi-view atlas union | explicit left join across lane-specific backbones | ESM2 + functional + gLM2 + QC/taxonomy + provenance + report features | never infer sample-level risk without MAG-to-sample mapping, abundance/read coverage, environmental covariates, and validation |
+
+Recommended union identity fields:
+
+```text
+atlas_unit_id
+proteome_id
+lane                         # poc_rumen, poc_wetland_mucc, mangrove_msm
+source_project
+source_dataset
+mag_id
+unit_scope                   # mag_bin, assembly_context, candidate_mag
+local_archive_denominator
+published_quality_denominator
+esm2_status
+functional_status
+glm2_status
+metadata_resolution
+sample_rollup_status
+claim_status
+```
+
+All high-level reports should expose `lane`, `unit_scope`, `functional_status`,
+and `sample_rollup_status` so that a completed MAG-bin evidence object cannot be
+mistaken for a scoreable environmental sample.
 
 ## Aggregation Principle
 

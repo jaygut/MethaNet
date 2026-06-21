@@ -9,13 +9,19 @@
 
 ## Overview
 
-MethaNet is a research initiative developing computational methods to predict net methane flux in coastal ecosystems using transfer learning from agricultural microbiome data. By leveraging the world's most comprehensive methanogen genomic resources, the ruminant gut archaeome, we aim to decode complex coastal wetland systems that are critical for carbon sequestration but remain data-sparse.
+MethaNet is a research initiative developing molecular intelligence methods for methane permanence-risk screening in coastal ecosystems, with the long-term goal of calibrated net methane-flux prediction. By leveraging data-rich rumen methane systems as a reference domain and expanding into wetland/MUCC and mangrove/MSM MAG/proteome evidence, we aim to decode complex coastal wetland systems that are critical for carbon sequestration but remain data-sparse.
 
 Methane has a global warming potential approximately 30× that of CO₂ over a 100-year horizon. Coastal wetlands can be net carbon sinks or sources depending on the balance between carbon uptake and methane emissions. Current measurement methods (chamber measurements, flux towers) are expensive, sparse, and unable to scale. This project addresses a critical gap in climate accounting: the inability to distinguish net climate benefits from net climate harms using molecular data.
 
 ### Core Hypothesis
 
-The ratio of methanogen marker genes (`mcrA`) to methanotroph marker genes (`pmoA`) can predict **net methane flux** across diverse saline environments. This molecular signal persists due to conserved methanogenesis machinery, enabling cross-ecosystem transfer learning.
+MAG/proteome-level molecular fingerprints, including methanogenesis markers such
+as `mcrA`, methane-oxidation markers such as `pmoA`, sulfur-competition signals,
+substrate-processing capacity, genome context, QC, taxonomy, and environmental
+metadata, can identify where methane permanence risk is more plausible and where
+field validation should be prioritized. Calibrated net methane-flux prediction
+requires sample mapping, abundance/read coverage, environmental covariates,
+uncertainty propagation, and measured flux/process validation.
 
 ---
 
@@ -121,11 +127,37 @@ We completed a cross-ecosystem proteome embedding POC between MUCC wetland genom
 
 The 662-genome ESM2 POC is being expanded into a source-audited functional atlas and MBAG evidence layer for methane-risk screening. The current claim boundary is strict: MAG-level molecular evidence can prioritize bridge candidates and monitoring follow-up, but final sample/project MRV risk scoring requires sample mapping, abundance/read coverage, environmental covariates, uncertainty propagation, and flux/process validation.
 
+Current implemented artifact arc:
+
+| Layer | Current local artifact | Status |
+|-------|------------------------|--------|
+| POC ESM2/crosswalk backbone | `ai_docs/functional_metagenomics_expansion/proteome_crosswalk/embedded_662_proteome_id_crosswalk.tsv` | 662 proteome IDs: 555 rumen + 107 wetland/MUCC |
+| POC unit scope | `results/functional_metagenomics/proteome_crosswalk_audit_20260612_0255/poc_662_functional_mag_manifest.with_unit_scope.tsv` | 625 MAG/bin-comparable units + 37 assembly-context units |
+| POC functional atlas warehouse | `results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse_poc_magbin_union_20260616_075022/` | 625 selected MAG/bin runs, 24 Parquet tables, DuckDB catalog, 711 validation gates passing |
+| POC gLM2 context | `results/contextual_genomics/glm2_integration_20260616_poc_catchup_20260616_073441/` | 625/625 MAG-bin units complete after rumen catch-up |
+| Mangrove/MSM ESM2 expansion | `results/blue_catalyst_poc/runs/msm_china_2025_esm2_20260616_082112/artifacts/` | 1,428/1,428 local mangrove/MSM proteomes embedded |
+| Mangrove/MSM gLM2 expansion | `results/contextual_genomics/glm2_msm_magbin_full_20260615_092737/` | 1,428/1,428 contextual genome units complete |
+| Mangrove/MSM functional expansion | `results/functional_metagenomics/msm_china_2025_20260615/` | active expansion lane; 1,002/1,428 functional MAGs complete at the 2026-06-20 snapshot |
+| Metadata provenance | `results/functional_metagenomics/environmental_metadata_recovery_20260612/` and `data/external/msm_china_2025/metadata/` | source/environmental metadata with resolution tiers across rumen, wetland/MUCC, and mangrove/MSM lanes |
+| Molecular attestation graph | `results/attestation/mmag_mvp_20260617/` | POC graph snapshot over the 662-row denominator; not yet rebuilt over the full mangrove/MSM expansion |
+| Latest expanded HTML atlas | `results/reports/mbag_nextgen_molecular_niche_atlas_20260619_113355/report.html` | partner-facing dated report; rebuild after mangrove/MSM functional completion for a refreshed multi-view denominator |
+
+These artifacts support MAG/proteome-level molecular attestation, bridge-candidate prioritization, and MRV feature-readiness design. They do **not** assign final sample/project methane-risk scores, final A-E MRV tiers, measured methane flux, source-independent transfer proof, or carbon-credit approval.
+
+The current system should be read as a three-lane molecular atlas:
+
+- rumen POC: source reference lane for methane-system molecular neighborhoods;
+- wetland/MUCC POC: target-domain wetland lane with complete MAG-bin molecular evidence;
+- mangrove/MSM expansion: broader blue-carbon target lane with ESM2 and gLM2 complete and functional annotations still completing.
+
+For the freshest dated payload inventory, see `docs/current_artifact_inventory.md`.
+
 Key roadmap and contract documents:
 
 - `ai_docs/functional_metagenomics_expansion/README.md` - functional-metagenomics expansion index.
 - `ai_docs/functional_metagenomics_expansion/final_mrv_risk_scoring_roadmap.md` - maturity ladder from MBAG molecular screening to final MRV risk scoring.
 - `ai_docs/functional_metagenomics_expansion/embedding_functional_transfer_framework/methanet_embedding_functional_transfer_framework.md` - MBAG framework and next-generation MethaNet Intelligence Report blueprint.
+- `docs/current_artifact_inventory.md` - current datasets, databases, warehouses, metadata outputs, and attestation artifacts created and used locally.
 
 ---
 
