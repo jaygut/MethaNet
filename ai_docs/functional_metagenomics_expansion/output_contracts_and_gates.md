@@ -1,6 +1,7 @@
 # Output Contracts and Scientific Gates
 
 Date: 2026-06-11
+Documentation refresh: 2026-06-20
 
 ## Run Directory Contract
 
@@ -33,6 +34,68 @@ results/functional_metagenomics/{run_id}/
 ├── figures/
 └── logs/
 ```
+
+## Implemented Apollo-3 Layout
+
+The implemented production stack now uses a more explicit per-attempt layout
+than the early recommended sketch above. The current evidence bundles live
+under:
+
+```text
+results/functional_metagenomics/{cohort_run_id}/per_mag/{proteome_id}/{run_id}/
+```
+
+Each successful run closes out through
+`scripts/curate_functional_mag_run.py` and writes:
+
+```text
+curated/run_record.json
+curated/file_manifest.tsv
+curated/parquet_manifest.tsv
+curated/parquet/<logical_table>.parquet
+status.tsv
+timings.tsv
+summary_metrics.tsv
+```
+
+The cohort warehouse then writes:
+
+```text
+results/functional_metagenomics/{cohort_run_id}/cohort_warehouse*/DATA_ARCHITECTURE_VALIDATION.md
+results/functional_metagenomics/{cohort_run_id}/cohort_warehouse*/cohort_table_manifest.tsv
+results/functional_metagenomics/{cohort_run_id}/cohort_warehouse*/validation_gates.tsv
+results/functional_metagenomics/{cohort_run_id}/cohort_warehouse*/functional_atlas.duckdb
+results/functional_metagenomics/{cohort_run_id}/cohort_warehouse*/parquet/<table>/cohort_run_id=<id>/part-00000.parquet
+```
+
+Current launch-ready generated snapshot:
+
+```text
+results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse_poc_magbin_union_20260616_075022/
+```
+
+This snapshot contains 625 selected MAG/bin rows in `dim_mag`, preserves 683
+attempts in `fact_run_status`, and provides 24 table/model artifacts including
+the DuckDB catalog. The 37 assembly-context units remain part of the 662-row
+identity/attestation denominator but are excluded from MAG-level feature tables
+by default.
+
+## Multi-Lane Output Gates
+
+The same output contract now applies across rumen, wetland/MUCC, and
+mangrove/MSM lanes, with lane-specific denominators:
+
+| Gate | Applies to | Pass condition |
+| --- | --- | --- |
+| POC MAG-bin gate | 518 rumen MAG-bin units + 107 wetland/MUCC MAG-bin units | 625/625 units present in ESM2, functional warehouse, gLM2, QC/taxonomy, and annotation-coverage tables |
+| POC assembly-context gate | 37 rumen no-bin or assembly-context units | explicitly present in identity/status/attestation views and excluded from MAG-bin feature tables unless a separate assembly-context analysis is requested |
+| Mangrove/MSM expansion gate | 1,428 local mangrove/MSM candidates | ESM2 and gLM2 complete; functional tranche consolidated by manifest with complete, failed, partial, duplicate, and not-started status rows |
+| Published-denominator reconciliation gate | mangrove/MSM source-paper comparison | local 1,428-candidate processing denominator reconciled against the paper-reported 966 final medium/high-quality MAG denominator |
+| Sample MRV gate | any lane used for sample/project claims | MAG-to-sample mapping, abundance/read coverage, environmental covariates, uncertainty propagation, and flux/process validation joined with explicit resolution tiers |
+
+Reports must name the lane and denominator for every count. A figure or table
+that mixes lanes must expose the join status for ESM2, functional annotation,
+gLM2 context, metadata, QC, and sample-readiness separately.
 
 ## Phase A - MAG QC and Identity
 

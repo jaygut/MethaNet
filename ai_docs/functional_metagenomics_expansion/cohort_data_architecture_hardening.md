@@ -1,6 +1,7 @@
 # Functional MAG Cohort Data Architecture Hardening
 
 Date: 2026-06-13
+Documentation refresh: 2026-06-20
 
 ## Purpose
 
@@ -67,6 +68,12 @@ scripts/consolidate_functional_mag_cohort.py \
 
 For the full production cohort, use `--expected-complete-count 662`.
 
+For the current MAG/bin-comparable POC functional-atlas denominator, use the
+unit-scoped manifest and expect 625 selected MAG/bin rows. The 662-row backbone
+remains authoritative for ESM2/attestation identity, but 37 assembly-context
+rumen no-bin records must remain excluded from MAG/bin feature tables unless an
+explicit assembly-context evidence lane is requested.
+
 The output layout is:
 
 ```text
@@ -83,6 +90,93 @@ results/functional_metagenomics/<cohort_run_id>/cohort_warehouse/
 
 The per-MAG folders remain immutable evidence bundles. The cohort warehouse is
 safe to delete and regenerate from completed per-MAG curated outputs.
+
+## Multi-Lane Warehouse Model
+
+Use separate cohort warehouses for analytically distinct denominators, then
+build an explicit multi-view union layer on top. Do not merge lanes by whatever
+folders happen to be complete on disk.
+
+| Lane | Recommended warehouse role | Denominator rule |
+| --- | --- | --- |
+| POC MAG-bin rumen + wetland/MUCC | completed reference warehouse for current MBAG reporting | 625 MAG/bin-comparable units from the 662-row ESM2 backbone |
+| POC assembly-context units | preserved evidence/status lane, not MAG-bin feature denominator | 37 rumen no-bin or assembly-context records, explicitly quarantined |
+| Mangrove/MSM expansion | target-domain expansion warehouse after active functional tranche completion or dated interim snapshot | 1,428 local candidates as the local processing denominator, with a separate reconciled view for the paper-reported 966 final medium/high-quality MAG denominator |
+| Multi-view atlas/report layer | report/query union across ESM2, functional warehouse, gLM2, provenance, and QC | manifest-driven left joins with explicit missingness and lane labels |
+
+For every warehouse, the manifest is authoritative. Completed folders indicate
+available evidence, not the cohort denominator. Failed, partial, superseded,
+duplicate, and not-yet-started records must remain visible in status tables.
+
+## Current Generated Warehouse Snapshot
+
+The latest launch-ready generated warehouse observed during the documentation
+refresh is:
+
+```text
+results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse_poc_magbin_union_20260616_075022/
+```
+
+Snapshot summary from `DATA_ARCHITECTURE_VALIDATION.md`:
+
+| Item | Value |
+| --- | ---: |
+| Cohort run | `fgx_poc_magbin_union_20260616` |
+| Run attempts inspected | 683 |
+| Completed curated MAG/bin runs selected | 625 |
+| Complete attempts | 644 |
+| Failed attempts | 24 |
+| Partial attempts | 15 |
+| Validation gates | 711 pass |
+| Launch decision | `LAUNCH-READY` |
+
+The warehouse contains these table families:
+
+- dimensions: `dim_mag`, `dim_gene`
+- operational facts: `fact_run_status`, `fact_tool_timing`, `fact_input_stats`
+- QC/taxonomy facts: `fact_qc_checkm2`, `fact_qc_gunc`, `fact_taxonomy_gtdbtk`
+- functional facts: `fact_kofam_hits`, `fact_mcycdb_hits`,
+  `fact_scycdb_hits`, `fact_dbcan_hits`, `fact_bakta_features`,
+  `fact_metabolic_hmm_hits`, `fact_metabolic_function_presence`,
+  `fact_metabolic_module_presence`, `fact_metabolic_module_step_presence`,
+  `fact_cazy_hits`, `fact_merops_hits`
+- feature summaries: `feature_annotation_coverage`,
+  `feature_methane_mechanism`, `feature_sulfur_competition`,
+  `feature_mrv_mag_level`
+- summary metrics: `run_summary_metrics`
+
+The optional DuckDB catalog is present at:
+
+```text
+results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse_poc_magbin_union_20260616_075022/functional_atlas.duckdb
+```
+
+## Mangrove/MSM Expansion Readiness
+
+The mangrove/MSM lane is an active expansion, not yet the final consolidated
+warehouse. Snapshot at the 2026-06-20 documentation refresh:
+
+| Item | Value |
+| --- | ---: |
+| Local mangrove/MSM MAG/proteome candidates | 1,428 |
+| ESM2 embeddings | 1,428 / 1,428 complete |
+| gLM2 contextual units | 1,428 / 1,428 complete |
+| Functional MAGs complete | 1,002 / 1,428 |
+| Partial/running MAGs | 3 |
+| Failed MAGs | 0 |
+| Not yet started | 423 |
+
+When this tranche is consolidated, use the same per-run curated Parquet
+contract and validation gates as the POC warehouse. Add two denominator fields
+to every mangrove/MSM cohort summary:
+
+- `local_archive_denominator = 1428`
+- `published_quality_denominator = 966` when reconciling to the source paper's
+  reported final medium/high-quality MAG set.
+
+This prevents three different concepts from being collapsed: local processable
+MAG candidates, source-publication quality-filtered MAGs, and the subset that
+has completed functional evidence at a dated point in time.
 
 ## Required Identity Columns
 

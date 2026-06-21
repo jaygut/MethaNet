@@ -4,6 +4,14 @@ Date: 2026-06-13
 
 Scope: design framework for integrating the 662-proteome geometry-aware ESM2 POC with the Apollo-3 functional-genomics atlas in support of MethaNet bridge-candidate interpretation and methane permanence-risk MRV product development.
 
+Status note, 2026-06-20: this document remains the conceptual MBAG framework,
+but its original operational counts are historical. The current local system has
+a completed 625-unit POC MAG-bin multi-view layer, complete mangrove/MSM ESM2
+and gLM2 payloads over 1,428 local candidates, and an active mangrove/MSM
+functional tranche that was 1,002/1,428 complete at the latest documentation
+snapshot. Use `docs/current_artifact_inventory.md` for current payload counts
+and report freshness before making partner-facing statements.
+
 This is a strategy/design artifact. It does not submit jobs, alter production outputs, or regenerate cohort warehouses.
 
 Hard-audit revision note, 2026-06-13: this document was reviewed under a severe scientific, statistical, graph-ML, MRV, and business-claim standard. The revisions below deliberately separate hypothesis generation from validation, MAG-level potential from sample/metagenome inference, and molecular screening from carbon-crediting claims.
@@ -20,14 +28,15 @@ The immediate opportunity is to convert bridge candidates into **MethaNet Bridge
 
 The recommended core algorithm is the **MethaNet Bridge Attestation Graph (MBAG)**. MBAG fuses multiple MAG similarity views, estimates auditable rumen-wetland couplings with optimal transport, propagates weak mechanism evidence over reliability-aware graphs, and reports a provisional Bridge Attestation Score with uncertainty. It is deliberately not a black-box classifier. It is a graph-based evidence system built to be inspected, ablated, challenged, and packaged into partner-facing molecular-attestation artifacts. The score becomes "calibrated" only after source-replicated cohorts and external sample/flux validation exist.
 
-Current local status at framework generation time:
+Historical local status at framework generation time, superseded by the
+2026-06-20 inventory in `docs/current_artifact_inventory.md`:
 
 | Layer | Local status | Interpretation |
 | --- | ---: | --- |
 | Embedded final POC cohort | 662 proteomes | 555 rumen + 107 wetland/MUCC |
 | Local MAG FASTA match | 662/662 | functional run denominator is clean |
 | Local proteome FAA match | 662/662 | embedding/function joins can use `proteome_id` |
-| Functional production snapshot | 121 complete, 0 failed | 107 wetland/MUCC + 14 rumen complete as of the last local status pass |
+| Functional production snapshot | 121 complete, 0 failed | historical smoke state: 107 wetland/MUCC + 14 rumen complete as of the last local status pass |
 | Top ESM2 bridge rumen candidates | mostly not functionally complete yet | full bridge-card validation should wait for those MAGs |
 | One top wetland bridge candidate | functionally complete | can serve as a wetland-side smoke-test card |
 | Cohort warehouse | valid calibration snapshot, stale versus live run | regenerate after intended tranche/full run completion |
@@ -88,7 +97,11 @@ The 662-genome ESM2 POC reported:
 
 The top ESM2 bridge candidates are dominated by rumen Archaea, which is biologically plausible for methane transfer hypotheses because conserved methanogenesis machinery can be shared across otherwise distant ecological contexts. The local bridge table also includes wetland candidates such as `mucc__GCA_002495465.1_ASM249546v1_genomic`.
 
-Functional production has already shown the pipeline can generate high-volume, long-form analytical evidence. At 121 completed MAGs, per-MAG manifests contained rows across:
+Functional production has already shown the pipeline can generate high-volume,
+long-form analytical evidence. The original 121-MAG smoke state demonstrated
+the curation contract; later POC and mangrove/MSM payload counts are tracked in
+`docs/current_artifact_inventory.md`. At the smoke-test stage, per-MAG manifests
+contained rows across:
 
 - `fact_kofam_hits`
 - `fact_mcycdb_hits`

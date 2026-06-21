@@ -1,7 +1,10 @@
 # MethaNet Functional-Metagenomics Expansion Package
 
 Date: 2026-06-13
-Scope: Blue Catalyst/MethaNet 662-genome POC expansion from ESM2 latent geometry into mechanistic, source-aware methane functional metagenomics.
+Documentation refresh: 2026-06-20
+Scope: Blue Catalyst/MethaNet functional expansion from the 662-genome rumen +
+wetland/MUCC POC into a broader three-lane molecular atlas spanning rumen,
+wetland/MUCC, and mangrove/MSM MAG/proteome evidence.
 
 ## Purpose
 
@@ -14,6 +17,62 @@ The objective is to convert the current claim:
 into a stronger, fundable platform claim:
 
 > MethaNet can rank methane-relevant genomes by combining latent protein-language geometry with independently measured genome quality, taxonomy, methane-cycle mechanism, substrate/electron-transfer function, sulfur competition, and source-aware transfer validation.
+
+## Current Implemented Arc And Artifact State
+
+As of the 2026-06-20 documentation refresh, this folder is no longer only a planning package. The repository now contains an implemented local arc:
+
+1. `embedded_662_proteome_id_crosswalk.tsv` remains the 662-proteome ESM2 backbone.
+2. Unit-scope manifests split that backbone into 625 MAG/bin-comparable units and 37 assembly-context rumen no-bin units.
+3. Apollo-3 per-MAG runs write immutable evidence bundles under `results/functional_metagenomics/fgx_662_apollo3_20260612/per_mag/`.
+4. `scripts/curate_functional_mag_run.py` converts raw tool output into per-run curated Parquet and `run_record.json` provenance.
+5. `scripts/consolidate_functional_mag_cohort.py` builds the Parquet-first cohort warehouse and optional DuckDB catalog.
+6. `scripts/attestation/build_molecular_attestation_mvp.py` builds a local queryable molecular attestation graph over the 662-row denominator.
+
+Latest generated launch-ready warehouse observed locally:
+
+```text
+results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse_poc_magbin_union_20260616_075022/
+```
+
+This warehouse reports:
+
+| Item | Current generated state |
+| --- | ---: |
+| Run attempts inspected | 683 |
+| Selected completed MAG/bin runs | 625 |
+| Complete attempts preserved in status | 644 |
+| Failed attempts preserved in status | 24 |
+| Partial attempts preserved in status | 15 |
+| Cohort tables written | 24 |
+| Validation gates | 711 pass, 0 warn, 0 fail |
+| DuckDB catalog | `functional_atlas.duckdb` present |
+| Launch decision | `LAUNCH-READY` for inspected data-format gates |
+
+The current molecular attestation graph snapshot is:
+
+```text
+results/attestation/mmag_mvp_20260617/
+```
+
+It preserves 662 MAG/proteome nodes, separates 625 MAG-bin units from 37 assembly-context units, links every evidence atom to an artifact, and explicitly blocks sample-level methane risk, final A-E MRV tiers, measured flux, and carbon-credit claims.
+
+## Current Three-Lane Status
+
+The functional expansion is no longer a single POC denominator. Current local
+work should be interpreted as three related but distinct evidence lanes:
+
+| Lane | Status at 2026-06-20 documentation refresh | Operational meaning |
+| --- | --- | --- |
+| Rumen POC | 555 ESM2 proteomes; 518 MAG/bin-comparable units in the completed POC functional/gLM2 layer; 37 assembly-context rumen units quarantined from MAG-bin tables | source reference lane for methane-system molecular neighborhoods and cross-domain bridge hypotheses |
+| Wetland/MUCC POC | 107 ESM2 proteomes; 107 completed functional MAG/bin outputs; 107 gLM2 units | target wetland POC lane for MBAG bridge-candidate evidence |
+| Mangrove/MSM expansion | 1,428 ESM2 proteome embeddings complete; 1,428 gLM2 units complete; 1,002/1,428 functional MAGs complete in the active run snapshot | broader blue-carbon target expansion; rebuild the expanded atlas after run completion or after an explicitly dated interim snapshot |
+
+The latest expanded HTML atlas at
+`results/reports/mbag_nextgen_molecular_niche_atlas_20260619_113355/report.html`
+is a dated report. It was generated before the latest mangrove/MSM functional
+completion snapshot and should be rebuilt before being described as the current
+full-payload atlas.
 
 ## Contents
 
@@ -45,6 +104,9 @@ into a stronger, fundable platform claim:
 
 - [final_mrv_risk_scoring_roadmap.md](final_mrv_risk_scoring_roadmap.md)
   Strategic maturity ladder from current MBAG/MAG-level molecular screening to sample/project-level MRV risk scoring, including required metadata, abundance, environmental, flux-validation, uncertainty, and claim-boundary gates.
+
+- [`../../docs/current_artifact_inventory.md`](../../docs/current_artifact_inventory.md)
+  Current source-controlled inventory of datasets, databases, generated warehouses, metadata outputs, attestation graph artifacts, and the docs that must stay in sync.
 
 - [source_provenance_environmental_metadata_reconciliation.md](source_provenance_environmental_metadata_reconciliation.md)
   Verified paper/data-object provenance for the rumen, wetland/MUCC, and mangrove lanes; current environmental metadata readiness; resolution tiers; and free API routes for accession, site, flux, soil, weather, and modeled-context enrichment.
@@ -104,3 +166,11 @@ active Apollo-3 runs, live queue state and per-MAG completion counts can change
 faster than the documentation. Use the docs for reproducible interpretation and
 refresh live operational state separately before launch, requeue, pruning, or
 external reporting decisions.
+
+For full system orientation, see:
+
+```text
+ai_docs/system_operational_map_20260619/TECHNICAL_BRIEF.md
+```
+
+That brief is an ignored/generated documentation artifact under `ai_docs/*`; keep the source-controlled docs in this folder as the stable contract layer.

@@ -1,6 +1,7 @@
 # Apollo-3 MAG Functional Analytics Operations
 
 Date: 2026-06-13
+Documentation refresh: 2026-06-20
 
 This page is the operational path for running MethaNet MAG functional analytics
 on Apolo-3 with the databases that are actually installed and validated under:
@@ -34,6 +35,87 @@ As of `fgx_bakta_light_20260611_231310`, the production-ready stack is:
 | Bakta 1.12.0 + light DB v6.0 | ready | optional standardized MAG annotation add-on |
 | eggNOG v2 | ready, optional | staged and integrity-validated under `$DB_ROOT/eggnog_v2`; keep out of the active Slurm run unless explicitly launching the sidecar |
 | DRAM/DRAM2 | gated | use only after fresh official provisioning; not a production blocker |
+
+## Current Created Data And Database Artifacts
+
+The operational path has produced a launch-ready local functional-atlas
+warehouse plus a molecular attestation graph. Treat these as generated evidence
+snapshots, not live scheduler state.
+
+Functional atlas warehouse:
+
+```text
+results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse_poc_magbin_union_20260616_075022/
+```
+
+Key contents:
+
+| Artifact | Current state |
+| --- | ---: |
+| `dim_mag` | 625 selected MAG/bin rows |
+| `fact_run_status` | 683 run attempts, including failed and partial attempts |
+| `feature_mrv_mag_level` | 625 MAG-level feature rows |
+| `feature_annotation_coverage` | 7,500 MAG x tool coverage rows |
+| `fact_kofam_hits` | 23,845,557 rows |
+| `fact_mcycdb_hits` | 1,223,407 rows |
+| `fact_scycdb_hits` | 1,525,120 rows |
+| `functional_atlas.duckdb` | present |
+
+Attestation snapshot:
+
+```text
+results/attestation/mmag_mvp_20260617/
+```
+
+Key contents:
+
+| Artifact | Current state |
+| --- | ---: |
+| `graph_nodes.tsv` / `.parquet` | 662 MAG nodes plus claims, gaps, features, artifacts, evidence atoms |
+| `graph_edges.tsv` / `.parquet` | evidence, feature, source, taxonomy, claim, blocker, and ESM2-neighbor relationships |
+| `evidence_atom.tsv` / `.parquet` | 3,968 evidence atoms |
+| `registry_artifact.tsv` / `.parquet` | 13 source artifacts with hashes/provenance |
+| `mmag.kuzu/` | optional embedded graph database when Kuzu is available |
+| `EXPERT_AUDIT_REPORT.md` | static and query stress audit; all listed gates pass |
+
+Claim boundary for operators: these artifacts are suitable for MAG/proteome-level
+molecular attestation, candidate triage, warehouse analytics, and partner-demo
+evidence packets. They are not final sample/project MRV risk scores and do not
+claim measured methane flux, final A-E tiers, source-independent transfer, or
+carbon-credit approval.
+
+## Current Mangrove/MSM Expansion Snapshot
+
+The active mangrove/MSM lane uses the same curated per-MAG evidence-bundle
+contract as the POC production run, but it is not yet a finalized cohort
+warehouse.
+
+Current dated snapshot: 2026-06-20 20:30 America/Bogota.
+
+| Payload | Current state |
+| --- | ---: |
+| Local mangrove/MSM MAG/proteome candidates | 1,428 |
+| ESM2 embeddings | 1,428 / 1,428 complete |
+| gLM2 contextual units | 1,428 / 1,428 complete |
+| Functional MAGs complete | 1,002 / 1,428 |
+| Functional MAGs partial/running | 3 |
+| Functional MAGs failed | 0 |
+| Functional MAGs not started | 423 |
+| Duplicate complete attempts observed | 1 |
+
+Current sidecar paths:
+
+```text
+results/blue_catalyst_poc/runs/msm_china_2025_esm2_20260616_082112/artifacts/
+results/contextual_genomics/glm2_msm_magbin_full_20260615_092737/
+results/functional_metagenomics/msm_china_2025_20260615/
+```
+
+Before rebuilding the expanded MBAG atlas, consolidate the mangrove/MSM tranche
+by manifest rather than by completed folders alone. Preserve duplicate, partial,
+failed, and not-started rows. Also keep the local 1,428-candidate processing
+denominator separate from the source paper's 966 final medium/high-quality MAG
+denominator until the provenance reconciliation is complete.
 
 ## Source-Backed Tool Decisions
 
