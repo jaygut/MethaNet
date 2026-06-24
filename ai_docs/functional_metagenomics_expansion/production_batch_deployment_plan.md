@@ -4,10 +4,12 @@ Date: 2026-06-12
 
 Scope: launch strategy for the 662-MAG MethaNet functional-metagenomics cohort on Apollo-3, after the real-MAG smoke run and storage architecture review.
 
-Freshness note, 2026-06-13: this file is a deployment plan and dated launch
-runbook, not a live scheduler-status page. During active production runs, refresh
-Slurm state and per-MAG curated outputs separately before interpreting current
-completion, failure, or queue counts.
+Freshness note, 2026-06-24: this file is the original POC 662-MAG deployment
+plan and dated launch runbook. It remains valid for the POC core lane but does
+not cover the MSM China 2025 (1,428 MAG) or Futian 2026 (3,404 rMAG) expansion
+lane arrays that launched later in June 2026. For current live operational
+counts, run `scripts/reports/refresh_atlas_lane_registry_status.sh` or check
+`configs/methanet_atlas_lanes.tsv`.
 
 ## Current Production Gate Status
 

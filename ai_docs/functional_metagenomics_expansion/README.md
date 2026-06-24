@@ -1,7 +1,7 @@
 # MethaNet Functional-Metagenomics Expansion Package
 
 Date: 2026-06-13
-Documentation refresh: 2026-06-20
+Documentation refresh: 2026-06-24
 Scope: Blue Catalyst/MethaNet functional expansion from the 662-genome rumen +
 wetland/MUCC POC into a broader three-lane molecular atlas spanning rumen,
 wetland/MUCC, and mangrove/MSM MAG/proteome evidence.
@@ -62,11 +62,12 @@ It preserves 662 MAG/proteome nodes, separates 625 MAG-bin units from 37 assembl
 The functional expansion is no longer a single POC denominator. Current local
 work should be interpreted as three related but distinct evidence lanes:
 
-| Lane | Status at 2026-06-20 documentation refresh | Operational meaning |
+| Lane | Status at 2026-06-24 documentation refresh | Operational meaning |
 | --- | --- | --- |
 | Rumen POC | 555 ESM2 proteomes; 518 MAG/bin-comparable units in the completed POC functional/gLM2 layer; 37 assembly-context rumen units quarantined from MAG-bin tables | source reference lane for methane-system molecular neighborhoods and cross-domain bridge hypotheses |
 | Wetland/MUCC POC | 107 ESM2 proteomes; 107 completed functional MAG/bin outputs; 107 gLM2 units | target wetland POC lane for MBAG bridge-candidate evidence |
-| Mangrove/MSM expansion | 1,428 ESM2 proteome embeddings complete; 1,428 gLM2 units complete; 1,002/1,428 functional MAGs complete in the active run snapshot | broader blue-carbon target expansion; rebuild the expanded atlas after run completion or after an explicitly dated interim snapshot |
+| Mangrove/MSM expansion | 1,428 ESM2 proteome embeddings complete; 1,428 gLM2 units complete; 1,225/1,428 functional MAGs complete at the 2026-06-22 snapshot (filesystem audit 2026-06-24 shows ~1,390 COMPLETE sentinels; refresh lane registry for authoritative deduplicated count) | broader blue-carbon target expansion; rebuild the expanded atlas after run completion or after an explicitly dated interim snapshot |
+| Mangrove/Futian 2026 expansion | 3,404 dereplicated rMAGs (3,156 ready payload rows + 248 gap rows); 1,425/3,156 ESM2 complete; 3,156 gLM2 complete; 114/312 archaea functional MAGs complete at the 2026-06-22 snapshot (filesystem audit 2026-06-24 shows ~220 COMPLETE sentinels for archaea) | newest blue-carbon mangrove target lane; archaea-only functional coverage so far; no consolidated warehouse yet |
 
 The latest expanded HTML atlas at
 `results/reports/mbag_nextgen_molecular_niche_atlas_20260619_113355/report.html`

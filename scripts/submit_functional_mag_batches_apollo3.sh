@@ -22,6 +22,7 @@ END_INDEX="${END_INDEX:-}"
 ARRAY_SPEC="${ARRAY_SPEC:-}"
 DRY_RUN="${DRY_RUN:-1}"
 ALLOW_ASSEMBLY_CONTEXT="${ALLOW_ASSEMBLY_CONTEXT:-0}"
+DEPENDENCY="${DEPENDENCY:-}"
 
 die() {
   echo "ERROR: $*" >&2
@@ -31,26 +32,72 @@ die() {
 [[ -s "$MANIFEST" ]] || die "Manifest missing or empty: $MANIFEST"
 [[ -x "$ARRAY_WORKER" ]] || die "Array worker missing or not executable: $ARRAY_WORKER"
 
-total="$(
+case "$RESULT_ROOT" in
+  /*) ;;
+  *) RESULT_ROOT="${REPO_ROOT}/${RESULT_ROOT#./}" ;;
+esac
+
+if ! total="$(
   awk -F '\t' '
+    function istrue(value) {
+      return value == "True" || value == "true" || value == "1" || value == "yes" || value == "Y" || value == "y"
+    }
+    function fail(message) {
+      print message > "/dev/stderr"
+      bad = 1
+    }
     NR == 1 {
-      for (i = 1; i <= NF; i++) col[$i] = i
-      required = "functional_run_include analysis_unit_type mbag_mag_level_include"
+      for (i = 1; i <= NF; i++) {
+        gsub(/\r$/, "", $i)
+        col[$i] = i
+      }
+      required = "proteome_id mag_fasta proteome_faa functional_run_include analysis_unit_type mbag_mag_level_include"
       split(required, r, " ")
-      for (j in r) if (!(r[j] in col)) exit 2
+      for (j in r) {
+        if (!(r[j] in col)) {
+          fail("missing required manifest column: " r[j])
+        }
+      }
+      if (bad) exit 2
       next
     }
     {
+      for (i = 1; i <= NF; i++) gsub(/\r$/, "", $i)
       include = $(col["functional_run_include"])
       unit = $(col["analysis_unit_type"])
       mbag = $(col["mbag_mag_level_include"])
-      if ((include == "True" || include == "true" || include == "1") &&
+      if (istrue(include) &&
           (unit == "mag_bin" || ENVIRON["ALLOW_ASSEMBLY_CONTEXT"] == "1") &&
-          (mbag == "true" || mbag == "True" || mbag == "1" || ENVIRON["ALLOW_ASSEMBLY_CONTEXT"] == "1")) n += 1
+          (istrue(mbag) || ENVIRON["ALLOW_ASSEMBLY_CONTEXT"] == "1")) {
+        n += 1
+        proteome_id = $(col["proteome_id"])
+        if (proteome_id == "") {
+          fail("included row " NR " has empty proteome_id")
+        } else if (seen[proteome_id]++) {
+          duplicates[proteome_id] = 1
+        }
+        if ($(col["mag_fasta"]) == "") {
+          fail("included row " NR " proteome_id=" proteome_id " has empty mag_fasta")
+        }
+        if ($(col["proteome_faa"]) == "") {
+          fail("included row " NR " proteome_id=" proteome_id " has empty proteome_faa")
+        }
+        if (col["match_status"] > 0 && $(col["match_status"]) == "missing_payload") {
+          fail("included row " NR " proteome_id=" proteome_id " has match_status=missing_payload")
+        }
+      }
     }
-    END { print n + 0 }
+    END {
+      for (proteome_id in duplicates) {
+        fail("duplicate included proteome_id: " proteome_id)
+      }
+      if (bad) exit 3
+      print n + 0
+    }
   ' "$MANIFEST"
-)"
+)"; then
+  die "Functional manifest preflight failed: $MANIFEST"
+fi
 [[ "$total" -gt 0 ]] || die "No functional_run_include=True rows found in $MANIFEST"
 if [[ -z "$END_INDEX" ]]; then
   END_INDEX="$total"
@@ -74,6 +121,9 @@ cmd=(
   --export="ALL,REPO_ROOT=${REPO_ROOT},DB_ROOT=${DB_ROOT},MANIFEST=${MANIFEST},COHORT_RUN_ID=${COHORT_RUN_ID},RESULT_BASE=${RESULT_ROOT}/per_mag,RESULT_ROOT=,THREADS=${THREADS},ALLOW_ASSEMBLY_CONTEXT=${ALLOW_ASSEMBLY_CONTEXT}"
   "$ARRAY_WORKER"
 )
+if [[ -n "$DEPENDENCY" ]]; then
+  cmd=(sbatch --dependency="$DEPENDENCY" "${cmd[@]:1}")
+fi
 
 printf 'Prepared cohort batch command for %s included MAGs (array=%s, time=%s, mem=%s, cpus=%s):\n' \
   "$total" "$ARRAY_SPEC" "$TIME_LIMIT" "$MEM" "$THREADS"

@@ -27,7 +27,7 @@ MethaNet currently has a strong foundation for molecular methane-risk screening:
 - local MAG/proteome file matching;
 - an Apollo-3 functional-genomics production stack for QC, taxonomy, KOfam, MCycDB, SCycDB, dbCAN, Bakta, CheckM2, GUNC, METABOLIC, CAZy, MEROPS, timing, and status records;
 - a completed POC MAG-bin multi-view layer with 625/625 units carrying ESM2, functional annotation, and gLM2 contextual evidence;
-- a mangrove/MSM expansion lane with 1,428/1,428 ESM2 proteome embeddings and 1,428/1,428 gLM2 contextual units complete, plus a functional annotation tranche that was 1,002/1,428 complete at the 2026-06-20 snapshot;
+- a mangrove/MSM expansion lane with 1,428/1,428 ESM2 proteome embeddings and 1,428/1,428 gLM2 contextual units complete, plus a functional annotation tranche that was 1,225/1,428 complete at the 2026-06-22 snapshot (filesystem audit 2026-06-24 shows ~1,390 COMPLETE sentinels; refresh lane registry for authoritative deduplicated count);
 - an MBAG design that integrates latent proteome geometry with functional evidence, QC, source leakage, graph structure, and uncertainty.
 
 The current product primitive is not final MRV scoring. It is:

@@ -51,6 +51,7 @@ python "$REPO_ROOT/scripts/embedding/build_manifest_esm2_genome_embeddings.py" \
   --domain-col "${ESM2_DOMAIN_COL:-domain}" \
   --source-group-col "${ESM2_SOURCE_GROUP_COL:-source_group}" \
   --protein-count-col "${ESM2_PROTEIN_COUNT_COL:-protein_count}" \
+  --include-col "${ESM2_INCLUDE_COL:-}" \
   --model-name "${ESM2_MODEL_NAME:-facebook/esm2_t33_650M_UR50D}" \
   --batch-size "${ESM2_BATCH_SIZE:-4}" \
   --max-length "${ESM2_MAX_LENGTH:-1022}" \

@@ -46,6 +46,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--domain-col", default="domain")
     parser.add_argument("--source-group-col", default="source_group")
     parser.add_argument("--protein-count-col", default="protein_count")
+    parser.add_argument(
+        "--include-col",
+        default="",
+        help="Optional boolean manifest column used to filter rows before embedding.",
+    )
     parser.add_argument("--model-name", default="facebook/esm2_t33_650M_UR50D")
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--max-length", type=int, default=1022)
@@ -89,6 +94,12 @@ def load_manifest(args: argparse.Namespace) -> pd.DataFrame:
     for col in [args.id_col, args.faa_col]:
         if col not in df.columns:
             raise ValueError(f"Manifest missing required column `{col}`: {manifest_path}")
+
+    if args.include_col:
+        if args.include_col not in df.columns:
+            raise ValueError(f"Manifest missing include column `{args.include_col}`: {manifest_path}")
+        include = df[args.include_col].astype(str).str.strip().str.lower().isin({"true", "1", "yes", "y"})
+        df = df[include].copy()
 
     if args.limit is not None:
         df = df.head(max(0, int(args.limit))).copy()

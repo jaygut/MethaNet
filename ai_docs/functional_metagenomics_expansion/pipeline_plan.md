@@ -1,8 +1,14 @@
 # Functional-Metagenomics Expansion Plan
 
-Date: 2026-06-11  
-Target platform: Apolo-3 SLURM HPC  
+Date: 2026-06-11
+Target platform: Apolo-3 SLURM HPC
 Primary current cohort: 662 genomes = 555 rumen + 107 wetland
+
+Freshness note, 2026-06-24: this plan describes the original POC pipeline.
+It has been superseded in practice by a three-lane expansion (POC core 625,
+MSM China 2025 1,428, Futian 2026 3,404). Use `configs/methanet_atlas_lanes.tsv`
+and `scripts/reports/summarize_atlas_lane_registry.py` for current operational
+counts and per-lane consolidation commands.
 
 ## Executive Strategy
 

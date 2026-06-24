@@ -15,6 +15,7 @@ import csv
 import html
 import json
 import math
+import shutil
 import subprocess
 import textwrap
 from collections import Counter, defaultdict
@@ -53,6 +54,9 @@ DEFAULT_MSM_ESM_DIR = Path(
     "results/blue_catalyst_poc/runs/msm_china_2025_esm2_20260616_082112/artifacts"
 )
 DEFAULT_MSM_GLM_DIR = Path("results/contextual_genomics/glm2_msm_magbin_full_20260615_092737")
+DEFAULT_LANE_REGISTRY = Path("configs/methanet_atlas_lanes.tsv")
+TRUE_VALUES = {"true", "1", "yes", "y"}
+REPORT_SUPPORTED_LANE_ROLES = {"calibration_core", "external_mangrove"}
 
 COLORS = {
     "rumen": "#d97706",
@@ -82,6 +86,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--msm-root", type=Path, default=DEFAULT_MSM_ROOT)
     parser.add_argument("--msm-esm-dir", type=Path, default=DEFAULT_MSM_ESM_DIR)
     parser.add_argument("--msm-glm-dir", type=Path, default=DEFAULT_MSM_GLM_DIR)
+    parser.add_argument(
+        "--lane-registry",
+        type=Path,
+        default=DEFAULT_LANE_REGISTRY,
+        help="Atlas lane registry TSV. When present, report inputs are derived from this registry.",
+    )
+    parser.add_argument(
+        "--allow-legacy-defaults",
+        action="store_true",
+        help=(
+            "Allow the historical POC plus MSM default-input fallback when "
+            "--lane-registry is absent. Current external-lane rebuilds should "
+            "use the registry control plane instead."
+        ),
+    )
     parser.add_argument(
         "--output-dir",
         type=Path,
@@ -113,6 +132,99 @@ def read_json(path: Path) -> dict[str, Any]:
         return json.loads(path.read_text())
     except Exception:
         return {}
+
+
+def truthy(value: Any) -> bool:
+    return str(value or "").strip().lower() in TRUE_VALUES
+
+
+def split_registry_paths(repo_root: Path, value: Any) -> list[Path]:
+    if value is None or pd.isna(value):
+        return []
+    paths: list[Path] = []
+    for item in str(value).split(";"):
+        item = item.strip()
+        if not item:
+            continue
+        path = Path(item)
+        paths.append(path if path.is_absolute() else repo_root / path)
+    return paths
+
+
+def read_lane_registry(path: Path) -> pd.DataFrame:
+    registry = read_tsv(path)
+    if registry.empty:
+        return registry
+    required = {
+        "lane_id",
+        "lane_role",
+        "denominator_units",
+        "source_lane_manifest",
+        "functional_manifest",
+        "functional_warehouse_dir",
+        "esm2_artifacts_dirs",
+        "glm2_artifacts_dirs",
+    }
+    missing = sorted(required - set(registry.columns))
+    if missing:
+        raise SystemExit(f"Lane registry {path} is missing required columns: {', '.join(missing)}")
+    return registry.fillna("")
+
+
+def validate_report_lane_registry(repo_root: Path, registry_path: Path, registry: pd.DataFrame) -> None:
+    """Fail fast on registry states that would make the report misleading."""
+    if registry.empty:
+        raise SystemExit(f"Lane registry has no rows: {registry_path}")
+    errors: list[str] = []
+    lane_ids = registry["lane_id"].astype(str).str.strip()
+    if lane_ids.eq("").any():
+        errors.append("lane registry contains blank lane_id values")
+    duplicates = sorted(lane_ids[lane_ids.duplicated()].unique())
+    if duplicates:
+        errors.append("lane registry contains duplicate lane_id values: " + ", ".join(duplicates))
+
+    roles = registry["lane_role"].astype(str).str.strip()
+    unsupported = sorted(set(roles) - REPORT_SUPPORTED_LANE_ROLES)
+    if unsupported:
+        errors.append("lane registry contains unsupported report lane_role values: " + ", ".join(unsupported))
+    calibration_count = int(roles.eq("calibration_core").sum())
+    if calibration_count != 1:
+        errors.append(f"lane registry must contain exactly one calibration_core row; observed={calibration_count}")
+    external_count = int(roles.eq("external_mangrove").sum())
+    if external_count < 1:
+        errors.append("lane registry must contain at least one external_mangrove row for the expanded atlas")
+
+    for idx, row in registry.iterrows():
+        label = f"lane_id={row.get('lane_id') or f'row_{idx + 2}'}"
+        try:
+            denominator = int(str(row.get("denominator_units") or ""))
+            if denominator < 0:
+                errors.append(f"{label}: denominator_units must be non-negative")
+        except ValueError:
+            errors.append(f"{label}: denominator_units is not an integer")
+
+        for column in ["source_lane_manifest", "functional_manifest"]:
+            paths = split_registry_paths(repo_root, row.get(column))
+            if not paths:
+                errors.append(f"{label}: missing required report path {column}")
+            for path in paths:
+                if not path.exists():
+                    errors.append(f"{label}: registered path is missing for {column}: {path}")
+
+        if row.get("lane_role") == "calibration_core":
+            for column in ["functional_warehouse_dir", "esm2_artifacts_dirs", "glm2_artifacts_dirs"]:
+                paths = split_registry_paths(repo_root, row.get(column))
+                if not paths:
+                    errors.append(f"{label}: missing calibration report path {column}")
+                for path in paths:
+                    if not path.exists():
+                        errors.append(f"{label}: registered path is missing for {column}: {path}")
+
+    if errors:
+        raise SystemExit(
+            "Lane registry is not valid for expanded atlas report rebuild:\n"
+            + "\n".join(f"- {error}" for error in errors)
+        )
 
 
 def git_head(repo_root: Path) -> str:
@@ -330,11 +442,43 @@ def load_poc_features(warehouse_dir: Path, glm_dir: Path, esm_dir: Path) -> pd.D
     return poc
 
 
-def aggregate_msm_glm(msm_glm_dir: Path) -> pd.DataFrame:
-    path = msm_glm_dir / "features/glm2_smoke_window_embedding_summary.tsv"
-    glm = read_tsv(path)
-    if glm.empty:
+def aggregate_glm_dirs(glm_dirs: list[Path]) -> pd.DataFrame:
+    frames: list[pd.DataFrame] = []
+    for glm_dir in glm_dirs:
+        mag_level = read_tsv(glm_dir / "feature_glm_mag_level.tsv")
+        if not mag_level.empty:
+            mag_level["proteome_id"] = mag_level["proteome_id"].astype(str)
+            if "has_glm2" not in mag_level.columns:
+                mag_level["has_glm2"] = pd.to_numeric(
+                    mag_level.get("native_window_count", 0), errors="coerce"
+                ).fillna(0).gt(0)
+            frames.append(mag_level)
+            continue
+        windows = read_tsv(glm_dir / "features/glm2_smoke_window_embedding_summary.tsv")
+        if not windows.empty:
+            frames.append(windows)
+    if not frames:
         return pd.DataFrame(columns=["proteome_id"])
+    glm = pd.concat(frames, ignore_index=True, sort=False)
+    if "window_type" not in glm.columns:
+        keep = [
+            "proteome_id",
+            "mag_id",
+            "native_window_count",
+            "shuffled_control_count",
+            "all_embeddings_finite",
+            "embedding_dim",
+            "native_embedding_std_mean",
+            "shuffled_embedding_std_mean",
+            "glm_context_delta",
+            "context_qc_tier",
+            "has_glm2",
+        ]
+        out = glm[[c for c in keep if c in glm.columns]].drop_duplicates("proteome_id")
+        if "has_glm2" not in out.columns:
+            native_count = out["native_window_count"] if "native_window_count" in out.columns else pd.Series([0] * len(out), index=out.index)
+            out["has_glm2"] = pd.to_numeric(native_count, errors="coerce").fillna(0).gt(0)
+        return out
     glm["proteome_id"] = glm["proteome_id"].astype(str)
     glm["is_shuffled"] = glm["window_type"].astype(str).str.contains("shuffled", case=False, na=False)
     glm["embedding_std"] = pd.to_numeric(glm["embedding_std"], errors="coerce")
@@ -374,6 +518,162 @@ def aggregate_msm_glm(msm_glm_dir: Path) -> pd.DataFrame:
     return out
 
 
+def aggregate_msm_glm(msm_glm_dir: Path) -> pd.DataFrame:
+    return aggregate_glm_dirs([msm_glm_dir])
+
+
+def latest_complete_run(proteome_dir: Path) -> Path | None:
+    runs = sorted([p for p in proteome_dir.iterdir() if p.is_dir()])
+    complete_runs = [p for p in runs if (p / "COMPLETE").exists() and (p / "curated/run_record.json").exists()]
+    return complete_runs[-1] if complete_runs else None
+
+
+def latest_incomplete_run_status(proteome_dir: Path) -> str:
+    runs = sorted([p for p in proteome_dir.iterdir() if p.is_dir()])
+    if not runs:
+        return "not_started"
+    if latest_complete_run(proteome_dir) is not None:
+        return "complete"
+    return "failed" if (runs[-1] / "FAILED").exists() else "partial"
+
+
+def discover_external_functional(
+    manifest: pd.DataFrame,
+    per_mag_dirs: list[Path],
+    lane_id: str,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    if manifest.empty:
+        return pd.DataFrame(), pd.DataFrame()
+    manifest = manifest.copy()
+    manifest["proteome_id"] = manifest["proteome_id"].astype(str)
+
+    selected: dict[str, Path] = {}
+    partial: set[str] = set()
+    failed: set[str] = set()
+    for per_mag in per_mag_dirs:
+        if not per_mag.exists():
+            continue
+        for proteome_dir in sorted(p for p in per_mag.iterdir() if p.is_dir()):
+            proteome_id = proteome_dir.name
+            complete = latest_complete_run(proteome_dir)
+            if complete is not None:
+                selected[proteome_id] = complete
+                continue
+            status = latest_incomplete_run_status(proteome_dir)
+            if status == "failed":
+                failed.add(proteome_id)
+            elif status == "partial":
+                partial.add(proteome_id)
+
+    rows: list[dict[str, Any]] = []
+    status_rows: list[dict[str, Any]] = []
+    for _, item in manifest.iterrows():
+        proteome_id = str(item["proteome_id"])
+        mag_id = item.get("mag_id") or item.get("mag_id_candidate") or proteome_id
+        include = truthy(item.get("functional_run_include", True))
+        if not include:
+            status_rows.append(
+                {
+                    "lane_id": lane_id,
+                    "proteome_id": proteome_id,
+                    "mag_id": mag_id,
+                    "functional_status": "missing_payload",
+                    "has_functional": False,
+                    "run_id": "",
+                    "run_dir": "",
+                    "has_curated_manifest": False,
+                }
+            )
+            continue
+
+        run_dir = selected.get(proteome_id)
+        if run_dir is None:
+            run_status = "failed" if proteome_id in failed else "partial" if proteome_id in partial else "not_started"
+            status_rows.append(
+                {
+                    "lane_id": lane_id,
+                    "proteome_id": proteome_id,
+                    "mag_id": mag_id,
+                    "functional_status": run_status,
+                    "has_functional": False,
+                    "run_id": "",
+                    "run_dir": "",
+                    "has_curated_manifest": False,
+                }
+            )
+            continue
+
+        record = read_json(run_dir / "curated/run_record.json")
+        parquet_manifest = read_tsv(run_dir / "curated/parquet_manifest.tsv")
+        table_rows = {}
+        if not parquet_manifest.empty:
+            table_rows = {
+                str(r["table"]): safe_int(r["rows"])
+                for _, r in parquet_manifest.iterrows()
+                if "table" in r
+            }
+        summary = record.get("summary_metrics", {}) or {}
+        qc = record.get("qc", {}) or {}
+        tax = record.get("taxonomy", {}) or {}
+
+        row = {
+            "lane_id": lane_id,
+            "cohort_run_id": record.get("cohort_run_id", lane_id),
+            "run_id": record.get("run_id", run_dir.name),
+            "proteome_id": proteome_id,
+            "mag_id": record.get("mag_id") or mag_id,
+            "source": lane_id,
+            "ecosystem": item.get("ecosystem") or item.get("env_broad_scale") or "mangrove_sediment",
+            "domain": tax.get("domain") or item.get("domain") or "unknown",
+            "phylum": tax.get("phylum", ""),
+            "class": tax.get("class", ""),
+            "order": tax.get("order", ""),
+            "family": tax.get("family", ""),
+            "genus": tax.get("genus", ""),
+            "species": tax.get("species", ""),
+            "qc_tier": qc.get("qc_tier", ""),
+            "checkm2_completeness": safe_float(qc.get("completeness")),
+            "checkm2_contamination": safe_float(qc.get("contamination")),
+            "gunc_pass": bool(qc.get("gunc_pass", False)),
+            "gunc_css": safe_float(qc.get("gunc_css")),
+            "input_total_bp": safe_int(summary.get("input_total_bp")),
+            "prodigal_proteins": safe_int(summary.get("prodigal_proteins")),
+            "kofam_rows": safe_int(summary.get("kofam_rows") or table_rows.get("fact_kofam_hits")),
+            "mcycdb_hits": safe_int(summary.get("mcycdb_hits") or table_rows.get("fact_mcycdb_hits")),
+            "scycdb_hits": safe_int(summary.get("scycdb_hits") or table_rows.get("fact_scycdb_hits")),
+            "dbcan_overview_rows": safe_int(summary.get("dbcan_overview_rows") or table_rows.get("fact_dbcan_hits")),
+            "bakta_feature_rows": safe_int(summary.get("bakta_feature_rows") or table_rows.get("fact_bakta_features")),
+            "metabolic_hmm_rows": safe_int(table_rows.get("fact_metabolic_hmm_hits")),
+            "metabolic_modules_present": safe_int(table_rows.get("fact_metabolic_module_presence")),
+            "metabolic_functions_present": safe_int(table_rows.get("fact_metabolic_function_presence")),
+            "cazy_family_count": safe_int(table_rows.get("fact_cazy_hits") or summary.get("dbcan_overview_rows")),
+            "merops_family_count": safe_int(table_rows.get("fact_merops_hits")),
+            "has_functional": True,
+            "functional_status": "complete",
+            "run_dir": str(run_dir),
+            "has_curated_manifest": True,
+        }
+        row["methane_evidence_score"] = row["mcycdb_hits"] + row["metabolic_hmm_rows"]
+        row["sulfur_competition_score"] = row["scycdb_hits"] + row["metabolic_functions_present"]
+        denom = max(row["prodigal_proteins"], 1)
+        row["kofam_annotated_gene_fraction"] = min(row["kofam_rows"] / denom, 1.0)
+        rows.append(row)
+        status_rows.append(
+            {
+                "lane_id": lane_id,
+                "proteome_id": proteome_id,
+                "mag_id": row["mag_id"],
+                "functional_status": "complete",
+                "has_functional": True,
+                "run_id": row["run_id"],
+                "run_dir": str(run_dir),
+                "has_curated_manifest": True,
+            }
+        )
+
+    return pd.DataFrame(rows), pd.DataFrame(status_rows)
+
+
 def discover_msm_functional(msm_root: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
     manifest_path = msm_root / "manifests/msm_china_2025_functional_mag_manifest.tsv"
     manifest = read_tsv(manifest_path)
@@ -391,9 +691,10 @@ def discover_msm_functional(msm_root: Path) -> tuple[pd.DataFrame, pd.DataFrame]
         if complete_runs:
             selected[mag_dir.name] = complete_runs[-1]
             continue
-        if any((p / "FAILED").exists() for p in runs):
+        status = latest_incomplete_run_status(mag_dir)
+        if status == "failed":
             failed.add(mag_dir.name)
-        elif runs:
+        elif status == "partial":
             partial.add(mag_dir.name)
 
     rows: list[dict[str, Any]] = []
@@ -558,25 +859,201 @@ def load_msm_features(msm_root: Path, msm_esm_dir: Path, msm_glm_dir: Path) -> t
     return msm, status, stats
 
 
-def build_embedding_context(
-    poc_esm_dir: Path,
-    msm_esm_dir: Path,
+def read_esm_metadata(esm_dirs: list[Path]) -> pd.DataFrame:
+    frames: list[pd.DataFrame] = []
+    for esm_dir in esm_dirs:
+        meta = read_tsv(esm_dir / "embedding_metadata.tsv")
+        if meta.empty:
+            continue
+        if "sample" in meta.columns and "proteome_id" not in meta.columns:
+            meta = meta.rename(columns={"sample": "proteome_id"})
+        if "proteome_id" in meta.columns:
+            meta["proteome_id"] = meta["proteome_id"].astype(str)
+            meta["esm2_artifact_dir"] = str(esm_dir)
+            frames.append(meta)
+    if not frames:
+        return pd.DataFrame(columns=["proteome_id"])
+    return pd.concat(frames, ignore_index=True, sort=False).drop_duplicates("proteome_id")
+
+
+def load_external_lane_features(
+    repo_root: Path,
+    lane: pd.Series,
+) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
+    lane_id = str(lane.get("lane_id") or "external_lane")
+    source_manifest_paths = split_registry_paths(repo_root, lane.get("source_lane_manifest"))
+    functional_manifest_paths = split_registry_paths(repo_root, lane.get("functional_manifest"))
+    manifest_path = source_manifest_paths[0] if source_manifest_paths else functional_manifest_paths[0] if functional_manifest_paths else None
+    functional_manifest_path = functional_manifest_paths[0] if functional_manifest_paths else manifest_path
+    if manifest_path is None:
+        return pd.DataFrame(), pd.DataFrame(), {}
+    manifest = read_tsv(manifest_path)
+    functional_manifest = read_tsv(functional_manifest_path) if functional_manifest_path else manifest
+    if manifest.empty:
+        return pd.DataFrame(), pd.DataFrame(), {}
+    manifest["proteome_id"] = manifest["proteome_id"].astype(str)
+    if "mag_id" not in manifest.columns:
+        manifest["mag_id"] = manifest.get("mag_id_candidate", manifest["proteome_id"])
+
+    per_mag_dirs = split_registry_paths(repo_root, lane.get("functional_per_mag_dirs"))
+    functional, status = discover_external_functional(functional_manifest, per_mag_dirs, lane_id)
+    glm = aggregate_glm_dirs(split_registry_paths(repo_root, lane.get("glm2_artifacts_dirs")))
+    esm_dirs = split_registry_paths(repo_root, lane.get("esm2_artifacts_dirs"))
+    esm_meta = read_esm_metadata(esm_dirs)
+    esm_ids = set(esm_meta["proteome_id"].astype(str)) if "proteome_id" in esm_meta.columns else set()
+
+    base_keep = [
+        c
+        for c in [
+            "proteome_id",
+            "mag_id",
+            "domain",
+            "source",
+            "ecosystem",
+            "source_group",
+            "functional_run_include",
+            "match_status",
+        ]
+        if c in manifest.columns
+    ]
+    frame = manifest[base_keep].drop_duplicates("proteome_id").copy()
+    esm_keep = [
+        c
+        for c in [
+            "proteome_id",
+            "source",
+            "ecosystem",
+            "domain",
+            "source_group",
+            "n_proteins_used",
+            "n_valid_proteins_seen",
+            "protein_cap_applied",
+            "esm2_artifact_dir",
+        ]
+        if c in esm_meta.columns
+    ]
+    if esm_keep:
+        frame = frame.merge(
+            esm_meta[esm_keep].drop_duplicates("proteome_id"),
+            on="proteome_id",
+            how="left",
+            suffixes=("", "_esm"),
+        )
+    if "mag_id_esm" in frame.columns:
+        frame["mag_id"] = frame["mag_id"].fillna(frame["mag_id_esm"])
+        frame = frame.drop(columns=["mag_id_esm"])
+    if not status.empty:
+        status = status.copy()
+        status["proteome_id"] = status["proteome_id"].astype(str)
+        frame = frame.merge(status.drop(columns=["mag_id"], errors="ignore"), on="proteome_id", how="left")
+    if not functional.empty:
+        functional = functional.copy()
+        functional["proteome_id"] = functional["proteome_id"].astype(str)
+        frame = frame.merge(functional.drop(columns=["mag_id"], errors="ignore"), on="proteome_id", how="left", suffixes=("", "_functional"))
+    if not glm.empty:
+        glm = glm.copy()
+        glm["proteome_id"] = glm["proteome_id"].astype(str)
+        frame = frame.merge(glm.drop(columns=["mag_id"], errors="ignore"), on="proteome_id", how="left")
+
+    frame["lane_id"] = lane_id
+    frame["source"] = lane_id
+    if "ecosystem" not in frame.columns:
+        frame["ecosystem"] = "mangrove_sediment"
+    else:
+        frame["ecosystem"] = frame["ecosystem"].fillna("").replace("", "mangrove_sediment")
+    frame["cohort_label"] = str(lane.get("denominator_label") or lane_id)
+    frame["source_category"] = "mangrove"
+    frame["has_esm2"] = frame["proteome_id"].isin(esm_ids)
+    if "has_glm2" not in frame.columns:
+        frame["has_glm2"] = False
+    frame["has_glm2"] = frame["has_glm2"].map(truthy)
+    if "has_functional" not in frame.columns:
+        frame["has_functional"] = False
+    frame["has_functional"] = frame["has_functional"].map(truthy)
+    include = frame.get("functional_run_include", True)
+    if isinstance(include, pd.Series):
+        include_bool = include.map(truthy)
+    else:
+        include_bool = pd.Series([True] * len(frame), index=frame.index)
+    frame["functional_run_include"] = include_bool
+    frame["atlas_inclusion_status"] = np.select(
+        [
+            ~include_bool,
+            frame["has_esm2"] & frame["has_glm2"] & frame["has_functional"],
+            frame["has_esm2"] & frame["has_glm2"],
+            frame["has_functional"],
+        ],
+        [
+            "manifest_gap_missing_payload",
+            "mangrove_multiview_complete",
+            "mangrove_esm_glm_only",
+            "mangrove_functional_only",
+        ],
+        default="mangrove_pending",
+    )
+    frame["claim_scope"] = str(lane.get("claim_scope") or "MAG/proteome molecular screening")
+    for col in [
+        "checkm2_completeness",
+        "checkm2_contamination",
+        "kofam_annotated_gene_fraction",
+        "metabolic_modules_present",
+        "cazy_family_count",
+        "merops_family_count",
+        "methane_evidence_score",
+        "sulfur_competition_score",
+        "mcycdb_hits",
+        "scycdb_hits",
+        "dbcan_overview_rows",
+        "kofam_rows",
+        "metabolic_hmm_rows",
+    ]:
+        if col not in frame.columns:
+            frame[col] = 0
+        frame[col] = pd.to_numeric(frame[col], errors="coerce").fillna(0)
+    stats = {}
+    for esm_dir in esm_dirs:
+        stats.update(read_json(esm_dir / "embedding_stats.json"))
+        stats.update(read_json(esm_dir / "embedding_checkpoints/embedding_stats_partial.json"))
+    return frame, status, stats
+
+
+def build_embedding_context_from_inputs(
+    esm_inputs: list[dict[str, Any]],
     atlas: pd.DataFrame,
     k: int,
 ) -> tuple[pd.DataFrame, pd.DataFrame, np.ndarray]:
-    poc_meta, poc_emb = load_npz_embeddings(poc_esm_dir / "genome_embeddings.npz", ["sample", "proteome_id"])
-    poc_meta["cohort_label"] = "POC ESM-2 context"
-    msm_meta, msm_emb = load_npz_embeddings(msm_esm_dir / "genome_embeddings.npz", ["proteome_id", "sample"])
-    msm_meta["cohort_label"] = "Mangrove/MSM"
+    meta_frames: list[pd.DataFrame] = []
+    embedding_frames: list[np.ndarray] = []
+    seen_ids: set[str] = set()
+    for item in esm_inputs:
+        npz_path = Path(item["path"]) / "genome_embeddings.npz"
+        if not npz_path.exists():
+            continue
+        meta, emb = load_npz_embeddings(npz_path, item.get("key_candidates", ["proteome_id", "sample"]))
+        keep_mask = ~meta["proteome_id"].astype(str).isin(seen_ids)
+        if not keep_mask.any():
+            continue
+        meta = meta.loc[keep_mask].copy()
+        emb = emb[keep_mask.to_numpy()]
+        seen_ids.update(meta["proteome_id"].astype(str))
+        meta["cohort_label"] = item.get("cohort_label", "")
+        if item.get("source_category"):
+            meta["source_category_override"] = item["source_category"]
+        meta_frames.append(meta)
+        embedding_frames.append(emb)
+    if not meta_frames:
+        raise SystemExit("No ESM2 genome_embeddings.npz files were available for report context")
 
-    emb_meta = pd.concat([poc_meta, msm_meta], ignore_index=True, sort=False)
-    embeddings = np.vstack([poc_emb, msm_emb])
-    emb_meta["source_category"] = emb_meta.apply(lambda r: source_category(r.get("source"), r.get("ecosystem")), axis=1)
+    emb_meta = pd.concat(meta_frames, ignore_index=True, sort=False)
+    embeddings = np.vstack(embedding_frames)
+    inferred_category = emb_meta.apply(lambda r: source_category(r.get("source"), r.get("ecosystem")), axis=1)
+    emb_meta["source_category"] = emb_meta.get("source_category_override", inferred_category).fillna(inferred_category)
+    emb_meta = emb_meta.drop(columns=["source_category_override"], errors="ignore")
     status = atlas[["proteome_id", "atlas_inclusion_status", "has_functional", "has_glm2"]].drop_duplicates("proteome_id")
     emb_meta = emb_meta.merge(status, on="proteome_id", how="left")
     emb_meta["atlas_inclusion_status"] = emb_meta["atlas_inclusion_status"].fillna("non_poc_or_unscoped")
-    emb_meta["has_functional"] = emb_meta["has_functional"].fillna(False).astype(bool)
-    emb_meta["has_glm2"] = emb_meta["has_glm2"].fillna(False).astype(bool)
+    emb_meta["has_functional"] = emb_meta["has_functional"].map(truthy)
+    emb_meta["has_glm2"] = emb_meta["has_glm2"].map(truthy)
     emb_meta["has_esm2"] = True
 
     reduced = PCA(n_components=2, random_state=20260619).fit_transform(normalize(embeddings))
@@ -619,7 +1096,11 @@ def build_embedding_context(
     emb_meta["cross_domain_neighbor_fraction"] = cross_counts / max(k, 1)
 
     poc_core_ids = set(atlas.loc[atlas["atlas_inclusion_status"].eq("poc_core_complete"), "proteome_id"])
-    msm_ids = set(atlas.loc[atlas["source_category"].eq("mangrove"), "proteome_id"])
+    if "source_category" in atlas.columns:
+        atlas_source_category = atlas["source_category"]
+    else:
+        atlas_source_category = atlas.apply(lambda r: source_category(r.get("source"), r.get("ecosystem")), axis=1)
+    msm_ids = set(atlas.loc[atlas_source_category.eq("mangrove"), "proteome_id"])
     poc_idx = emb_meta.index[emb_meta["proteome_id"].isin(poc_core_ids)].to_numpy()
     msm_idx = emb_meta.index[emb_meta["proteome_id"].isin(msm_ids)].to_numpy()
     emb_norm = normalize(embeddings)
@@ -634,6 +1115,31 @@ def build_embedding_context(
         emb_meta["nearest_mangrove_similarity"] = 1.0 - d_msm[:, 0]
 
     return emb_meta, edge_df, embeddings
+
+
+def build_embedding_context(
+    poc_esm_dir: Path,
+    msm_esm_dir: Path,
+    atlas: pd.DataFrame,
+    k: int,
+) -> tuple[pd.DataFrame, pd.DataFrame, np.ndarray]:
+    return build_embedding_context_from_inputs(
+        [
+            {
+                "path": poc_esm_dir,
+                "key_candidates": ["sample", "proteome_id"],
+                "cohort_label": "POC ESM-2 context",
+            },
+            {
+                "path": msm_esm_dir,
+                "key_candidates": ["proteome_id", "sample"],
+                "cohort_label": "Mangrove/MSM",
+                "source_category": "mangrove",
+            },
+        ],
+        atlas,
+        k,
+    )
 
 
 def add_report_metrics(atlas: pd.DataFrame, emb_meta: pd.DataFrame) -> pd.DataFrame:
@@ -723,6 +1229,8 @@ def build_candidate_cards(atlas: pd.DataFrame, top_n_poc: int, top_n_mangrove: i
 
 
 def build_evidence_ledger(summary: dict[str, Any]) -> list[dict[str, Any]]:
+    if summary.get("lane_ledger"):
+        return summary["lane_ledger"]
     return [
         {
             "cohort": "POC core",
@@ -734,7 +1242,7 @@ def build_evidence_ledger(summary: dict[str, Any]) -> list[dict[str, Any]]:
             "pending_function": 0,
         },
         {
-            "cohort": "Mangrove/MSM",
+            "cohort": "Mangrove lanes",
             "total": summary["msm_total"],
             "esm2": summary["msm_esm2"],
             "glm2": summary["msm_glm2"],
@@ -1092,8 +1600,13 @@ def fetch_d3(js_dir: Path) -> tuple[Path, str]:
     js_dir.mkdir(parents=True, exist_ok=True)
     path = js_dir / "d3.v7.min.js"
     if not path.exists() or path.stat().st_size < 100_000:
-        with urlopen("https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js", timeout=30) as handle:
-            path.write_bytes(handle.read())
+        cached = sorted(REPO_ROOT.glob("results/reports/*/assets/js/d3.v7.min.js"), reverse=True)
+        cached = [candidate for candidate in cached if candidate.exists() and candidate.stat().st_size > 100_000]
+        if cached:
+            shutil.copyfile(cached[0], path)
+        else:
+            with urlopen("https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js", timeout=30) as handle:
+                path.write_bytes(handle.read())
     return path, path.read_text()
 
 
@@ -1124,9 +1637,9 @@ def render_html(
         [
             f"<div class='metric'><b>{summary['multiview_complete']:,}</b><span>multiview-complete MAGs now explorable</span></div>",
             f"<div class='metric'><b>{summary['poc_core_total']:,}/{summary['poc_core_total']:,}</b><span>POC rumen + wetland/MUCC complete</span></div>",
-            f"<div class='metric'><b>{summary['msm_functional']:,}/{summary['msm_total']:,}</b><span>mangrove functional MAGs complete so far</span></div>",
-            f"<div class='metric'><b>{summary['msm_esm2']:,}/{summary['msm_total']:,}</b><span>mangrove ESM-2 embeddings complete</span></div>",
-            f"<div class='metric'><b>{summary['msm_glm2']:,}/{summary['msm_total']:,}</b><span>mangrove gLM2 contextual layer complete</span></div>",
+            f"<div class='metric'><b>{summary['msm_functional']:,}/{summary['msm_total']:,}</b><span>registered mangrove functional MAGs complete</span></div>",
+            f"<div class='metric'><b>{summary['msm_esm2']:,}/{summary['msm_total']:,}</b><span>registered mangrove ESM-2 embeddings complete</span></div>",
+            f"<div class='metric'><b>{summary['msm_glm2']:,}/{summary['msm_total']:,}</b><span>registered mangrove gLM2 contextual layer complete</span></div>",
             f"<div class='metric'><b>{summary['graph_node_count']:,}</b><span>D3 bridge-neighborhood nodes in interactive graph</span></div>",
         ]
     )
@@ -1248,14 +1761,14 @@ def render_html(
 <main>
   <section class="section">
     <h2>Executive Summary</h2>
-    <p><b>The expanded atlas now joins the closed POC core with the computed mangrove payloads available so far.</b> The multiview-complete analytical layer contains {summary['multiview_complete']:,} MAG/proteome units: {summary['poc_core_total']:,} POC rumen + wetland/MUCC units and {summary['msm_multiview']:,} mangrove/MSM units with ESM-2, gLM2, and functional evidence.</p>
-    <p><b>Mangrove is no longer just a future lane.</b> All {summary['msm_total']:,} mangrove proteomes have ESM-2 embeddings and gLM2 context; {summary['msm_functional']:,} have completed functional outputs in this snapshot. The remaining {summary['msm_total'] - summary['msm_functional']:,} are preserved as function-pending rows instead of being hidden.</p>
+    <p><b>The expanded atlas now joins the closed POC core with the registered mangrove source lanes available so far.</b> The multiview-complete analytical layer contains {summary['multiview_complete']:,} MAG/proteome units: {summary['poc_core_total']:,} POC rumen + wetland/MUCC units and {summary['msm_multiview']:,} mangrove units with ESM-2, gLM2, and functional evidence.</p>
+    <p><b>Mangrove is a lane-registry-backed expansion layer, not a hidden side analysis.</b> Across {summary['msm_total']:,} registered mangrove MAG/proteome rows, {summary['msm_esm2']:,} have ESM-2 embeddings, {summary['msm_glm2']:,} have gLM2 context, and {summary['msm_functional']:,} have completed functional outputs in this snapshot. Pending and missing-payload rows are preserved instead of being hidden.</p>
     <div class="metric-grid">{metric_cards}</div>
   </section>
 
   <section class="section">
     <h2>Atlas Evidence Ledger</h2>
-    <p class="note">This panel separates data availability from biological interpretation. ESM-2 and gLM2 are complete for the mangrove payload; functional evidence is computed-so-far and will expand as active arrays finish.</p>
+    <p class="note">This panel separates data availability from biological interpretation. Each registered lane exposes ESM-2, gLM2, functional, pending, and missing-payload state separately.</p>
     <div id="ledger" class="viz small"></div>
     <details class="fallback"><summary>Static fallback</summary><img src="{figure_uri['evidence_ledger']}" alt="Evidence ledger fallback"></details>
   </section>
@@ -1296,7 +1809,7 @@ def render_html(
 
   <section class="section">
     <h2>Strategic Interpretation</h2>
-    <p><b>What is strong now:</b> MethaNet has a complete POC core and a large mangrove expansion where ESM-2 and gLM2 are already complete. The {summary['msm_multiview']:,} completed mangrove MAGs let the team inspect target-domain molecular fingerprints rather than waiting for the full tranche.</p>
+    <p><b>What is strong now:</b> MethaNet has a complete POC core and registered mangrove expansion lanes where evidence availability is tracked source by source. The {summary['msm_multiview']:,} completed mangrove MAGs let the team inspect target-domain molecular fingerprints while active tranches continue.</p>
     <p><b>What remains provisional:</b> mangrove pattern interpretation is still MAG/proteome-level functional potential. It cannot be rolled up to blue-carbon sample risk until MAG-to-sample mapping, abundance/read coverage, environmental covariates, uncertainty, and validation exist.</p>
     <p><b>Why this matters commercially:</b> the atlas converts raw metagenomic outputs into an auditable bridge-evidence interface: candidate cards, MRV feature primitives, monitoring-priority hypotheses, and a credible partner-facing proof artifact with claim locks built in.</p>
     <div class="warn"><b>Forbidden claims:</b> no final A-E risk tiers, no measured methane flux, no carbon-credit approval, and no source-independent rumen-to-wetland/mangrove transfer claims from this artifact alone.</div>
@@ -1430,9 +1943,9 @@ def write_outputs(
             ## Snapshot
 
             - POC core multiview complete: {summary['poc_core_total']:,}/{summary['poc_core_total']:,}
-            - Mangrove/MSM ESM-2 complete: {summary['msm_esm2']:,}/{summary['msm_total']:,}
-            - Mangrove/MSM gLM2 complete: {summary['msm_glm2']:,}/{summary['msm_total']:,}
-            - Mangrove/MSM functional complete: {summary['msm_functional']:,}/{summary['msm_total']:,}
+            - Registered mangrove ESM-2 complete: {summary['msm_esm2']:,}/{summary['msm_total']:,}
+            - Registered mangrove gLM2 complete: {summary['msm_glm2']:,}/{summary['msm_total']:,}
+            - Registered mangrove functional complete: {summary['msm_functional']:,}/{summary['msm_total']:,}
             - Expanded multiview complete atlas: {summary['multiview_complete']:,}
 
             ## Claim Boundary
@@ -1444,11 +1957,81 @@ def write_outputs(
             ```bash
             source /opt/ohpc/pub/apps/miniconda3/etc/profile.d/conda.sh
             conda activate methanet-fgx
-            python scripts/reports/build_mbag_expanded_multiview_atlas.py
+            python scripts/reports/build_mbag_expanded_multiview_atlas.py \\
+              --lane-registry configs/methanet_atlas_lanes.tsv
             ```
             """
         )
     )
+
+
+def lane_counts(frame: pd.DataFrame, label: str) -> dict[str, Any]:
+    if frame.empty:
+        return {"cohort": label, "total": 0, "esm2": 0, "glm2": 0, "functional": 0, "multiview": 0, "pending_function": 0}
+    include = frame.get("functional_run_include", pd.Series([True] * len(frame), index=frame.index)).fillna(True).astype(bool)
+    total = int(len(frame))
+    functional = int(frame["has_functional"].fillna(False).astype(bool).sum())
+    return {
+        "cohort": label,
+        "total": total,
+        "esm2": int(frame["has_esm2"].fillna(False).astype(bool).sum()),
+        "glm2": int(frame["has_glm2"].fillna(False).astype(bool).sum()),
+        "functional": functional,
+        "multiview": int((frame["has_esm2"] & frame["has_glm2"] & frame["has_functional"]).sum()),
+        "pending_function": int((include & ~frame["has_functional"]).sum()),
+    }
+
+
+def load_registry_backed_atlas(
+    repo_root: Path,
+    registry: pd.DataFrame,
+    args: argparse.Namespace,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    poc_rows = registry[registry["lane_role"].eq("calibration_core")]
+    poc_lane = poc_rows.iloc[0] if not poc_rows.empty else pd.Series(dtype=object)
+    poc_esm_dir = split_registry_paths(repo_root, poc_lane.get("esm2_artifacts_dirs"))[0] if not poc_lane.empty and split_registry_paths(repo_root, poc_lane.get("esm2_artifacts_dirs")) else resolve(repo_root, args.poc_esm_dir)
+    poc_warehouse_dir = split_registry_paths(repo_root, poc_lane.get("functional_warehouse_dir"))[0] if not poc_lane.empty and split_registry_paths(repo_root, poc_lane.get("functional_warehouse_dir")) else resolve(repo_root, args.poc_warehouse_dir)
+    poc_glm_dir = split_registry_paths(repo_root, poc_lane.get("glm2_artifacts_dirs"))[0] if not poc_lane.empty and split_registry_paths(repo_root, poc_lane.get("glm2_artifacts_dirs")) else resolve(repo_root, args.poc_glm_dir)
+    assert poc_esm_dir and poc_warehouse_dir and poc_glm_dir
+    poc = load_poc_features(poc_warehouse_dir, poc_glm_dir, poc_esm_dir)
+    poc["lane_id"] = poc_lane.get("lane_id", "poc_core") if not poc_lane.empty else "poc_core"
+
+    external_frames: list[pd.DataFrame] = []
+    status_frames: list[pd.DataFrame] = []
+    lane_ledger = [lane_counts(poc, "POC core")]
+    esm_inputs: list[dict[str, Any]] = [
+        {
+            "path": poc_esm_dir,
+            "key_candidates": ["sample", "proteome_id"],
+            "cohort_label": "POC ESM-2 context",
+        }
+    ]
+    esm_stats: dict[str, Any] = {}
+
+    external_lanes = registry[registry["lane_role"].eq("external_mangrove")]
+    for _, lane in external_lanes.iterrows():
+        frame, status, stats = load_external_lane_features(repo_root, lane)
+        if frame.empty:
+            continue
+        external_frames.append(frame)
+        if not status.empty:
+            status_frames.append(status)
+        lane_ledger.append(lane_counts(frame, str(lane.get("denominator_label") or lane.get("lane_id"))))
+        esm_stats[str(lane.get("lane_id"))] = stats
+        for esm_dir in split_registry_paths(repo_root, lane.get("esm2_artifacts_dirs")):
+            esm_inputs.append(
+                {
+                    "path": esm_dir,
+                    "key_candidates": ["proteome_id", "sample"],
+                    "cohort_label": str(lane.get("denominator_label") or lane.get("lane_id")),
+                    "source_category": "mangrove",
+                }
+            )
+
+    external = pd.concat(external_frames, ignore_index=True, sort=False) if external_frames else pd.DataFrame()
+    status = pd.concat(status_frames, ignore_index=True, sort=False) if status_frames else pd.DataFrame()
+    atlas = pd.concat([poc, external], ignore_index=True, sort=False)
+    return atlas, poc, external, status, lane_ledger, esm_inputs, esm_stats
 
 
 def main() -> None:
@@ -1458,19 +2041,33 @@ def main() -> None:
     output_dir = resolve(repo_root, args.output_dir) if args.output_dir else repo_root / f"results/reports/mbag_expanded_multiview_atlas_{timestamp}"
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    poc_esm_dir = resolve(repo_root, args.poc_esm_dir)
-    poc_warehouse_dir = resolve(repo_root, args.poc_warehouse_dir)
-    poc_glm_dir = resolve(repo_root, args.poc_glm_dir)
-    msm_root = resolve(repo_root, args.msm_root)
-    msm_esm_dir = resolve(repo_root, args.msm_esm_dir)
-    msm_glm_dir = resolve(repo_root, args.msm_glm_dir)
-    assert poc_esm_dir and poc_warehouse_dir and poc_glm_dir and msm_root and msm_esm_dir and msm_glm_dir
-
-    poc = load_poc_features(poc_warehouse_dir, poc_glm_dir, poc_esm_dir)
-    msm, msm_status, msm_esm_stats = load_msm_features(msm_root, msm_esm_dir, msm_glm_dir)
-    atlas = pd.concat([poc, msm], ignore_index=True, sort=False)
-
-    emb_meta, edge_df, _ = build_embedding_context(poc_esm_dir, msm_esm_dir, atlas, args.knn)
+    registry_path = resolve(repo_root, args.lane_registry)
+    if registry_path and registry_path.exists():
+        registry = read_lane_registry(registry_path)
+        validate_report_lane_registry(repo_root, registry_path, registry)
+    elif args.allow_legacy_defaults:
+        registry = pd.DataFrame()
+    else:
+        raise SystemExit(
+            f"Lane registry missing: {registry_path}. "
+            "Pass --allow-legacy-defaults only for historical POC/MSM-only rebuilds."
+        )
+    if not registry.empty:
+        atlas, poc, msm, msm_status, lane_ledger, esm_inputs, msm_esm_stats = load_registry_backed_atlas(repo_root, registry, args)
+        emb_meta, edge_df, _ = build_embedding_context_from_inputs(esm_inputs, atlas, args.knn)
+    else:
+        poc_esm_dir = resolve(repo_root, args.poc_esm_dir)
+        poc_warehouse_dir = resolve(repo_root, args.poc_warehouse_dir)
+        poc_glm_dir = resolve(repo_root, args.poc_glm_dir)
+        msm_root = resolve(repo_root, args.msm_root)
+        msm_esm_dir = resolve(repo_root, args.msm_esm_dir)
+        msm_glm_dir = resolve(repo_root, args.msm_glm_dir)
+        assert poc_esm_dir and poc_warehouse_dir and poc_glm_dir and msm_root and msm_esm_dir and msm_glm_dir
+        poc = load_poc_features(poc_warehouse_dir, poc_glm_dir, poc_esm_dir)
+        msm, msm_status, msm_esm_stats = load_msm_features(msm_root, msm_esm_dir, msm_glm_dir)
+        atlas = pd.concat([poc, msm], ignore_index=True, sort=False)
+        lane_ledger = [lane_counts(poc, "POC core"), lane_counts(msm, "Mangrove/MSM")]
+        emb_meta, edge_df, _ = build_embedding_context(poc_esm_dir, msm_esm_dir, atlas, args.knn)
     atlas = add_report_metrics(atlas, emb_meta)
     cards = build_candidate_cards(atlas, args.top_n_poc, args.top_n_mangrove)
 
@@ -1483,12 +2080,37 @@ def main() -> None:
         "msm_glm2": int(msm["has_glm2"].sum()),
         "msm_functional": int(msm["has_functional"].sum()),
         "msm_multiview": int((msm["has_esm2"] & msm["has_glm2"] & msm["has_functional"]).sum()),
-        "msm_function_pending": int((~msm["has_functional"]).sum()),
-        "msm_esm_embedded_total_with_resume": int(msm_esm_stats.get("embedded_total_with_resume") or 0),
-        "msm_esm_pending_remaining": int(msm_esm_stats.get("pending_remaining") or 0),
+        "msm_function_pending": int(
+            (
+                (
+                    msm["functional_run_include"].fillna(True).astype(bool)
+                    if not msm.empty and "functional_run_include" in msm.columns
+                    else pd.Series([True] * len(msm), index=msm.index)
+                )
+                & ~msm["has_functional"].fillna(False).astype(bool)
+            ).sum()
+        )
+        if not msm.empty
+        else 0,
+        "msm_esm_embedded_total_with_resume": int(
+            max(
+                [safe_int(v.get("embedded_total_with_resume")) for v in msm_esm_stats.values()]
+                if isinstance(msm_esm_stats, dict) and all(isinstance(v, dict) for v in msm_esm_stats.values())
+                else [safe_int(msm_esm_stats.get("embedded_total_with_resume") if isinstance(msm_esm_stats, dict) else 0)]
+            )
+        ),
+        "msm_esm_pending_remaining": int(
+            sum(
+                [safe_int(v.get("pending_remaining")) for v in msm_esm_stats.values()]
+                if isinstance(msm_esm_stats, dict) and all(isinstance(v, dict) for v in msm_esm_stats.values())
+                else [safe_int(msm_esm_stats.get("pending_remaining") if isinstance(msm_esm_stats, dict) else 0)]
+            )
+        ),
         "multiview_complete": int(poc["has_functional"].sum() + (msm["has_esm2"] & msm["has_glm2"] & msm["has_functional"]).sum()),
         "embedding_context_total": int(len(emb_meta)),
         "knn_edges": int(len(edge_df)),
+        "lane_ledger": lane_ledger,
+        "lane_registry": str(registry_path) if registry_path else "",
     }
 
     payloads = build_d3_payloads(atlas, emb_meta, edge_df, cards, summary, args.graph_node_cap)
