@@ -35,10 +35,18 @@ die() {
 [[ -s "$MANIFEST" ]] || die "Manifest missing or empty: $MANIFEST"
 [[ -x "$RUNNER" ]] || die "Runner missing or not executable: $RUNNER"
 
+case "$RESULT_BASE" in
+  /*) ;;
+  *) RESULT_BASE="${REPO_ROOT}/${RESULT_BASE#./}" ;;
+esac
+
 row="$(
   awk -F '\t' -v idx="$TASK_INDEX" '
     NR == 1 {
-      for (i = 1; i <= NF; i++) col[$i] = i
+      for (i = 1; i <= NF; i++) {
+        gsub(/\r$/, "", $i)
+        col[$i] = i
+      }
       required = "proteome_id mag_id mag_fasta proteome_faa functional_run_include analysis_unit_type mbag_mag_level_include claim_scope"
       split(required, r, " ")
       for (j in r) {
@@ -50,6 +58,7 @@ row="$(
       next
     }
     {
+      for (i = 1; i <= NF; i++) gsub(/\r$/, "", $i)
       include = $(col["functional_run_include"])
       unit = $(col["analysis_unit_type"])
       mbag = $(col["mbag_mag_level_include"])
@@ -95,6 +104,10 @@ esac
 
 RUN_ID="${RUN_ID:-fgx_${TASK_INDEX}_${PROTEOME_ID}_$(date -u +%Y%m%d_%H%M%S)}"
 RESULT_ROOT="${RESULT_ROOT:-${RESULT_BASE}/${PROTEOME_ID}/${RUN_ID}}"
+case "$RESULT_ROOT" in
+  /*) ;;
+  *) RESULT_ROOT="${REPO_ROOT}/${RESULT_ROOT#./}" ;;
+esac
 
 if [[ "$ARRAY_DRY_RUN" == "1" ]]; then
   printf 'task_index\t%s\n' "$TASK_INDEX"
@@ -118,4 +131,23 @@ export PROTEOME_FAA="$PROTEOME_FAA_ABS"
 export ANALYSIS_UNIT_TYPE MBAG_MAG_LEVEL_INCLUDE CLAIM_SCOPE
 export DBCAN_COMPAT_DIR PRUNE_SUCCESS COMPRESS_LOGS
 
-exec "$RUNNER"
+set +e
+"$RUNNER"
+rc=$?
+set -e
+
+if [[ "$rc" -ne 0 ]]; then
+  {
+    printf 'timestamp\t%s\n' "$(date -Is)"
+    printf 'task_index\t%s\n' "$TASK_INDEX"
+    printf 'proteome_id\t%s\n' "$PROTEOME_ID"
+    printf 'mag_id\t%s\n' "$MAG_ID"
+    printf 'run_id\t%s\n' "$RUN_ID"
+    printf 'result_root\t%s\n' "$RESULT_ROOT"
+    printf 'runner\t%s\n' "$RUNNER"
+    printf 'exit_code\t%s\n' "$rc"
+  } > "${RESULT_ROOT}/failure.tsv"
+  touch "${RESULT_ROOT}/FAILED"
+fi
+
+exit "$rc"

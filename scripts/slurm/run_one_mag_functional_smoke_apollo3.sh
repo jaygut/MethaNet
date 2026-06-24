@@ -22,6 +22,10 @@ MAG_ID="${MAG_ID%.fa}"
 THREADS="${THREADS:-${SLURM_CPUS_PER_TASK:-16}}"
 RUN_ID="${RUN_ID:-one_mag_fgx_${MAG_ID}_$(date -u +%Y%m%d_%H%M%S)}"
 RESULT_ROOT="${RESULT_ROOT:-${REPO_ROOT}/results/functional_metagenomics/one_mag_smoke/${RUN_ID}}"
+case "$RESULT_ROOT" in
+  /*) ;;
+  *) RESULT_ROOT="${REPO_ROOT}/${RESULT_ROOT#./}" ;;
+esac
 CONDA_SH="${CONDA_SH:-/opt/ohpc/pub/apps/miniconda3/etc/profile.d/conda.sh}"
 TIME_BIN="${TIME_BIN:-}"
 if [[ -z "$TIME_BIN" ]]; then

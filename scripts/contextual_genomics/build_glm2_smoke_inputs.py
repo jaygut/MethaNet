@@ -219,6 +219,15 @@ def resolve_msm_input_paths(repo_root: Path, row: dict[str, str]) -> dict[str, s
     }
 
 
+def resolve_source_lane_input_paths(repo_root: Path, row: dict[str, str]) -> dict[str, str]:
+    return {
+        "source_fna": str(repo_path(repo_root, row.get("mag_fasta") or row.get("local_fna_path")) or ""),
+        "source_faa": str(repo_path(repo_root, row.get("proteome_faa") or row.get("local_faa_path")) or ""),
+        "source_gff": str(repo_path(repo_root, row.get("local_gff_path")) or ""),
+        "source_attempt_dir": "",
+    }
+
+
 def has_usable_inputs(row: dict[str, str]) -> bool:
     return all(
         bool(row.get(field)) and Path(row[field]).is_file()
@@ -358,6 +367,13 @@ def select_manifest_mags(
             row["n_proteins_used"] = row.get("protein_count", "")
             row["embedded_final_662"] = "false"
             row["cohort_run_id"] = row.get("cohort_run_id") or "msm_china_2025_20260615"
+        elif manifest_kind == "source_lane":
+            row.update(resolve_source_lane_input_paths(repo_root, row))
+            row["sample"] = row["proteome_id"]
+            row["mag_fasta_basename"] = Path(row.get("mag_fasta") or row.get("local_fna_path", "")).name
+            row["n_proteins_used"] = row.get("protein_count", "")
+            row["embedded_final_662"] = "false"
+            row["cohort_run_id"] = row.get("cohort_run_id") or row.get("source") or payload_name
         else:
             raise ValueError(f"Unknown manifest kind: {manifest_kind}")
 
@@ -835,7 +851,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--repo-root", default=".")
     parser.add_argument("--mode", choices=["smoke", "manifest"], default="smoke")
     parser.add_argument("--manifest", type=Path)
-    parser.add_argument("--manifest-kind", choices=["poc", "msm"], default="poc")
+    parser.add_argument("--manifest-kind", choices=["poc", "msm", "source_lane"], default="poc")
     parser.add_argument("--payload-name", default="glm2_smoke")
     parser.add_argument("--glm-run-id", default="glm2_smoke_20260615")
     parser.add_argument("--include-assembly-context", action="store_true")

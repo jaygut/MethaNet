@@ -137,7 +137,7 @@ Current implemented artifact arc:
 | POC gLM2 context | `results/contextual_genomics/glm2_integration_20260616_poc_catchup_20260616_073441/` | 625/625 MAG-bin units complete after rumen catch-up |
 | Mangrove/MSM ESM2 expansion | `results/blue_catalyst_poc/runs/msm_china_2025_esm2_20260616_082112/artifacts/` | 1,428/1,428 local mangrove/MSM proteomes embedded |
 | Mangrove/MSM gLM2 expansion | `results/contextual_genomics/glm2_msm_magbin_full_20260615_092737/` | 1,428/1,428 contextual genome units complete |
-| Mangrove/MSM functional expansion | `results/functional_metagenomics/msm_china_2025_20260615/` | active expansion lane; 1,002/1,428 functional MAGs complete at the 2026-06-20 snapshot |
+| Mangrove/MSM functional expansion | `results/functional_metagenomics/msm_china_2025_20260615/` | active expansion lane; 1,225/1,428 functional MAGs complete at the 2026-06-22 snapshot |
 | Metadata provenance | `results/functional_metagenomics/environmental_metadata_recovery_20260612/` and `data/external/msm_china_2025/metadata/` | source/environmental metadata with resolution tiers across rumen, wetland/MUCC, and mangrove/MSM lanes |
 | Molecular attestation graph | `results/attestation/mmag_mvp_20260617/` | POC graph snapshot over the 662-row denominator; not yet rebuilt over the full mangrove/MSM expansion |
 | Latest expanded HTML atlas | `results/reports/mbag_nextgen_molecular_niche_atlas_20260619_113355/report.html` | partner-facing dated report; rebuild after mangrove/MSM functional completion for a refreshed multi-view denominator |
