@@ -193,7 +193,28 @@
     function clean(v, fallback='not available'){ return (v === null || v === undefined || String(v).trim()==='' || String(v)==='NaN') ? fallback : String(v); }
     function finiteNum(v){ const x=Number(v); return Number.isFinite(x); }
     function fixed(v, digits=2, fallback='not available'){ return finiteNum(v) ? Number(v).toFixed(digits) : fallback; }
-    function rateText(d, key){ return d.rate_metric_status === 'rate_normalized' && finiteNum(d[key]) ? `${Number(d[key]).toFixed(2)} /1k proteins` : 'not rate-normalized'; }
+    function densityText(d, key){ return finiteNum(d[key]) ? `${Number(d[key]).toFixed(2)} /1k proteins` : 'not available'; }
+    function percentText(v, digits=1){ return finiteNum(v) ? `${Number(v).toFixed(digits)}%` : 'not available'; }
+    function qcText(d){
+      const tier = clean(d.qc_tier, 'QC tier not available');
+      const gunc = clean(d.gunc_pass, 'GUNC not available');
+      return `${percentText(d.checkm2_completeness,1)} complete / ${percentText(d.checkm2_contamination,2)} contamination · ${tier} · GUNC ${gunc}`;
+    }
+    function provenanceText(d){
+      const resolution = clean(d.provenance_resolution_tier, '');
+      const accession = clean(d.primary_accession || d.source_bucket || d.mapped_ncbi_biosamples, '');
+      const type = clean(d.primary_accession_type, '');
+      const parts = [resolution, accession, type].filter(v => v && v !== 'not available');
+      return parts.length ? parts.join(' · ') : 'provenance not available in this payload';
+    }
+    function sampleContextText(d){
+      const label = clean(d.sample_context_label || d.source_sample_ids || d.site_label, '');
+      const resolution = clean(d.sample_context_resolution || d.sample_rollup_status, '');
+      const sampleCount = finiteNum(d.linked_sample_context_count) ? `${Number(d.linked_sample_context_count).toLocaleString()} linked sample-context rows` : '';
+      const envFields = finiteNum(d.environmental_context_fields_present) ? `${Number(d.environmental_context_fields_present).toLocaleString()} environmental fields` : '';
+      const parts = [label, resolution, sampleCount, envFields].filter(v => v && v !== 'not available');
+      return parts.length ? parts.join(' · ') : 'sample context not available';
+    }
     function taxonomyText(d){
       const parts=[d.domain,d.phylum,d.class,d.order,d.family,d.genus,d.species].filter(v=>v && String(v).trim());
       if(parts.length){ return parts.join(' · '); }
@@ -207,9 +228,10 @@
       Taxonomy: ${taxonomyText(d)}<br>
       Evidence: methane ${fmt(Number(d.methane_marker_count || d.methane_evidence_score || 0))}; sulfur ${fmt(Number(d.sulfur_context_count || d.sulfur_competition_score || 0))}; substrate ${fmt(Number(d.substrate_breadth_count || 0))}<br>
       Nearest POC reference: ${clean(d.nearest_poc_id,'not applicable')}<br>
-      Rates: CH4 ${rateText(d,'methane_marker_density_per_1k')}; sulfur ${rateText(d,'sulfur_context_density_per_1k')}<br>
-      QC: ${fixed(d.checkm2_completeness,1)}% complete / ${fixed(d.checkm2_contamination,2)}% contam · ${clean(d.qc_tier,'QC tier not available')}<br>
-      Provenance: ${clean(d.provenance_resolution_tier)} · ${clean(d.primary_accession || d.source_bucket)}`;
+      Densities: CH4 ${densityText(d,'methane_marker_density_per_1k')}; sulfur ${densityText(d,'sulfur_context_density_per_1k')}<br>
+      QC: ${qcText(d)}<br>
+      Provenance: ${provenanceText(d)}<br>
+      Sample context: ${sampleContextText(d)}`;
     }
     const cardMap = new Map((ATLAS.cards || []).map(d => [d.proteome_id, d]));
     function updateCard(id){
