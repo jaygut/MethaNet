@@ -22,12 +22,12 @@
       }
       pin = { x: w * 0.34, y: cy + h * 0.02 };
       // pipeline stage gates
-      const px0 = w * 0.10, px1 = w * 0.90, py = h * 0.56;
-      const names = ["QC", "annotation", "ESM2 + gLM2", "attestation"];
-      stages = names.map((nm, i) => ({ nm, x: D.lerp(px0 + 60, px1 - 60, i / (names.length - 1)), y: py }));
+      const px0 = w * 0.08, px1 = w * 0.92, py = h * 0.47;
+      const names = ["quality", "annotation", "embeddings", "attestation"];
+      stages = names.map((nm, i) => ({ nm, x: D.lerp(px0 + 90, px1 - 90, i / (names.length - 1)), y: py }));
       tokens = [];
       // milestones (right band - clears the bottom-left copy card)
-      const mx0 = w * 0.42, mx1 = w * 0.95, my = h * 0.80;
+      const mx0 = w * 0.42, mx1 = w * 0.95, my = h * 0.76;
       miles = TL.map((m, i) => ({ ...m, x: D.lerp(mx0, mx1, i / (TL.length - 1)), y: my, lit: i === 0 }));
     }
 
@@ -71,21 +71,27 @@
     }
 
     function drawPipeline(w, h, t, tm) {
-      const px0 = w * 0.06, px1 = w * 0.94, py = stages[0].y;
+      const px0 = w * 0.08, px1 = w * 0.92, py = stages[0].y;
       // rail (with additive glow underlay)
       p.push(); p.blendMode(p.ADD); p.stroke(D.rgba(EB.color.emergence, 0.18)); p.strokeWeight(5); p.line(px0, py, px1, py); p.pop();
       p.push(); p.stroke(D.rgba(EB.color.emergence, 0.55)); p.strokeWeight(2); p.line(px0, py, px1, py); p.pop();
-      // label + speed readout
-      D.label(p, "AGENTIC PIPELINE · RAW SEQUENCES → REPORT", px0, py - 40, EB.color.textMuted, 11);
-      p.push();
-      p.fill(EB.color.attested); p.noStroke(); p.textFont("JetBrains Mono"); p.textSize(15); p.textAlign(p.LEFT, p.CENTER);
-      p.text("< " + N.pipelineDays + " days", px0, py - 20);
-      p.fill(D.rgba(EB.color.textMuted, 0.8)); p.textSize(10);
-      const vs = "vs " + N.analystMonthsLo + "–" + N.analystMonthsHi + " months analyst work";
-      p.text(vs, px0 + 90, py - 19);
-      p.stroke(D.rgba(EB.color.textMuted, 0.6)); p.strokeWeight(1); p.line(px0 + 90, py - 17, px0 + 90 + p.textWidth(vs), py - 17);
+
+      // title (left) + speed readout (centered) - kept on separate rows, no overlap
+      D.label(p, "AGENTIC PIPELINE", px0, py - 46, EB.color.textMuted, 11);
+      p.push(); p.textAlign(p.CENTER, p.BASELINE);
+      p.fill(EB.color.attested); p.noStroke(); p.textFont("JetBrains Mono"); p.textSize(16);
+      p.text("< " + N.pipelineDays + " days", w * 0.5, py - 38);
+      p.fill(D.rgba(EB.color.textMuted, 0.85)); p.textSize(10);
+      p.text("raw sequences to a reproducible report · vs months of manual analysis", w * 0.5, py - 22);
       p.pop();
-      // stage gates
+
+      // input / output labels above the rail ends (clear of stage labels below)
+      p.push(); p.noStroke(); p.textFont("JetBrains Mono"); p.textSize(10);
+      p.fill(D.rgba(EB.color.mangroveMsm, 0.95)); p.textAlign(p.LEFT, p.BOTTOM); p.text("raw sequences →", px0, py - 10);
+      p.fill(D.rgba(EB.color.attested, 0.95)); p.textAlign(p.RIGHT, p.BOTTOM); p.text("→ report", px1, py - 10);
+      p.pop();
+
+      // stage gates (boxes on rail, labels below)
       for (let i = 0; i < stages.length; i++) {
         const s = stages[i];
         p.push();
@@ -95,11 +101,6 @@
         p.text(s.nm, s.x, s.y + 24);
         p.pop();
       }
-      // input glyph (DNA) and output (report)
-      p.push(); p.fill(D.rgba(EB.color.mangroveMsm, 0.9)); p.noStroke(); p.textFont("JetBrains Mono"); p.textSize(9); p.textAlign(p.CENTER, p.BOTTOM);
-      p.text("raw\nsequences", px0, py - 6);
-      p.fill(D.rgba(EB.color.attested, 0.95)); p.text("report", px1, py - 6);
-      p.pop();
       // flowing tokens
       if (!ctx.reduced) { if (p.frameCount % 9 === 0 && tokens.length < 40) tokens.push({ u: 0, sp: rng.next() }); }
       else { if (tokens.length === 0) for (let k = 0; k < 8; k++) tokens.push({ u: k / 8, sp: 0.5 }); }

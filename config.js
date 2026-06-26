@@ -1,8 +1,8 @@
 /* =====================================================================
    EmergentBiome / MethaNet - SINGLE SOURCE OF TRUTH
    All numbers, the snapshot date, brand tokens, and scene copy live here.
-   Every figure is verified in DIGEST.md against the live repo snapshot
-   (2026-06-25). To update the page after a new run, edit THIS file only.
+   Every figure is verified in DIGEST.md against the live repo snapshot.
+   To update the page after a new run, edit THIS file only.
    ===================================================================== */
 window.EB = (function () {
   "use strict";
@@ -37,32 +37,38 @@ window.EB = (function () {
 
   /* ---- verified headline numbers (see DIGEST.md §1) ---- */
   const num = {
-    snapshot: "2026-06-25",
-    snapshotLiveUTC: "2026-06-25 15:39 UTC",
+    snapshot: "2026-06-26",
+    snapshotLiveUTC: "2026-06-26 03:11 UTC",
     snapshotFreezeUTC: "2026-06-25 14:55 UTC",
 
     calibrationCore: 625,            // rumen + wetland POC, consolidated warehouse
     msmCandidates: 1428,
     msmFunctionalComplete: 1427,
-    futianRMAGs: 3404,               // phase-1 dereplicated at 99% ANI
-    futianReady: 3156,               // ready payload rows (ESM2+gLM2 complete)
+    futianRMAGs: 3404,               // phase-1 dereplicated genomes
+    futianReady: 3156,               // ready payload rows (embeddings complete)
     futianGapRows: 248,
     futianArchaeaTotal: 312,
-    futianArchaeaComplete: 300,      // report freeze (live: 302)
-    futianArchaeaCompleteLive: 302,
+    futianArchaeaComplete: 308,
+    futianArchaeaCompleteLive: 308,
     futianBacteriaQueued: 2844,
 
-    triViewReady: 2352,              // FROZEN, report-backed (625 + 1427 + 300)
-    triViewReadyLive: 2354,          // live (625 + 1427 + 302)
+    triViewReady: 2360,              // current registry-backed (625 + 1427 + 308)
+    triViewReadyLive: 2360,
     embeddingBearingUnits: 5209,     // 625 + 1428 + 3156  (scaling target ~5,200)
     plottedNodes: 5457,              // incl. 248 non-embedded gap rows
+
+    muccWarehouseGenomes: 2508,
+    muccExpressionMags: 1948,
+    muccExpressionSamples: 133,
+    muccCandidateCards: 100,
+    warehouseReach: 7717,            // 5,209 mapped + 2,508 MUCC wetland warehouse genomes
 
     bridgeEdges: 372,                // documented cross-domain k-NN bridge edges
     bridgeNodes: 136,
     caseStudies: 26,
     pocBridgeGenomes: 14,            // POC 662 cohort
 
-    // ESM2 POC geometry (662 cohort)
+    // POC geometry (662-genome cohort)
     pocCohort: 662,
     pocRumen: 555,
     pocWetland: 107,
@@ -92,42 +98,41 @@ window.EB = (function () {
     analystMonthsLo: 6,
     analystMonthsHi: 12,
     methaneGWP: 30,                  // ~30x CO2 over 100yr
-    benchmarkR2: 0.879,              // mcrA/pmoA literature target (Lee et al. 2014, freshwater)
+    benchmarkR2: 0.879,              // marker-ratio literature target (Lee et al. 2014, freshwater)
   };
 
-  /* ---- foundation-model + tool stack ---- */
+  /* ---- model views (kept jargon-free for the public page) ---- */
   const stack = {
-    foundationModels: ["ESM2 (650M protein LM)", "gLM2 (genomic-context LM)"],
-    functional: ["KOfam", "MCycDB", "SCycDB", "dbCAN", "METABOLIC"],
-    qcTax: ["CheckM2", "GUNC", "GTDB-Tk", "Bakta", "Prodigal"],
+    foundationModels: ["Proteome embeddings", "Genomic-context embeddings"],
+    views: ["Proteome embedding", "Genomic context", "Functional annotation"],
   };
 
   /* ---- non-negotiable claim boundaries (visible, not buried) ---- */
   const claims = {
     footer:
-      "Current results are MAG/proteome-level molecular screening and monitoring prioritization. " +
+      "Current results are genome-level molecular screening and monitoring prioritization. " +
       "No measured methane flux, final risk scores, A–E tiers, or carbon-credit approval are claimed " +
-      "from the molecular atlas alone. A–E risk tiers are target product vocabulary, not yet calibrated. " +
+      "from the molecular map alone. A–E risk tiers are target product vocabulary, not yet calibrated. " +
       "Snapshot " + num.snapshot + ".",
     short: "Molecular screening, not calibrated MRV. A–E tiers are target vocabulary, not yet calibrated.",
     boundaries: [
-      "Molecular screening and monitoring prioritization, at MAG/proteome grain.",
+      "Molecular screening and monitoring prioritization, at the genome level.",
       "A–E risk tiers are TARGET product vocabulary, explicitly not yet calibrated.",
-      "No measured flux, final MRV scores, or carbon-credit approval from the atlas alone.",
-      "Rumen↔wetland source confounding stands until source-balanced validation exists.",
+      "No measured flux, final MRV scores, or carbon-credit approval from the map alone.",
+      "Reference-to-target signals stay provisional until source-balanced validation exists.",
     ],
   };
 
   /* ---- maturity ladder (MRV roadmap Levels 0–5, + 6 horizon) ---- */
   const ladder = [
-    { rung: 0, title: "MAG molecular screening", state: "lit",
-      unlock: "ESM2, gLM2, functional annotation, QC/taxonomy, and the attestation graph. Done now." },
+    { rung: 0, title: "Molecular screening", state: "lit",
+      unlock: "Proteome embeddings, genomic context, functional annotation, quality control, and the attestation graph. Done now." },
     { rung: 1, title: "Sample identity & metadata", state: "next",
-      unlock: "Map every MAG to a physical sample, site, and project with provenance tiers." },
+      unlock: "Map every genome to a physical sample, site, and project with provenance tiers." },
     { rung: 2, title: "Abundance & community capacity", state: "dim",
       unlock: "Read coverage and relative abundance. Weight genome potential by who is actually there." },
     { rung: 3, title: "Environmental permissiveness", state: "dim",
-      unlock: "Salinity, sulfate, redox, temperature, hydroperiod. Does the site let methane express?" },
+      unlock: "Salinity, sulfate, redox, temperature, hydroperiod: the site conditions that let methane express, or suppress it." },
     { rung: 4, title: "Flux & process validation", state: "dim",
       unlock: "Chamber and eddy-covariance methane flux, incubations. Paired molecular and measured GHG." },
     { rung: 5, title: "Calibrated probabilistic MRV risk", state: "target",
@@ -137,23 +142,23 @@ window.EB = (function () {
 
   /* ---- attestation evidence chain (Scene 5): one claim, traced ---- */
   const attestation = {
-    claimText: "This MAG carries molecular evidence consistent with methane-related functional potential.",
-    forbidden: "“This MAG emits methane.”",
+    claimText: "This genome carries molecular evidence consistent with methane-related functional potential.",
+    forbidden: "“This genome emits methane.”",
     chain: [
-      { stage: "Genome",            detail: "MAG / proteome unit · QC + GTDB-Tk taxonomy", node: "MAG" },
-      { stage: "Markers",           detail: "mcrA · HdrABC · MCycDB / KOfam direct hits",   node: "MarkerFamily" },
-      { stage: "Embedding neighbors", detail: "k-NN in ESM2 space → rumen methanogens",      node: "NEAR_IN_ESM2_SPACE" },
-      { stage: "QC gate",           detail: "CheckM2 completeness · GUNC · annotation coverage", node: "ValidationGate" },
-      { stage: "Claim boundary",    detail: "allowed wording · blocked wording · upgrade path", node: "Claim" },
+      { stage: "Genome",            detail: "One genome, quality-controlled and taxonomically placed", node: "genome" },
+      { stage: "Markers",           detail: "Methane-production and oxidation marker genes detected", node: "marker genes" },
+      { stage: "Embedding neighbors", detail: "Nearest neighbors in molecular space land on known methanogens", node: "embedding neighbor" },
+      { stage: "Quality gate",      detail: "Completeness, contamination, and annotation-coverage checks", node: "validation gate" },
+      { stage: "Claim boundary",    detail: "Allowed wording, blocked wording, and the path to upgrade it", node: "claim" },
     ],
     futureSlots: ["", "", ""], // honest empty optionality: no non-methane application built yet
   };
 
   /* ---- Scene 7 milestones ---- */
   const timeline = [
-    { phase: "Now",   label: "Molecular atlas", detail: "5,209 embedding-bearing units; source-audited; queryable attestation." },
-    { phase: "Field", label: "Cispatá Bay validation", detail: "Colombian Caribbean mangrove · paired CH₄-flux sampling." },
-    { phase: "Pair",  label: "Paired data", detail: "23 → 80–100 paired molecular + flux records across seasons & habitats." },
+    { phase: "Now",   label: "Molecular atlas", detail: "5,209 genomes mapped; 2,508 wetland genomes queryable in the warehouse." },
+    { phase: "Field", label: "Cispatá Bay validation", detail: "Colombian Caribbean mangrove · paired methane-flux sampling." },
+    { phase: "Pair",  label: "Paired data", detail: "Target: pair molecular evidence with field methane flux across seasons and habitats." },
     { phase: "Model", label: "Calibrated methane risk", detail: "Holdout-validated risk distribution; A–E tiers earn their thresholds." },
     { phase: "MRV",   label: "Registry integration", detail: "Reproducible evidence packets aligned to VM0033 / ICVCM review." },
   ];
@@ -171,21 +176,21 @@ window.EB = (function () {
       id: "blindspot", n: 2, label: "02 · The Blind Spot",
       kicker: "The measurement gap",
       headline: "Methane risk is unmeasurable at scale.",
-      copy: "The sediment microbiome is dark matter. Across the field, only a handful of sites carry paired methane-flux data. Today: 23.",
-      data: "real-number",
+      copy: "The sediment microbiome is climate dark matter. Direct methane measurements are rare and costly, so most of the risk surface has never been observed.",
+      data: "illustrative",
     },
     {
       id: "insight", n: 3, label: "03 · The Insight",
-      kicker: "EmergentBiome representation",
-      headline: "Foundation models reveal the bridge taxa.",
-      copy: "ESM2 proteome geometry resolves the rumen and wetland basins out of noise, then lights the bridge taxa that carry methane knowledge across ecosystems.",
+      kicker: "The molecular map",
+      headline: "The map reveals the bridge genomes.",
+      copy: "We place every genome in a learned map of its proteins. Reference communities separate into basins, and the bridge genomes appear: the ones whose molecular signatures carry methane knowledge from one ecosystem to the next.",
       data: "real-coords",
     },
     {
       id: "atlas", n: 4, label: "04 · The Atlas",
-      kicker: "Source-audited functional atlas",
-      headline: "2,352 tri-view units, and growing.",
-      copy: "Mangrove genomes pour into the manifold. Each unit stacks three views: ESM2 embedding, gLM2 context, and functional annotation.",
+      kicker: "A source-audited atlas",
+      headline: "2,360 genomes fully mapped. 2,508 more in the warehouse.",
+      copy: "The map now spans rumen, wetland, and two mangrove systems. A deep wetland archive adds 2,508 more genomes, annotated, source-audited, and ready for the next map refresh.",
       data: "real-counts",
     },
     {
