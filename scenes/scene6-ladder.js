@@ -1,6 +1,6 @@
 /* SCENE 6 - THE HONEST LADDER  ·  REAL ROADMAP
    The MRV maturity ladder (roadmap Levels 0-5, + Level 6 horizon). An ascending
-   staircase: rung 0 (MAG molecular screening) is LIT NOW; rungs 1-4 are the climb;
+   staircase: rung 0 (molecular screening) is LIT NOW; rungs 1-4 are the climb;
    rung 5 (calibrated probabilistic MRV / A-E tiers) is the dimmed TARGET. Each rung
    reveals exactly what unlocks it. "YOU ARE HERE" never lies: only rung 0 is lit. */
 (function () {

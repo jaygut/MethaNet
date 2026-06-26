@@ -2,7 +2,7 @@
    Reveals EmergentBiome as the substrate (embeddings + attestation graph + agentic
    pipeline) with MethaNet lit as the first application and honestly-empty future
    slots. Then a real molecular-attestation graph lights ONE claim and traces its
-   evidence chain: Genome -> Markers -> ESM2 neighbors -> QC gate -> Claim boundary,
+   evidence chain: Genome -> Markers -> embedding neighbors -> quality gate -> Claim boundary,
    ending in the real allowed-vs-forbidden wording. Counts are the live MMAG snapshot. */
 (function () {
   window.EBScenes = window.EBScenes || {};
@@ -171,7 +171,7 @@
     function drawReadouts(w, h, a) {
       const items = [
         [D.fmt(N.evidenceAtoms), "evidence atoms"],
-        [D.fmt(N.nearEsm2Edges), "ESM2-neighbor edges"],
+        [D.fmt(N.nearEsm2Edges), "embedding-neighbor links"],
         [N.claimNodes, "claims"],
         [N.validationGapNodes, "validation gaps"],
       ];

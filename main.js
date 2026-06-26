@@ -20,13 +20,13 @@
   function el(html) { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstChild; }
 
   const READOUTS = {
-    stakes: [["~" + EB.num.methaneGWP + "×", "CH₄ vs CO₂ · 100yr GWP"]],
-    blindspot: [[EB.num.pairedFluxNow, "paired CH₄-flux samples", true], ["→ " + EB.num.pairedFluxTargetLo + "–" + EB.num.pairedFluxTargetHi, "target"]],
-    insight: [[D.fmt(EB.num.embeddingBearingUnits), "embedding-bearing units", true], [EB.num.bridgeEdges, "bridge edges"], ["R²=" + EB.num.permanovaR2, "ecosystem (PERMANOVA)"]],
-    atlas: [[D.fmt(EB.num.triViewReady), "tri-view-ready units", true], ["625 → " + D.fmt(EB.num.embeddingBearingUnits), "scaling"]],
-    platform: [[D.fmt(EB.num.evidenceAtoms), "evidence atoms", true], [D.fmt(EB.num.nearEsm2Edges), "ESM2-neighbor edges"]],
+    stakes: [["~" + EB.num.methaneGWP + "×", "CH₄ vs CO₂ · 100-year warming"]],
+    blindspot: [["≈ 0", "sites with paired flux + molecular data today", true], [EB.num.pairedFluxTargetLo + "–" + EB.num.pairedFluxTargetHi, "validation target"]],
+    insight: [[D.fmt(EB.num.embeddingBearingUnits), "genomes mapped", true], [EB.num.bridgeEdges, "bridge links"], ["R²=" + EB.num.permanovaR2, "ecosystem separation"]],
+    atlas: [[D.fmt(EB.num.triViewReady), "genomes fully mapped", true], [D.fmt(EB.num.muccWarehouseGenomes), "wetland genomes in warehouse"]],
+    platform: [[D.fmt(EB.num.evidenceAtoms), "evidence atoms", true], [D.fmt(EB.num.nearEsm2Edges), "embedding-neighbor links"]],
     ladder: [["0 / 5", "rung lit now", true], ["6", "rung horizon"]],
-    path: ["<" + EB.num.pipelineDays + " days", "raw → report"].length ? [["<" + EB.num.pipelineDays + " d", "raw seqs → report", true], [EB.num.analystMonthsLo + "–" + EB.num.analystMonthsHi + " mo", "prior analyst effort"]] : [],
+    path: [["< " + EB.num.pipelineDays + " days", "raw sequences → report", true], ["months", "of manual analysis, before"]],
   };
 
   function injectCopy() {
@@ -58,7 +58,7 @@
     // header meta
     document.getElementById("headerMeta").innerHTML =
       '<span class="dot">●</span> live snapshot ' + EB.num.snapshot +
-      ' · ' + D.fmt(EB.num.embeddingBearingUnits) + ' units · ' + EB.num.bridgeEdges + ' bridges';
+      ' · ' + D.fmt(EB.num.embeddingBearingUnits) + ' genomes mapped · ' + EB.num.bridgeEdges + ' bridges';
     // rail
     const rail = document.getElementById("rail");
     EB.scenes.forEach((s) => {
@@ -72,26 +72,27 @@
     // ask + factsheet
     document.getElementById("fsDate").textContent = EB.num.snapshot;
     document.getElementById("askBody").innerHTML =
-      "We have built the molecular layer: a source-audited, queryable atlas of <b>" + D.fmt(EB.num.embeddingBearingUnits) +
-      "</b> embedding-bearing genome units across rumen, wetland, and two mangrove expansions, with every claim traceable to raw evidence. " +
-      "The pre-seed unlocks the next rung: field validation at Cispatá Bay and the paired flux data that turns molecular screening into calibrated methane MRV.";
+      "We have built the molecular layer: a source-audited, queryable map of <b>" + D.fmt(EB.num.embeddingBearingUnits) +
+      "</b> genomes across rumen, wetland, and two mangrove systems, with every claim traceable to raw evidence. " +
+      "The pre-seed unlocks the next rung: field validation at Cispatá Bay, and the paired flux data that turns molecular screening into calibrated methane MRV.";
     const points = [
-      "Field validation at Cispatá Bay (Colombian Caribbean mangrove · VM0033 context)",
-      "Scale paired CH₄-flux data " + EB.num.pairedFluxNow + " → " + EB.num.pairedFluxTargetLo + "–" + EB.num.pairedFluxTargetHi + " samples",
+      "Field validation at Cispatá Bay (Colombian Caribbean mangrove, VM0033 context)",
+      "Pair molecular evidence with field methane flux (target " + EB.num.pairedFluxTargetLo + "–" + EB.num.pairedFluxTargetHi + " samples)",
       "Calibrate the probabilistic risk model to earn the A–E tiers under holdout validation",
       "Harden the attestation graph into a partner-facing, registry-aligned evidence product",
     ];
     document.getElementById("askPoints").innerHTML = points.map((p) => "<li>" + p + "</li>").join("");
     // factsheet rows
     const F = [
-      ["Calibration core (rumen + wetland)", D.fmt(EB.num.calibrationCore) + " MAGs"],
-      ["Mangrove · MSM China 2025", D.fmt(EB.num.msmCandidates) + " (" + D.fmt(EB.num.msmFunctionalComplete) + " functional)"],
-      ["Mangrove · Futian 2026 (Qi et al.)", D.fmt(EB.num.futianRMAGs) + " rMAGs <span class='in-progress'>(in progress)</span>"],
-      ["Tri-view-ready units", D.fmt(EB.num.triViewReady) + " &nbsp;·&nbsp; live " + D.fmt(EB.num.triViewReadyLive)],
-      ["Embedding-bearing units", D.fmt(EB.num.embeddingBearingUnits) + " → ~5,200+"],
-      ["Foundation models", "ESM2 650M + gLM2"],
-      ["Cross-ecosystem bridge edges", D.fmt(EB.num.bridgeEdges)],
-      ["Pipeline speed", "&lt;" + EB.num.pipelineDays + " days vs " + EB.num.analystMonthsLo + "–" + EB.num.analystMonthsHi + " mo"],
+      ["Calibration core (rumen + wetland)", D.fmt(EB.num.calibrationCore) + " genomes"],
+      ["Mangrove · MSM China 2025", D.fmt(EB.num.msmCandidates) + " genomes (" + D.fmt(EB.num.msmFunctionalComplete) + " annotated)"],
+      ["Mangrove · Futian 2026 (Qi et al.)", D.fmt(EB.num.futianRMAGs) + " genomes <span class='in-progress'>(in progress)</span>"],
+      ["Genomes fully mapped", D.fmt(EB.num.triViewReady)],
+      ["Genomes mapped (molecular space)", D.fmt(EB.num.embeddingBearingUnits)],
+      ["Wetland warehouse (annotated)", D.fmt(EB.num.muccWarehouseGenomes) + " genomes"],
+      ["Model views per genome", "proteome + genomic-context embeddings, plus function"],
+      ["Cross-ecosystem bridge links", D.fmt(EB.num.bridgeEdges)],
+      ["Pipeline speed", "&lt;" + EB.num.pipelineDays + " days, vs months of manual analysis"],
       ["Field site", "Cispatá Bay, Colombia"],
     ];
     document.getElementById("factsheet").innerHTML = F.map((r) =>

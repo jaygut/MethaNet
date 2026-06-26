@@ -1,8 +1,8 @@
 /* SCENE 4 - THE ATLAS  ·  REAL COUNTS
-   Mangrove MAG particles (MSM cyan + Futian indigo) pour into the manifold while a
-   mono counter ticks 625 -> 2,352 tri-view-ready units. A lane bar fills POC (locked)
-   + MSM + Futian(in-progress). A three-plane motif (ESM2 / gLM2 / functional) slides
-   together into one multi-view MAG. Every number is the verified live snapshot. */
+   Mangrove genome particles (MSM cyan + Futian indigo) pour into the manifold while a
+   mono counter ticks 625 -> 2,360 mapped atlas units. A lane bar fills POC (locked)
+   + MSM + Futian. MUCC v1 adds a 2,508-genome wetland warehouse layer that is
+   called out without pretending it is already plotted in the manifold. */
 (function () {
   window.EBScenes = window.EBScenes || {};
   window.EBScenes.atlas = function (p, ctx) {
@@ -72,21 +72,25 @@
       const v = Math.round(D.lerp(N.calibrationCore, N.triViewReady, D.easeInOut(t)));
       p.push();
       p.textAlign(p.CENTER, p.CENTER);
-      D.label(p, "TRI-VIEW-READY UNITS", w * 0.5, h * 0.15, EB.color.textMuted, 11, [p.CENTER, p.CENTER]);
+      D.label(p, "ATLAS UNITS MAPPED", w * 0.5, h * 0.15, EB.color.textMuted, 11, [p.CENTER, p.CENTER]);
       p.fill(EB.color.textPrimary); p.noStroke(); p.textFont("JetBrains Mono"); p.textSize(Math.min(72, w * 0.1));
       p.text(D.fmt(v), w * 0.5, h * 0.15 + 48);
       p.fill(D.rgba(EB.color.attested, 0.85)); p.textSize(11);
-      p.text("625 calibration core  →  scaling toward " + D.fmt(N.embeddingBearingUnits) + " embedding-bearing units", w * 0.5, h * 0.15 + 86);
+      p.text(D.fmt(N.embeddingBearingUnits) + " genomes mapped  +  " + D.fmt(N.muccWarehouseGenomes) + " wetland genomes in the warehouse", w * 0.5, h * 0.15 + 86);
+      p.fill(D.rgba(EB.color.textMuted, 0.85)); p.textSize(10);
+      p.text(D.fmt(N.muccExpressionMags) + " wetland genomes carry activity clues across " + D.fmt(N.muccExpressionSamples) + " samples", w * 0.5, h * 0.15 + 108);
       p.pop();
     }
 
     function drawLaneBar(w, h, t) {
-      const bw = Math.min(w * 0.6, 540), x = (w - bw) / 2, y = h * 0.7, bh = 14;
+      const bw = Math.min(w * (w >= 1000 ? 0.42 : 0.6), 540);
+      const x = w >= 1000 ? w * 0.43 : (w - bw) / 2;
+      const y = h * 0.7, bh = 14;
       const total = N.triViewReady;
       const segs = [
         ["POC core", N.calibrationCore, C_POC, false],
         ["MSM", N.msmFunctionalComplete, C_MSM, false],
-        ["Futian archaea", N.futianArchaeaComplete, C_FUT, true],
+        ["Futian", N.futianArchaeaComplete, C_FUT, true],
       ];
       const grow = D.easeInOut(t);
       p.push(); p.noStroke();
@@ -108,17 +112,17 @@
     }
 
     function drawTriView(w, h, t) {
-      // three planes (ESM2 / gLM2 / functional) slide together into one multi-view MAG
+      // three evidence planes slide together into one atlas unit
       const conv = D.easeInOut(D.window01(t, 0.35, 0.9));
       const cx = w * 0.84, cy = h * 0.5, pw = Math.min(w * 0.14, 150), ph = 40;
       if (w < 760) return; // hide motif on narrow screens (copy + counter carry it)
       const views = [
-        ["ESM2", EB.color.emergence, -1],
-        ["gLM2", C_FUT, 0],
-        ["functional", EB.color.methaneA, 1],
+        ["map", EB.color.emergence, -1],
+        ["context", C_FUT, 0],
+        ["evidence", EB.color.methaneA, 1],
       ];
       p.push();
-      D.label(p, "ONE MULTI-VIEW MAG", cx, cy - 64, EB.color.textMuted, 10, [p.CENTER, p.BOTTOM]);
+      D.label(p, "ONE ATLAS UNIT", cx, cy - 64, EB.color.textMuted, 10, [p.CENTER, p.BOTTOM]);
       for (let i = 0; i < 3; i++) {
         const [name, col, off] = views[i];
         const spread = (1 - conv) * 46;
