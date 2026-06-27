@@ -9,7 +9,7 @@
 
 ## Overview
 
-MethaNet is a research initiative developing molecular intelligence methods for methane permanence-risk screening in coastal ecosystems, with the long-term goal of calibrated net methane-flux prediction. By leveraging data-rich rumen methane systems as a reference domain and expanding into wetland/MUCC and mangrove/MSM MAG/proteome evidence, we aim to decode complex coastal wetland systems that are critical for carbon sequestration but remain data-sparse.
+MethaNet is a research initiative developing molecular intelligence methods for methane permanence-risk screening in coastal ecosystems, with the long-term goal of calibrated net methane-flux prediction. By leveraging data-rich rumen methane systems as a reference domain and expanding into wetland/MUCC, mangrove/MSM, and mangrove/Futian MAG/proteome evidence, we aim to decode complex coastal wetland systems that are critical for carbon sequestration but remain data-sparse.
 
 Methane has a global warming potential approximately 30× that of CO₂ over a 100-year horizon. Coastal wetlands can be net carbon sinks or sources depending on the balance between carbon uptake and methane emissions. Current measurement methods (chamber measurements, flux towers) are expensive, sparse, and unable to scale. This project addresses a critical gap in climate accounting: the inability to distinguish net climate benefits from net climate harms using molecular data.
 
@@ -137,20 +137,27 @@ Current implemented artifact arc:
 | POC gLM2 context | `results/contextual_genomics/glm2_integration_20260616_poc_catchup_20260616_073441/` | 625/625 MAG-bin units complete after rumen catch-up |
 | Mangrove/MSM ESM2 expansion | `results/blue_catalyst_poc/runs/msm_china_2025_esm2_20260616_082112/artifacts/` | 1,428/1,428 local mangrove/MSM proteomes embedded |
 | Mangrove/MSM gLM2 expansion | `results/contextual_genomics/glm2_msm_magbin_full_20260615_092737/` | 1,428/1,428 contextual genome units complete |
-| Mangrove/MSM functional expansion | `results/functional_metagenomics/msm_china_2025_20260615/` | active expansion lane; 1,225/1,428 functional MAGs complete at the 2026-06-22 snapshot |
-| Metadata provenance | `results/functional_metagenomics/environmental_metadata_recovery_20260612/` and `data/external/msm_china_2025/metadata/` | source/environmental metadata with resolution tiers across rumen, wetland/MUCC, and mangrove/MSM lanes |
-| Molecular attestation graph | `results/attestation/mmag_mvp_20260617/` | POC graph snapshot over the 662-row denominator; not yet rebuilt over the full mangrove/MSM expansion |
-| Latest expanded HTML atlas | `results/reports/mbag_nextgen_molecular_niche_atlas_20260619_113355/report.html` | partner-facing dated report; rebuild after mangrove/MSM functional completion for a refreshed multi-view denominator |
+| Mangrove/MSM functional expansion | `results/functional_metagenomics/msm_china_2025_20260615/` | near-complete expansion lane; 1,427/1,428 functional MAGs complete at the 2026-06-25 snapshot |
+| Mangrove/Futian ESM2 + gLM2 expansion | `results/blue_catalyst_poc/runs/futian_mangrove_2026_esm2_phase1_shard*_20260621/` and `results/contextual_genomics/glm2_futian_phase1_shard*_20260621/` | 3,156/3,156 ready Futian MAG/proteome units complete in both ESM2 and gLM2 |
+| Mangrove/Futian functional expansion | `results/functional_metagenomics/futian_mangrove_2026_phase1_archaea/` and queued bacteria shards | active expansion lane; live status is 302/312 archaea complete, 2 running/partial, 8 pending/not-started at the 2026-06-25 15:39 UTC refresh; bacteria shards queued behind the archaea dependency. The current external report remains backed by the earlier 300-archaea release freeze. |
+| Metadata provenance | `results/functional_metagenomics/environmental_metadata_recovery_20260612/`, `data/external/msm_china_2025/metadata/`, and `data/external/futian_mangrove_2026_qi/metadata/` | source/environmental metadata with resolution tiers across rumen, wetland/MUCC, MSM, and Futian lanes |
+| Molecular attestation graph | `results/attestation/mmag_mvp_20260617/` | POC graph snapshot over the 662-row denominator; not yet rebuilt over the full mangrove expansion |
+| Latest expanded HTML atlas | `results/reports/mbag_nextgen_molecular_niche_atlas_20260625_release_freeze_145509_bridge_v4/report.html` | current freeze-backed report over 2,352 release-required tri-view MAG/proteome units: 625 POC core + 1,427 MSM + 300 Futian archaea; preserves one MSM release exclusion and 248 Futian source-lane gap rows; hardens the molecular niche-space view with all embedding-bearing units, case-study halos, nearest-POC bridge links, and projection sensitivity views |
 
 These artifacts support MAG/proteome-level molecular attestation, bridge-candidate prioritization, and MRV feature-readiness design. They do **not** assign final sample/project methane-risk scores, final A-E MRV tiers, measured methane flux, source-independent transfer proof, or carbon-credit approval.
 
-The current system should be read as a three-lane molecular atlas:
+The current system should be read as a four-lane molecular atlas:
 
 - rumen POC: source reference lane for methane-system molecular neighborhoods;
 - wetland/MUCC POC: target-domain wetland lane with complete MAG-bin molecular evidence;
-- mangrove/MSM expansion: broader blue-carbon target lane with ESM2 and gLM2 complete and functional annotations still completing.
+- mangrove/MSM expansion: broader blue-carbon target lane with ESM2 and gLM2 complete and functional annotations almost complete.
+- mangrove/Futian expansion: larger time/depth/habitat mangrove target lane with ESM2 and gLM2 complete, archaea functional annotation active at 302/312 live complete, and bacteria shards queued.
 
 For the freshest dated payload inventory, see `docs/current_artifact_inventory.md`.
+For live multi-lane payload state, regenerate the registry summary with
+`scripts/reports/refresh_atlas_lane_registry_status.sh`; for report freezes,
+use `scripts/reports/build_methanet_3view_payload_freeze.py` and preserve
+blocked/pending rows rather than silently dropping them.
 
 Key roadmap and contract documents:
 

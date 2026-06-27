@@ -1,6 +1,7 @@
 # Source Provenance And Environmental Metadata Reconciliation
 
 Date: 2026-06-18
+Documentation refresh: 2026-06-25
 
 Scope: source-of-truth provenance and environmental metadata strategy for the current MethaNet rumen, wetland/MUCC, and mangrove MAG/proteome lanes.
 
@@ -8,27 +9,31 @@ This document is a documentation and reconciliation layer. It does not replace p
 
 ## Executive Summary
 
-The three current source domains are traceable to defensible papers or data objects:
+The current source domains are traceable to defensible papers or data objects:
 
 | MethaNet lane | Primary citation | Primary data object | Local resolution now | Claim status |
 | --- | --- | --- | --- | --- |
 | Rumen POC MAGs | Stewart et al. 2019, *Nature Biotechnology*, `10.1038/s41587-019-0202-3` | ENA `PRJEB31266`; protein resource `10.7488/ds/2470` | 555/555 exact `ERZ...` analysis-accession matches | Conclusive MAG/proteome provenance; environmental context is mostly cohort-level cattle rumen |
 | Wetland/MUCC POC MAGs | Bechtold et al. 2025, *Nature Communications*, `10.1038/s41467-025-56133-0` | MUCC v2.0.0 Zenodo `10.5281/zenodo.14532347` | 107 Methanoregula MAG/proteome units: 20 exact NCBI assembly/BioSample, 23 OWC bin plus site/project, 64 source-bucket rows | Conclusive paper/dataset provenance; mixed per-MAG sample metadata resolution |
 | Mangrove/MSM MAGs | Pan et al. 2025, *GigaScience*, `10.1093/gigascience/giaf081` | GigaDB `10.5524/102702`; NCBI `PRJNA1150796`; NODE/eLMSG accessions | 82 local sediment-sample metadata rows, 71 exact BioSample rows, 1428 local MAG candidates | Conclusive source provenance; per-MAG sample mapping and 966-vs-1428 denominator reconciliation still required |
+| Mangrove/Futian 2026 rMAGs | Qi et al. 2026, *Scientific Data*, `10.1038/s41597-026-07291-3` | Figshare `10.6084/m9.figshare.30883646.v3`; NCBI/GSA/NODE/NMDC/eLMSG accessions | 65 exact sediment sample metadata rows, 6,922 MAG metadata rows, 3,404 phase-1 rMAGs, 3,156 ready local payload rows, 248 gap rows | Conclusive source provenance; MAGs currently resolve to site/month, while depth-resolved sample assignment, abundance, and flux/process validation remain pending |
 
 The practical metadata rule is:
 
 > Use exact accession metadata where present, use paper/site/project metadata as context, and label modeled environmental covariates as estimates. Do not let estimated covariates masquerade as measured sample metadata.
 
 Operational molecular-payload status is tracked in
-`docs/current_artifact_inventory.md`. As of the 2026-06-20 refresh, the POC
+`docs/current_artifact_inventory.md`. As of the 2026-06-25 refresh, the POC
 rumen + wetland/MUCC MAG-bin layer is complete across ESM2, functional
 annotation, and gLM2 for 625 units; the mangrove/MSM lane has complete ESM2 and
-gLM2 coverage for 1,428 local candidates and an active functional tranche that
-was 1,002/1,428 complete. These molecular counts do not change the metadata
-claim boundary: sample-level ecological interpretation still requires
-MAG-to-sample mapping, abundance/read coverage, environmental covariates, and
-validation.
+gLM2 coverage for 1,428 local candidates and 1,427/1,428 functional MAGs; the
+Futian lane has complete ESM2 and gLM2 coverage for 3,156 ready MAG/proteome
+units and 302 completed archaeal functional annotations at the 2026-06-25
+15:39 UTC live refresh while bacteria remain queued. The current external report
+freeze remains fixed at 300 Futian archaea, so these molecular counts
+do not change the metadata claim boundary:
+sample-level ecological interpretation still requires MAG-to-sample mapping,
+abundance/read coverage, environmental covariates, and validation.
 
 ## Local Sources Checked
 
@@ -45,6 +50,10 @@ Authoritative local files:
 - `data/external/msm_china_2025/metadata/source_register.tsv`
 - `data/external/msm_china_2025/metadata/ncbi_biosample_environmental_metadata.tsv`
 - `data/external/msm_china_2025/gigadb_wasabi/metadata_sediment_samples.txt`
+- `data/external/futian_mangrove_2026_qi/metadata/source_register.tsv`
+- `data/external/futian_mangrove_2026_qi/metadata/futian_65_sample_metadata.tsv`
+- `data/external/futian_mangrove_2026_qi/metadata/futian_6922_mag_metadata.tsv`
+- `data/external/futian_mangrove_2026_qi/manifests/futian_phase1_source_lane_manifest.tsv`
 
 Important local caveat: `data/external/msm_china_2025/gigadb_wasabi/Supplementary_Tables.xlsx` is not currently a valid XLSX file. It contains an XML `AccessDenied` response and must not be treated as evidence until reacquired.
 
@@ -189,6 +198,49 @@ Interpretation boundary:
 - Per-MAG sample assignment must still be verified before rolling MAG features up to site/sample MRV features.
 - External claims must reconcile the 1428 local archive candidates against the published 966 final medium/high-quality MAGs.
 
+### Mangrove / Futian 2026
+
+Primary paper:
+
+- Qi et al. "A seven-year metagenomic genome catalogue of mangrove and mudflat sediments from the Futian Reserve, China." *Scientific Data* (2026). DOI: `10.1038/s41597-026-07291-3`.
+
+Primary data objects:
+
+- Figshare metadata package, DOI `10.6084/m9.figshare.30883646.v3`.
+- NCBI WGS/eLMSG genome accessions, GSA and NODE raw-read accessions, and NMDC accession listed in the article/data package.
+
+Local reconciliation:
+
+Local source register:
+
+- 6,922 MAG metadata rows from the source package.
+- 3,404 phase-1 dereplicated rMAG rows at 99% ANI.
+- 3,156 ready local payload rows with FNA/FAA/FFN/GFF paths.
+- 248 explicit missing-payload gap rows.
+- 65 exact sediment-sample metadata rows.
+- Sampling years: 2017 through 2023.
+- Geography: Futian Mangrove National Nature Reserve, Shenzhen, China.
+- Habitat: paired mangrove forest and adjacent mudflat sediment.
+
+Usable local sample metadata from `futian_65_sample_metadata.tsv`:
+
+| Field | Current coverage |
+| --- | --- |
+| `sample_name` | 65/65 |
+| `sample_site` / `site_name` | 65/65 across MF1 and MG1 |
+| `sampling_time_yyyymm` / month | 65/65 |
+| `depth_cm` | 65/65 |
+| `latitude_longitude` | 65/65 |
+| `pH`, `TOC`, ammonium, nitrate, total nitrogen | present in the source sample table where measured |
+
+Interpretation boundary:
+
+- Futian source provenance is conclusive at the paper/data-package/source-register level.
+- Futian is strategically valuable because it introduces repeated time points, depth-resolved sediment samples, and paired mudflat/mangrove habitat context.
+- Current MAG rows resolve to site/month and source metadata, but depth-resolved MAG-to-sample assignment still requires additional evidence.
+- Current Futian functional evidence is archaea-only; bacteria shards are queued.
+- Futian molecular features are not sample-level MRV risk scores until abundance/read coverage, depth-resolved sample mapping, environmental covariates, uncertainty propagation, and flux/process validation are joined.
+
 ## Recommended Normalized Metadata Schema
 
 Use this schema for the future consolidated environmental metadata table:
@@ -199,7 +251,7 @@ metadata_unit_type              # mag, proteome, sample, site, project, modeled_
 proteome_id
 mag_id
 sample_id
-source_domain                   # rumen, wetland_mucc, mangrove_msm
+source_domain                   # rumen, wetland_mucc, mangrove_msm, mangrove_futian
 source_paper_doi
 source_dataset_doi
 primary_accession
@@ -271,6 +323,7 @@ Example verified API probes from this pass:
 | Rumen | Exact ENA analysis accession, country, digestive-system context, source paper/data DOI | Broad cattle-rumen context from paper; no need for climate/soil estimates for MRV target context | Animal-level metadata and exact cattle/sample mapping beyond ENA analysis context |
 | Wetland/MUCC | Paper/dataset provenance, source bucket, OWC bin/site context, some NCBI assembly/BioSample rows | Site-level wetland type, methane flux context, AmeriFlux/USGS/site-source covariates | Uniform MAG-to-sample BioSample mapping for JGI/PPR/STM/source-bucket rows |
 | Mangrove/MSM | Paper/dataset provenance, 82 local sediment sample rows, 71 exact BioSample rows, coordinates/dates/depths for local sample metadata | SoilGrids/Open-Meteo/tidal/remote-sensing context by coordinate/date | MAG-to-sample assignment and 966-vs-1428 denominator reconciliation |
+| Mangrove/Futian | Paper/data-package provenance, 65 exact sediment sample rows, 6,922 MAG metadata rows, 3,156 ready payload rows, site/month/habitat context | SoilGrids/Open-Meteo/tidal/remote-sensing context by coordinate/date; habitat/time/depth stratification design | Depth-resolved MAG-to-sample assignment, abundance/read coverage, bacteria functional completion, and flux/process validation |
 
 ## Recommended Next Consolidation Actions
 
@@ -278,6 +331,7 @@ Example verified API probes from this pass:
    - Stewart 2019 / `PRJEB31266`
    - Bechtold 2025 / MUCC v2.0.0 / Zenodo `14532347`
    - Pan 2025 / GigaDB `102702`
+   - Qi 2026 / Figshare `30883646.v3`
 
 2. Build `dim_environmental_context` with the schema above and preserve resolution tiers.
 
@@ -285,11 +339,13 @@ Example verified API probes from this pass:
 
 4. For wetland/MUCC, prioritize recovering the missing MAG-to-BioSample or MAG-to-sample metadata for JGI, PPR, and STM rows. Until then, these rows remain source-bucket/site-level context.
 
-5. For mangrove/MSM, reconcile local MAG IDs to sample IDs before reporting sample-level MAG functional rollups.
+5. For mangrove/MSM, reconcile local MAG IDs to sample IDs and the 966-vs-1428 denominator before reporting sample-level MAG functional rollups.
 
-6. Treat Open-Meteo, SoilGrids, tidal, and remote-sensing covariates as `modeled_estimate` rows with source URL, query date, coordinate, date range, and uncertainty when available.
+6. For mangrove/Futian, preserve the 3,404 phase-1 rMAG denominator, 3,156-ready payload denominator, and 248-row missing-payload gap register; resolve depth-specific MAG-to-sample and abundance/read-coverage links before using the strong time/depth metadata for sample-level methane-risk scoring.
 
-7. Do not assign final MRV methane-risk tiers from this metadata alone. Use it as context for MAG-level functional features, sample rollup readiness, and monitoring-priority hypotheses.
+7. Treat Open-Meteo, SoilGrids, tidal, and remote-sensing covariates as `modeled_estimate` rows with source URL, query date, coordinate, date range, and uncertainty when available.
+
+8. Do not assign final MRV methane-risk tiers from this metadata alone. Use it as context for MAG-level functional features, sample rollup readiness, and monitoring-priority hypotheses.
 
 ## Allowed Wording
 
@@ -298,6 +354,7 @@ Allowed:
 - "The rumen POC MAGs trace to Stewart et al. 2019 and ENA PRJEB31266 through exact analysis accessions."
 - "The wetland/MUCC POC MAGs trace to the Bechtold et al. 2025 MUCC v2.0.0 Methanoregula analysis and Zenodo data package, with mixed per-MAG sample metadata resolution."
 - "The mangrove/MSM payload traces to Pan et al. 2025 and GigaDB 10.5524/102702, with local sediment sample metadata available and per-MAG sample rollup still pending."
+- "The mangrove/Futian payload traces to Qi et al. 2026 and Figshare 10.6084/m9.figshare.30883646.v3, with time/depth/habitat sediment metadata available and depth-resolved MAG-to-sample rollup still pending."
 - "Modeled environmental covariates from SoilGrids/Open-Meteo can support ecological context and uncertainty-aware feature engineering."
 
 Not allowed:

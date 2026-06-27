@@ -1,7 +1,7 @@
 # Functional MAG Cohort Data Architecture Hardening
 
 Date: 2026-06-13
-Documentation refresh: 2026-06-20
+Documentation refresh: 2026-06-25
 
 ## Purpose
 
@@ -102,6 +102,7 @@ folders happen to be complete on disk.
 | POC MAG-bin rumen + wetland/MUCC | completed reference warehouse for current MBAG reporting | 625 MAG/bin-comparable units from the 662-row ESM2 backbone |
 | POC assembly-context units | preserved evidence/status lane, not MAG-bin feature denominator | 37 rumen no-bin or assembly-context records, explicitly quarantined |
 | Mangrove/MSM expansion | target-domain expansion warehouse after active functional tranche completion or dated interim snapshot | 1,428 local candidates as the local processing denominator, with a separate reconciled view for the paper-reported 966 final medium/high-quality MAG denominator |
+| Mangrove/Futian 2026 expansion | target-domain expansion warehouse after archaea and bacteria shards complete or a dated interim snapshot is deliberately frozen | 3,156 ready payload rows plus a preserved 248-row missing-payload gap register from the 3,404 phase-1 rMAG denominator |
 | Multi-view atlas/report layer | report/query union across ESM2, functional warehouse, gLM2, provenance, and QC | manifest-driven left joins with explicit missingness and lane labels |
 
 For every warehouse, the manifest is authoritative. Completed folders indicate
@@ -151,32 +152,45 @@ The optional DuckDB catalog is present at:
 results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse_poc_magbin_union_20260616_075022/functional_atlas.duckdb
 ```
 
-## Mangrove/MSM Expansion Readiness
+## Mangrove Expansion Readiness
 
-The mangrove/MSM lane is an active expansion, not yet the final consolidated
-warehouse. Snapshot at the 2026-06-20 documentation refresh:
+The mangrove lanes are active expansions, not yet final consolidated warehouses.
+Snapshot at the 2026-06-25 documentation refresh:
 
 | Item | Value |
 | --- | ---: |
 | Local mangrove/MSM MAG/proteome candidates | 1,428 |
 | ESM2 embeddings | 1,428 / 1,428 complete |
 | gLM2 contextual units | 1,428 / 1,428 complete |
-| Functional MAGs complete | 1,002 / 1,428 |
-| Partial/running MAGs | 3 |
-| Failed MAGs | 0 |
-| Not yet started | 423 |
+| Functional MAGs complete | 1,427 / 1,428 |
+| Partial/running MAGs | 1 |
+| Manifest-scoped failed MAGs | 0 |
+| Not yet started | 0 |
+| Futian phase-1 rMAGs | 3,404 |
+| Futian ready payload rows | 3,156 |
+| Futian missing-payload gap rows | 248 |
+| Futian ESM2 embeddings | 3,156 / 3,156 complete |
+| Futian gLM2 contextual units | 3,156 / 3,156 complete |
+| Futian functional MAGs complete | 302 / 3,156 live; 300 / 3,156 in the current release freeze |
+| Futian functional status | live status is 302/312 archaea complete at the 2026-06-25 15:39 UTC registry refresh; the current 2,352-unit report freeze remains fixed at 300/312 archaea; bacteria shards queued |
 
-When this tranche is consolidated, use the same per-run curated Parquet
-contract and validation gates as the POC warehouse. Add two denominator fields
-to every mangrove/MSM cohort summary:
+When these tranches are consolidated, use the same per-run curated Parquet
+contract and validation gates as the POC warehouse. Add denominator fields to
+every mangrove cohort summary:
 
 - `local_archive_denominator = 1428`
 - `published_quality_denominator = 966` when reconciling to the source paper's
   reported final medium/high-quality MAG set.
+- `futian_phase1_rmag_denominator = 3404`
+- `futian_ready_payload_denominator = 3156`
+- `futian_gap_denominator = 248`
 
 This prevents three different concepts from being collapsed: local processable
 MAG candidates, source-publication quality-filtered MAGs, and the subset that
 has completed functional evidence at a dated point in time.
+Refresh `configs/methanet_atlas_lanes.tsv` through
+`scripts/reports/refresh_atlas_lane_registry_status.sh` before any consolidation
+or report rebuild decision.
 
 ## Required Identity Columns
 
