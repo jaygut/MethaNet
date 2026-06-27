@@ -86,6 +86,8 @@ ai_docs/functional_metagenomics_expansion/*
 !ai_docs/functional_metagenomics_expansion/queryable_molecular_attestation_moat/*.md
 !ai_docs/functional_metagenomics_expansion/embedding_functional_transfer_framework/
 !ai_docs/functional_metagenomics_expansion/embedding_functional_transfer_framework/*.md
+!ai_docs/mucc_v1_wetland_mbag_integration/
+!ai_docs/mucc_v1_wetland_mbag_integration/*.md
 grants/
 docs/papers/
 results/*
@@ -109,3 +111,6 @@ Thumbs.db
 
 # Transient workspace
 /tmp/
+
+# Web build output (generated site; multi-MB bundles)
+web/emergentbiome-methanet/_site/

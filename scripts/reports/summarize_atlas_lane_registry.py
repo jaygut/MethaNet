@@ -82,17 +82,43 @@ def count_include(rows: list[dict[str, str]], col: str) -> int:
     return sum(1 for row in rows if truthy(row.get(col)))
 
 
+def status_tsv_run_state(path: Path) -> str | None:
+    """Return final run state from current functional-run status.tsv files."""
+
+    if not path.exists() or path.stat().st_size == 0:
+        return None
+    for line in reversed(path.read_text(errors="ignore").splitlines()):
+        parts = line.split("\t")
+        if len(parts) < 3:
+            continue
+        step = parts[1].strip().lower()
+        state = parts[2].strip().lower()
+        if step == "run" and state in {"complete", "failed", "error"}:
+            return "failed" if state in {"failed", "error"} else "complete"
+    return None
+
+
+def run_dir_status(run_dir: Path) -> str:
+    """Classify one run attempt across legacy sentinels and status.tsv runs."""
+
+    if (run_dir / "COMPLETE").exists() or (run_dir / "_COMPLETE").exists():
+        return "complete"
+    if (run_dir / "FAILED").exists() or (run_dir / "_FAILED").exists():
+        return "failed"
+    status_state = status_tsv_run_state(run_dir / "status.tsv")
+    if status_state:
+        return status_state
+    return "partial"
+
+
 def latest_run_status(proteome_dir: Path) -> str:
     runs = sorted([path for path in proteome_dir.iterdir() if path.is_dir()])
     if not runs:
         return "not_started"
-    complete_runs = [path for path in runs if (path / "COMPLETE").exists() and (path / "curated/run_record.json").exists()]
-    if complete_runs:
+    if any(run_dir_status(path) == "complete" for path in runs):
         return "complete"
     latest_run = runs[-1]
-    if (latest_run / "FAILED").exists():
-        return "failed"
-    return "partial"
+    return run_dir_status(latest_run)
 
 
 def functional_status_counts(per_mag_dirs: list[Path], manifest_rows: list[dict[str, str]]) -> Counter[str]:
@@ -132,9 +158,10 @@ def functional_attempt_audit(per_mag_dirs: list[Path]) -> dict[str, int]:
         for proteome_dir in sorted(path for path in per_mag_dir.iterdir() if path.is_dir()):
             proteome_id = proteome_dir.name
             for run_dir in sorted(path for path in proteome_dir.iterdir() if path.is_dir()):
-                if (run_dir / "COMPLETE").exists() and (run_dir / "curated/run_record.json").exists():
+                status = run_dir_status(run_dir)
+                if status == "complete":
                     complete_attempts_by_id[proteome_id] += 1
-                elif (run_dir / "FAILED").exists():
+                elif status == "failed":
                     failed_attempts += 1
                 else:
                     partial_attempts += 1

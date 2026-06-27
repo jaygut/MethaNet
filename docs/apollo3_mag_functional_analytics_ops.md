@@ -1,7 +1,7 @@
 # Apollo-3 MAG Functional Analytics Operations
 
 Date: 2026-06-13
-Documentation refresh: 2026-06-20
+Documentation refresh: 2026-06-25
 
 This page is the operational path for running MethaNet MAG functional analytics
 on Apolo-3 with the databases that are actually installed and validated under:
@@ -84,24 +84,37 @@ evidence packets. They are not final sample/project MRV risk scores and do not
 claim measured methane flux, final A-E tiers, source-independent transfer, or
 carbon-credit approval.
 
-## Current Mangrove/MSM Expansion Snapshot
+## Current Mangrove Expansion Snapshot
 
-The active mangrove/MSM lane uses the same curated per-MAG evidence-bundle
-contract as the POC production run, but it is not yet a finalized cohort
-warehouse.
+The active mangrove lanes use the same curated per-MAG evidence-bundle contract
+as the POC production run, but they are not yet finalized cohort warehouses.
 
-Current dated snapshot: 2026-06-20 20:30 America/Bogota.
+Current dated snapshot: 2026-06-25 10:39 America/Bogota / 15:39 UTC.
 
 | Payload | Current state |
 | --- | ---: |
 | Local mangrove/MSM MAG/proteome candidates | 1,428 |
 | ESM2 embeddings | 1,428 / 1,428 complete |
 | gLM2 contextual units | 1,428 / 1,428 complete |
-| Functional MAGs complete | 1,002 / 1,428 |
-| Functional MAGs partial/running | 3 |
-| Functional MAGs failed | 0 |
-| Functional MAGs not started | 423 |
-| Duplicate complete attempts observed | 1 |
+| MSM functional MAGs complete | 1,427 / 1,428 |
+| MSM functional MAGs partial/running | 1 |
+| MSM manifest-scoped failed MAGs | 0 |
+| MSM raw duplicate complete attempts | 4 proteome IDs |
+| Futian ready MAG/proteome payload rows | 3,156 |
+| Futian ESM2 embeddings | 3,156 / 3,156 complete |
+| Futian gLM2 contextual units | 3,156 / 3,156 complete |
+| Futian archaea functional MAGs complete | 302 / 312 |
+| Futian archaea functional MAGs running/partial | 2 |
+| Futian manifest-scoped failed rows | 0 |
+| Futian archaea pending/not-started | 8 |
+| Futian bacteria shards | 3 x 948 pending by dependency |
+
+Scheduler caveat: `sacct` for array `10557` records two failed task states
+(`10557_17` and `10557_18`, exit 127), but the selected per-MAG evidence scan
+has complete curated bundles for 302 manifest-scoped units at the 15:39 UTC live
+refresh. The external report freeze remains fixed at 300 Futian archaea. Treat curated
+`status.tsv`/`parquet_manifest.tsv` sentinels as the payload-readiness source
+and Slurm task state as operational telemetry.
 
 Current sidecar paths:
 
@@ -109,13 +122,23 @@ Current sidecar paths:
 results/blue_catalyst_poc/runs/msm_china_2025_esm2_20260616_082112/artifacts/
 results/contextual_genomics/glm2_msm_magbin_full_20260615_092737/
 results/functional_metagenomics/msm_china_2025_20260615/
+results/blue_catalyst_poc/runs/futian_mangrove_2026_esm2_phase1_shard*_20260621/
+results/contextual_genomics/glm2_futian_phase1_shard*_20260621/
+results/functional_metagenomics/futian_mangrove_2026_phase1_archaea/
+results/functional_metagenomics/futian_mangrove_2026_phase1_bacteria_001/
+results/functional_metagenomics/futian_mangrove_2026_phase1_bacteria_002/
+results/functional_metagenomics/futian_mangrove_2026_phase1_bacteria_003/
 ```
 
-Before rebuilding the expanded MBAG atlas, consolidate the mangrove/MSM tranche
-by manifest rather than by completed folders alone. Preserve duplicate, partial,
-failed, and not-started rows. Also keep the local 1,428-candidate processing
-denominator separate from the source paper's 966 final medium/high-quality MAG
-denominator until the provenance reconciliation is complete.
+Before rebuilding the expanded MBAG atlas, consolidate each mangrove tranche by
+manifest rather than by completed folders alone. Preserve duplicate, partial,
+failed, and not-started rows. Keep the MSM 1,428-candidate processing
+denominator separate from the paper's 966 final medium/high-quality MAG
+denominator, and keep the Futian 3,156-ready payload denominator separate from
+the 3,404 phase-1 rMAG denominator and 248-row missing-payload gap register.
+Use `scripts/reports/refresh_atlas_lane_registry_status.sh` for the live
+readiness snapshot and `scripts/reports/build_methanet_3view_payload_freeze.py`
+before any report rebuild or external handoff.
 
 ## Source-Backed Tool Decisions
 

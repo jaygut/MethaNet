@@ -6,7 +6,7 @@ genomes are mechanistically methane-relevant, source-balanced, or robust to
 annotation missingness. This page defines the gated work needed to move from
 latent geometry to source-aware methane MRV features.
 
-Documentation refresh: 2026-06-20.
+Documentation refresh: 2026-06-25.
 
 The early gates below remain the conceptual contract, but much of the first
 implementation arc now exists as generated local artifacts:
@@ -26,16 +26,20 @@ sample mapping, abundance/read coverage, environmental covariates, uncertainty
 propagation, and flux/process validation.
 
 The same contract is now being extended beyond the original 662-row POC. The
-current molecular atlas has three lanes:
+current molecular atlas has four lanes:
 
 | Lane | Current state | Interpretation |
 | --- | --- | --- |
 | Rumen POC | 555 ESM2 proteomes; 518 MAG/bin-comparable multi-view units plus 37 assembly-context units | source reference lane for methane-system bridge hypotheses |
 | Wetland/MUCC POC | 107 ESM2/function/gLM2 MAG-bin units | target wetland POC lane |
-| Mangrove/MSM expansion | 1,428/1,428 ESM2 embeddings and 1,428/1,428 gLM2 units complete; functional annotations actively completing | broader blue-carbon target expansion, not yet a final sample-level MRV layer |
+| Mangrove/MSM expansion | 1,428/1,428 ESM2 embeddings and 1,428/1,428 gLM2 units complete; 1,427/1,428 functional MAGs complete | broader blue-carbon target expansion, not yet a final sample-level MRV layer |
+| Mangrove/Futian expansion | 3,156/3,156 ESM2 embeddings and 3,156/3,156 gLM2 units complete; 302/312 archaea functional MAGs complete at the 2026-06-25 15:39 UTC live refresh while the current external report freeze remains fixed at 300/312, bacteria queued | largest target-domain expansion, still functionally incomplete and not warehouse-consolidated |
 
 For dated counts, paths, and report freshness, use
 `docs/current_artifact_inventory.md`.
+For live lane status and report-freeze decisions, use
+`scripts/reports/refresh_atlas_lane_registry_status.sh` followed by
+`scripts/reports/build_methanet_3view_payload_freeze.py`.
 
 All heavy tools are disabled by default in `configs/pipeline.yaml` under
 `functional_metagenomics`. A gate can be marked complete only when its required
@@ -160,16 +164,19 @@ for the current POC denominator. The highest-priority remaining work is:
 
 1. Promote gene/marker/pathway-level evidence from the warehouse into richer
    bridge mechanism cards and graph nodes.
-2. Finish or deliberately snapshot the mangrove/MSM functional tranche, then
-   build a manifest-driven expansion warehouse that preserves complete, partial,
-   failed, duplicate, and not-started status rows.
+2. Finish or deliberately snapshot the mangrove/MSM and Futian functional
+   tranches, then build manifest-driven expansion warehouses that preserve
+   complete, partial, failed, duplicate, and not-started status rows.
 3. Reconcile local mangrove/MSM 1,428 processable candidates with the
    paper-reported 966 final medium/high-quality MAG denominator.
-4. Reconcile sample/MAG links and metadata resolution for sample-level rollups.
-5. Add abundance/read-coverage tables so MAG potential can become
+4. Preserve Futian's 3,156-ready payload denominator, 3,404 phase-1 rMAG
+   denominator, and 248-row missing-payload gap register as separate status
+   concepts.
+5. Reconcile sample/MAG links and metadata resolution for sample-level rollups.
+6. Add abundance/read-coverage tables so MAG potential can become
    community-capacity estimates.
-6. Join environmental covariates and measured/process methane validation.
-7. Add source-replicated cohorts and source-aware controls before claiming
+7. Join environmental covariates and measured/process methane validation.
+8. Add source-replicated cohorts and source-aware controls before claiming
    transfer beyond the current confounded rumen/MUCC design.
 
 The project should not claim final methane MRV readiness until Phases A-D plus

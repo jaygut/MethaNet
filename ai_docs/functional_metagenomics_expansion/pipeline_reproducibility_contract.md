@@ -1,11 +1,11 @@
 # Pipeline Reproducibility Contract
 
 Date: 2026-06-13
-Documentation refresh: 2026-06-20
+Documentation refresh: 2026-06-25
 
 Scope: MethaNet functional-metagenomics code, documentation, generated outputs,
 and downstream analytics for the 662-proteome POC cohort plus the
-mangrove/MSM expansion lane.
+mangrove/MSM and mangrove/Futian expansion lanes.
 
 ## Purpose
 
@@ -26,19 +26,23 @@ analysis scripts evolve.
    reconciled source-paper denominator is applied. The source paper's 966 final
    medium/high-quality MAG count must remain a separate denominator field, not a
    silent replacement.
-5. Cohort integration uses left joins onto the backbone. Failures, missing
+5. The mangrove/Futian phase-1 source-lane denominator is 3,404 rMAGs, with a
+   distinct 3,156-ready payload denominator and a 248-row gap register. These
+   denominators must remain visible until missing payloads and depth-resolved
+   sample mapping are reconciled.
+6. Cohort integration uses left joins onto the backbone. Failures, missing
    annotations, and unresolved metadata become explicit status fields.
-6. Per-MAG run folders are evidence bundles. The cohort warehouse is a derived,
+7. Per-MAG run folders are evidence bundles. The cohort warehouse is a derived,
    regenerable analytical layer.
-7. Every cohort table must preserve `cohort_run_id`, `run_id`, `proteome_id`,
+8. Every cohort table must preserve `cohort_run_id`, `run_id`, `proteome_id`,
    `mag_id`, and `source_tool` unless the table is explicitly outside the
    functional atlas model.
-8. Missing pathway evidence must never be interpreted without MAG QC and
+9. Missing pathway evidence must never be interpreted without MAG QC and
    annotation coverage.
-9. MAG-level functional potential must not be described as sample-level ecology
+10. MAG-level functional potential must not be described as sample-level ecology
    unless sample/metagenome metadata and abundance or coverage weights are
    joined.
-10. Current source design does not support source-independent methane MRV
+11. Current source design does not support source-independent methane MRV
    transfer claims without additional source-aware validation.
 
 ## Versioned Versus Generated Artifacts
@@ -66,6 +70,14 @@ Every production or calibration run should be reconstructable from:
 - cohort-level `cohort_table_manifest.tsv`,
 - cohort-level `validation_gates.tsv`, and
 - the final warehouse/report generation command.
+
+Every mixed-lane MBAG report should additionally record:
+
+- the `configs/methanet_atlas_lanes.tsv` revision used;
+- the lane-registry status JSON/TSV generated immediately before reporting;
+- the three-view freeze manifest and `freeze_decision.json` when a release or
+  external handoff snapshot is being made;
+- the explicit policy for partial, failed, duplicate, not-started, and gap rows.
 
 If any of these are absent, the run can still be useful, but it is not fully
 reproducible until the gap is documented.
@@ -123,8 +135,8 @@ Before committing pipeline changes:
 4. Confirm claim boundaries are explicit for MAG-level, sample-level, and
    transfer-learning interpretations.
 5. Confirm lane and denominator labels are explicit for POC MAG-bin, POC
-   assembly-context, mangrove/MSM local archive, and any published-quality
-   denominator.
+   assembly-context, mangrove/MSM local archive, mangrove/Futian source-lane
+   and ready-payload counts, and any published-quality denominator.
 6. Run only safe static checks while production jobs are active. Do not submit,
    cancel, requeue, prune, or consolidate active outputs unless that is the
    explicit task.
@@ -136,7 +148,7 @@ Allowed now:
 > MethaNet is building a source-audited functional atlas that links ESM2 latent
 > bridge candidates to independent MAG quality, taxonomy, methane-cycle,
 > sulfur-cycle, CAZyme, metabolic-trait, and genomic-context evidence across
-> rumen, wetland/MUCC, and mangrove/MSM molecular lanes.
+> rumen, wetland/MUCC, mangrove/MSM, and mangrove/Futian molecular lanes.
 
 Not allowed yet:
 

@@ -1,10 +1,10 @@
 # MethaNet Functional-Metagenomics Expansion Package
 
 Date: 2026-06-13
-Documentation refresh: 2026-06-24
+Documentation refresh: 2026-06-25
 Scope: Blue Catalyst/MethaNet functional expansion from the 662-genome rumen +
-wetland/MUCC POC into a broader three-lane molecular atlas spanning rumen,
-wetland/MUCC, and mangrove/MSM MAG/proteome evidence.
+wetland/MUCC POC into a broader multi-lane molecular atlas spanning rumen,
+wetland/MUCC, mangrove/MSM, and mangrove/Futian MAG/proteome evidence.
 
 ## Purpose
 
@@ -20,7 +20,7 @@ into a stronger, fundable platform claim:
 
 ## Current Implemented Arc And Artifact State
 
-As of the 2026-06-20 documentation refresh, this folder is no longer only a planning package. The repository now contains an implemented local arc:
+By the 2026-06-20 documentation refresh, this folder was no longer only a planning package. As of the 2026-06-25 refresh, the same architecture is being extended across the MSM and Futian mangrove lanes:
 
 1. `embedded_662_proteome_id_crosswalk.tsv` remains the 662-proteome ESM2 backbone.
 2. Unit-scope manifests split that backbone into 625 MAG/bin-comparable units and 37 assembly-context rumen no-bin units.
@@ -57,23 +57,43 @@ results/attestation/mmag_mvp_20260617/
 
 It preserves 662 MAG/proteome nodes, separates 625 MAG-bin units from 37 assembly-context units, links every evidence atom to an artifact, and explicitly blocks sample-level methane risk, final A-E MRV tiers, measured flux, and carbon-credit claims.
 
-## Current Three-Lane Status
+## Current Multi-Lane Status
 
 The functional expansion is no longer a single POC denominator. Current local
-work should be interpreted as three related but distinct evidence lanes:
+work should be interpreted as related but distinct evidence lanes:
 
-| Lane | Status at 2026-06-24 documentation refresh | Operational meaning |
+| Lane | Status at 2026-06-25 documentation refresh | Operational meaning |
 | --- | --- | --- |
 | Rumen POC | 555 ESM2 proteomes; 518 MAG/bin-comparable units in the completed POC functional/gLM2 layer; 37 assembly-context rumen units quarantined from MAG-bin tables | source reference lane for methane-system molecular neighborhoods and cross-domain bridge hypotheses |
 | Wetland/MUCC POC | 107 ESM2 proteomes; 107 completed functional MAG/bin outputs; 107 gLM2 units | target wetland POC lane for MBAG bridge-candidate evidence |
-| Mangrove/MSM expansion | 1,428 ESM2 proteome embeddings complete; 1,428 gLM2 units complete; 1,225/1,428 functional MAGs complete at the 2026-06-22 snapshot (filesystem audit 2026-06-24 shows ~1,390 COMPLETE sentinels; refresh lane registry for authoritative deduplicated count) | broader blue-carbon target expansion; rebuild the expanded atlas after run completion or after an explicitly dated interim snapshot |
-| Mangrove/Futian 2026 expansion | 3,404 dereplicated rMAGs (3,156 ready payload rows + 248 gap rows); 1,425/3,156 ESM2 complete; 3,156 gLM2 complete; 114/312 archaea functional MAGs complete at the 2026-06-22 snapshot (filesystem audit 2026-06-24 shows ~220 COMPLETE sentinels for archaea) | newest blue-carbon mangrove target lane; archaea-only functional coverage so far; no consolidated warehouse yet |
+| Mangrove/MSM expansion | 1,428 ESM2 proteome embeddings complete; 1,428 gLM2 units complete; 1,427/1,428 functional MAGs complete at the 2026-06-25 snapshot | broader blue-carbon target expansion; one partial unit remains before final consolidation |
+| Mangrove/Futian 2026 expansion | 3,404 dereplicated rMAGs (3,156 ready payload rows + 248 gap rows); 3,156/3,156 ESM2 complete; 3,156/3,156 gLM2 complete; live functional status is 302/312 archaea complete, 2 running/partial, 8 pending/not-started, 0 manifest-scoped failed rows at the 2026-06-25 15:39 UTC refresh; 2,844 bacteria queued | newest blue-carbon mangrove target lane; archaea-only functional coverage so far; no consolidated warehouse yet |
 
-The latest expanded HTML atlas at
-`results/reports/mbag_nextgen_molecular_niche_atlas_20260619_113355/report.html`
-is a dated report. It was generated before the latest mangrove/MSM functional
-completion snapshot and should be rebuilt before being described as the current
-full-payload atlas.
+The latest expanded HTML atlas is:
+
+```text
+results/reports/mbag_nextgen_molecular_niche_atlas_20260625_release_freeze_145509_bridge_v4/report.html
+```
+
+It is backed by:
+
+```text
+results/reports/methanet_3view_payload_freeze_20260625_145509/
+```
+
+This freeze contains 2,352 release-required tri-view MAG/proteome units
+(625 POC core + 1,427 MSM + 300 Futian archaea), explicitly preserves one
+release-excluded MSM partial unit, and retains 248 Futian source-lane gap rows
+outside the ready-payload denominator. Live production has moved beyond that
+freeze to 2,354 tri-view units as of the 2026-06-25 15:39 UTC registry refresh,
+but external reports should remain tied to their dated freeze manifests. The
+`bridge_v4` render keeps that denominator fixed while improving the molecular
+niche-space bridge view with all embedding-bearing units, case-study halos,
+nearest-POC evidence links, and diffusion/UMAP/t-SNE/PCA sensitivity views.
+Future rebuilds should continue to use `configs/methanet_atlas_lanes.tsv` and a
+dated freeze manifest from
+`scripts/reports/build_methanet_3view_payload_freeze.py`, not ad hoc folder
+discovery.
 
 ## Contents
 
@@ -105,6 +125,9 @@ full-payload atlas.
 
 - [final_mrv_risk_scoring_roadmap.md](final_mrv_risk_scoring_roadmap.md)
   Strategic maturity ladder from current MBAG/MAG-level molecular screening to sample/project-level MRV risk scoring, including required metadata, abundance, environmental, flux-validation, uncertainty, and claim-boundary gates.
+
+- [three_view_freeze_and_nextgen_report_plan.md](three_view_freeze_and_nextgen_report_plan.md)
+  Current registry/freeze workflow for building the next expanded MBAG atlas over POC, MSM, and Futian three-view payloads without losing pending, partial, gap, or provenance rows.
 
 - [`../../docs/current_artifact_inventory.md`](../../docs/current_artifact_inventory.md)
   Current source-controlled inventory of datasets, databases, generated warehouses, metadata outputs, attestation graph artifacts, and the docs that must stay in sync.

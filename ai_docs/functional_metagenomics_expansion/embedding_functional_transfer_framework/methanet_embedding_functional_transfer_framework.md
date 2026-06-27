@@ -4,13 +4,18 @@ Date: 2026-06-13
 
 Scope: design framework for integrating the 662-proteome geometry-aware ESM2 POC with the Apollo-3 functional-genomics atlas in support of MethaNet bridge-candidate interpretation and methane permanence-risk MRV product development.
 
-Status note, 2026-06-20: this document remains the conceptual MBAG framework,
+Status note, 2026-06-25: this document remains the conceptual MBAG framework,
 but its original operational counts are historical. The current local system has
 a completed 625-unit POC MAG-bin multi-view layer, complete mangrove/MSM ESM2
-and gLM2 payloads over 1,428 local candidates, and an active mangrove/MSM
-functional tranche that was 1,002/1,428 complete at the latest documentation
-snapshot. Use `docs/current_artifact_inventory.md` for current payload counts
-and report freshness before making partner-facing statements.
+and gLM2 payloads over 1,428 local candidates, a near-complete mangrove/MSM
+functional tranche at 1,427/1,428, complete Futian ESM2 and gLM2 payloads over
+3,156 ready MAG/proteome units, and an active Futian functional tranche at
+300/312 Archaea while bacteria shards remain queued at the 2026-06-25 14:55 UTC
+release freeze. Use
+`docs/current_artifact_inventory.md` and
+`ai_docs/functional_metagenomics_expansion/three_view_freeze_and_nextgen_report_plan.md`
+for current payload counts, report-freeze rules, and report freshness before
+making partner-facing statements.
 
 This is a strategy/design artifact. It does not submit jobs, alter production outputs, or regenerate cohort warehouses.
 

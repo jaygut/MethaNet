@@ -1,12 +1,13 @@
 # Data Aggregation Strategy
 
 Date: 2026-06-12
-Documentation refresh: 2026-06-20
+Documentation refresh: 2026-06-25
 
 Scope: integrative analysis for the 662-genome MethaNet POC cohort, combining
 geometry-aware ESM2 protein embeddings with MAG-level functional genomics from
 the Apollo-3 annotation stack. The same design is now extended as a multi-lane
-union across rumen, wetland/MUCC, and mangrove/MSM molecular evidence.
+union across rumen, wetland/MUCC, mangrove/MSM, and mangrove/Futian molecular
+evidence.
 
 ## Purpose
 
@@ -71,32 +72,42 @@ mucc__PPR_1022_P7D_M_E_concat_coassembly_mesocosms_megahit_bin.197
 
 The original 662-row POC remains the source-audited backbone for rumen +
 wetland/MUCC bridge-candidate interpretation. The expanded MBAG atlas now also
-needs a second target-domain lane for mangrove/MSM MAGs.
+needs explicit target-domain lanes for mangrove/MSM and mangrove/Futian MAGs.
 
 | Lane | Backbone rule | Current molecular layers | Special caveat |
 | --- | --- | --- | --- |
 | POC rumen + wetland/MUCC | 662-row ESM2 backbone, with 625 MAG/bin-comparable units and 37 assembly-context units | ESM2, functional warehouse, gLM2, metadata, attestation graph | source and ecosystem are still confounded; assembly-context units are not MAG-bin feature rows |
-| Mangrove/MSM expansion | 1,428 local candidate manifest under `data/external/msm_china_2025/` | ESM2 1,428/1,428, gLM2 1,428/1,428, functional tranche in progress | local 1,428 candidates must be reconciled to the paper-reported 966 final medium/high-quality MAG denominator |
-| Multi-view atlas union | explicit left join across lane-specific backbones | ESM2 + functional + gLM2 + QC/taxonomy + provenance + report features | never infer sample-level risk without MAG-to-sample mapping, abundance/read coverage, environmental covariates, and validation |
+| Mangrove/MSM expansion | 1,428 local candidate manifest under `data/external/msm_china_2025/` | ESM2 1,428/1,428, gLM2 1,428/1,428, functional tranche 1,427/1,428 complete at the 2026-06-25 snapshot | local 1,428 candidates must be reconciled to the paper-reported 966 final medium/high-quality MAG denominator before sample-level rollups |
+| Mangrove/Futian 2026 expansion | 3,404 phase-1 rMAG source-lane manifest under `data/external/futian_mangrove_2026_qi/`, with 3,156 ready payload rows and 248 gap rows | ESM2 3,156/3,156, gLM2 3,156/3,156, functional annotation active: 302/312 archaea complete at the 2026-06-25 15:39 UTC live refresh while the current external report freeze remains fixed at 300/312, and bacteria shards queued | site/month/habitat metadata are strong, but depth-resolved MAG-to-sample assignment, abundance/read coverage, and flux/process validation remain pending |
+| Multi-view atlas union | explicit left join across lane-specific backbones; current release freezes should be generated from `scripts/reports/build_methanet_3view_payload_freeze.py` | ESM2 + functional + gLM2 + QC/taxonomy + provenance + report features | never infer sample-level risk without MAG-to-sample mapping, abundance/read coverage, environmental covariates, and validation |
 
 Recommended union identity fields:
 
 ```text
 atlas_unit_id
 proteome_id
-lane                         # poc_rumen, poc_wetland_mucc, mangrove_msm
+lane_id                      # poc_core, msm_china_2025, futian_mangrove_2026_qi
+lane                         # poc_rumen, poc_wetland_mucc, mangrove_msm, mangrove_futian
 source_project
 source_dataset
 mag_id
 unit_scope                   # mag_bin, assembly_context, candidate_mag
 local_archive_denominator
 published_quality_denominator
+ready_payload_denominator
+gap_payload_denominator
 esm2_status
 functional_status
 glm2_status
 metadata_resolution
 sample_rollup_status
 claim_status
+```
+
+The operational uniqueness key for the expanded atlas is:
+
+```text
+lane_id + proteome_id
 ```
 
 All high-level reports should expose `lane`, `unit_scope`, `functional_status`,
