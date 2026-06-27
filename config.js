@@ -110,13 +110,13 @@ window.EB = (function () {
   /* ---- non-negotiable claim boundaries (visible, not buried) ---- */
   const claims = {
     footer:
-      "Current results are genome-level molecular screening and monitoring prioritization. " +
+      "Current results are genome-level molecular screening, candidate triage, and monitoring prioritization. " +
       "No measured methane flux, final risk scores, A–E tiers, or carbon-credit approval are claimed " +
       "from the molecular map alone. A–E risk tiers are target product vocabulary, not yet calibrated. " +
       "Snapshot " + num.snapshot + ".",
-    short: "Molecular screening, not calibrated MRV. A–E tiers are target vocabulary, not yet calibrated.",
+    short: "Molecular screening and candidate triage, not calibrated MRV. A–E tiers are target vocabulary.",
     boundaries: [
-      "Molecular screening and monitoring prioritization, at the genome level.",
+      "Molecular screening, candidate triage, and monitoring prioritization, at the genome level.",
       "A–E risk tiers are TARGET product vocabulary, explicitly not yet calibrated.",
       "No measured flux, final MRV scores, or carbon-credit approval from the map alone.",
       "Reference-to-target signals stay provisional until source-balanced validation exists.",
@@ -142,11 +142,11 @@ window.EB = (function () {
 
   /* ---- attestation evidence chain (Scene 5): one claim, traced ---- */
   const attestation = {
-    claimText: "This genome carries molecular evidence consistent with methane-related functional potential.",
+    claimText: "This genome carries molecular evidence consistent with a methane-relevant review hypothesis.",
     forbidden: "“This genome emits methane.”",
     chain: [
       { stage: "Genome",            detail: "One genome, quality-controlled and taxonomically placed", node: "genome" },
-      { stage: "Markers",           detail: "Methane-production and oxidation marker genes detected", node: "marker genes" },
+      { stage: "Markers",           detail: "Methane-related marker evidence is screened and linked", node: "marker genes" },
       { stage: "Embedding neighbors", detail: "Nearest neighbors in molecular space land on known methanogens", node: "embedding neighbor" },
       { stage: "Quality gate",      detail: "Completeness, contamination, and annotation-coverage checks", node: "validation gate" },
       { stage: "Claim boundary",    detail: "Allowed wording, blocked wording, and the path to upgrade it", node: "claim" },
@@ -156,7 +156,7 @@ window.EB = (function () {
 
   /* ---- Scene 7 milestones ---- */
   const timeline = [
-    { phase: "Now",   label: "Molecular atlas", detail: "5,209 genomes mapped; 2,508 wetland genomes queryable in the warehouse." },
+    { phase: "Now",   label: "Molecular atlas", detail: "5,209 genomes mapped; 2,508 wetland genomes queryable as the next warehouse-backed expansion." },
     { phase: "Field", label: "Cispatá Bay validation", detail: "Colombian Caribbean mangrove · paired methane-flux sampling." },
     { phase: "Pair",  label: "Paired data", detail: "Target: pair molecular evidence with field methane flux across seasons and habitats." },
     { phase: "Model", label: "Calibrated methane risk", detail: "Holdout-validated risk distribution; A–E tiers earn their thresholds." },
@@ -182,22 +182,22 @@ window.EB = (function () {
     {
       id: "insight", n: 3, label: "03 · The Insight",
       kicker: "The molecular map",
-      headline: "The map reveals the bridge genomes.",
-      copy: "We place every genome in a learned map of its proteins. Reference communities separate into basins, and the bridge genomes appear: the ones whose molecular signatures carry methane knowledge from one ecosystem to the next.",
+      headline: "The map turns bridge candidates into reviewable hypotheses.",
+      copy: "We place every genome in a learned map of its proteins. Reference communities separate into basins, and bridge candidates appear: genomes whose molecular signatures make cross-ecosystem methane hypotheses reviewable.",
       data: "real-coords",
     },
     {
       id: "atlas", n: 4, label: "04 · The Atlas",
       kicker: "A source-audited atlas",
-      headline: "2,360 genomes fully mapped. 2,508 more in the warehouse.",
-      copy: "The map now spans rumen, wetland, and two mangrove systems. A deep wetland archive adds 2,508 more genomes, annotated, source-audited, and ready for the next map refresh.",
+      headline: "2,360 tri-view genomes. 2,508 more in the wetland warehouse.",
+      copy: "The live atlas spans rumen, wetland, and two mangrove systems. MUCC adds 2,508 source-audited wetland genomes as the warehouse-backed scaffold for the next manifold refresh.",
       data: "real-counts",
     },
     {
       id: "platform", n: 5, label: "05 · The Platform & the Moat",
       kicker: "EmergentBiome substrate",
       headline: "Every claim traces to its evidence.",
-      copy: "Embeddings, an attestation graph, and an agentic pipeline. MethaNet is the first application on a substrate we are building to generalize beyond methane.",
+      copy: "Embeddings, an attestation graph, and an agentic pipeline. MethaNet is the first product wedge on a substrate built to generalize beyond methane.",
       data: "real-schema",
     },
     {

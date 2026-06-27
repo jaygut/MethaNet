@@ -72,8 +72,9 @@
     // ask + factsheet
     document.getElementById("fsDate").textContent = EB.num.snapshot;
     document.getElementById("askBody").innerHTML =
-      "We have built the molecular layer: a source-audited, queryable map of <b>" + D.fmt(EB.num.embeddingBearingUnits) +
-      "</b> genomes across rumen, wetland, and two mangrove systems, with every claim traceable to raw evidence. " +
+      "We have built the molecular layer: <b>" + D.fmt(EB.num.embeddingBearingUnits) +
+      "</b> embedding-bearing genomes mapped across rumen, wetland, and two mangrove systems, plus <b>" +
+      D.fmt(EB.num.muccWarehouseGenomes) + "</b> source-audited wetland genomes queryable for the next expansion. " +
       "The pre-seed unlocks the next rung: field validation at Cispatá Bay, and the paired flux data that turns molecular screening into calibrated methane MRV.";
     const points = [
       "Field validation at Cispatá Bay (Colombian Caribbean mangrove, VM0033 context)",
@@ -89,7 +90,7 @@
       ["Mangrove · Futian 2026 (Qi et al.)", D.fmt(EB.num.futianRMAGs) + " genomes <span class='in-progress'>(in progress)</span>"],
       ["Genomes fully mapped", D.fmt(EB.num.triViewReady)],
       ["Genomes mapped (molecular space)", D.fmt(EB.num.embeddingBearingUnits)],
-      ["Wetland warehouse (annotated)", D.fmt(EB.num.muccWarehouseGenomes) + " genomes"],
+      ["Wetland warehouse scaffold", D.fmt(EB.num.muccWarehouseGenomes) + " genomes"],
       ["Model views per genome", "proteome + genomic-context embeddings, plus function"],
       ["Cross-ecosystem bridge links", D.fmt(EB.num.bridgeEdges)],
       ["Pipeline speed", "&lt;" + EB.num.pipelineDays + " days, vs months of manual analysis"],
