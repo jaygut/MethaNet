@@ -230,7 +230,7 @@ window.EB = (function () {
     report: "report/",                 // stable alias on GitHub Pages → current freeze
     reportName: "MethaNet Molecular Niche Atlas (full scientific report)",
     reportDate: "2026-06-29",
-    siteUrl: "https://jaygut.github.io/MethaNet/",
+    siteUrl: "https://emergentbiome.earth/",
     contactEmail: "jg@graphoflife.com",
   };
 
