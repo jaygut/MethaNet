@@ -14,7 +14,7 @@
   window.EBScenes = window.EBScenes || {};
 
   // scene order incl. hero intro
-  const ORDER = ["hero", "stakes", "blindspot", "insight", "atlas", "platform", "ladder", "path"];
+  const ORDER = ["hero", "stakes", "blindspot", "insight", "surveyor", "atlas", "platform", "ladder", "path"];
 
   // ---------- copy + chrome injection ----------
   function el(html) { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstChild; }
@@ -23,6 +23,7 @@
     stakes: [["~" + EB.num.methaneGWP + "×", "CH₄ vs CO₂ · 100-year warming"]],
     blindspot: [["≈ 0", "sites with paired flux + molecular data today", true], [EB.num.pairedFluxTargetLo + "–" + EB.num.pairedFluxTargetHi, "validation target"]],
     insight: [[D.fmt(EB.num.embeddingBearingUnits), "genomes mapped", true], [EB.num.bridgeEdges, "bridge links"], ["R²=" + EB.num.permanovaR2, "ecosystem separation"]],
+    surveyor: [[D.fmt(EB.num.bridgeEdges), "molecular matches surveyed", true], ["≈ 0", "field assays run today", false]],
     atlas: [[D.fmt(EB.num.triViewReady), "genomes fully mapped", true], [D.fmt(EB.num.embeddingBearingUnits), "mapped in molecular space"], [D.fmt(EB.num.warehouseReach), "genomes of evidence in all"]],
     platform: [[D.fmt(EB.num.evidenceAtoms), "evidence atoms", true], [D.fmt(EB.num.nearEsm2Edges), "embedding-neighbor links"]],
     ladder: [["rung 0", "lit · molecular screening", true], ["rung 1", "underway · sample metadata"]],
