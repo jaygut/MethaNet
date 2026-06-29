@@ -5,8 +5,8 @@ This file is the reconciliation between the build spec's *expected* numbers and 
 here traces back to the repo artifacts cited in each row. Read this before editing
 `config.js`.
 
-- **Snapshot date:** 2026-06-26
-- **Authoritative live snapshot:** `2026-06-26 03:11 UTC` (lane registry / per-MAG sentinels)
+- **Snapshot date:** 2026-06-27
+- **Authoritative live snapshot:** `2026-06-27 16:37 UTC` (lane registry / per-MAG sentinels)
 - **Report-freeze snapshot:** `2026-06-25 14:55:09 UTC` (the dated freeze the external HTML atlas is built from)
 - **Primary sources digested:** `README.md`, `AGENTS.md`, `docs/current_artifact_inventory.md`,
   `ai_docs/functional_metagenomics_expansion/final_mrv_risk_scoring_roadmap.md`,
@@ -27,8 +27,8 @@ here traces back to the repo artifacts cited in each row. Read this before editi
 | Mangrove / MSM China 2025 candidates | 1,428 | **1,428** ✓ | ESM2 1,428/1,428; gLM2 1,428/1,428; functional **1,427/1,428** (99.93%, 1 partial) at snapshot |
 | Mangrove / Futian 2026 (Qi et al.) rMAGs | 3,404 | **3,404** ✓ | Phase-1 dereplicated at 99% ANI. 3,156 ready payload + 248 explicit gap rows |
 | Futian ESM2 / gLM2 | complete | **3,156 / 3,156 both** ✓ | Across four shards |
-| Futian functional (archaea-first) | in progress | **308 live**; bacteria **0/2,844 queued** | IN PROGRESS. Registry summary generated 2026-06-26 |
-| Atlas units mapped | 2,317 | **2,360 live** ⚠️ **UPDATED** | 625 POC + 1,427 MSM + **308** Futian |
+| Futian functional (archaea-first) | in progress | **312/312 archaea complete**; bacteria **0/2,844 queued** | IN PROGRESS. Registry summary generated 2026-06-27 |
+| Atlas units mapped | 2,317 | **2,364 live** ⚠️ **UPDATED** | 625 POC + 1,427 MSM + **312** Futian |
 | Scaling target | ~5,200 | **5,209 embedding-bearing units** ✓ | 625 + 1,428 + 3,156. (5,457 plotted incl. 248 gap rows) |
 | MUCC v1 OWC wetland warehouse | not in original page | **2,508 wetland genomes** ✓ | Queryable source-scaffold warehouse; 1,948 genomes with expression support across 133 samples; not yet plotted in the manifold |
 | Foundation models | ESM2 + gLM2 | **ESM2 (650M, `esm2_t33_650M_UR50D`) + gLM2 (650M)** ✓ | |
@@ -38,7 +38,7 @@ here traces back to the repo artifacts cited in each row. Read this before editi
 | Field validation site | Cispatá Bay | **Cispatá Bay, Colombian Caribbean mangrove** ✓ | Conservation International context; VM0033 methodology family |
 
 **The single most important update: the landing page now separates what is mapped from what is
-newly queryable.** `config.js` uses 2,360 as the live tri-view atlas count and calls out the new
+newly queryable.** `config.js` uses 2,364 as the live tri-view atlas count and calls out the new
 2,508-genome MUCC wetland warehouse as the next source-scaffold expansion, without claiming those
 genomes are already plotted in the manifold.
 
@@ -65,7 +65,7 @@ genomes are already plotted in the manifold.
 | `rumen` (POC) | source reference (methane-system neighborhoods) | 518 MAG/bin in POC denominator (555 ESM2 in 662 backbone) | complete, source-confounded |
 | `wetland` / MUCC (POC) | target-domain wetland | 107 | complete (MAG-level) |
 | `mangrove_msm` (MSM China 2025) | blue-carbon target expansion | 1,428 | ESM2+gLM2 complete; functional 1,427/1,428 |
-| `mangrove_futian` (Futian 2026, Qi et al.) | larger time/depth/habitat mangrove target | 3,156 ready (+248 gap) | ESM2+gLM2 complete; archaea functional 308/312 at the live registry snapshot; **bacteria queued** |
+| `mangrove_futian` (Futian 2026, Qi et al.) | larger time/depth/habitat mangrove target | 3,156 ready (+248 gap) | ESM2+gLM2 complete; archaea functional 312/312 complete at the live registry snapshot; **bacteria queued** |
 
 > A fifth lane exists in the registry — `mucc_v1_owc_wetland` (MUCC v1 OWC, 2,508 local FASTA
 > entries versus the published/deposit 2,502 HQ/MQ headline denominator). It now has a queryable
@@ -90,9 +90,11 @@ genomes are already plotted in the manifold.
 3. From the molecular atlas alone, MethaNet does **not** claim: measured methane flux · final
    sample/project MRV risk scores · final A–E tiers · source-independent rumen→wetland transfer
    proof · carbon-credit approval.
-4. Maturity ladder: **Level 0 (MAG molecular screening) = active/current.** Calibrated
-   probabilistic MRV risk (Level 5) requires sample mapping → abundance → environmental covariates
-   → flux/process validation → calibration. We are at rung 0 and say so.
+4. Maturity ladder: **Level 0 (molecular screening) = complete/lit; Level 1 (sample identity &
+   metadata) = in progress** (sample/site/season metadata recovered for the mangrove lanes — 147
+   sediment samples + 71 environmental rows — but full genome-to-sample mapping is not done).
+   Calibrated probabilistic MRV risk (Level 5) still requires abundance → environmental covariates
+   → flux/process validation → calibration. We do not claim anything beyond rung 1, and say so.
 
 Maturity ladder (roadmap Levels 0–6; page shows rungs 0–5 with Level 6 as the registry horizon):
 `0 MAG molecular screening (LIT NOW)` → `1 sample identity/metadata` → `2 abundance/community
@@ -108,8 +110,18 @@ The hero uses the **diffusion map** as its 2D backbone (the report's primary nic
 because the bridge structure reads most clearly there: the gold "nearest-reference" links fan from
 the mangrove line back to specific rumen reference genomes.
 
-`tools/export_atlas.py` reads the freeze-backed niche projection
-`results/reports/mbag_nextgen_molecular_niche_atlas_20260625_release_freeze_145509_bridge_v4/assets/data/niche.json`
+**Interim recompute (2026-06-29):** the Atlas and report were regenerated end-to-end from the
+current warehouse (Futian archaea 312/312) so the landing, `atlas.json`, and `report.html` all read
+the same **2,364**. Pipeline: `build_methanet_3view_payload_freeze.py` (3-lane registry, 1 MSM
+exclusion) → freeze `methanet_3view_payload_freeze_20260629_195927` (2,364) →
+`build_mbag_nextgen_molecular_niche_atlas.py` → report
+`mbag_nextgen_molecular_niche_atlas_20260629_interim_2364`. The diffusion geometry is **byte-identical**
+to the prior export (same embeddings → deterministic diffusion map; max per-point L1 drift 0.0); only
+the newly-functional archaea gained functional attributes and the tri-view count rose 2,352 → 2,364.
+The final Atlas will be re-run once the full warehouse (incl. Futian bacteria) completes.
+
+`tools/export_atlas.py` reads the recomputed niche projection
+`results/reports/mbag_nextgen_molecular_niche_atlas_20260629_interim_2364/assets/data/niche.json`
 and writes `data/atlas.json`:
 
 - **5,209 real embedding-bearing points** (625 POC + 1,428 MSM + 3,156 Futian; 248 non-embedded
@@ -143,14 +155,14 @@ linked *report* remains the technical deep-dive.
 | 1 — The Stakes | CO₂ settling / CH₄ eroding a net-benefit bar | **Illustrative** (concept; CH₄ GWP≈30× CO₂/100yr is real, labeled) |
 | 2 — The Blind Spot | grey unknown-genome field; scan finds nothing | **Illustrative** scale; the honest present state shown is **≈ 0** sites with paired flux + molecular data today (no fabricated "23") |
 | 3 — The Insight (HERO) | diffusion-map manifold; gold bridge links | **REAL coordinates** (`atlas.json`, diffusion map; PHATE/PCA also exported) + **real 372 bridge links** |
-| 4 — The Atlas | particles pour in; counters 625→2,360; MUCC wetland warehouse callout | **Real counts** (mapped lanes plus MUCC warehouse); particle motion stylized |
+| 4 — The Atlas | particles pour in; counters 625→2,364; MUCC wetland warehouse callout | **Real counts** (mapped lanes plus MUCC warehouse); particle motion stylized |
 | 5 — Platform & Moat | attestation graph; one claim's evidence chain | **Real schema + counts** (MMAG graph nodes/edges/claims/gaps); future slots = honest empty optionality |
 | 6 — Honest Ladder | 6-rung maturity gauge; rung 0 lit | **Real** (MRV roadmap Levels 0–5; rung 0 = current) |
 | 7 — Path & Ask | Cispatá Bay pin; milestones; <4-day pipeline | **Real** geography + roadmap milestones + pipeline speed; the ask is a business statement |
 
 **One-paragraph honesty summary:** The hero (Scene 3) is driven entirely by real diffusion-map
 coordinates of the proteome embeddings and the real 372 bridge links exported in `data/atlas.json`;
-nothing in it is invented. Scenes 4–7 are built from verified repository counts (2,360 fully-mapped
+nothing in it is invented. Scenes 4–7 are built from verified repository counts (2,364 fully-mapped
 genomes, 5,209 mapped, 2,508 wetland-warehouse genomes), the real molecular-attestation graph schema,
 and the published MRV maturity ladder, with generative motion used to *present* (not fabricate) those
 quantities. Scenes 1–2 are deliberately illustrative and badged so: the climate concept, and the
@@ -158,4 +170,4 @@ measurement gap whose honest present state is **≈ 0** sites with paired methan
 (the earlier "23" was a curation target, not a measurement, and has been removed). The 80–100 paired
 samples figure appears only as a stated **target**. Every A–E risk claim is marked
 TARGET/not-yet-calibrated, and a persistent footer plus Scene 6 state the molecular-screening claim
-boundary with the 2026-06-26 snapshot date.
+boundary with the 2026-06-27 snapshot date.

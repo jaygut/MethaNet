@@ -19,7 +19,7 @@ set -euo pipefail
 CMD="${1:-build}"
 HERE="$(cd "$(dirname "$0")/.." && pwd)"          # web/emergentbiome-methanet
 REPO="$(cd "$HERE/../.." && pwd)"                  # repo root
-DEFAULT_REPORT="$REPO/results/reports/mbag_nextgen_molecular_niche_atlas_20260625_release_freeze_145509_bridge_v4"
+DEFAULT_REPORT="$REPO/results/reports/mbag_nextgen_molecular_niche_atlas_20260629_interim_2364"
 REPORT="${2:-$DEFAULT_REPORT}"
 [[ "$REPORT" == --* ]] && REPORT="$DEFAULT_REPORT"   # allow `deploy --push`
 OUT="$HERE/_site"
@@ -36,6 +36,10 @@ build() {
     cp -R "$HERE/$item" "$OUT/"
   done
   touch "$OUT/.nojekyll"
+
+  # --- custom domain: write CNAME from the source file if present (keeps GitHub Pages
+  #     custom-domain binding across republishes; harmless no-op when absent) ---
+  if [[ -f "$HERE/CNAME" ]]; then cp "$HERE/CNAME" "$OUT/CNAME"; echo "    CNAME   : $(cat "$HERE/CNAME")"; fi
 
   # --- report → /report/ (render-complete: exactly what report.html loads) ---
   mkdir -p "$OUT/report/assets/js" "$OUT/report/assets/data" "$OUT/report/assets/figures"
@@ -67,9 +71,10 @@ deploy() {
   fi
   git -C "$WT" fetch origin gh-pages --quiet || true
   git -C "$WT" reset --hard origin/gh-pages --quiet   # base on the live site
-  # replace landing/report at root but PRESERVE dated report dirs + .git
+  # replace landing/report at root but PRESERVE dated report dirs, .git, and any
+  # existing CNAME (so a custom domain set via the GitHub UI is never wiped)
   ( cd "$WT" && find . -maxdepth 1 -mindepth 1 \
-      ! -name '.git' ! -name 'mbag_nextgen_molecular_niche_atlas_*' -exec rm -rf {} + )
+      ! -name '.git' ! -name 'CNAME' ! -name 'mbag_nextgen_molecular_niche_atlas_*' -exec rm -rf {} + )
   cp -R "$OUT"/. "$WT"/
   git -C "$WT" add -A
   if git -C "$WT" diff --cached --quiet; then
