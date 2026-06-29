@@ -114,3 +114,7 @@ Thumbs.db
 
 # Web build output (generated site; multi-MB bundles)
 web/emergentbiome-methanet/_site/
+
+# The landing page ships its own lib/ (p5 helpers); override the generic `lib/` ignore above
+!web/emergentbiome-methanet/lib/
+!web/emergentbiome-methanet/lib/**

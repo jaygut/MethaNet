@@ -40,11 +40,11 @@ from collections import Counter, OrderedDict
 REPO_ROOT_FROM_HERE = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 SOURCE_NICHE = os.path.join(
     REPO_ROOT_FROM_HERE,
-    "results/reports/mbag_nextgen_molecular_niche_atlas_20260625_release_freeze_145509_bridge_v4",
+    "results/reports/mbag_nextgen_molecular_niche_atlas_20260629_interim_2364",
     "assets/data/niche.json",
 )
 OUT_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data", "atlas.json"))
-SNAPSHOT = "2026-06-25"
+SNAPSHOT = "2026-06-29"
 
 ECO_FROM_PREFIX = {
     "rumen": "rumen",
@@ -130,12 +130,16 @@ def r(x, nd=4):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true", help="summarize only; do not write")
+    ap.add_argument("--niche", default=SOURCE_NICHE, help="path to a niche.json (defaults to the pinned current Atlas)")
+    ap.add_argument("--snapshot", default=SNAPSHOT, help="snapshot date stamped into meta")
     args = ap.parse_args()
+    src = args.niche
+    snap = args.snapshot
 
-    if not os.path.exists(SOURCE_NICHE):
-        sys.exit(f"ERROR: source niche.json not found:\n  {SOURCE_NICHE}")
+    if not os.path.exists(src):
+        sys.exit(f"ERROR: source niche.json not found:\n  {src}")
 
-    with open(SOURCE_NICHE) as fh:
+    with open(src) as fh:
         doc = json.load(fh)
 
     raw_nodes = doc["nodes"]
@@ -217,13 +221,13 @@ def main():
     out = OrderedDict([
         ("meta", OrderedDict([
             ("artifact", "EmergentBiome/MethaNet atlas — Phase 1 data export"),
-            ("source", os.path.relpath(SOURCE_NICHE, REPO_ROOT_FROM_HERE)),
+            ("source", os.path.relpath(src, REPO_ROOT_FROM_HERE)),
             ("option_used", "1 — DIFFUSION MAP 2D coordinates of the proteome embeddings (REAL); PHATE + PCA also exported as toggles"),
             ("primary_projection", "diffusion"),
             ("secondary_projections", ["phate", "pca"]),
             ("coord_transform", "diffusion: per-axis linear min-max (0.3/99.7 clip), faithful to the report fan; phate/pca: standardize + tanh"),
             ("projection_note", "The primary hero map is the diffusion map (built from the proteome-embedding cosine kNN affinity graph): rumen and wetland references form fans on the left, the mangrove expansion forms the line on the right, and the bridge links span between them. PHATE and PCA are exported as projection-sensitivity toggles."),
-            ("snapshot", SNAPSHOT),
+            ("snapshot", snap),
             ("n_points", len(points)),
             ("n_bridges", len(bridges)),
             ("n_case_study", sum(p["cs"] for p in points)),
