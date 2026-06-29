@@ -114,9 +114,9 @@
     setHref("contactCta", "mailto:" + EB.links.contactEmail);
     const note = document.getElementById("reportNote");
     if (note) note.innerHTML =
-      "The report is the full scientific narrative behind these numbers: molecular niche-space, bridge evidence, the attestation graph, and the sample-readiness ladder. It is a dated freeze at " +
-      D.fmt(EB.num.reportFreezeTriView) + " fully-mapped genomes (" + EB.links.reportDate + "); the live atlas above stands at " + D.fmt(EB.num.triViewReady) +
-      '. <a href="' + rep + '" target="_blank" rel="noopener">Open the interactive atlas ↗</a>';
+      "The report is the full scientific narrative behind these numbers: molecular niche-space, bridge evidence, the attestation graph, and the sample-readiness ladder. Recomputed " +
+      EB.links.reportDate + ", in sync with the live atlas at " + D.fmt(EB.num.triViewReady) + " fully-mapped genomes." +
+      ' <a href="' + rep + '" target="_blank" rel="noopener">Open the interactive atlas ↗</a>';
   }
 
   // ---------- scene lifecycle ----------

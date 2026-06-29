@@ -54,7 +54,7 @@ window.EB = (function () {
 
     triViewReady: 2364,              // live registry-backed (625 + 1427 + 312), 2026-06-27
     triViewReadyLive: 2364,
-    reportFreezeTriView: 2352,       // the published /report/ freeze (used 300 Futian archaea)
+    reportFreezeTriView: 2364,       // report recomputed in sync with live (312 Futian archaea)
     embeddingBearingUnits: 5209,     // 625 + 1428 + 3156  (scaling target ~5,200)
     plottedNodes: 5457,              // incl. 248 non-embedded gap rows
 
@@ -229,7 +229,7 @@ window.EB = (function () {
   const links = {
     report: "report/",                 // stable alias on GitHub Pages → current freeze
     reportName: "MethaNet Molecular Niche Atlas (full scientific report)",
-    reportDate: "2026-06-25",
+    reportDate: "2026-06-29",
     siteUrl: "https://jaygut.github.io/MethaNet/",
     contactEmail: "jg@graphoflife.com",
   };
