@@ -37,8 +37,8 @@ window.EB = (function () {
 
   /* ---- verified headline numbers (see DIGEST.md §1) ---- */
   const num = {
-    snapshot: "2026-06-26",
-    snapshotLiveUTC: "2026-06-26 03:11 UTC",
+    snapshot: "2026-06-27",
+    snapshotLiveUTC: "2026-06-27 16:37 UTC",
     snapshotFreezeUTC: "2026-06-25 14:55 UTC",
 
     calibrationCore: 625,            // rumen + wetland POC, consolidated warehouse
@@ -48,12 +48,13 @@ window.EB = (function () {
     futianReady: 3156,               // ready payload rows (embeddings complete)
     futianGapRows: 248,
     futianArchaeaTotal: 312,
-    futianArchaeaComplete: 308,
-    futianArchaeaCompleteLive: 308,
-    futianBacteriaQueued: 2844,
+    futianArchaeaComplete: 312,      // 312/312 archaea functional complete (2026-06-27 registry)
+    futianArchaeaCompleteLive: 312,
+    futianBacteriaQueued: 2844,      // 0/2,844 bacteria complete; queued behind archaea chain
 
-    triViewReady: 2360,              // current registry-backed (625 + 1427 + 308)
-    triViewReadyLive: 2360,
+    triViewReady: 2364,              // live registry-backed (625 + 1427 + 312), 2026-06-27
+    triViewReadyLive: 2364,
+    reportFreezeTriView: 2352,       // the published /report/ freeze (used 300 Futian archaea)
     embeddingBearingUnits: 5209,     // 625 + 1428 + 3156  (scaling target ~5,200)
     plottedNodes: 5457,              // incl. 248 non-embedded gap rows
 
@@ -62,6 +63,14 @@ window.EB = (function () {
     muccExpressionSamples: 133,
     muccCandidateCards: 100,
     warehouseReach: 7717,            // 5,209 mapped + 2,508 MUCC wetland warehouse genomes
+
+    // sample-metadata layer (the start of rung 1: linking genomes to real samples/sites)
+    msmSedimentSamples: 82,          // local sediment-sample rows
+    msmBiosampleRows: 71,            // exact BioSample environmental rows
+    futianSedimentSamples: 65,       // exact sediment-sample rows
+    futianSiteTimeKeys: 14,
+    futianSites: 2,
+    futianMonths: 8,
 
     bridgeEdges: 372,                // documented cross-domain k-NN bridge edges
     bridgeNodes: 136,
@@ -127,8 +136,8 @@ window.EB = (function () {
   const ladder = [
     { rung: 0, title: "Molecular screening", state: "lit",
       unlock: "Proteome embeddings, genomic context, functional annotation, quality control, and the attestation graph. Done now." },
-    { rung: 1, title: "Sample identity & metadata", state: "next",
-      unlock: "Map every genome to a physical sample, site, and project with provenance tiers." },
+    { rung: 1, title: "Sample identity & metadata", state: "progress",
+      unlock: "Underway: sample, site, and season metadata recovered for the mangrove lanes (147 sediment samples, 71 environmental rows). Full genome-to-sample mapping is next." },
     { rung: 2, title: "Abundance & community capacity", state: "dim",
       unlock: "Read coverage and relative abundance. Weight genome potential by who is actually there." },
     { rung: 3, title: "Environmental permissiveness", state: "dim",
@@ -189,7 +198,7 @@ window.EB = (function () {
     {
       id: "atlas", n: 4, label: "04 · The Atlas",
       kicker: "A source-audited atlas",
-      headline: "2,360 tri-view genomes. 2,508 more in the wetland warehouse.",
+      headline: "2,364 tri-view genomes. 2,508 more in the wetland warehouse.",
       copy: "The live atlas spans rumen, wetland, and two mangrove systems. MUCC adds 2,508 source-audited wetland genomes as the warehouse-backed scaffold for the next manifold refresh.",
       data: "real-counts",
     },

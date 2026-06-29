@@ -66,8 +66,8 @@
 
     function drawRung(r, i, a, tm) {
       if (a <= 0) return;
-      const lit = r.state === "lit", target = r.state === "target";
-      const col = lit ? EB.color.emergence : target ? EB.color.methaneA : EB.color.textMuted;
+      const lit = r.state === "lit", target = r.state === "target", prog = r.state === "progress";
+      const col = (lit || prog) ? EB.color.emergence : target ? EB.color.methaneA : EB.color.textMuted;
       // platform tick
       p.push();
       p.stroke(D.rgba(col, 0.5 * a)); p.strokeWeight(1);
@@ -75,7 +75,9 @@
       // node
       p.noStroke();
       if (lit) { p.push(); p.blendMode(p.ADD); D.glow(p, r.x, r.y, 4, col, a); p.pop(); }
-      p.fill(lit ? col : D.rgba(EB.color.bgBase, a)); p.stroke(D.rgba(col, (lit ? 1 : 0.7) * a)); p.strokeWeight(target ? 1.6 : 1.2);
+      else if (prog) { p.push(); p.blendMode(p.ADD); D.glow(p, r.x, r.y, 3, col, 0.45 * a); p.pop(); }
+      p.fill(lit ? col : prog ? D.rgba(col, 0.35 * a) : D.rgba(EB.color.bgBase, a));
+      p.stroke(D.rgba(col, (lit ? 1 : prog ? 0.9 : 0.7) * a)); p.strokeWeight(target ? 1.6 : 1.2);
       if (target) p.drawingContext.setLineDash([4, 3]);
       p.circle(r.x, r.y, target ? 18 : 13);
       p.drawingContext.setLineDash([]);
@@ -89,7 +91,7 @@
       p.textAlign(p.LEFT, above ? p.BOTTOM : p.TOP);
       const lx = r.x + 22;
       // state chip
-      const chip = lit ? "LIT · NOW" : target ? "TARGET" : i === 1 ? "NEXT" : "ROADMAP";
+      const chip = lit ? "LIT · NOW" : prog ? "IN PROGRESS" : target ? "TARGET" : "ROADMAP";
       p.fill(D.rgba(col, a)); p.textFont("JetBrains Mono"); p.textSize(8);
       p.text(chip, lx, above ? ly - 30 : ly);
       p.fill(D.rgba(EB.color.textPrimary, a)); p.textFont("Space Grotesk"); p.textStyle(p.BOLD); p.textSize(13);

@@ -23,9 +23,9 @@
     stakes: [["~" + EB.num.methaneGWP + "×", "CH₄ vs CO₂ · 100-year warming"]],
     blindspot: [["≈ 0", "sites with paired flux + molecular data today", true], [EB.num.pairedFluxTargetLo + "–" + EB.num.pairedFluxTargetHi, "validation target"]],
     insight: [[D.fmt(EB.num.embeddingBearingUnits), "genomes mapped", true], [EB.num.bridgeEdges, "bridge links"], ["R²=" + EB.num.permanovaR2, "ecosystem separation"]],
-    atlas: [[D.fmt(EB.num.triViewReady), "genomes fully mapped", true], [D.fmt(EB.num.muccWarehouseGenomes), "wetland genomes in warehouse"]],
+    atlas: [[D.fmt(EB.num.triViewReady), "genomes fully mapped", true], [D.fmt(EB.num.embeddingBearingUnits), "mapped in molecular space"], [D.fmt(EB.num.warehouseReach), "genomes of evidence in all"]],
     platform: [[D.fmt(EB.num.evidenceAtoms), "evidence atoms", true], [D.fmt(EB.num.nearEsm2Edges), "embedding-neighbor links"]],
-    ladder: [["0 / 5", "rung lit now", true], ["6", "rung horizon"]],
+    ladder: [["rung 0", "lit · molecular screening", true], ["rung 1", "underway · sample metadata"]],
     path: [["< " + EB.num.pipelineDays + " days", "raw sequences → report", true], ["months", "of manual analysis, before"]],
   };
 
@@ -75,6 +75,7 @@
       "We have built the molecular layer: <b>" + D.fmt(EB.num.embeddingBearingUnits) +
       "</b> embedding-bearing genomes mapped across rumen, wetland, and two mangrove systems, plus <b>" +
       D.fmt(EB.num.muccWarehouseGenomes) + "</b> source-audited wetland genomes queryable for the next expansion. " +
+      "We have begun linking those genomes to real samples, sites, and seasons. " +
       "The pre-seed unlocks the next rung: field validation at Cispatá Bay, and the paired flux data that turns molecular screening into calibrated methane MRV.";
     const points = [
       "Field validation at Cispatá Bay (Colombian Caribbean mangrove, VM0033 context)",
@@ -87,10 +88,12 @@
     const F = [
       ["Calibration core (rumen + wetland)", D.fmt(EB.num.calibrationCore) + " genomes"],
       ["Mangrove · MSM China 2025", D.fmt(EB.num.msmCandidates) + " genomes (" + D.fmt(EB.num.msmFunctionalComplete) + " annotated)"],
-      ["Mangrove · Futian 2026 (Qi et al.)", D.fmt(EB.num.futianRMAGs) + " genomes <span class='in-progress'>(in progress)</span>"],
-      ["Genomes fully mapped", D.fmt(EB.num.triViewReady)],
+      ["Mangrove · Futian 2026 (Qi et al.)", D.fmt(EB.num.futianRMAGs) + " genomes <span class='in-progress'>(archaea mapped; bacteria in progress)</span>"],
+      ["Genomes fully mapped (3 views)", D.fmt(EB.num.triViewReady)],
       ["Genomes mapped (molecular space)", D.fmt(EB.num.embeddingBearingUnits)],
       ["Wetland warehouse scaffold", D.fmt(EB.num.muccWarehouseGenomes) + " genomes"],
+      ["Total evidence reach", D.fmt(EB.num.warehouseReach) + " genomes"],
+      ["Sample metadata recovered", (EB.num.msmSedimentSamples + EB.num.futianSedimentSamples) + " sediment samples · " + EB.num.msmBiosampleRows + " environmental rows"],
       ["Model views per genome", "proteome + genomic-context embeddings, plus function"],
       ["Cross-ecosystem bridge links", D.fmt(EB.num.bridgeEdges)],
       ["Pipeline speed", "&lt;" + EB.num.pipelineDays + " days, vs months of manual analysis"],
@@ -111,8 +114,9 @@
     setHref("contactCta", "mailto:" + EB.links.contactEmail);
     const note = document.getElementById("reportNote");
     if (note) note.innerHTML =
-      "The report is the full scientific narrative behind these numbers: molecular niche-space, bridge evidence, the attestation graph, and the sample-risk readiness ladder. Snapshot " +
-      EB.links.reportDate + '. <a href="' + rep + '" target="_blank" rel="noopener">Open the interactive atlas ↗</a>';
+      "The report is the full scientific narrative behind these numbers: molecular niche-space, bridge evidence, the attestation graph, and the sample-readiness ladder. It is a dated freeze at " +
+      D.fmt(EB.num.reportFreezeTriView) + " fully-mapped genomes (" + EB.links.reportDate + "); the live atlas above stands at " + D.fmt(EB.num.triViewReady) +
+      '. <a href="' + rep + '" target="_blank" rel="noopener">Open the interactive atlas ↗</a>';
   }
 
   // ---------- scene lifecycle ----------
