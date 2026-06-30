@@ -8,6 +8,7 @@
   window.EBScenes.blindspot = function (p, ctx) {
     const EB = window.EB, D = window.EBDraw;
     const LIT = EB.color.attested;
+    const TGT_LO = EB.num.pairedFluxTargetLo, TGT_HI = EB.num.pairedFluxTargetHi, SLOTS = TGT_HI; // 80, 100
     let rng, field = [];
 
     function layout() {
@@ -53,6 +54,28 @@
         p.noStroke(); p.fill(D.rgba(LIT, 0.04)); p.rect(sx - 30, 0, 30, h);
         p.pop();
         D.label(p, "scanning for paired flux data…", sx - 8, h * 0.92 + 14, D.rgba(LIT, 0.55), 9, [p.RIGHT, p.TOP]);
+      }
+
+      // validation-coverage row: the 80-100 target band, 0 of them lit (measured) today.
+      // The scan rakes across it and lights nothing - the same fact as "≈ 0", made spatial.
+      {
+        const rowY = h * 0.46, x0 = w * 0.18, x1 = w * 0.82;
+        const dc2 = p.drawingContext; dc2.save();
+        for (let i = 0; i < SLOTS; i++) {
+          const sxSlot = p.lerp(x0, x1, i / (SLOTS - 1));
+          const reached = ctx.reduced ? true : sxSlot < sx;          // probed by the scan, still empty
+          if (reached) { dc2.globalAlpha = 0.30; dc2.fillStyle = D.rgba(LIT, 0.16); }
+          else { dc2.globalAlpha = 0.22; dc2.fillStyle = "#3A4650"; }
+          dc2.fillRect(sxSlot - 1, rowY - 7, 2, 14);
+        }
+        dc2.globalAlpha = 1; dc2.restore();
+        p.push(); p.stroke(D.rgba(EB.color.textMuted, 0.28)); p.strokeWeight(1);
+        p.line(x0, rowY + 9, x1, rowY + 9);
+        const x80 = p.lerp(x0, x1, (TGT_LO - 1) / (SLOTS - 1));
+        p.line(x80, rowY + 6, x80, rowY + 12); p.line(x1, rowY + 6, x1, rowY + 12);
+        p.pop();
+        D.label(p, "validation target  " + TGT_LO + " to " + TGT_HI + " sites", (x0 + x1) / 2, rowY + 22, EB.color.textMuted, 9.5, [p.CENTER, p.TOP]);
+        D.label(p, "0 lit", x0 - 12, rowY, D.rgba(LIT, 0.7), 11, [p.RIGHT, p.CENTER]);
       }
 
       // counter readout - honest present state

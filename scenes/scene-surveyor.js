@@ -37,7 +37,10 @@
       cent = {};
       EB.ecosystems.forEach((eco) => {
         const g = pts.filter((q) => q.e === eco.code);
-        if (g.length) cent[eco.key] = { x: g.reduce((s, q) => s + q.x, 0) / g.length, y: g.reduce((s, q) => s + q.y, 0) / g.length };
+        if (!g.length) return;
+        const cx = g.reduce((s, q) => s + q.x, 0) / g.length, cy = g.reduce((s, q) => s + q.y, 0) / g.length;
+        let dsum = 0; for (const q of g) dsum += Math.hypot(q.x - cx, q.y - cy);
+        cent[eco.key] = { x: cx, y: cy, rad: (dsum / g.length) * 1.6 };   // rings hug the true cluster extent, no sprawl
       });
       gate = { x: w * 0.82, cy: region.cy, gh: region.s * 1.15 };
       ready = true;
@@ -65,11 +68,12 @@
         for (const key of ["rumen", "wetland"]) {
           const c = cent[key]; if (!c) continue;
           const col = ECOC[key === "rumen" ? 0 : 1];
-          const g = dc.createRadialGradient(c.x, c.y, 0, c.x, c.y, region.s * 0.42);
-          g.addColorStop(0, D.rgba(col, 0.13 * settle)); g.addColorStop(1, "rgba(0,0,0,0)");
+          const halo = c.rad * 1.6;
+          const g = dc.createRadialGradient(c.x, c.y, 0, c.x, c.y, halo);
+          g.addColorStop(0, D.rgba(col, 0.15 * settle)); g.addColorStop(1, "rgba(0,0,0,0)");
           dc.save(); dc.fillStyle = g; dc.fillRect(0, 0, w, h); dc.restore();
           p.push(); p.noFill();
-          for (let r = 1; r <= 3; r++) { p.stroke(D.rgba(col, 0.18 * settle / r)); p.strokeWeight(1); p.circle(c.x, c.y, region.s * 0.22 * r); }
+          for (let r = 1; r <= 2; r++) { p.stroke(D.rgba(col, 0.20 * settle / r)); p.strokeWeight(1); p.circle(c.x, c.y, c.rad * 2 * (0.7 + 0.35 * r)); }
           p.pop();
         }
       }
