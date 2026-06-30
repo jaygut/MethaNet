@@ -83,32 +83,45 @@
       }
       p.pop();
 
-      drawMeter(w, h, t);
+      drawBalance(w, h, t);
       D.vignette(p, w, h, EB.color.bgBase, 0.5);
     };
 
-    function drawMeter(w, h, t) {
-      // net climate benefit meter: stored sink minus methane (x GWP) escaping
-      const mx = D.clamp(w * 0.06, 24, 80), my = EB.num ? 96 : 96;
-      const barW = Math.min(w * 0.42, 460), barH = 12;
-      const erosion = D.clamp(0.08 + t * 0.9); // fraction of benefit eroded by CH4*GWP
-      const net = 1 - erosion;
-      p.push();
-      D.label(p, "NET CLIMATE BENEFIT", mx, my - 12, EB.color.textMuted, 11);
-      // track
-      p.noStroke(); p.fill(D.rgba(EB.color.hairline, 0.9)); p.rect(mx, my, barW, barH, 2);
-      // remaining benefit (green) shrinking
-      const col = D.lerpHex(M_B, SINK, net);
-      p.fill(col); p.rect(mx, my, barW * net, barH, 2);
-      // eroded portion (methane hatch)
-      p.fill(D.rgba(M_B, 0.25)); p.rect(mx + barW * net, my, barW * erosion, barH, 2);
-      // ticks
-      p.stroke(D.rgba(EB.color.textMuted, 0.5)); p.strokeWeight(1);
-      for (let i = 0; i <= 4; i++) { const x = mx + (barW / 4) * i; p.line(x, my + barH + 2, x, my + barH + 6); }
-      p.noStroke();
-      D.label(p, "STORED CARBON ▲   CH₄ ESCAPING ×" + GWP + " GWP ▼", mx, my + barH + 22, D.rgba(EB.color.textMuted, 0.9), 10.5);
-      D.label(p, Math.round(net * 100) + "%", mx + barW + 12, my + barH - 1, col, 14, [p.LEFT, p.BOTTOM]);
+    function drawBalance(w, h, t) {
+      // a single "net climate balance" line rides down through a NET ZERO threshold:
+      // stored carbon holds it up; methane (x GWP) pushes it down, into net warming.
+      const mx = D.clamp(w * 0.06, 24, 80);
+      const net = 1 - D.clamp(0.08 + t * 0.9);        // existing erosion model, unchanged
+      const topY = h * 0.20, botY = sedY - h * 0.06;
+      const frac = 1 - net, zeroFrac = 0.45;
+      const zeroY = p.lerp(topY, botY, zeroFrac);
+      const lineY = p.lerp(topY, botY, frac);
+      const bal = Math.round((zeroFrac - frac) * 180);  // + above zero, - below; 0 at the crossing
+      const lineCol = D.lerpHex(M_B, SINK, D.clamp(0.5 + bal / 110, 0, 1));
+      // faint directional washes so the empty column reads as the contest
+      p.push(); p.noStroke();
+      p.fill(D.rgba(M_B, 0.05 * frac)); p.rect(0, topY, w, lineY - topY);
+      p.fill(D.rgba(SINK, 0.05 * net)); p.rect(0, lineY, w, botY - lineY);
       p.pop();
+      // static NET ZERO threshold + zone tags (pinned right edge, clear of the bottom-left card)
+      p.push(); p.stroke(D.rgba(EB.color.hairline, 0.85)); p.strokeWeight(1);
+      p.drawingContext.setLineDash([2, 5]); p.line(0, zeroY, w, zeroY);
+      p.drawingContext.setLineDash([]); p.pop();
+      D.label(p, "NET ZERO", w - mx - 4, zeroY - 6, EB.color.textMuted, 10, [p.RIGHT, p.BOTTOM]);
+      D.label(p, "COOLING", w - mx - 4, topY + 14, SINK, 11, [p.RIGHT, p.TOP]);
+      D.label(p, "WARMING", w - mx - 4, botY - 6, M_B, 11, [p.RIGHT, p.BOTTOM]);
+      // the travelling balance line
+      p.push(); p.stroke(lineCol); p.strokeWeight(1.6);
+      if (!ctx.reduced) { p.drawingContext.setLineDash([6, 6]); p.drawingContext.lineDashOffset = -(p.frameCount * 0.5); }
+      p.line(0, lineY, w, lineY);
+      p.drawingContext.setLineDash([]); p.drawingContext.lineDashOffset = 0; p.pop();
+      // riding readout (center-right, clear of the bottom-left card)
+      const cxr = w * 0.56;
+      p.push(); p.noStroke(); p.fill(lineCol); p.circle(cxr - 14, lineY, 6); p.pop();
+      D.label(p, (bal > 0 ? "+" : "") + bal + " net", cxr, lineY - 6, lineCol, 14, [p.LEFT, p.BOTTOM]);
+      // title + GWP legend (the only hard number, kept verbatim)
+      D.label(p, "NET CLIMATE BALANCE", mx, topY - 14, EB.color.textMuted, 11);
+      D.label(p, "STORED CARBON ▲   CH₄ ×" + GWP + " GWP ▼", mx, topY + 2, D.rgba(EB.color.textMuted, 0.9), 10.5);
     }
   };
 })();
