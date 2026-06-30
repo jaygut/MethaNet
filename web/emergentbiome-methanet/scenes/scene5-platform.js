@@ -137,6 +137,14 @@
           p.fill(D.rgba("#0A0F12", appA)); p.textAlign(p.CENTER, p.CENTER); p.textFont("Space Grotesk"); p.textStyle(p.BOLD); p.textSize(13);
           p.text("MethaNet", x + slotW / 2, sy + sh / 2); p.textStyle(p.NORMAL);
           D.label(p, "methane · live", x + slotW / 2, sy + sh + 12, D.rgba(EB.color.methaneA, appA), 8.5, [p.CENTER, p.CENTER]);
+        } else if (i === 1) {
+          // N2O: the second lens from the prior scene, an honest candidate slot (not a live product)
+          p.noFill(); p.drawingContext.setLineDash([4, 3]);
+          p.stroke(D.rgba("#7C8CC4", 0.6 * appA)); p.strokeWeight(1.1); p.rect(x, sy, slotW, sh, 4);
+          p.drawingContext.setLineDash([]);
+          p.noStroke(); p.fill(D.rgba("#A9B6D8", 0.9 * appA)); p.textAlign(p.CENTER, p.CENTER); p.textFont("Space Grotesk"); p.textStyle(p.BOLD); p.textSize(12);
+          p.text("N₂O", x + slotW / 2, sy + sh / 2); p.textStyle(p.NORMAL);
+          D.label(p, "candidate · uncalibrated", x + slotW / 2, sy + sh + 12, D.rgba("#7C8CC4", 0.7 * appA), 8.5, [p.CENTER, p.CENTER]);
         } else {
           p.noFill(); p.drawingContext.setLineDash([4, 4]);
           p.stroke(D.rgba(EB.color.textMuted, 0.4 * appA)); p.strokeWeight(1); p.rect(x, sy, slotW, sh, 4);
@@ -161,7 +169,7 @@
         p.fill(D.rgba(EB.color.emergence, 0.95 * subA)); p.textAlign(p.CENTER, p.CENTER); p.textFont("JetBrains Mono"); p.textSize(8.6);
         p.text(cells[i], cx, subY + subH / 2);
       }
-      D.label(p, "EmergentBiome substrate · built to generalize beyond methane", w / 2, subY + subH + 14, D.rgba(EB.color.emergence, 0.8 * subA), 9.5, [p.CENTER, p.CENTER]);
+      D.label(p, "EmergentBiome substrate · every gas inherits the same evidence trail", w / 2, subY + subH + 14, D.rgba(EB.color.emergence, 0.8 * subA), 9.5, [p.CENTER, p.CENTER]);
       // connector from MethaNet down to substrate
       p.stroke(D.rgba(EB.color.methaneA, 0.4 * subA)); p.strokeWeight(1);
       p.line(sx + slotW / 2, sy + sh + 18, sx + slotW / 2, subY);
