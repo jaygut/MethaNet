@@ -94,9 +94,9 @@
       p.push();
       p.noFill(); p.stroke(D.rgba(col, 0.6 * a)); p.strokeWeight(1.2); p.circle(n.x, n.y, last ? 30 : 22);
       // labels
-      p.noStroke(); p.fill(D.rgba(EB.color.textPrimary, a)); p.textAlign(p.CENTER, p.BOTTOM); p.textFont("Space Grotesk"); p.textSize(13);
+      p.noStroke(); p.fill(D.rgba(EB.color.textPrimary, a)); p.textAlign(p.CENTER, p.BOTTOM); p.textFont("Bricolage Grotesque"); p.textSize(13);
       p.text(n.stage, n.x, n.y - 20);
-      p.fill(D.rgba(EB.color.textMuted, 0.9 * a)); p.textFont("JetBrains Mono"); p.textSize(8.6); p.textAlign(p.CENTER, p.TOP);
+      p.fill(D.rgba(EB.color.textMuted, 0.9 * a)); p.textFont("IBM Plex Mono"); p.textSize(8.6); p.textAlign(p.CENTER, p.TOP);
       wrapText(n.detail, n.x, n.y + 18, 150, 11);
       p.fill(D.rgba(col, 0.7 * a)); p.textSize(8);
       p.text(n.node, n.x, n.y + 18 - 12);
@@ -110,7 +110,7 @@
       p.rect(x, y, cw, 92, 4);
       p.noStroke();
       D.label(p, "ALLOWED WORDING", x + 14, y + 18, D.rgba(EB.color.attested, a), 8.5);
-      p.fill(D.rgba(EB.color.textPrimary, a)); p.textFont("Inter"); p.textSize(11); p.textAlign(p.LEFT, p.TOP);
+      p.fill(D.rgba(EB.color.textPrimary, a)); p.textFont("Hanken Grotesk"); p.textSize(11); p.textAlign(p.LEFT, p.TOP);
       wrapTextLeft("“" + AT.claimText + "”", x + 14, y + 28, cw - 28, 14);
       D.label(p, "FORBIDDEN", x + 14, y + 74, D.rgba(EB.color.methaneB, a), 8.5);
       p.fill(D.rgba(EB.color.methaneB, 0.85 * a)); p.textSize(10.5);
@@ -134,7 +134,7 @@
           g.addColorStop(0, EB.color.methaneA); g.addColorStop(1, EB.color.methaneB);
           p.drawingContext.fillStyle = g; p.drawingContext.globalAlpha = appA;
           p.noStroke(); p.rect(x, sy, slotW, sh, 4); p.drawingContext.globalAlpha = 1;
-          p.fill(D.rgba("#0A0F12", appA)); p.textAlign(p.CENTER, p.CENTER); p.textFont("Space Grotesk"); p.textStyle(p.BOLD); p.textSize(13);
+          p.fill(D.rgba("#0A0F12", appA)); p.textAlign(p.CENTER, p.CENTER); p.textFont("Bricolage Grotesque"); p.textStyle(p.BOLD); p.textSize(13);
           p.text("MethaNet", x + slotW / 2, sy + sh / 2); p.textStyle(p.NORMAL);
           D.label(p, "methane · live", x + slotW / 2, sy + sh + 12, D.rgba(EB.color.methaneA, appA), 8.5, [p.CENTER, p.CENTER]);
         } else if (i === 1) {
@@ -142,14 +142,14 @@
           p.noFill(); p.drawingContext.setLineDash([4, 3]);
           p.stroke(D.rgba("#7C8CC4", 0.6 * appA)); p.strokeWeight(1.1); p.rect(x, sy, slotW, sh, 4);
           p.drawingContext.setLineDash([]);
-          p.noStroke(); p.fill(D.rgba("#A9B6D8", 0.9 * appA)); p.textAlign(p.CENTER, p.CENTER); p.textFont("Space Grotesk"); p.textStyle(p.BOLD); p.textSize(12);
+          p.noStroke(); p.fill(D.rgba("#A9B6D8", 0.9 * appA)); p.textAlign(p.CENTER, p.CENTER); p.textFont("Bricolage Grotesque"); p.textStyle(p.BOLD); p.textSize(12);
           p.text("N₂O", x + slotW / 2, sy + sh / 2); p.textStyle(p.NORMAL);
           D.label(p, "candidate · uncalibrated", x + slotW / 2, sy + sh + 12, D.rgba("#7C8CC4", 0.7 * appA), 8.5, [p.CENTER, p.CENTER]);
         } else {
           p.noFill(); p.drawingContext.setLineDash([4, 4]);
           p.stroke(D.rgba(EB.color.textMuted, 0.4 * appA)); p.strokeWeight(1); p.rect(x, sy, slotW, sh, 4);
           p.drawingContext.setLineDash([]);
-          p.noStroke(); p.fill(D.rgba(EB.color.textMuted, 0.5 * appA)); p.textAlign(p.CENTER, p.CENTER); p.textFont("JetBrains Mono"); p.textSize(16);
+          p.noStroke(); p.fill(D.rgba(EB.color.textMuted, 0.5 * appA)); p.textAlign(p.CENTER, p.CENTER); p.textFont("IBM Plex Mono"); p.textSize(16);
           p.text("+", x + slotW / 2, sy + sh / 2);
           D.label(p, "future", x + slotW / 2, sy + sh + 12, D.rgba(EB.color.textMuted, 0.5 * appA), 8.5, [p.CENTER, p.CENTER]);
         }
@@ -166,7 +166,7 @@
       for (let i = 0; i < 3; i++) {
         const cx = subX + (i + 0.5) * (subW / 3);
         if (i > 0) { p.stroke(D.rgba(EB.color.emergence, 0.25 * subA)); p.line(subX + i * (subW / 3), subY + 4, subX + i * (subW / 3), subY + subH - 4); p.noStroke(); }
-        p.fill(D.rgba(EB.color.emergence, 0.95 * subA)); p.textAlign(p.CENTER, p.CENTER); p.textFont("JetBrains Mono"); p.textSize(8.6);
+        p.fill(D.rgba(EB.color.emergence, 0.95 * subA)); p.textAlign(p.CENTER, p.CENTER); p.textFont("IBM Plex Mono"); p.textSize(8.6);
         p.text(cells[i], cx, subY + subH / 2);
       }
       D.label(p, "EmergentBiome substrate · every gas inherits the same evidence trail", w / 2, subY + subH + 14, D.rgba(EB.color.emergence, 0.8 * subA), 9.5, [p.CENTER, p.CENTER]);
@@ -186,7 +186,7 @@
       const x = w - 18; let y = h * 0.40;
       p.push(); p.textAlign(p.RIGHT, p.CENTER);
       for (const [v, k] of items) {
-        p.fill(D.rgba(EB.color.textPrimary, a)); p.textFont("JetBrains Mono"); p.textSize(13); p.text(v, x, y);
+        p.fill(D.rgba(EB.color.textPrimary, a)); p.textFont("IBM Plex Mono"); p.textSize(13); p.text(v, x, y);
         p.fill(D.rgba(EB.color.textMuted, a)); p.textSize(8.5); p.text(k.toUpperCase(), x, y + 12);
         y += 30;
       }
