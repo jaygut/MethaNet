@@ -125,9 +125,9 @@
         else if (m.kind === "flat") { p.stroke(D.rgba(col, 0.7 * a)); p.strokeWeight(2); p.line(x, y, x + 16, y); p.noStroke(); }
         else { const cs = [M_A, EB.color.attested, EMG]; for (let k = 0; k < 3; k++) { p.fill(D.rgba(cs[k], 0.85 * a)); p.rect(x + k * 6, y - 6 + (2 - k) * 2, 4, 12 - (2 - k) * 2, 1); } }
         // label
-        p.fill(D.rgba(m.hi ? EB.color.textPrimary : MUT, (m.hi ? 1 : 0.85) * a)); p.textFont("Space Grotesk"); p.textStyle(m.hi ? p.BOLD : p.NORMAL); p.textSize(12); p.textAlign(p.LEFT, p.BOTTOM);
+        p.fill(D.rgba(m.hi ? EB.color.textPrimary : MUT, (m.hi ? 1 : 0.85) * a)); p.textFont("Bricolage Grotesque"); p.textStyle(m.hi ? p.BOLD : p.NORMAL); p.textSize(12); p.textAlign(p.LEFT, p.BOTTOM);
         p.text(m.name, x + 26, y + 1); p.textStyle(p.NORMAL);
-        p.fill(D.rgba(m.hi ? EMG : MUT, 0.8 * a)); p.textFont("JetBrains Mono"); p.textSize(8.5); p.textAlign(p.LEFT, p.TOP);
+        p.fill(D.rgba(m.hi ? EMG : MUT, 0.8 * a)); p.textFont("IBM Plex Mono"); p.textSize(8.5); p.textAlign(p.LEFT, p.TOP);
         p.text("sees: " + m.sees, x + 26, y + 3);
         p.pop();
       }

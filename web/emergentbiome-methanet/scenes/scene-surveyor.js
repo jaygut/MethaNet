@@ -74,12 +74,12 @@
       const y = G.top + i * G.rowH + G.rowH * 0.5;
       p.push();
       // rank
-      p.fill(D.rgba(MUT, 0.7 * a)); p.noStroke(); p.textFont("JetBrains Mono"); p.textSize(10); p.textAlign(p.LEFT, p.CENTER);
+      p.fill(D.rgba(MUT, 0.7 * a)); p.noStroke(); p.textFont("IBM Plex Mono"); p.textSize(10); p.textAlign(p.LEFT, p.CENTER);
       p.text((i + 1 < 10 ? "0" : "") + (i + 1), G.rankX, y);
       // label + note
-      p.fill(D.rgba(EB.color.textPrimary, a)); p.textFont("Space Grotesk"); p.textSize(13); p.textAlign(p.LEFT, p.CENTER);
+      p.fill(D.rgba(EB.color.textPrimary, a)); p.textFont("Bricolage Grotesque"); p.textSize(13); p.textAlign(p.LEFT, p.CENTER);
       p.text(s.name, G.labelX, y - 5);
-      p.fill(D.rgba(MUT, 0.8 * a)); p.textFont("JetBrains Mono"); p.textSize(8.5);
+      p.fill(D.rgba(MUT, 0.8 * a)); p.textFont("IBM Plex Mono"); p.textSize(8.5);
       p.text(s.note, G.labelX, y + 8);
       // signal bar (methane gradient by signal), grows with row reveal
       const bx = G.barX, bw = G.barMax * s.sig * a, bh = 7;
@@ -105,7 +105,7 @@
           p.noStroke(); p.fill(M_A); p.circle(G.flagX, y, 8);
         } else {
           p.stroke(D.rgba(M_A, 0.9)); p.strokeWeight(1); p.noFill(); p.rect(G.flagX, y - 9, 116, 18, 3);
-          p.noStroke(); p.fill(M_A); p.textFont("JetBrains Mono"); p.textSize(8.5); p.textAlign(p.LEFT, p.CENTER);
+          p.noStroke(); p.fill(M_A); p.textFont("IBM Plex Mono"); p.textSize(8.5); p.textAlign(p.LEFT, p.CENTER);
           p.text("MEASURE HERE NEXT", G.flagX + 7, y + 0.5);
         }
         p.pop();
@@ -144,7 +144,7 @@
         for (const r of c.rows) {
           p.push(); p.noStroke();
           p.fill(D.rgba(c.col, 0.8 * a)); p.circle(c.x + 15, yy - 3, 3);
-          p.fill(D.rgba(EB.color.textPrimary, 0.82 * a)); p.textFont("Inter"); p.textSize(10.5); p.textAlign(p.LEFT, p.TOP);
+          p.fill(D.rgba(EB.color.textPrimary, 0.82 * a)); p.textFont("Hanken Grotesk"); p.textSize(10.5); p.textAlign(p.LEFT, p.TOP);
           p.text(r, c.x + 24, yy - 9);
           p.pop();
           yy += 16;

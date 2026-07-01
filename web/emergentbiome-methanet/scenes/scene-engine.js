@@ -168,7 +168,7 @@
         if (!active) p.drawingContext.setLineDash([3, 3]);
         p.rect(x, y, segW, g.bh, 4); p.drawingContext.setLineDash([]);
         p.noStroke(); p.fill(D.rgba(active ? EB.color.textPrimary : (hovered ? EB.color.textPrimary : EB.color.textMuted), (active ? 1 : hovered ? 0.85 : 0.55) * settle));
-        p.textAlign(p.CENTER, p.CENTER); p.textFont("JetBrains Mono"); p.textSize(narrow ? 9 : (i === 2 ? 8.5 : 9.5));
+        p.textAlign(p.CENTER, p.CENTER); p.textFont("IBM Plex Mono"); p.textSize(narrow ? 9 : (i === 2 ? 8.5 : 9.5));
         p.text(labels[i], x + segW / 2, y + 13);
         p.pop();
       }
@@ -184,7 +184,7 @@
 
     function drawPlates(w, h, t) {
       if (w < 640) return;   // mobile: the lens bar + copy-card readout carry the maps story
-      const x = w * 0.73, y0 = h * 0.30, pw = Math.min(w * 0.21, 188), ph = 50, sp = 62;
+      const x = w * 0.72, y0 = h * 0.30, pw = Math.min(w * 0.255, 250), ph = 50, sp = 62;
       const thr = [0.06, 0.30, 0.58];
       for (let i = 0; i < 3; i++) {
         const a = ctx.reduced ? 1 : D.window01(t, thr[i], thr[i] + 0.12);
@@ -198,7 +198,7 @@
         else { p.drawingContext.setLineDash([4, 4]); p.stroke(D.rgba(L.col, 0.5 * a)); p.strokeWeight(1); }
         p.rect(xx, y, pw, ph, 4); p.drawingContext.setLineDash([]);
         // mini-swatch: filled gradient for methane, empty/aimed for the rest
-        const sw = 30, sx = xx + 9, sy = y + (ph - sw) / 2;
+        const sw = 26, sx = xx + 10, sy = y + (ph - sw) / 2;
         if (i === 0) {
           const g = p.drawingContext.createLinearGradient(sx, 0, sx + sw, 0);
           g.addColorStop(0, EB.color.methaneA); g.addColorStop(1, EB.color.methaneB);
@@ -210,9 +210,9 @@
         }
         // title + sub
         p.noStroke(); p.textAlign(p.LEFT, p.BOTTOM);
-        p.fill(D.rgba(i === 0 ? EB.color.textPrimary : EB.color.textMuted, a)); p.textFont("Space Grotesk"); p.textStyle(p.BOLD); p.textSize(11.5);
+        p.fill(D.rgba(i === 0 ? EB.color.textPrimary : EB.color.textMuted, a)); p.textFont("Bricolage Grotesque"); p.textStyle(p.BOLD); p.textSize(10.5);
         p.text((i === 0 ? "MAP 01 · " : i === 1 ? "LENS 02 · " : "SLOT 03 · ") + L.name, sx + sw + 10, y + ph / 2); p.textStyle(p.NORMAL);
-        p.textAlign(p.LEFT, p.TOP); p.textFont("JetBrains Mono"); p.textSize(8.3);
+        p.textAlign(p.LEFT, p.TOP); p.textFont("IBM Plex Mono"); p.textSize(8);
         p.fill(D.rgba(i === 0 ? EB.color.methaneA : EB.color.textMuted, 0.85 * a));
         p.text(i === 0 ? "screening map · 0 measured flux" : i === 1 ? "candidate · 0 paired flux" : "not built", sx + sw + 10, y + ph / 2 + 2);
         p.pop();
@@ -224,7 +224,7 @@
       D.label(p, "ONE ENGINE · MANY MAPS", x, y, D.rgba(EB.color.emergence, 0.95 * settle), 11);
       D.label(p, "same atlas, swap the gene lens", x, y + 15, D.rgba(EB.color.textMuted, 0.9 * settle), 9.5);
       // 1 live screening map / 2 candidate lenses
-      p.push(); p.textAlign(p.LEFT, p.TOP); p.textFont("JetBrains Mono");
+      p.push(); p.textAlign(p.LEFT, p.TOP); p.textFont("IBM Plex Mono");
       p.fill(D.rgba(EB.color.methaneA, settle)); p.textSize(12); p.text("1 screening map live", x, y + 34);
       p.fill(D.rgba(EB.color.textMuted, 0.9 * settle)); p.textSize(10); p.text("2 lenses ready, uncalibrated", x, y + 50);
       p.pop();
@@ -236,7 +236,7 @@
       p.fill(D.rgba(EB.color.bgPanel, 0.8 * a)); p.stroke(D.rgba(COOL_N2O, 0.5 * a)); p.strokeWeight(1);
       p.rect(x, y, cw, 50, 4); p.noStroke();
       D.label(p, "WHY THE SECOND GAS MATTERS", x + 14, y + 16, D.rgba(COOL_N2O, a), 8.5);
-      p.fill(D.rgba(EB.color.textPrimary, a)); p.textFont("Inter"); p.textSize(11.5); p.textAlign(p.LEFT, p.TOP);
+      p.fill(D.rgba(EB.color.textPrimary, a)); p.textFont("Hanken Grotesk"); p.textSize(11.5); p.textAlign(p.LEFT, p.TOP);
       p.text("Nitrous oxide traps 273× the heat of CO₂ over 100 years.", x + 14, y + 24);
       p.fill(D.rgba(EB.color.textMuted, a)); p.textSize(10);
       p.text("Today's blue-carbon rules can still count it as zero.", x + 14, y + 38);
@@ -244,14 +244,14 @@
     }
 
     function drawHonestyBand(w, h, settle) {
-      p.push(); p.textAlign(p.CENTER, p.BOTTOM); p.textFont("JetBrains Mono"); p.textSize(9.5);
+      p.push(); p.textAlign(p.CENTER, p.BOTTOM); p.textFont("IBM Plex Mono"); p.textSize(9.5);
       p.fill(D.rgba(EB.color.textMuted, 0.85 * settle));
       p.text("capacity screening, not flux rate. the field measurement stays the assay for every gas.", w / 2, h - 16);
       p.pop();
     }
 
     function drawNoData(w, h) {
-      p.push(); p.fill(EB.color.textMuted); p.textAlign(p.CENTER, p.CENTER); p.textFont("JetBrains Mono"); p.textSize(13);
+      p.push(); p.fill(EB.color.textMuted); p.textAlign(p.CENTER, p.CENTER); p.textFont("IBM Plex Mono"); p.textSize(13);
       p.text("Serve over http:// to load the live atlas (data/atlas.json)", w / 2, h / 2);
       p.pop();
     }
