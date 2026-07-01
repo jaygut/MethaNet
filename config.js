@@ -255,7 +255,7 @@ window.EB = (function () {
       kicker: "The evidence behind the ranking",
       headline: "Every call stands on a source-audited atlas.",
       copy: "Each ranking traces to real genomes: 5,209 mapped across rumen, wetland, and two mangrove systems, plus 2,508 wetland genomes queryable for the next expansion.",
-      data: "real-counts",
+      data: "real-coords",
     },
     {
       id: "engine", n: 6, label: "06 · One Engine, Many Maps",
