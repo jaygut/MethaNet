@@ -63,9 +63,9 @@
       // pin label
       p.push(); p.noStroke();
       p.stroke(D.rgba(EB.color.methaneA, 0.6)); p.strokeWeight(1); p.line(pin.x, pin.y, pin.x, pin.y - 34); p.noStroke();
-      p.fill(EB.color.textPrimary); p.textFont("Space Grotesk"); p.textStyle(p.BOLD); p.textSize(14); p.textAlign(p.LEFT, p.BOTTOM);
+      p.fill(EB.color.textPrimary); p.textFont("Bricolage Grotesque"); p.textStyle(p.BOLD); p.textSize(14); p.textAlign(p.LEFT, p.BOTTOM);
       p.text("Cispatá Bay", pin.x + 8, pin.y - 34); p.textStyle(p.NORMAL);
-      p.fill(D.rgba(EB.color.textMuted, 0.95)); p.textFont("JetBrains Mono"); p.textSize(9); p.textAlign(p.LEFT, p.TOP);
+      p.fill(D.rgba(EB.color.textMuted, 0.95)); p.textFont("IBM Plex Mono"); p.textSize(9); p.textAlign(p.LEFT, p.TOP);
       p.text("Colombian Caribbean mangrove · VM0033 context", pin.x + 8, pin.y - 32);
       p.pop();
     }
@@ -79,14 +79,14 @@
       // title (left) + speed readout (centered) - kept on separate rows, no overlap
       D.label(p, "AGENTIC PIPELINE", px0, py - 46, EB.color.textMuted, 11);
       p.push(); p.textAlign(p.CENTER, p.BASELINE);
-      p.fill(EB.color.attested); p.noStroke(); p.textFont("JetBrains Mono"); p.textSize(16);
+      p.fill(EB.color.attested); p.noStroke(); p.textFont("IBM Plex Mono"); p.textSize(16);
       p.text("< " + N.pipelineDays + " days", w * 0.5, py - 38);
       p.fill(D.rgba(EB.color.textMuted, 0.85)); p.textSize(10);
       p.text("raw sequences to a reproducible report · vs months of manual analysis", w * 0.5, py - 22);
       p.pop();
 
       // input / output labels above the rail ends (clear of stage labels below)
-      p.push(); p.noStroke(); p.textFont("JetBrains Mono"); p.textSize(10);
+      p.push(); p.noStroke(); p.textFont("IBM Plex Mono"); p.textSize(10);
       p.fill(D.rgba(EB.color.mangroveMsm, 0.95)); p.textAlign(p.LEFT, p.BOTTOM); p.text("raw sequences →", px0, py - 10);
       p.fill(D.rgba(EB.color.attested, 0.95)); p.textAlign(p.RIGHT, p.BOTTOM); p.text("→ report", px1, py - 10);
       p.pop();
@@ -97,7 +97,7 @@
         p.push();
         p.fill(D.rgba(EB.color.bgElevated, 0.95)); p.stroke(D.rgba(EB.color.emergence, 0.7)); p.strokeWeight(1.2);
         p.rectMode(p.CENTER); p.rect(s.x, s.y, 16, 34, 3);
-        p.noStroke(); p.fill(D.rgba(EB.color.textPrimary, 0.95)); p.textFont("JetBrains Mono"); p.textSize(9); p.textAlign(p.CENTER, p.TOP);
+        p.noStroke(); p.fill(D.rgba(EB.color.textPrimary, 0.95)); p.textFont("IBM Plex Mono"); p.textSize(9); p.textAlign(p.CENTER, p.TOP);
         p.text(s.nm, s.x, s.y + 24);
         p.pop();
       }
@@ -133,9 +133,9 @@
         const col = m.lit ? EB.color.emergence : EB.color.textMuted;
         if (m.lit) { p.push(); p.blendMode(p.ADD); D.glow(p, m.x, m.y, 4, col, (ctx.reduced ? 1 : 0.7 + 0.3 * Math.sin(tm * 2)) * a); p.pop(); }
         p.noStroke(); p.fill(m.lit ? col : D.rgba(EB.color.bgBase, a)); p.stroke(D.rgba(col, a)); p.strokeWeight(1.2); p.circle(m.x, m.y, 11);
-        p.noStroke(); p.fill(D.rgba(EB.color.textMuted, a)); p.textFont("JetBrains Mono"); p.textSize(8); p.textAlign(p.CENTER, p.BOTTOM);
+        p.noStroke(); p.fill(D.rgba(EB.color.textMuted, a)); p.textFont("IBM Plex Mono"); p.textSize(8); p.textAlign(p.CENTER, p.BOTTOM);
         p.text(m.phase.toUpperCase() + (m.lit ? " · NOW" : ""), m.x, m.y - 12);
-        p.fill(D.rgba(EB.color.textPrimary, a)); p.textFont("Space Grotesk"); p.textSize(11); p.textAlign(p.CENTER, p.TOP);
+        p.fill(D.rgba(EB.color.textPrimary, a)); p.textFont("Bricolage Grotesque"); p.textSize(11); p.textAlign(p.CENTER, p.TOP);
         p.text(m.label, m.x, m.y + 10);
       }
     }

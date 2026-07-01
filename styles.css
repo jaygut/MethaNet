@@ -21,9 +21,9 @@
   --eco-mangrove-futian: #6E7BFF;
 
   --methane-grad: linear-gradient(90deg, var(--methane-a), var(--methane-b));
-  --font-display: "Space Grotesk", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --font-body: "Hanken Grotesk", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
   --header-h: 56px;
   --footer-h: 30px;

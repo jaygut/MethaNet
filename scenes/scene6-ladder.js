@@ -26,7 +26,7 @@
 
       // heading
       D.label(p, "MRV MATURITY LADDER", w * 0.08, h * 0.12, EB.color.textMuted, 11);
-      p.push(); p.fill(D.rgba(EB.color.textPrimary, 0.9)); p.textFont("JetBrains Mono"); p.textSize(10);
+      p.push(); p.fill(D.rgba(EB.color.textPrimary, 0.9)); p.textFont("IBM Plex Mono"); p.textSize(10);
       p.text("LIT NOW: rung 0 · molecular screening      TARGET: rung 5 · calibrated A–E risk (not yet calibrated)", w * 0.08, h * 0.12 + 16);
       p.pop();
 
@@ -82,7 +82,7 @@
       p.circle(r.x, r.y, target ? 18 : 13);
       p.drawingContext.setLineDash([]);
       // rung number inside
-      p.noStroke(); p.fill(lit ? D.rgba("#06090D", a) : D.rgba(col, a)); p.textAlign(p.CENTER, p.CENTER); p.textFont("JetBrains Mono"); p.textSize(8.5);
+      p.noStroke(); p.fill(lit ? D.rgba("#06090D", a) : D.rgba(col, a)); p.textAlign(p.CENTER, p.CENTER); p.textFont("IBM Plex Mono"); p.textSize(8.5);
       p.text(r.rung, r.x, r.y + 0.5);
 
       // label block (alternate above/below to avoid overlap)
@@ -92,11 +92,11 @@
       const lx = r.x + 22;
       // state chip
       const chip = lit ? "LIT · NOW" : prog ? "IN PROGRESS" : target ? "TARGET" : "ROADMAP";
-      p.fill(D.rgba(col, a)); p.textFont("JetBrains Mono"); p.textSize(8);
+      p.fill(D.rgba(col, a)); p.textFont("IBM Plex Mono"); p.textSize(8);
       p.text(chip, lx, above ? ly - 30 : ly);
-      p.fill(D.rgba(EB.color.textPrimary, a)); p.textFont("Space Grotesk"); p.textStyle(p.BOLD); p.textSize(13);
+      p.fill(D.rgba(EB.color.textPrimary, a)); p.textFont("Bricolage Grotesque"); p.textStyle(p.BOLD); p.textSize(13);
       p.text(r.title, lx, above ? ly - 16 : ly + 12); p.textStyle(p.NORMAL);
-      p.fill(D.rgba(EB.color.textMuted, 0.9 * a)); p.textFont("JetBrains Mono"); p.textSize(8.6); p.textAlign(p.LEFT, p.TOP);
+      p.fill(D.rgba(EB.color.textMuted, 0.9 * a)); p.textFont("IBM Plex Mono"); p.textSize(8.6); p.textAlign(p.LEFT, p.TOP);
       wrapTextLeft(r.unlock, lx, above ? ly - 2 : ly + 28, Math.min(ctx.W * 0.27, 280), 11);
       p.pop();
     }
