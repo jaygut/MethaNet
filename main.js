@@ -25,7 +25,7 @@
     surveyor: [["screening", "signal, per site, ranked", true], ["not flux", "no units claimed, by design", false]],
     cheap: [["r > " + EB.ext.mcraFluxSpearman, "methanogen marker vs measured flux", true], ["salinity", "necessary, not sufficient", false]],
     atlas: [[D.fmt(EB.num.triViewReady), "genomes fully mapped", true], [D.fmt(EB.num.embeddingBearingUnits), "mapped in molecular space"], [D.fmt(EB.num.warehouseReach), "genomes of evidence in all"]],
-    engine: [["273×", "N₂O warming vs CO₂", true], ["1", "gas map validated so far", false], ["0", "field assays for new gases", false]],
+    engine: [["273×", "N₂O vs CO₂ over 100 years", true], ["1", "gas map running today (screening)", false], ["0", "field assays for new gases", false]],
     platform: [[D.fmt(EB.num.evidenceAtoms), "evidence atoms", true], [D.fmt(EB.num.nearEsm2Edges), "embedding-neighbor links"]],
     ladder: [["rung 0", "product today · screening + triage", true], ["rungs 1-5", "path to calibrated MRV"]],
     path: [["< " + EB.num.pipelineDays + " days", "raw sequences to report", true], ["Cispatá Bay", "field validation, next rung"]],
