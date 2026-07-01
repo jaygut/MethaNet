@@ -6,7 +6,7 @@
   window.EBScenes = window.EBScenes || {};
   window.EBScenes.stakes = function (p, ctx) {
     const EB = window.EB, D = window.EBDraw;
-    const GWP = EB.num.methaneGWP;
+    const GWP = EB.num.methaneGWP20;   // ~80x over 20 years (front-loaded framing, IPCC AR6)
     const SINK = EB.color.wetland, M_A = EB.color.methaneA, M_B = EB.color.methaneB;
     let rng, co2 = [], ch4 = [], vents = [], sedY = 0, settled = 0;
 
@@ -121,7 +121,7 @@
       D.label(p, (bal > 0 ? "+" : "") + bal + " net", cxr, lineY - 6, lineCol, 14, [p.LEFT, p.BOTTOM]);
       // title + GWP legend (the only hard number, kept verbatim)
       D.label(p, "NET CLIMATE BALANCE", mx, topY - 14, EB.color.textMuted, 11);
-      D.label(p, "STORED CARBON ▲   CH₄ ×" + GWP + " GWP ▼", mx, topY + 2, D.rgba(EB.color.textMuted, 0.9), 10.5);
+      D.label(p, "STORED CARBON ▲   CH₄ ×" + GWP + " over 20yr ▼", mx, topY + 2, D.rgba(EB.color.textMuted, 0.9), 10.5);
     }
   };
 })();

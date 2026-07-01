@@ -14,21 +14,21 @@
   window.EBScenes = window.EBScenes || {};
 
   // scene order incl. hero intro
-  const ORDER = ["hero", "stakes", "blindspot", "insight", "surveyor", "atlas", "engine", "platform", "ladder", "path"];
+  const ORDER = ["hero", "stakes", "blindspot", "surveyor", "cheap", "atlas", "engine", "platform", "ladder", "path"];
 
   // ---------- copy + chrome injection ----------
   function el(html) { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstChild; }
 
   const READOUTS = {
-    stakes: [["~" + EB.num.methaneGWP + "×", "CH₄ vs CO₂ · 100-year warming"]],
-    blindspot: [["≈ 0", "sites with paired flux + molecular data today", true], [EB.num.pairedFluxTargetLo + "–" + EB.num.pairedFluxTargetHi, "validation target"]],
-    insight: [[D.fmt(EB.num.embeddingBearingUnits), "genomes mapped", true], [EB.num.bridgeEdges, "bridge links"], ["R²=" + EB.num.permanovaR2, "ecosystem separation"]],
-    surveyor: [[D.fmt(EB.num.bridgeEdges), "molecular matches surveyed", true], ["≈ 0", "field assays run today", false]],
+    stakes: [["~" + EB.num.methaneGWP20 + "×", "CH₄ vs CO₂ over 20 years", true], ["$" + EB.ext.dbcRecordPrice + "/t", "blue-carbon record price, Aug 2025"]],
+    blindspot: [["≈ 0", "sites with paired flux + molecular data today", true], ["< " + EB.ext.vm0033SalinityPpt + " ppt", "salinity: no default methane factor"]],
+    surveyor: [["screening", "signal, per site, ranked", true], ["not flux", "no units claimed, by design", false]],
+    cheap: [["r > " + EB.ext.mcraFluxSpearman, "methanogen marker vs measured flux", true], ["salinity", "necessary, not sufficient", false]],
     atlas: [[D.fmt(EB.num.triViewReady), "genomes fully mapped", true], [D.fmt(EB.num.embeddingBearingUnits), "mapped in molecular space"], [D.fmt(EB.num.warehouseReach), "genomes of evidence in all"]],
     engine: [["273×", "N₂O warming vs CO₂", true], ["1", "gas map validated so far", false], ["0", "field assays for new gases", false]],
     platform: [[D.fmt(EB.num.evidenceAtoms), "evidence atoms", true], [D.fmt(EB.num.nearEsm2Edges), "embedding-neighbor links"]],
-    ladder: [["rung 0", "lit · molecular screening", true], ["rung 1", "underway · sample metadata"]],
-    path: [["< " + EB.num.pipelineDays + " days", "raw sequences → report", true], ["months", "of manual analysis, before"]],
+    ladder: [["rung 0", "product today · screening + triage", true], ["rungs 1-5", "path to calibrated MRV"]],
+    path: [["< " + EB.num.pipelineDays + " days", "raw sequences to report", true], ["Cispatá Bay", "field validation, next rung"]],
   };
 
   function injectCopy() {
@@ -57,6 +57,9 @@
   }
 
   function injectChrome() {
+    // hero (decision-first copy from the single source of truth)
+    document.getElementById("heroEyebrow").textContent = EB.hero.eyebrow;
+    document.getElementById("heroSub").textContent = EB.hero.sub;
     // header meta
     document.getElementById("headerMeta").innerHTML =
       '<span class="dot">●</span> live snapshot ' + EB.num.snapshot +
@@ -74,11 +77,11 @@
     // ask + factsheet
     document.getElementById("fsDate").textContent = EB.num.snapshot;
     document.getElementById("askBody").innerHTML =
-      "We have built the molecular layer: <b>" + D.fmt(EB.num.embeddingBearingUnits) +
-      "</b> embedding-bearing genomes mapped across rumen, wetland, and two mangrove systems, plus <b>" +
-      D.fmt(EB.num.muccWarehouseGenomes) + "</b> source-audited wetland genomes queryable for the next expansion. " +
-      "We have begun linking those genomes to real samples, sites, and seasons. " +
-      "The pre-seed unlocks the next rung: field validation at Cispatá Bay, and the paired flux data that turns molecular screening into calibrated methane MRV.";
+      "MethaNet sells integrity into the one market whose upside is gated on it. Blue carbon is its premium, " +
+      "methane-blocked frontier, and the sediment microbiome is the evidence layer no incumbent reads. " +
+      "Built for blue-carbon developers, verifiers, raters, and buyers doing diligence. " +
+      "We have mapped <b>" + D.fmt(EB.num.embeddingBearingUnits) + "</b> genomes and begun linking them to real samples and sites; " +
+      "the pre-seed unlocks field validation at Cispatá Bay, and the paired flux data that turns molecular screening into calibrated methane MRV.";
     const points = [
       "Field validation at Cispatá Bay (Colombian Caribbean mangrove, VM0033 context)",
       "Pair molecular evidence with field methane flux (target " + EB.num.pairedFluxTargetLo + "–" + EB.num.pairedFluxTargetHi + " samples)",

@@ -4,21 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EmergentBiome / MethaNet: methane-risk intelligence for blue carbon</title>
-  <meta name="description" content="EmergentBiome is a molecular-intelligence platform. MethaNet is its flagship methane-risk application for blue carbon: 5,209 genomes mapped, 2,508 wetland genomes queryable, every claim evidence-bounded." />
+  <meta name="description" content="MethaNet reads the sediment microbiome to flag which blue-carbon sites carry a hidden methane-source signature, so developers and verifiers know where to measure and which credits to scrutinize before they spend. Screening, not a flux number." />
   <meta name="robots" content="noindex" />
 
   <!-- Open Graph / Twitter - premium link previews when shared with investors -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="EmergentBiome / MethaNet" />
   <meta property="og:title" content="EmergentBiome / MethaNet: methane-risk intelligence for blue carbon" />
-  <meta property="og:description" content="A source-audited molecular atlas for blue-carbon methane risk: 5,209 genomes mapped, 2,508 wetland genomes queryable, and every claim tied to evidence." />
+  <meta property="og:description" content="MethaNet flags which blue-carbon sites carry a hidden methane-source signature, from a single sequenced sample, so you know where to measure and which credits to scrutinize before you spend." />
   <meta property="og:url" content="https://emergentbiome.earth/" />
   <meta property="og:image" content="https://emergentbiome.earth/assets/og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="EmergentBiome / MethaNet: methane-risk intelligence for blue carbon" />
-  <meta name="twitter:description" content="A source-audited molecular atlas for blue-carbon methane risk: 5,209 genomes mapped, 2,508 wetland genomes queryable." />
+  <meta name="twitter:description" content="MethaNet flags which blue-carbon sites carry a hidden methane-source signature, so you know where to measure and which credits to scrutinize before you spend." />
   <meta name="twitter:image" content="https://emergentbiome.earth/assets/og.png" />
 
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
@@ -31,11 +31,13 @@
   <nav class="skip-nav" aria-label="Jump to scene">
     <a href="#scene-stakes">1 · The Stakes</a>
     <a href="#scene-blindspot">2 · The Blind Spot</a>
-    <a href="#scene-insight">3 · The Insight</a>
-    <a href="#scene-atlas">4 · The Atlas</a>
-    <a href="#scene-platform">5 · Platform &amp; Moat</a>
-    <a href="#scene-ladder">6 · The Honest Ladder</a>
-    <a href="#scene-path">7 · The Path &amp; Ask</a>
+    <a href="#scene-surveyor">3 · What You Get</a>
+    <a href="#scene-cheap">4 · Versus the Cheap Method</a>
+    <a href="#scene-atlas">5 · The Evidence</a>
+    <a href="#scene-engine">6 · One Engine, Many Maps</a>
+    <a href="#scene-platform">7 · Platform &amp; Moat</a>
+    <a href="#scene-ladder">8 · The Honest Ladder</a>
+    <a href="#scene-path">9 · The Path &amp; Ask</a>
     <a href="#scene-ask">The ask</a>
   </nav>
 
@@ -79,13 +81,9 @@
     <section class="hero" id="scene-hero" data-scene="hero">
       <div class="hero__canvas" id="canvas-hero" aria-hidden="true"></div>
       <div class="hero__inner">
-        <div class="hero__eyebrow smallcaps" style="color:var(--emergence)">Molecular dark matter → verifiable structure</div>
+        <div class="hero__eyebrow smallcaps" id="heroEyebrow" style="color:var(--emergence)"></div>
         <h1 class="hero__title"><span class="plat">EmergentBiome</span> <span class="sep" style="color:var(--text-muted);font-weight:400">/</span> <span class="app">MethaNet</span></h1>
-        <p class="hero__sub">A molecular-intelligence platform that turns unseen microbiome signal into evidence-bounded decisions. MethaNet, the flagship application, prioritizes methane-risk monitoring and validation for blue carbon.</p>
-        <div class="hero__defs">
-          <div class="hero__def"><span class="plat">EmergentBiome</span>: <b>embeddings + attestation graph + agentic pipeline</b></div>
-          <div class="hero__def"><span class="app">MethaNet</span>: <b>the first application on a substrate built to generalize beyond methane</b></div>
-        </div>
+        <p class="hero__sub" id="heroSub"></p>
       </div>
       <div class="scrollhint">
         <span>Scroll</span>
@@ -102,12 +100,12 @@
       <div class="scene__stage"><div class="scene__canvas" id="canvas-blindspot" aria-hidden="true"></div><div class="scene__overlay"><div class="copy" data-copy="blindspot"></div></div></div>
     </section>
 
-    <section class="scene" id="scene-insight" data-scene="insight" data-accent="--emergence" style="height:320vh; --copy-h:flex-end; --copy-v:flex-end;">
-      <div class="scene__stage"><div class="scene__canvas" id="canvas-insight" aria-hidden="true"></div><div class="scene__overlay"><div class="copy" data-copy="insight"></div></div></div>
+    <section class="scene" id="scene-surveyor" data-scene="surveyor" data-accent="--methane-a" style="height:300vh; --copy-h:flex-start; --copy-v:flex-end;">
+      <div class="scene__stage"><div class="scene__canvas" id="canvas-surveyor" aria-hidden="true"></div><div class="scene__overlay"><div class="copy" data-copy="surveyor"></div></div></div>
     </section>
 
-    <section class="scene" id="scene-surveyor" data-scene="surveyor" data-accent="--methane-a" style="height:300vh; --copy-h:center; --copy-v:flex-end;">
-      <div class="scene__stage"><div class="scene__canvas" id="canvas-surveyor" aria-hidden="true"></div><div class="scene__overlay"><div class="copy" data-copy="surveyor"></div></div></div>
+    <section class="scene" id="scene-cheap" data-scene="cheap" data-accent="--attested" style="height:280vh; --copy-h:flex-start; --copy-v:flex-end;">
+      <div class="scene__stage"><div class="scene__canvas" id="canvas-cheap" aria-hidden="true"></div><div class="scene__overlay"><div class="copy" data-copy="cheap"></div></div></div>
     </section>
 
     <section class="scene" id="scene-atlas" data-scene="atlas" data-accent="--eco-mangrove-msm" style="height:280vh; --copy-h:flex-start; --copy-v:flex-end;">
@@ -167,8 +165,8 @@
   <script src="scenes/hero.js"></script>
   <script src="scenes/scene1-stakes.js"></script>
   <script src="scenes/scene2-blindspot.js"></script>
-  <script src="scenes/scene3-insight.js"></script>
   <script src="scenes/scene-surveyor.js"></script>
+  <script src="scenes/scene-cheap.js"></script>
   <script src="scenes/scene4-atlas.js"></script>
   <script src="scenes/scene-engine.js"></script>
   <script src="scenes/scene5-platform.js"></script>

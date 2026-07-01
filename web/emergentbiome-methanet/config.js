@@ -2,7 +2,17 @@
    EmergentBiome / MethaNet - SINGLE SOURCE OF TRUTH
    All numbers, the snapshot date, brand tokens, and scene copy live here.
    Every figure is verified in DIGEST.md against the live repo snapshot.
+   External facts live in `ext` with a source; see the grounding dossier.
    To update the page after a new run, edit THIS file only.
+
+   THE STANDING BAR (every scene must let a first-time viewer answer, in one
+   sentence each, after a single scroll):
+     1. What does it do?            (the decision it produces, not the method)
+     2. Who is it for?              (the named buyer and their job-to-be-done)
+     3. What exactly do I get?      (the concrete output object, shown)
+     4. Why beat the cheap method?  (vs metabarcoding, qPCR, the salinity proxy)
+     5. What does it NOT claim?     (the honesty that makes it credible)
+   No em-dashes in any public copy. Decision-first headlines. Body <= 25 words.
    ===================================================================== */
 window.EB = (function () {
   "use strict";
@@ -106,8 +116,46 @@ window.EB = (function () {
     pipelineDays: 4,
     analystMonthsLo: 6,
     analystMonthsHi: 12,
-    methaneGWP: 30,                  // ~30x CO2 over 100yr
+    methaneGWP: 30,                  // ~30x CO2 over 100yr (round GWP-100)
+    methaneGWP20: 80,                // ~80x CO2 over 20yr (biogenic GWP-20, IPCC AR6, the front-loaded story)
+    methaneLifetimeYears: 12,        // perturbation lifetime ~11.8yr (IPCC AR6). NOT a half-life.
     benchmarkR2: 0.879,              // marker-ratio literature target (Lee et al. 2014, freshwater)
+  };
+
+  /* ---- external grounded facts (each traces to the dossier; sources + dates inline) ----
+     ai_docs/prompts/landing_page_grounding_dossier.md. Flags: SAFE to print. ---- */
+  const ext = {
+    // Methane climate metrics: IPCC AR6 WG1 Ch.7 Table 7.15, biogenic (non-fossil).
+    methaneGWP20: 80,                // GWP-20 ~80.8 non-fossil
+    methaneLifetimeYears: 12,        // perturbation lifetime ~11.8 yr (adjustment time)
+    methaneERF: 0.54,                // W/m2, second-largest anthropogenic forcing after CO2
+    methaneSource: "IPCC AR6 WG1",
+    // Blue-carbon premium: Ecosystem Marketplace 2024; S&P Global Platts DBC (carboncredits.com 2025).
+    dbcRecordPrice: 29,              // $/tCO2e record, 28 Aug 2025 (Platts DBC blue-carbon benchmark)
+    blueCreditsCumulativeM: 7,       // ~7M credits issued cumulatively
+    blueActiveProjects: 10,          // ~10 projects actively issuing (supply-constrained)
+    premiumSource: "Platts DBC, Aug 2025",
+    // Methane wedge: VM0033 v2.1; Frontiers Env Sci 2024; par.nsf.gov review.
+    vm0033SalinityPpt: 18,           // below 18 ppt salinity: NO default CH4 factor permitted
+    ch4HotspotX: 400,                // methane hotspots ~400x background (Robison et al. 2021)
+    wedgeSource: "VM0033 v2.1",
+    // Flight to quality: BeZero / Sylvera (State of Carbon Credits 2025).
+    integrityRetireFromPct: 10,      // high-integrity retirements 10% share (2022)
+    integrityRetireToPct: 22,        // -> 22% share (early 2025); volume to value
+    // Science backbone: Baker et al. 2022 ISME J (salt ponds); ISME J 2022 methylotrophy.
+    mcraFluxSpearman: "0.7",         // methanogen marker mcrA vs measured CH4 flux, Spearman r > 0.7
+    scienceSource: "Baker et al. 2022, ISME J",
+    // Competitive white space: structured primary-source review (2026-07-01).
+    whiteSpaceAsOf: "July 2026",     // no company found doing molecular methane-risk attestation for blue carbon
+  };
+
+  /* ---- hero copy (decision-first; the first sentence a stranger reads is their decision) ---- */
+  const hero = {
+    eyebrow: "Methane-risk screening for blue carbon",
+    sub:
+      "Carbon credits price the carbon a wetland stores and ignore the methane it can leak. " +
+      "MethaNet reads the sediment microbiome from a single sample and flags which sites carry a hidden " +
+      "methane-source signature, so you know where to measure and which credits to scrutinize before you spend.",
   };
 
   /* ---- model views (kept jargon-free for the public page) ---- */
@@ -172,41 +220,41 @@ window.EB = (function () {
     { phase: "MRV",   label: "Registry integration", detail: "Reproducible evidence packets aligned to VM0033 / ICVCM review." },
   ];
 
-  /* ---- 7 scenes: kicker, headline, copy (<=25 words), data honesty ---- */
+  /* ---- 9 scenes: kicker, headline, copy (<=25 words), data honesty. See THE STANDING BAR up top. ---- */
   const scenes = [
     {
       id: "stakes", n: 1, label: "01 · The Stakes",
       kicker: "Blue carbon",
       headline: "A carbon sink that can quietly run in reverse.",
-      copy: "Coastal wetlands lock away carbon. But methane, at roughly 30× the warming power of CO₂, can quietly erode that net benefit.",
+      copy: "Methane traps roughly 80x CO₂ over 20 years. In brackish, freshened, or restored wetlands it can erode the very benefit a project is paid for.",
       data: "illustrative",
     },
     {
       id: "blindspot", n: 2, label: "02 · The Blind Spot",
       kicker: "The measurement gap",
       headline: "Methane risk is unmeasurable at scale.",
-      copy: "The sediment microbiome is climate dark matter. Direct methane measurements are rare and costly, so most of the risk surface has never been observed.",
+      copy: "Direct methane monitoring is costly and patchy. Below 18 ppt salinity the rules give no default, so a project must measure or model.",
       data: "illustrative",
     },
     {
-      id: "insight", n: 3, label: "03 · The Insight",
-      kicker: "The molecular map",
-      headline: "The map turns bridge candidates into reviewable hypotheses.",
-      copy: "We place every genome in a learned map of its proteins. Reference communities separate into basins, and bridge candidates appear: genomes whose molecular signatures make cross-ecosystem methane hypotheses reviewable.",
-      data: "real-coords",
+      id: "surveyor", n: 3, label: "03 · What You Get",
+      kicker: "What you get",
+      headline: "A ranked list of where methane risk hides, and where to measure first.",
+      copy: "For each site: a methane-risk signal, a confidence band, and the evidence behind it. Not a flux number. A call on where to measure first.",
+      data: "illustrative",
     },
     {
-      id: "surveyor", n: 4, label: "04 · The Survey",
-      kicker: "Where to measure first",
-      headline: "We map where to drill, not what's in the ground.",
-      copy: "A mineral survey reads rock chemistry to rank where the first costly core goes. MethaNet ranks where methane deserves its first field measurement.",
-      data: "real-coords",
+      id: "cheap", n: 4, label: "04 · Versus the Cheap Method",
+      kicker: "Versus the cheap method",
+      headline: "One gene tells you little. We read the whole community.",
+      copy: "Salinity sets the baseline. The microbial community sets the exception, and that is exactly where a project's methane assumption is most likely wrong.",
+      data: "illustrative",
     },
     {
-      id: "atlas", n: 5, label: "05 · The Atlas",
-      kicker: "A source-audited atlas",
-      headline: "2,364 tri-view genomes. 2,508 more in the wetland warehouse.",
-      copy: "The live atlas spans rumen, wetland, and two mangrove systems. MUCC adds 2,508 source-audited wetland genomes as the warehouse-backed scaffold for the next manifold refresh.",
+      id: "atlas", n: 5, label: "05 · The Evidence",
+      kicker: "The evidence behind the ranking",
+      headline: "Every call stands on a source-audited atlas.",
+      copy: "Each ranking traces to real genomes: 5,209 mapped across rumen, wetland, and two mangrove systems, plus 2,508 wetland genomes queryable for the next expansion.",
       data: "real-counts",
     },
     {
@@ -220,21 +268,21 @@ window.EB = (function () {
       id: "platform", n: 7, label: "07 · The Platform & the Moat",
       kicker: "EmergentBiome substrate",
       headline: "Every claim traces to its evidence.",
-      copy: "Embeddings, an attestation graph, and an agentic pipeline. The breadth you just saw runs on one substrate, where every new gas inherits the same evidence trail.",
+      copy: "Embeddings, an attestation graph, and an agentic pipeline. The atlas grows with every project sequenced, and every new gas inherits the same evidence trail.",
       data: "real-schema",
     },
     {
       id: "ladder", n: 8, label: "08 · The Honest Ladder",
       kicker: "MRV maturity",
       headline: "We are at molecular screening, and we say so.",
-      copy: "Calibrated A–E methane risk requires sample mapping, abundance, environment, and field flux. Rung 0 is lit. The rest is the roadmap.",
+      copy: "Rung 0 is a product today: screening, triage, and monitoring prioritization buyers and raters can use now. Rungs 1 to 5 climb to calibrated MRV.",
       data: "real-ladder",
     },
     {
       id: "path", n: 9, label: "09 · The Path & the Ask",
-      kicker: "From sequences to signal",
-      headline: "Field validation → paired data → calibrated risk.",
-      copy: "An agentic pipeline turns raw sequences into reproducible reports in under four days. Cispatá Bay is where the molecular map meets the mud.",
+      kicker: "Who it is for, and the ask",
+      headline: "Field validation, then paired data, then calibrated risk.",
+      copy: "For blue-carbon developers, verifiers, raters, and buyers doing diligence. Cispatá Bay is the field validation that turns molecular screening into calibrated methane risk.",
       data: "real-path",
     },
   ];
@@ -259,7 +307,7 @@ window.EB = (function () {
   };
 
   return {
-    color, ecosystems, num, stack, claims, ladder, ladderHorizon,
+    color, ecosystems, num, ext, hero, stack, claims, ladder, ladderHorizon,
     attestation, timeline, scenes, brand, links,
     // global seed for all reproducible sketches
     seed: 0xE13B10,

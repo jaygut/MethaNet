@@ -150,24 +150,31 @@ linked *report* remains the technical deep-dive.
 
 ## 6. Real vs stylized data per scene (for scientific review before any investor sees it)
 
+Scene order re-sequenced 2026-07-01 (decision-first; see `ai_docs/prompts/landing_page_value_prop_tightening_prompt.md`).
+The old abstract "Insight" manifold scene was dropped; the Survey was promoted into a concrete
+"What You Get" output artifact and a new "Versus the Cheap Method" scene was added, both before the
+Atlas (now recast as "The Evidence"). External facts live in `config.js` `ext` with sources; see the
+grounding dossier. The hero backdrop (`scenes/hero.js`) still uses the real diffusion-map manifold.
+
 | Scene | Visual | Data basis |
 | --- | --- | --- |
-| 1 — The Stakes | CO₂ settling / CH₄ eroding a net-benefit bar | **Illustrative** (concept; CH₄ GWP≈30× CO₂/100yr is real, labeled) |
-| 2 — The Blind Spot | grey unknown-genome field; scan finds nothing | **Illustrative** scale; the honest present state shown is **≈ 0** sites with paired flux + molecular data today (no fabricated "23") |
-| 3 — The Insight (HERO) | diffusion-map manifold; gold bridge links | **REAL coordinates** (`atlas.json`, diffusion map; PHATE/PCA also exported) + **real 372 bridge links** |
-| 4 — The Atlas | particles pour in; counters 625→2,364; MUCC wetland warehouse callout | **Real counts** (mapped lanes plus MUCC warehouse); particle motion stylized |
-| 5 — Platform & Moat | attestation graph; one claim's evidence chain | **Real schema + counts** (MMAG graph nodes/edges/claims/gaps); future slots = honest empty optionality |
-| 6 — Honest Ladder | 6-rung maturity gauge; rung 0 lit | **Real** (MRV roadmap Levels 0–5; rung 0 = current) |
-| 7 — Path & Ask | Cispatá Bay pin; milestones; <4-day pipeline | **Real** geography + roadmap milestones + pipeline speed; the ask is a business statement |
+| Hero | diffusion-map manifold backdrop; decision-first copy | **REAL coords** (`atlas.json`); copy is a business statement |
+| 1 — The Stakes | net-climate-balance line crossing net-zero into warming | **Illustrative** concept; CH₄ ≈80× CO₂ over 20yr + ≈12yr lifetime real (IPCC AR6, labeled); blue-carbon record ≈$29/tCO2e (Platts DBC) |
+| 2 — The Blind Spot | grey unknown field; scan finds nothing; 0-of-80–100 coverage row | **Illustrative** scale; honest present state **≈ 0** sites paired; VM0033 no-default-below-18-ppt is real (source in `ext`) |
+| 3 — What You Get | ranked site-triage list (signal, confidence, evidence link, measure-here) + two-column what-it-is/is-not | **Illustrative product shape** (exact output object; per-site scores are a mock; ranking follows the real science: risk concentrates in brackish/freshened/restored) |
+| 4 — Versus the Cheap Method | salinity-vs-methane field; exceptions the community flags; method-resolution legend | **Illustrative teaching plot**; the molecular anchor is real: mcrA vs measured flux Spearman r > 0.7 (Baker et al. 2022, ISME J) |
+| 5 — The Evidence (atlas) | particles; counters 625→2,364; MUCC warehouse callout | **Real counts** (mapped lanes + MUCC warehouse); motion stylized |
+| 6 — One Engine, Many Maps | one atlas re-read by a gas "lens"; methane lit, N₂O/sulfur honestly-empty | **REAL coords** (PHATE view of `atlas.json`); N₂O/sulfur invent no per-genome signal |
+| 7 — Platform & Moat | attestation graph; one claim's evidence chain | **Real schema + counts** (MMAG graph); future slots = honest empty optionality |
+| 8 — Honest Ladder | 6-rung maturity gauge; rung 0 lit, reframed as the product sold today | **Real** (MRV roadmap Levels 0–5) |
+| 9 — Path & Ask | Cispatá Bay pin; buyer set; <4-day pipeline | **Real** geography + roadmap + speed; the ask is a business statement |
 
-**One-paragraph honesty summary:** The hero (Scene 3) is driven entirely by real diffusion-map
-coordinates of the proteome embeddings and the real 372 bridge links exported in `data/atlas.json`;
-nothing in it is invented. Scenes 4–7 are built from verified repository counts (2,364 fully-mapped
-genomes, 5,209 mapped, 2,508 wetland-warehouse genomes), the real molecular-attestation graph schema,
-and the published MRV maturity ladder, with generative motion used to *present* (not fabricate) those
-quantities. Scenes 1–2 are deliberately illustrative and badged so: the climate concept, and the
-measurement gap whose honest present state is **≈ 0** sites with paired methane-flux + molecular data
-(the earlier "23" was a curation target, not a measurement, and has been removed). The 80–100 paired
-samples figure appears only as a stated **target**. Every A–E risk claim is marked
-TARGET/not-yet-calibrated, and a persistent footer plus Scene 6 state the molecular-screening claim
-boundary with the 2026-06-27 snapshot date.
+**One-paragraph honesty summary:** The atlas-backed scenes (Hero, 5 The Evidence, 6 One Engine) are
+driven by real coordinates in `data/atlas.json` and verified repository counts (2,364 fully-mapped
+genomes, 5,209 mapped, 2,508 wetland-warehouse genomes); scenes 7–9 use the real molecular-attestation
+graph schema and the published MRV maturity ladder. Scenes 1, 2, 3, and 4 are deliberately illustrative
+and badged so: the climate concept, the measurement gap (honest present state **≈ 0** sites with paired
+methane-flux + molecular data), the exact *shape* of the product output (per-site scores mocked, the
+ranking following real biogeochemistry), and a teaching plot of the salinity-vs-community argument. Every
+external fact carries a source in `config.js` `ext`; every A–E risk claim is marked TARGET/not-yet-calibrated;
+a persistent claim-boundary bar and Scene 8 state the molecular-screening boundary with the 2026-06-27 snapshot.
