@@ -154,8 +154,8 @@ window.EB = (function () {
     eyebrow: "Methane-risk screening for blue carbon",
     sub:
       "Carbon credits price the carbon a wetland stores and ignore the methane it can leak. " +
-      "MethaNet reads the sediment microbiome from a single sample and flags which sites carry a hidden " +
-      "methane-source signature, so you know where to measure and which credits to scrutinize before you spend.",
+      "MethaNet reads the sediment community from a single sample and flags which sites carry the pathway " +
+      "signature of a hidden methane source, so you know where to measure and which credits to scrutinize before you spend.",
   };
 
   /* ---- model views (kept jargon-free for the public page) ---- */
@@ -199,11 +199,11 @@ window.EB = (function () {
 
   /* ---- attestation evidence chain (Scene 5): one claim, traced ---- */
   const attestation = {
-    claimText: "This genome carries molecular evidence consistent with a methane-relevant review hypothesis.",
+    claimText: "This genome carries molecular evidence of a methane pathway, consistent with a methane-relevant review hypothesis.",
     forbidden: "“This genome emits methane.”",
     chain: [
       { stage: "Genome",            detail: "One genome, quality-controlled and taxonomically placed", node: "genome" },
-      { stage: "Markers",           detail: "Methane-related marker evidence is screened and linked", node: "marker genes" },
+      { stage: "Pathway markers",   detail: "Methane pathway marker evidence across producing and consuming guilds is screened and linked", node: "pathway markers" },
       { stage: "Embedding neighbors", detail: "Nearest neighbors in molecular space land on known methanogens", node: "embedding neighbor" },
       { stage: "Quality gate",      detail: "Completeness, contamination, and annotation-coverage checks", node: "validation gate" },
       { stage: "Claim boundary",    detail: "Allowed wording, blocked wording, and the path to upgrade it", node: "claim" },
@@ -226,28 +226,28 @@ window.EB = (function () {
       id: "stakes", n: 1, label: "01 · The Stakes",
       kicker: "Blue carbon",
       headline: "A carbon sink that can quietly run in reverse.",
-      copy: "Methane traps roughly 80x CO₂ over 20 years. In brackish, freshened, or restored wetlands it can erode the very benefit a project is paid for.",
+      copy: "Methane traps roughly 80x CO₂ over 20 years. In brackish, freshened, or restored systems it can shift to net methane and erode the paid-for benefit.",
       data: "illustrative",
     },
     {
       id: "blindspot", n: 2, label: "02 · The Blind Spot",
       kicker: "The measurement gap",
       headline: "Methane risk is unmeasurable at scale.",
-      copy: "Direct methane monitoring is costly and patchy. Below 18 ppt salinity the rules give no default, so a project must measure or model.",
+      copy: "Direct methane monitoring is costly and patchy. Below 18 ppt salinity the rules give no default, so the sediment process stays uncounted.",
       data: "illustrative",
     },
     {
       id: "surveyor", n: 3, label: "03 · What You Get",
       kicker: "What you get",
       headline: "A ranked list of where methane risk hides, and where to measure first.",
-      copy: "For each site: a methane-risk signal, a confidence band, and the evidence behind it. Not a flux number. A call on where to measure first.",
+      copy: "For each site: a methane-capacity signal from the sediment community, plus a confidence band and the evidence. Not a flux number. Where to measure first.",
       data: "illustrative",
     },
     {
       id: "cheap", n: 4, label: "04 · Versus the Cheap Method",
       kicker: "Versus the cheap method",
-      headline: "One gene tells you little. We read the whole community.",
-      copy: "Salinity sets the baseline. The microbial community sets the exception, and that is exactly where a project's methane assumption is most likely wrong.",
+      headline: "One gene tells you little. We read the whole pathway balance.",
+      copy: "Salinity sets the baseline. The balance of methane-making and methane-eating guilds sets the exception, exactly where a project's methane assumption is most likely wrong.",
       data: "illustrative",
     },
     {
@@ -261,14 +261,14 @@ window.EB = (function () {
       id: "engine", n: 6, label: "06 · One Engine, Many Maps",
       kicker: "One engine, many maps",
       headline: "One engine that keeps printing new risk maps.",
-      copy: "The engine that ranks methane risk can be pointed at the genes behind nitrous oxide, the gas today's blue-carbon rules still let projects count as zero.",
+      copy: "The engine that ranks methane risk can be pointed at the pathways behind nitrous oxide, the gas blue-carbon rules still let projects count as zero.",
       data: "real-coords",
     },
     {
       id: "platform", n: 7, label: "07 · The Platform & the Moat",
       kicker: "EmergentBiome substrate",
       headline: "Every claim traces to its evidence.",
-      copy: "Embeddings, an attestation graph, and an agentic pipeline. The atlas grows with every project sequenced, and every new gas inherits the same evidence trail.",
+      copy: "Embeddings, an attestation graph, and an agentic pipeline. The atlas grows with every project sequenced, and every new pathway inherits the same evidence trail.",
       data: "real-schema",
     },
     {
@@ -282,7 +282,7 @@ window.EB = (function () {
       id: "path", n: 9, label: "09 · The Path & the Ask",
       kicker: "Who it is for, and the ask",
       headline: "Field validation, then paired data, then calibrated risk.",
-      copy: "For blue-carbon developers, verifiers, raters, and buyers doing diligence. Cispatá Bay is the field validation that turns molecular screening into calibrated methane risk.",
+      copy: "For blue-carbon developers, verifiers, raters, and buyers doing diligence. Cispatá Bay pairs the sediment community screen with measured flux, the step toward calibrated methane risk.",
       data: "real-path",
     },
   ];
