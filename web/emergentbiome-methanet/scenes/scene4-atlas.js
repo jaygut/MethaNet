@@ -1,145 +1,197 @@
-/* SCENE 4 - THE ATLAS  ·  REAL COUNTS
-   Mangrove genome particles (MSM cyan + Futian indigo) pour into the manifold while a
-   mono counter ticks 625 -> 2,360 mapped atlas units. A lane bar fills POC (locked)
-   + MSM + Futian. MUCC v1 adds a 2,508-genome wetland warehouse layer that is
-   called out without pretending it is already plotted in the manifold. */
+/* SCENE 5 - THE EVIDENCE  ·  REAL DATA  ·  the source-audited atlas the ranking stands on.
+   The stunning projection: every point is a real genome at its true diffusion-map coordinate
+   (data/atlas.json). Rumen and wetland references fan out on the left, the mangrove expansion
+   forms the line on the right, and the biomes separate in molecular space. On scroll the cloud
+   resolves from noise, then the BRIDGE links light up: gold links join a mangrove genome to its
+   nearest reference genome, faint teal links are the wider cross-ecosystem neighborhood, and
+   knowledge flows along the gold bridges. This is what every ranked call in "What You Get"
+   traces back to: real genomes, projected across ecosystems, source-audited. */
 (function () {
   window.EBScenes = window.EBScenes || {};
   window.EBScenes.atlas = function (p, ctx) {
-    const EB = window.EB, D = window.EBDraw, N = EB.num;
-    const C_MSM = EB.color.mangroveMsm, C_FUT = EB.color.mangroveFutian, C_POC = EB.color.emergence;
-    let rng, stream = [], cloud = [];
+    const EB = window.EB, D = window.EBDraw;
+    const ECOC = {}; EB.ecosystems.forEach((e) => (ECOC[e.code] = e.color));
+    const GOLD = "#FFC75A"; // bridge-to-nearest-reference links (the bridge genomes)
+    let rng, pts = [], byEco = [[], [], [], []], gold = [], teal = [], pulses = [], region = {}, cent = {}, ready = false;
+    let bridgeNodes = [], csMangrove = [];
 
-    function layout() {
-      rng = window.EBRandom.RNG("atlas");
-      stream = []; cloud = [];
-      // pre-seed the POC core already present in the manifold
-      const w = ctx.W, h = ctx.H, cx = w * 0.5, cy = h * 0.56, s = Math.min(w, h) * 0.3;
-      for (let i = 0; i < 160; i++) {
-        const a = rng.range(0, 6.28), r = Math.sqrt(rng.next()) * s * 0.7;
-        cloud.push({ x: cx + Math.cos(a) * r * 0.7, y: cy + Math.sin(a) * r, c: C_POC, a: 0.5 });
-      }
-    }
-    function spawn(side) {
-      const w = ctx.W, h = ctx.H, cx = w * 0.5, cy = h * 0.56, s = Math.min(w, h) * 0.3;
-      const a = rng.range(0, 6.28), r = Math.sqrt(rng.next()) * s;
-      stream.push({
-        x: side < 0 ? rng.range(0, w * 0.3) : rng.range(w * 0.7, w),
-        y: -rng.range(0, h * 0.4),
-        tx: cx + Math.cos(a) * r, ty: cy + Math.sin(a) * r * 0.9,
-        c: side < 0 ? C_MSM : C_FUT, u: 0, sp: rng.range(0.012, 0.03), sz: rng.range(1.2, 2.4),
+    function project() {
+      const w = ctx.W, h = ctx.H;
+      const s = Math.min(w, h) * 0.40;
+      region = { cx: w * 0.48, cy: h * 0.45, s };
+      const atlas = ctx.data && ctx.data.atlas;
+      if (!atlas) { ready = false; return; }
+      rng = window.EBRandom.RNG("evidence");
+      pts = atlas.points.map((pt) => {
+        const sx = region.cx + pt.x * s, sy = region.cy - pt.y * s;
+        const a = rng.range(0, 6.2831), r = rng.range(0, Math.min(w, h) * 0.5);
+        return { sx, sy, nsx: region.cx + Math.cos(a) * r, nsy: region.cy + Math.sin(a) * r,
+          e: pt.e, br: pt.br, cs: pt.cs, ma: pt.ma || 0, mz: pt.mz || 0,
+          col: ECOC[pt.e] || "#889", ph: rng.range(0, 6.2831) };
       });
+      byEco = [[], [], [], []];
+      pts.forEach((pt) => byEco[pt.e].push(pt));
+      bridgeNodes = pts.filter((pt) => pt.br);
+      csMangrove = pts.filter((pt) => pt.cs && pt.e >= 2);
+      gold = atlas.bridges.filter((b) => b.cs).sort((a, b) => b.w - a.w);
+      teal = atlas.bridges.filter((b) => !b.cs).sort((a, b) => b.w - a.w);
+      cent = {};
+      EB.ecosystems.forEach((eco) => {
+        const g = byEco[eco.code];
+        if (g.length) cent[eco.key] = { x: g.reduce((a, q) => a + q.sx, 0) / g.length, y: g.reduce((a, q) => a + q.sy, 0) / g.length };
+      });
+      pulses = [];
+      ready = true;
     }
 
-    p.setup = function () { p.createCanvas(ctx.W, ctx.H); p.pixelDensity(Math.min(2, window.devicePixelRatio || 1)); layout(); if (ctx.reduced) p.noLoop(); };
-    p.windowResized = function () { p.resizeCanvas(ctx.W, ctx.H); layout(); };
+    p.setup = function () { p.createCanvas(ctx.W, ctx.H); p.pixelDensity(Math.min(2, window.devicePixelRatio || 1)); project(); if (ctx.reduced) p.noLoop(); };
+    p.windowResized = function () { p.resizeCanvas(ctx.W, ctx.H); project(); };
 
     p.draw = function () {
       const w = ctx.W, h = ctx.H, t = ctx.progress;
       p.clear(); p.background(EB.color.bgBase);
       D.instrumentGrid(p, w, h, EB.color.hairline, 0.22, 110);
+      if (!ready) { drawNoData(w, h); return; }
 
-      // emission proportional to progress; cap cloud size for perf
-      if (!ctx.reduced) { const rate = 0.4 + t * 2.4; let acc = (p._a || 0) + rate; while (acc >= 1) { spawn(rng.next() < 0.45 ? -1 : 1); acc -= 1; } p._a = acc; }
-      else { const want = 160 + Math.round(t * 700); while (cloud.length < want) { const a = rng.range(0, 6.28), r = Math.sqrt(rng.next()) * Math.min(w, h) * 0.3; cloud.push({ x: w * 0.5 + Math.cos(a) * r * 0.7, y: h * 0.56 + Math.sin(a) * r, c: rng.next() < 0.5 ? C_MSM : C_FUT, a: 0.5 }); } }
-      if (cloud.length > 1300) cloud.splice(0, cloud.length - 1300);
+      const resolve = D.easeInOut(D.window01(t, 0.0, 0.30));
+      const clarify = D.window01(t, 0.22, 0.5);
+      const tealA = D.window01(t, 0.46, 0.70);
+      const goldA = D.window01(t, 0.60, 0.85);
+      const flow = D.window01(t, 0.74, 1.0);
+      const dc = p.drawingContext;
 
-      // advance streams into the cloud
+      for (const pt of pts) { pt.x = D.lerp(pt.nsx, pt.sx, resolve); pt.y = D.lerp(pt.nsy, pt.sy, resolve); }
+
+      if (resolve > 0.15 && cent.mangrove_msm) {
+        const mc = cent.mangrove_msm;
+        const gx = dc.createRadialGradient(mc.x, mc.y, 0, mc.x, mc.y, region.s * 1.0);
+        gx.addColorStop(0, D.rgba(EB.color.mangroveMsm, 0.11 * resolve));
+        gx.addColorStop(0.55, D.rgba(EB.color.mangroveFutian, 0.04 * resolve));
+        gx.addColorStop(1, "rgba(0,0,0,0)");
+        dc.save(); dc.fillStyle = gx; dc.fillRect(0, 0, w, h); dc.restore();
+      }
+
+      // ---- bulk points: batched fillRect by ecosystem ----
+      dc.save();
+      for (let e = 0; e < 4; e++) {
+        const grp = byEco[e]; if (!grp.length) continue;
+        const poc = e < 2;
+        dc.fillStyle = D.lerpHex("#586771", ECOC[e], clarify);
+        dc.globalAlpha = poc ? 0.62 + 0.36 * clarify : 0.42 + 0.42 * clarify;
+        for (let i = 0; i < grp.length; i++) {
+          const pt = grp[i]; if (pt.br) continue;
+          const sz = (poc ? 2.4 : 1.4) + pt.mz * 1.8 * clarify;
+          dc.fillRect(pt.x - sz * 0.5, pt.y - sz * 0.5, sz, sz);
+        }
+      }
+      dc.globalAlpha = 1; dc.restore();
+
+      // ---- teal cross-ecosystem neighborhood links ----
+      const nTeal = Math.round(tealA * Math.min(teal.length, 240));
+      if (nTeal > 0) {
+        p.push(); p.blendMode(p.ADD); p.strokeWeight(1);
+        p.stroke(D.rgba(EB.color.emergence, 0.07 + 0.05 * tealA));
+        for (let i = 0; i < nTeal; i++) { const b = teal[i], a = pts[b.s], c = pts[b.t]; if (!a || !c) continue; p.line(a.x, a.y, c.x, c.y); }
+        p.pop();
+      }
+
+      // ---- gold bridge links: each joins a bridge genome to its nearest reference ----
+      const nGold = Math.round(goldA * gold.length);
+      if (nGold > 0) {
+        p.push(); p.blendMode(p.ADD);
+        for (let i = 0; i < nGold; i++) {
+          const b = gold[i], a = pts[b.s], c = pts[b.t]; if (!a || !c) continue;
+          p.stroke(D.rgba(GOLD, 0.30 + 0.45 * goldA)); p.strokeWeight(1.4);
+          p.line(a.x, a.y, c.x, c.y);
+        }
+        p.pop();
+      }
+
+      // ---- knowledge flows along the gold bridges (reference -> bridge genome) ----
+      if (flow > 0.02 && !ctx.reduced && nGold > 0) {
+        if (p.frameCount % 4 === 0 && pulses.length < 48) pulses.push({ b: gold[rng.int(0, nGold - 1)], u: 0, sp: rng.range(0.01, 0.022) });
+        p.push(); p.blendMode(p.ADD); p.noStroke();
+        for (let i = pulses.length - 1; i >= 0; i--) {
+          const pu = pulses[i]; pu.u += pu.sp; if (pu.u >= 1) { pulses.splice(i, 1); continue; }
+          let a = pts[pu.b.s], c = pts[pu.b.t]; if (a.e > c.e) { const tmp = a; a = c; c = tmp; }
+          const x = D.lerp(a.x, c.x, pu.u), y = D.lerp(a.y, c.y, pu.u);
+          D.glow(p, x, y, 2.2, D.lerpHex(EB.color.attested, GOLD, pu.u), 0.85 * (1 - pu.u));
+        }
+        p.pop();
+      } else if (ctx.reduced && flow > 0.3) {
+        p.push(); p.blendMode(p.ADD); p.noStroke();
+        for (let i = 0; i < nGold; i++) { const b = gold[i]; let a = pts[b.s], c = pts[b.t]; if (a.e > c.e) { const t2 = a; a = c; c = t2; } D.glow(p, D.lerp(a.x, c.x, 0.55), D.lerp(a.y, c.y, 0.55), 2.2, GOLD, 0.7); }
+        p.pop();
+      }
+
+      // ---- bridge-genome nodes ----
+      const nodeA = 0.4 + 0.6 * Math.max(goldA, tealA);
       p.push(); p.blendMode(p.ADD); p.noStroke();
-      for (let i = stream.length - 1; i >= 0; i--) {
-        const s = stream[i]; s.u += s.sp;
-        const e = D.easeInOut(D.clamp(s.u));
-        s.x = D.lerp(s.x, s.tx, 0.04 + e * 0.04); s.y = D.lerp(s.y, s.ty, 0.04 + e * 0.06);
-        D.glow(p, s.x, s.y, s.sz, s.c, 0.6);
-        if (s.u >= 1) { cloud.push({ x: s.tx, y: s.ty, c: s.c, a: 0.5 }); stream.splice(i, 1); }
+      for (const pt of bridgeNodes) {
+        if (pt.cs) { D.glow(p, pt.x, pt.y, 2.4 + pt.ma * 1.6, GOLD, 0.65 * nodeA); }
+        else { p.fill(D.rgba(pt.col, (0.35 + pt.ma * 0.5) * nodeA)); p.circle(pt.x, pt.y, 2.6 + pt.ma * 1.4); }
       }
       p.pop();
+      if (goldA > 0.2) {
+        p.noFill(); p.strokeWeight(1.2);
+        let labeled = 0;
+        for (const pt of csMangrove) {
+          p.stroke(D.rgba(GOLD, 0.65 * goldA)); p.circle(pt.x, pt.y, 13);
+          if (labeled < 4 && goldA > 0.6) { p.noStroke(); p.fill(D.rgba(GOLD, goldA)); p.textFont("JetBrains Mono"); p.textSize(8.5); p.textAlign(p.LEFT, p.CENTER); p.text("bridge", pt.x + 9, pt.y); p.noFill(); labeled++; }
+        }
+      }
 
-      // accumulated cloud (additive bloom underlay + crisp core)
-      p.push(); p.blendMode(p.ADD); p.noStroke();
-      for (const c of cloud) { p.fill(D.rgba(c.c, 0.06 * (0.5 + 0.5 * t))); p.circle(c.x, c.y, 4.5); }
-      p.pop();
-      p.noStroke();
-      for (const c of cloud) { p.fill(D.rgba(c.c, c.a * (0.55 + 0.5 * t))); p.circle(c.x, c.y, 2); }
-
-      drawCounter(w, h, t);
-      drawLaneBar(w, h, t);
-      drawTriView(w, h, t);
+      drawBasinLabels(clarify, resolve);
+      drawLegend(w, h, clarify, nGold, tealA);
       D.vignette(p, w, h, EB.color.bgBase, 0.5);
     };
 
-    function drawCounter(w, h, t) {
-      const v = Math.round(D.lerp(N.calibrationCore, N.triViewReady, D.easeInOut(t)));
-      p.push();
-      p.textAlign(p.CENTER, p.CENTER);
-      D.label(p, "ATLAS UNITS MAPPED", w * 0.5, h * 0.15, EB.color.textMuted, 11, [p.CENTER, p.CENTER]);
-      p.fill(EB.color.textPrimary); p.noStroke(); p.textFont("JetBrains Mono"); p.textSize(Math.min(72, w * 0.1));
-      p.text(D.fmt(v), w * 0.5, h * 0.15 + 48);
-      p.fill(D.rgba(EB.color.attested, 0.85)); p.textSize(11);
-      p.text(D.fmt(N.embeddingBearingUnits) + " genomes mapped  +  " + D.fmt(N.muccWarehouseGenomes) + " wetland genomes in the warehouse", w * 0.5, h * 0.15 + 86);
-      p.fill(D.rgba(EB.color.textMuted, 0.85)); p.textSize(10);
-      p.text(D.fmt(N.muccExpressionMags) + " wetland genomes carry activity clues across " + D.fmt(N.muccExpressionSamples) + " samples", w * 0.5, h * 0.15 + 108);
-      p.pop();
-    }
-
-    function drawLaneBar(w, h, t) {
-      const bw = Math.min(w * (w >= 1000 ? 0.42 : 0.6), 540);
-      const x = w >= 1000 ? w * 0.43 : (w - bw) / 2;
-      const y = h * 0.7, bh = 14;
-      const total = N.triViewReady;
-      const segs = [
-        ["POC core", N.calibrationCore, C_POC, false],
-        ["MSM", N.msmFunctionalComplete, C_MSM, false],
-        ["Futian", N.futianArchaeaComplete, C_FUT, true],
+    function drawBasinLabels(clarify, resolve) {
+      if (clarify < 0.25) return;
+      const a = clarify * resolve;
+      const defs = [
+        { key: "rumen", name: "RUMEN", sub: "reference · methanogens", dx: 16, dy: -10, ah: p.LEFT },
+        { key: "wetland", name: "WETLAND", sub: "target reference", dx: 16, dy: 10, ah: p.LEFT },
+        { key: "mangrove_msm", name: "MANGROVE EXPANSION", sub: "the genomes we screen", dx: 0, dy: -24, ah: p.CENTER },
       ];
-      const grow = D.easeInOut(t);
-      p.push(); p.noStroke();
-      p.fill(D.rgba(EB.color.hairline, 0.9)); p.rect(x, y, bw, bh, 3);
-      let cx = x;
-      for (const [label, val, col, prog] of segs) {
-        const segW = (val / total) * bw * grow;
-        p.fill(prog ? D.rgba(col, 0.6) : col); p.rect(cx, y, segW, bh, 2);
-        cx += segW;
-      }
-      // legend chips
-      let lx = x;
-      for (const [label, val, col, prog] of segs) {
-        p.fill(col); p.circle(lx + 4, y - 12, 7);
-        D.label(p, label + " " + D.fmt(val) + (prog ? " ⟳" : ""), lx + 13, y - 8, D.rgba(EB.color.textPrimary, 0.85), 10);
-        lx += p.textWidth(label + " " + D.fmt(val)) + 60;
+      p.push();
+      for (const d of defs) {
+        const s = cent[d.key]; if (!s) continue;
+        const col = ECOC[EB.ecosystems.find((e) => e.key === d.key).code];
+        const lx = s.x + d.dx, ly = s.y + d.dy;
+        p.noStroke(); p.textAlign(d.ah, p.CENTER);
+        p.fill(D.rgba(col, 0.95 * a)); p.textFont("Space Grotesk"); p.textStyle(p.BOLD); p.textSize(13);
+        p.text(d.name, lx, ly); p.textStyle(p.NORMAL);
+        p.fill(D.rgba(EB.color.textMuted, 0.85 * a)); p.textFont("JetBrains Mono"); p.textSize(9);
+        p.text(d.sub, lx, ly + 13);
       }
       p.pop();
     }
 
-    function drawTriView(w, h, t) {
-      // three evidence planes slide together into one atlas unit
-      const conv = D.easeInOut(D.window01(t, 0.35, 0.9));
-      const cx = w * 0.84, cy = h * 0.5, pw = Math.min(w * 0.14, 150), ph = 40;
-      if (w < 760) return; // hide motif on narrow screens (copy + counter carry it)
-      const views = [
-        ["map", EB.color.emergence, -1],
-        ["context", C_FUT, 0],
-        ["evidence", EB.color.methaneA, 1],
-      ];
+    function drawLegend(w, h, clarify, nGold, tealA) {
+      const x = Math.max(16, w * 0.04), y = h * 0.15;
       p.push();
-      D.label(p, "ONE ATLAS UNIT", cx, cy - 64, EB.color.textMuted, 10, [p.CENTER, p.BOTTOM]);
-      for (let i = 0; i < 3; i++) {
-        const [name, col, off] = views[i];
-        const spread = (1 - conv) * 46;
-        const yy = cy + off * (14 + spread);
-        p.push();
-        p.noStroke(); p.fill(D.rgba(col, 0.12 + 0.06 * conv));
-        p.stroke(D.rgba(col, 0.8)); p.strokeWeight(1);
-        p.rectMode(p.CENTER); p.rect(cx, yy, pw, ph, 4);
-        p.noStroke(); p.fill(D.rgba(col, 0.95)); p.textAlign(p.CENTER, p.CENTER); p.textFont("JetBrains Mono"); p.textSize(11);
-        p.text(name, cx, yy);
-        p.pop();
+      D.label(p, "SOURCE-AUDITED ATLAS · DIFFUSION VIEW", x, y, EB.color.textMuted, 10);
+      D.label(p, "real coordinates · " + D.fmt(pts.length) + " genomes mapped", x, y + 15, D.rgba(EB.color.attested, 0.9), 10);
+      let i = 0; const ly = y + 36;
+      for (const e of EB.ecosystems) {
+        const yy = ly + i * 15;
+        p.noStroke(); p.fill(D.rgba(e.color, 0.5 + 0.5 * clarify)); p.circle(x + 4, yy - 3, 6);
+        D.label(p, e.label + "  ·  " + D.fmt(e.count), x + 14, yy, D.rgba(EB.color.textPrimary, 0.85), 10);
+        i++;
       }
-      // bracket
-      p.stroke(D.rgba(EB.color.attested, 0.5 + 0.4 * conv)); p.strokeWeight(1); p.noFill();
-      p.line(cx + pw / 2 + 8, cy - 58, cx + pw / 2 + 16, cy - 58);
-      p.line(cx + pw / 2 + 16, cy - 58, cx + pw / 2 + 16, cy + 58);
-      p.line(cx + pw / 2 + 8, cy + 58, cx + pw / 2 + 16, cy + 58);
+      let yy = ly + i * 15 + 6;
+      p.stroke(D.rgba(GOLD, 0.9)); p.strokeWeight(1.6); p.line(x, yy - 3, x + 11, yy - 3); p.noStroke();
+      D.label(p, "bridge genome → nearest reference", x + 16, yy, D.rgba(EB.color.textPrimary, 0.9), 10);
+      yy += 15;
+      p.stroke(D.rgba(EB.color.emergence, 0.6)); p.strokeWeight(1.2); p.line(x, yy - 3, x + 11, yy - 3); p.noStroke();
+      D.label(p, "cross-ecosystem neighbor", x + 16, yy, D.rgba(EB.color.textMuted, 0.9), 10);
+      p.pop();
+    }
+
+    function drawNoData(w, h) {
+      p.push(); p.fill(EB.color.textMuted); p.textAlign(p.CENTER, p.CENTER); p.textFont("JetBrains Mono"); p.textSize(13);
+      p.text("Serve over http:// to load the live atlas (data/atlas.json)", w / 2, h / 2);
       p.pop();
     }
   };
