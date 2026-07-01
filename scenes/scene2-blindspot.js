@@ -81,7 +81,7 @@
       // counter readout - honest present state
       p.push();
       D.label(p, "PAIRED METHANE-FLUX MEASUREMENTS", w * 0.5, h * 0.15, EB.color.textMuted, 11, [p.CENTER, p.CENTER]);
-      p.fill(LIT); p.noStroke(); p.textFont("JetBrains Mono"); p.textAlign(p.CENTER, p.CENTER);
+      p.fill(LIT); p.noStroke(); p.textFont("IBM Plex Mono"); p.textAlign(p.CENTER, p.CENTER);
       p.textSize(Math.min(72, w * 0.1));
       p.text("≈ 0", w * 0.5, h * 0.15 + 48);
       D.label(p, "sites today with paired flux + molecular data", w * 0.5, h * 0.15 + 88, D.rgba(EB.color.textPrimary, 0.7), 11, [p.CENTER, p.CENTER]);

@@ -137,7 +137,7 @@
         let labeled = 0;
         for (const pt of csMangrove) {
           p.stroke(D.rgba(GOLD, 0.65 * goldA)); p.circle(pt.x, pt.y, 13);
-          if (labeled < 4 && goldA > 0.6) { p.noStroke(); p.fill(D.rgba(GOLD, goldA)); p.textFont("JetBrains Mono"); p.textSize(8.5); p.textAlign(p.LEFT, p.CENTER); p.text("bridge", pt.x + 9, pt.y); p.noFill(); labeled++; }
+          if (labeled < 4 && goldA > 0.6) { p.noStroke(); p.fill(D.rgba(GOLD, goldA)); p.textFont("IBM Plex Mono"); p.textSize(8.5); p.textAlign(p.LEFT, p.CENTER); p.text("bridge", pt.x + 9, pt.y); p.noFill(); labeled++; }
         }
       }
 
@@ -160,9 +160,9 @@
         const col = ECOC[EB.ecosystems.find((e) => e.key === d.key).code];
         const lx = s.x + d.dx, ly = s.y + d.dy;
         p.noStroke(); p.textAlign(d.ah, p.CENTER);
-        p.fill(D.rgba(col, 0.95 * a)); p.textFont("Space Grotesk"); p.textStyle(p.BOLD); p.textSize(13);
+        p.fill(D.rgba(col, 0.95 * a)); p.textFont("Bricolage Grotesque"); p.textStyle(p.BOLD); p.textSize(13);
         p.text(d.name, lx, ly); p.textStyle(p.NORMAL);
-        p.fill(D.rgba(EB.color.textMuted, 0.85 * a)); p.textFont("JetBrains Mono"); p.textSize(9);
+        p.fill(D.rgba(EB.color.textMuted, 0.85 * a)); p.textFont("IBM Plex Mono"); p.textSize(9);
         p.text(d.sub, lx, ly + 13);
       }
       p.pop();
@@ -190,7 +190,7 @@
     }
 
     function drawNoData(w, h) {
-      p.push(); p.fill(EB.color.textMuted); p.textAlign(p.CENTER, p.CENTER); p.textFont("JetBrains Mono"); p.textSize(13);
+      p.push(); p.fill(EB.color.textMuted); p.textAlign(p.CENTER, p.CENTER); p.textFont("IBM Plex Mono"); p.textSize(13);
       p.text("Serve over http:// to load the live atlas (data/atlas.json)", w / 2, h / 2);
       p.pop();
     }
