@@ -164,7 +164,7 @@ grounding dossier. The hero backdrop (`scenes/hero.js`) still uses the real diff
 | 3 — What You Get | ranked site-triage list (signal, confidence, evidence link, measure-here) + two-column what-it-is/is-not | **Illustrative product shape** (exact output object; per-site scores are a mock; ranking follows the real science: risk concentrates in brackish/freshened/restored) |
 | 4 — Versus the Cheap Method | salinity-vs-methane field; exceptions the community flags; method-resolution legend | **Illustrative teaching plot**; the molecular anchor is real: mcrA vs measured flux Spearman r > 0.7 (Baker et al. 2022, ISME J) |
 | 5 — The Evidence (atlas) | particles; counters 625→2,364; MUCC warehouse callout | **Real counts** (mapped lanes + MUCC warehouse); motion stylized |
-| 6 — One Engine, Many Maps | one atlas re-read by a gas "lens"; methane lit, N₂O/sulfur honestly-empty | **REAL coords** (PHATE view of `atlas.json`); N₂O/sulfur invent no per-genome signal |
+| 6 — One Engine, Many Maps | one atlas re-read by a clickable gas "lens"; methane screening map lit on the real `mz` signal, N₂O/sulfur honestly-empty ("aimed, not computed") | **REAL coords** (diffusion view of `atlas.json`, the same projection as the Evidence atlas); N₂O/sulfur invent no per-genome signal; methane is molecular screening, never a measured/validated flux |
 | 7 — Platform & Moat | attestation graph; one claim's evidence chain | **Real schema + counts** (MMAG graph); future slots = honest empty optionality |
 | 8 — Honest Ladder | 6-rung maturity gauge; rung 0 lit, reframed as the product sold today | **Real** (MRV roadmap Levels 0–5) |
 | 9 — Path & Ask | Cispatá Bay pin; buyer set; <4-day pipeline | **Real** geography + roadmap + speed; the ask is a business statement |
