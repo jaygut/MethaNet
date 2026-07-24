@@ -37,7 +37,7 @@ from collections import Counter, OrderedDict
 REPO_ROOT_FROM_HERE = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 SOURCE_NICHE = os.path.join(
     REPO_ROOT_FROM_HERE,
-    "results/reports/mbag_nextgen_molecular_niche_atlas_20260724_harmonized",
+    "results/reports/mbag_nextgen_molecular_niche_atlas_20260724_scientific_reconciliation",
     "assets/data/niche.json",
 )
 OUT_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data", "atlas.json"))
@@ -172,8 +172,28 @@ def main():
         proj[key] = (standardize_scale([n[a] for n in nodes]),
                      standardize_scale([n[b] for n in nodes]))
 
-    # methane-marker density (per 1k aa) -> robust 0..1 for honest visual encoding
-    mz = norm01_percentile([n.get("methane_marker_density_per_1k") or 0.0 for n in nodes])
+    # Public methane intensity is restricted to the curated POC mechanism
+    # contract. MSM/Futian raw hit-row aggregates and MUCC source terms are
+    # intentionally null after the scientific reconciliation; treating those
+    # lanes as zero would falsely imply comparable biological absence.
+    eligible_mz_nodes = [
+        n
+        for n in nodes
+        if n.get("rate_metric_status") == "comparable_curated_feature_density"
+        and n.get("methane_marker_density_per_1k") is not None
+    ]
+    eligible_mz_scaled = norm01_percentile(
+        [float(n["methane_marker_density_per_1k"]) for n in eligible_mz_nodes]
+    )
+    mz_by_id = {
+        n["proteome_id"]: value
+        for n, value in zip(eligible_mz_nodes, eligible_mz_scaled, strict=True)
+    }
+    contract_code = {
+        "canonical_mechanism_comparable": 1,
+        "annotation_complete_harmonization_pending": 2,
+        "source_scaffold_non_equivalent": 3,
+    }
 
     # bridge-link endpoints (the documented cross-ecosystem kNN bridge genomes)
     bridge_ids = set()
@@ -201,8 +221,9 @@ def main():
             ("d", domain_code(n.get("domain"))),
             ("br", 1 if pid in bridge_ids else 0),
             ("cs", 1 if n.get("is_case_study") else 0),
-            ("ma", r(n.get("molecular_attestation_index") or 0.0, 3)),
-            ("mz", r(mz[i], 3)),
+            ("ma", r(n.get("molecular_attestation_index"), 3)),
+            ("mz", r(mz_by_id.get(pid), 3)),
+            ("fc", contract_code.get(n.get("functional_comparability_tier"), 0)),
             ("nps", r(n.get("nearest_poc_similarity"), 3) if eco.startswith("mangrove") else None),
         ]))
 
@@ -233,7 +254,7 @@ def main():
 
     out = OrderedDict([
         ("meta", OrderedDict([
-            ("artifact", "EmergentBiome/MethaNet atlas — Phase 1 data export"),
+            ("artifact", "EmergentBiome/MethaNet atlas — evidence-reconciled public export"),
             ("source", os.path.relpath(src, REPO_ROOT_FROM_HERE)),
             ("option_used", f"1 — DIFFUSION MAP 2D coordinates of the proteome embeddings (REAL); {nonlinear_name.upper()} + PCA also exported as sensitivity views"),
             ("primary_projection", "diffusion"),
@@ -246,6 +267,19 @@ def main():
             ("n_case_study", sum(p["cs"] for p in points)),
             ("n_bridge_nodes", sum(p["br"] for p in points)),
             ("excluded_gap_rows", gap_rows),
+            (
+                "methane_intensity_scope",
+                "curated POC mechanism contract only; null for harmonization-pending and source-scaffold lanes",
+            ),
+            (
+                "functional_contract_codes",
+                {
+                    "0": "incomplete or unclassified",
+                    "1": "canonical mechanism-comparable POC",
+                    "2": "annotation-complete, harmonization pending",
+                    "3": "source scaffold, non-equivalent",
+                },
+            ),
             ("ecosystem_codes", ECO_CODE),
             ("ecosystem_counts", dict(eco_counts)),
             ("centroids", cent),
