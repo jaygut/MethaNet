@@ -40,16 +40,16 @@ window.EB = (function () {
 
   const ecosystems = [
     { key: "rumen",           code: 0, label: "Rumen",           sub: "source reference",      color: color.rumen,          count: 518 },
-    { key: "wetland",         code: 1, label: "Wetland / MUCC",  sub: "target domain",         color: color.wetland,        count: 107 },
+    { key: "wetland",         code: 1, label: "Wetland / MUCC",  sub: "POC + MUCC v1 reference", color: color.wetland,      count: 2608 },
     { key: "mangrove_msm",    code: 2, label: "Mangrove · MSM",  sub: "China 2025 expansion",  color: color.mangroveMsm,    count: 1428 },
     { key: "mangrove_futian", code: 3, label: "Mangrove · Futian", sub: "2026 expansion (Qi et al.)", color: color.mangroveFutian, count: 3156 },
   ];
 
   /* ---- verified headline numbers (see DIGEST.md §1) ---- */
   const num = {
-    snapshot: "2026-06-27",
-    snapshotLiveUTC: "2026-06-27 16:37 UTC",
-    snapshotFreezeUTC: "2026-06-25 14:55 UTC",
+    snapshot: "2026-07-24",
+    snapshotLiveUTC: "2026-07-24 20:33 UTC",
+    snapshotFreezeUTC: "2026-07-24 20:31 UTC",
 
     calibrationCore: 625,            // rumen + wetland POC, consolidated warehouse
     msmCandidates: 1428,
@@ -58,21 +58,26 @@ window.EB = (function () {
     futianReady: 3156,               // ready payload rows (embeddings complete)
     futianGapRows: 248,
     futianArchaeaTotal: 312,
-    futianArchaeaComplete: 312,      // 312/312 archaea functional complete (2026-06-27 registry)
+    futianArchaeaComplete: 312,      // 312/312 archaea functional complete
     futianArchaeaCompleteLive: 312,
-    futianBacteriaQueued: 2844,      // 0/2,844 bacteria complete; queued behind archaea chain
+    futianBacteriaTotal: 2844,
+    futianBacteriaComplete: 2616,    // 2,616/2,844 complete in the report snapshot
+    futianBacteriaPending: 228,
 
-    triViewReady: 2364,              // live registry-backed (625 + 1427 + 312), 2026-06-27
-    triViewReadyLive: 2364,
-    reportFreezeTriView: 2364,       // report recomputed in sync with live (312 Futian archaea)
-    embeddingBearingUnits: 5209,     // 625 + 1428 + 3156  (scaling target ~5,200)
-    plottedNodes: 5457,              // incl. 248 non-embedded gap rows
+    triViewReady: 7481,              // 4,980 canonical + 2,501 source-scaffold
+    triViewReadyLive: 7481,
+    reportFreezeTriView: 7481,
+    canonicalMechanismTriView: 4980,
+    sourceScaffoldTriView: 2501,
+    embeddingBearingUnits: 7710,     // registered ESM-2-bearing units
+    plottedNodes: 7965,              // all registered rows, including explicit gaps
 
     muccWarehouseGenomes: 2508,
+    muccTriViewReady: 2501,
     muccExpressionMags: 1948,
     muccExpressionSamples: 133,
     muccCandidateCards: 100,
-    warehouseReach: 7717,            // 5,209 mapped + 2,508 MUCC wetland warehouse genomes
+    warehouseReach: 7965,            // all registered atlas rows across four lanes
 
     // sample-metadata layer (the start of rung 1: linking genomes to real samples/sites)
     msmSedimentSamples: 82,          // local sediment-sample rows
@@ -82,9 +87,9 @@ window.EB = (function () {
     futianSites: 2,
     futianMonths: 8,
 
-    bridgeEdges: 372,                // documented cross-domain k-NN bridge edges
-    bridgeNodes: 136,
-    caseStudies: 26,
+    bridgeEdges: 2226,               // exported cross-domain k-NN and case-study links
+    bridgeNodes: 936,
+    caseStudies: 36,
     pocBridgeGenomes: 14,            // POC 662 cohort
 
     // POC geometry (662-genome cohort)
@@ -213,7 +218,7 @@ window.EB = (function () {
 
   /* ---- Scene 7 milestones ---- */
   const timeline = [
-    { phase: "Now",   label: "Molecular atlas", detail: "5,209 genomes mapped; 2,508 wetland genomes queryable as the next warehouse-backed expansion." },
+    { phase: "Now",   label: "Molecular atlas", detail: "7,710 genomes in ESM-2 space; 7,481 all-view units under two explicit functional evidence contracts." },
     { phase: "Field", label: "Cispatá Bay validation", detail: "Colombian Caribbean mangrove · paired methane-flux sampling." },
     { phase: "Pair",  label: "Paired data", detail: "Target: pair molecular evidence with field methane flux across seasons and habitats." },
     { phase: "Model", label: "Calibrated methane risk", detail: "Holdout-validated risk distribution; A–E tiers earn their thresholds." },
@@ -254,7 +259,7 @@ window.EB = (function () {
       id: "atlas", n: 5, label: "05 · The Evidence",
       kicker: "The evidence behind the ranking",
       headline: "Every call stands on a source-audited atlas.",
-      copy: "Each ranking traces to real genomes: 5,209 mapped across rumen, wetland, and two mangrove systems, plus 2,508 wetland genomes queryable for the next expansion.",
+      copy: "Each ranking traces to real genomes: 7,710 in molecular space and 7,481 with all three views across rumen, wetland, and two mangrove systems.",
       data: "real-coords",
     },
     {
@@ -291,7 +296,7 @@ window.EB = (function () {
   const links = {
     report: "report/",                 // stable alias on GitHub Pages → current freeze
     reportName: "MethaNet Molecular Niche Atlas (full scientific report)",
-    reportDate: "2026-06-29",
+    reportDate: "2026-07-24",
     siteUrl: "https://emergentbiome.earth/",
     contactEmail: "jg@graphoflife.com",
   };
