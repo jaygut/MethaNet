@@ -119,7 +119,7 @@
     function drawCloud(methaneW, coolW, n2oW, sulfW, settle, tm) {
       const dc = p.drawingContext;
       dc.save();
-      // always-present structure so the whole shared atlas fan reads (all 5,209 genomes),
+      // always-present structure so the whole shared atlas fan reads (all 7,710 genomes),
       // with the active gas as a highlight on top
       dc.fillStyle = NEUTRAL; dc.globalAlpha = 0.42 * settle;
       for (let i = 0; i < pts.length; i++) { const q = pts[i]; dc.fillRect(q.x - 1.3, q.y - 1.3, 2.6, 2.6); }
