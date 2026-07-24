@@ -705,9 +705,13 @@ def discover_external_functional(
             "functional_status": "complete",
             "run_dir": str(run_dir),
             "has_curated_manifest": True,
-            "functional_evidence_class": "canonical_curated_mechanism_features",
-            "functional_harmonization_status": "canonical_feature_contract",
-            "mechanism_equivalence_status": "mechanism_equivalent",
+            "functional_evidence_class": (
+                "annotation_complete_feature_aggregation_pending"
+            ),
+            "functional_harmonization_status": (
+                "raw_annotation_outputs_complete_common_mechanism_aggregation_pending"
+            ),
+            "mechanism_equivalence_status": "not_yet_mechanism_equivalent",
         }
         row["methane_evidence_score"] = row["mcycdb_hits"] + row["metabolic_hmm_rows"]
         row["sulfur_competition_score"] = row["scycdb_hits"] + row["metabolic_functions_present"]
@@ -1185,25 +1189,36 @@ def load_external_lane_features(
         default=f"{status_prefix}_pending",
     )
     frame["claim_scope"] = str(lane.get("claim_scope") or "MAG/proteome molecular screening")
+    default_evidence_class = (
+        "canonical_curated_mechanism_features"
+        if lane_role == "calibration_core"
+        else "annotation_complete_feature_aggregation_pending"
+    )
+    default_harmonization_status = (
+        "canonical_feature_contract"
+        if lane_role == "calibration_core"
+        else "raw_annotation_outputs_complete_common_mechanism_aggregation_pending"
+    )
+    default_mechanism_status = (
+        "mechanism_equivalent"
+        if lane_role == "calibration_core"
+        else "not_yet_mechanism_equivalent"
+    )
     if "functional_evidence_class" not in frame.columns:
-        frame["functional_evidence_class"] = (
-            "canonical_curated_mechanism_features"
-        )
+        frame["functional_evidence_class"] = default_evidence_class
     frame["functional_evidence_class"] = frame[
         "functional_evidence_class"
-    ].fillna(
-        "canonical_curated_mechanism_features"
-    )
+    ].fillna(default_evidence_class)
     if "functional_harmonization_status" not in frame.columns:
-        frame["functional_harmonization_status"] = "canonical_feature_contract"
+        frame["functional_harmonization_status"] = default_harmonization_status
     frame["functional_harmonization_status"] = frame[
         "functional_harmonization_status"
-    ].fillna("canonical_feature_contract")
+    ].fillna(default_harmonization_status)
     if "mechanism_equivalence_status" not in frame.columns:
-        frame["mechanism_equivalence_status"] = "mechanism_equivalent"
+        frame["mechanism_equivalence_status"] = default_mechanism_status
     frame["mechanism_equivalence_status"] = frame[
         "mechanism_equivalence_status"
-    ].fillna("mechanism_equivalent")
+    ].fillna(default_mechanism_status)
     if "prodigal_proteins" not in frame.columns and "protein_count" in frame.columns:
         frame["prodigal_proteins"] = frame["protein_count"]
     for col in [
@@ -1487,14 +1502,19 @@ def add_report_metrics(atlas: pd.DataFrame, emb_meta: pd.DataFrame) -> pd.DataFr
     atlas["tri_view_ready"] = (
         atlas["has_esm2"] & atlas["has_glm2"] & atlas["has_functional"]
     )
+    annotation_complete_pending = atlas["functional_evidence_class"].eq(
+        "annotation_complete_feature_aggregation_pending"
+    )
     atlas["formal_tri_view_status"] = np.select(
         [
             ~atlas["tri_view_ready"],
             mechanism_equivalent,
+            annotation_complete_pending,
         ],
         [
             "incomplete_tri_view",
             "complete_canonical_mechanism_tri_view",
+            "complete_annotation_tri_view_harmonization_pending",
         ],
         default="complete_source_scaffold_tri_view",
     )
@@ -2312,7 +2332,15 @@ def write_outputs(
 def lane_counts(frame: pd.DataFrame, label: str) -> dict[str, Any]:
     if frame.empty:
         return {"cohort": label, "total": 0, "esm2": 0, "glm2": 0, "functional": 0, "multiview": 0, "pending_function": 0}
-    include = frame.get("functional_run_include", pd.Series([True] * len(frame), index=frame.index)).fillna(True).astype(bool)
+    include = (
+        frame.get(
+            "functional_run_include",
+            pd.Series([True] * len(frame), index=frame.index),
+        )
+        .astype("boolean")
+        .fillna(True)
+        .astype(bool)
+    )
     total = int(len(frame))
     functional = int(frame["has_functional"].fillna(False).astype(bool).sum())
     return {

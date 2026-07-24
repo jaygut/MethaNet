@@ -19,7 +19,7 @@ set -euo pipefail
 CMD="${1:-build}"
 HERE="$(cd "$(dirname "$0")/.." && pwd)"          # web/emergentbiome-methanet
 REPO="$(cd "$HERE/../.." && pwd)"                  # repo root
-DEFAULT_REPORT="$REPO/results/reports/mbag_nextgen_molecular_niche_atlas_20260724_harmonized"
+DEFAULT_REPORT="$REPO/results/reports/mbag_nextgen_molecular_niche_atlas_20260724_scientific_reconciliation"
 REPORT="${2:-$DEFAULT_REPORT}"
 [[ "$REPORT" == --* ]] && REPORT="$DEFAULT_REPORT"   # allow `deploy --push`
 OUT="$HERE/_site"
@@ -42,11 +42,12 @@ build() {
   if [[ -f "$HERE/CNAME" ]]; then cp "$HERE/CNAME" "$OUT/CNAME"; echo "    CNAME   : $(cat "$HERE/CNAME")"; fi
 
   # --- report → /report/ (render-complete: exactly what report.html loads) ---
-  mkdir -p "$OUT/report/assets/js" "$OUT/report/assets/data" "$OUT/report/assets/figures"
+  mkdir -p "$OUT/report/assets/js" "$OUT/report/assets/data" "$OUT/report/assets/figures" "$OUT/report/audit"
   cp "$REPORT/report.html"                  "$OUT/report/index.html"
   cp "$REPORT/assets/js/d3.v7.min.js"       "$OUT/report/assets/js/"
   cp "$REPORT/assets/data/atlas_bundle.js"  "$OUT/report/assets/data/"
   cp "$REPORT"/assets/figures/*.png         "$OUT/report/assets/figures/"
+  cp "$REPORT"/audit/*                      "$OUT/report/audit/"
 
   # provenance breadcrumb (which freeze backs the published report)
   printf '{"published_report":"%s","built_for":"gh-pages site root + /report/"}\n' \

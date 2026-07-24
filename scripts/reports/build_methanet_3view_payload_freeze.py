@@ -209,7 +209,24 @@ def functional_evidence_contract(
     repo_root: Path,
     registry_row: dict[str, str],
 ) -> dict[str, str]:
-    """Classify functional evidence without equating source scaffolds to curated mechanisms."""
+    """Classify functional evidence without conflating completion and comparability.
+
+    A completed annotation run is necessary for a functional view, but it is
+    not sufficient for cross-lane mechanism equivalence.  The POC warehouse is
+    the only current lane whose exported ``feature_mrv_mag_level`` contract is
+    explicitly MAG/bin comparable.  External per-MAG pipelines retain their
+    completed raw annotation outputs while a common accepted/present mechanism
+    feature rebuild is pending.
+    """
+    lane_id = str(registry_row.get("lane_id") or "")
+    lane_role = str(registry_row.get("lane_role") or "")
+    if lane_role == "calibration_core" or lane_id == "poc_core":
+        return {
+            "functional_evidence_class": "canonical_curated_mechanism_features",
+            "functional_harmonization_status": "canonical_feature_contract",
+            "mechanism_equivalence_status": "mechanism_equivalent",
+        }
+
     warehouse_tables: set[str] = set()
     for warehouse_dir in resolve_many(repo_root, registry_row.get("functional_warehouse_dir")):
         for row in read_tsv(warehouse_dir / "cohort_table_manifest.tsv"):
@@ -225,9 +242,11 @@ def functional_evidence_contract(
             "mechanism_equivalence_status": "not_canonical_mechanism_equivalent",
         }
     return {
-        "functional_evidence_class": "canonical_curated_mechanism_features",
-        "functional_harmonization_status": "canonical_feature_contract",
-        "mechanism_equivalence_status": "mechanism_equivalent",
+        "functional_evidence_class": "annotation_complete_feature_aggregation_pending",
+        "functional_harmonization_status": (
+            "raw_annotation_outputs_complete_common_mechanism_aggregation_pending"
+        ),
+        "mechanism_equivalence_status": "not_yet_mechanism_equivalent",
     }
 
 
@@ -326,13 +345,29 @@ def lane_unit_rows(repo_root: Path, registry_row: dict[str, str], status_row: di
         has_glm2 = proteome_id in glm_ids
         has_functional = func.get("functional_status") == "complete"
         tri_view_ready = has_esm2 and has_glm2 and has_functional
+        row_evidence_contract = dict(evidence_contract)
+        if not has_functional:
+            row_evidence_contract["functional_harmonization_status"] = (
+                "functional_output_incomplete"
+            )
+            row_evidence_contract["mechanism_equivalence_status"] = (
+                "not_applicable_functional_incomplete"
+            )
         mechanism_equivalent = (
-            evidence_contract["mechanism_equivalence_status"] == "mechanism_equivalent"
+            row_evidence_contract["mechanism_equivalence_status"]
+            == "mechanism_equivalent"
         )
         if not tri_view_ready:
             formal_tri_view_status = "incomplete_tri_view"
         elif mechanism_equivalent:
             formal_tri_view_status = "complete_canonical_mechanism_tri_view"
+        elif (
+            row_evidence_contract["functional_evidence_class"]
+            == "annotation_complete_feature_aggregation_pending"
+        ):
+            formal_tri_view_status = (
+                "complete_annotation_tri_view_harmonization_pending"
+            )
         else:
             formal_tri_view_status = "complete_source_scaffold_tri_view"
         rows.append(
@@ -348,7 +383,7 @@ def lane_unit_rows(repo_root: Path, registry_row: dict[str, str], status_row: di
                 "has_glm2": str(has_glm2).lower(),
                 "has_functional": str(has_functional).lower(),
                 "tri_view_ready": str(tri_view_ready).lower(),
-                **evidence_contract,
+                **row_evidence_contract,
                 "formal_tri_view_status": formal_tri_view_status,
                 "mechanism_equivalent_tri_view": str(
                     tri_view_ready and mechanism_equivalent
@@ -379,6 +414,12 @@ def summarize(rows: list[dict[str, Any]], registry_status_rows: list[dict[str, A
             for row in lane_rows
             if row.get("formal_tri_view_status") == "complete_source_scaffold_tri_view"
         )
+        annotation_complete_tri_view = sum(
+            1
+            for row in lane_rows
+            if row.get("formal_tri_view_status")
+            == "complete_annotation_tri_view_harmonization_pending"
+        )
         release_required = sum(1 for row in lane_rows if truthy(row.get("release_required")))
         release_excluded = sum(1 for row in lane_rows if truthy(row.get("release_excluded")))
         release_tri_view = sum(
@@ -401,6 +442,7 @@ def summarize(rows: list[dict[str, Any]], registry_status_rows: list[dict[str, A
                 "functional_not_started": counts.get("not_started", 0),
                 "tri_view_ready_units": tri_view,
                 "canonical_mechanism_tri_view_units": canonical_tri_view,
+                "annotation_complete_tri_view_units": annotation_complete_tri_view,
                 "source_scaffold_tri_view_units": source_scaffold_tri_view,
                 "release_tri_view_ready_units": release_tri_view,
                 "registry_denominator_units": status.get("denominator_units", ""),
@@ -426,15 +468,17 @@ def markdown(
         f"Freeze allowed: `{'true' if freeze_allowed else 'false'}`",
         f"Required green lanes: `{', '.join(required_lanes)}`",
         "",
-        "| Lane | Expected | Release-required | Excluded | ESM2 | gLM2 | Functional | Tri-view | Canonical mechanism | Source scaffold | Release tri-view | Partial | Failed | Not started |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Lane | Expected | Release-required | Excluded | ESM2 | gLM2 | Functional | Tri-view | Mechanism-comparable | Annotation complete, harmonization pending | Source scaffold | Release tri-view | Partial | Failed | Not started |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for row in summary_rows:
         lines.append(
             "| {lane_id} | {expected_units:,} | {release_required_units:,} | "
             "{release_excluded_units:,} | {esm2_units:,} | {glm2_units:,} | "
             "{functional_complete:,} | {tri_view_ready_units:,} | "
-            "{canonical_mechanism_tri_view_units:,} | {source_scaffold_tri_view_units:,} | "
+            "{canonical_mechanism_tri_view_units:,} | "
+            "{annotation_complete_tri_view_units:,} | "
+            "{source_scaffold_tri_view_units:,} | "
             "{release_tri_view_ready_units:,} | {functional_partial:,} | "
             "{functional_failed:,} | {functional_not_started:,} |".format(
                 **{key: int(value) if str(value).isdigit() else value for key, value in row.items()}
@@ -559,6 +603,12 @@ def main() -> int:
         "tri_view_ready_units": sum(1 for row in unit_rows if truthy(row.get("tri_view_ready"))),
         "canonical_mechanism_tri_view_units": sum(
             1 for row in unit_rows if truthy(row.get("mechanism_equivalent_tri_view"))
+        ),
+        "annotation_complete_tri_view_units": sum(
+            1
+            for row in unit_rows
+            if row.get("formal_tri_view_status")
+            == "complete_annotation_tri_view_harmonization_pending"
         ),
         "source_scaffold_tri_view_units": sum(
             1

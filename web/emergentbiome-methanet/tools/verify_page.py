@@ -40,7 +40,42 @@ with sync_playwright() as pw:
         claim: document.getElementById('claimText').textContent.slice(0,40),
         fs: document.querySelectorAll('.factsheet__row').length,
     })""")
+    landing_audit = page.evaluate("""async () => {
+        const atlas = await fetch('data/atlas.json').then(r => r.json());
+        const count = code => atlas.points.filter(p => p.fc === code).length;
+        return {
+          points: atlas.points.length,
+          bridges: atlas.bridges.length,
+          mechanismComparable: count(1),
+          harmonizationPending: count(2),
+          sourceScaffold: count(3),
+          incomplete: count(0),
+          methaneIntensityNonNull: atlas.points.filter(p => p.mz != null).length,
+          nonComparableMethaneIntensity: atlas.points.filter(
+            p => p.fc !== 1 && p.mz != null
+          ).length,
+          evidenceReconciledSource: atlas.meta.source.includes(
+            '20260724_scientific_reconciliation'
+          ),
+        };
+    }""")
     print("PAGE INFO:", info)
+    print("LANDING AUDIT:", landing_audit)
+    if not (
+        info["canvases"] >= 1
+        and info["rail"] == 9
+        and info["fs"] == 15
+        and landing_audit["points"] == 7710
+        and landing_audit["bridges"] == 2226
+        and landing_audit["mechanismComparable"] == 625
+        and landing_audit["harmonizationPending"] == 4358
+        and landing_audit["sourceScaffold"] == 2501
+        and landing_audit["incomplete"] == 226
+        and landing_audit["methaneIntensityNonNull"] == 625
+        and landing_audit["nonComparableMethaneIntensity"] == 0
+        and landing_audit["evidenceReconciledSource"]
+    ):
+        page_errors.append(f"landing evidence contract failed: {landing_audit}")
 
     def scroll_to_scene(sid, frac=0.5):
         page.evaluate(f"""(sid) => {{
@@ -73,27 +108,68 @@ with sync_playwright() as pw:
         nicheSvg: document.querySelectorAll('#niche-map svg').length,
         matrixSvg: document.querySelectorAll('#signature-matrix svg').length,
         circosSvg: document.querySelectorAll('#candidate-circos svg').length,
+        evidenceContractSvg: document.querySelectorAll('#evidence-contract-chart svg').length,
         sampleSvg: document.querySelectorAll('#sample-linkage svg').length,
         hasUmapButton: Array.from(document.querySelectorAll('#method-buttons button')).some(
           b => b.textContent.trim() === 'UMAP'
         ),
-        bodyHasTriViewTotal: document.body.textContent.includes('7,481'),
-        bodyHasCanonicalTotal: document.body.textContent.includes('4,980'),
+        bodyHasTriViewTotal: document.body.textContent.includes('7,484'),
+        bodyHasMechanismComparableTotal: document.body.textContent.includes('625'),
+        bodyHasHarmonizationPendingTotal: document.body.textContent.includes('4,358'),
         bodyHasScaffoldTotal: document.body.textContent.includes('2,501'),
+        bodyHasQuarantineBoundary: document.body.textContent.toLowerCase().includes('quarantin'),
+        bodyHasCompletenessBoundary: document.body.textContent.includes(
+          'data completeness is not mechanism comparability'
+        ),
+        bodyHasRetired5457Infographic: document.body.textContent.includes('5,457'),
+        hasRetiredOperatingModel: Array.from(document.querySelectorAll('h2')).some(
+          h => h.textContent.trim() === 'The Operating Model Behind The Atlas'
+        ),
+        auditLinks: document.querySelectorAll('a[href^="audit/"]').length,
     })""")
+    audit_status = {
+        name: page.request.get(f"{BASE}/report/audit/{name}").status
+        for name in (
+            "scientific_audit.json",
+            "evidence_contract_summary.tsv",
+            "scientific_reconciliation_findings.tsv",
+            "functional_metric_provenance_audit.tsv",
+            "report_validation_gates.tsv",
+            "claim_boundary_matrix.tsv",
+        )
+    }
+    report_info["auditStatus"] = audit_status
     print("REPORT INFO:", report_info)
     page.screenshot(path=f"{OUT}/report.png", full_page=False)
+    for label, heading in (
+        ("report-contract", "Formal Tri-View Evidence Contract"),
+        ("report-geometry", "ESM-2 Geometry: Useful Signal, Measured Limitations"),
+        ("report-functional", "Functional Metric Provenance And Quarantine"),
+        ("report-mucc", "MUCC v1: Orthogonal Expression Evidence, Ecological Join Still Blocked"),
+    ):
+        page.get_by_role("heading", name=heading).scroll_into_view_if_needed()
+        time.sleep(0.3)
+        page.screenshot(path=f"{OUT}/{label}.png", full_page=False)
+        print("shot:", label)
     if not (
         report_info["atlasNodes"] == 7965
         and report_info["runtimeErrors"] == 0
         and report_info["nicheSvg"] == 1
         and report_info["matrixSvg"] == 1
         and report_info["circosSvg"] == 1
+        and report_info["evidenceContractSvg"] == 1
         and report_info["sampleSvg"] == 1
         and report_info["hasUmapButton"]
         and report_info["bodyHasTriViewTotal"]
-        and report_info["bodyHasCanonicalTotal"]
+        and report_info["bodyHasMechanismComparableTotal"]
+        and report_info["bodyHasHarmonizationPendingTotal"]
         and report_info["bodyHasScaffoldTotal"]
+        and report_info["bodyHasQuarantineBoundary"]
+        and report_info["bodyHasCompletenessBoundary"]
+        and not report_info["bodyHasRetired5457Infographic"]
+        and not report_info["hasRetiredOperatingModel"]
+        and report_info["auditLinks"] == 6
+        and all(status == 200 for status in report_info["auditStatus"].values())
     ):
         page_errors.append(f"report contract failed: {report_info}")
 

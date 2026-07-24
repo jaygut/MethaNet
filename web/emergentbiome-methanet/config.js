@@ -61,13 +61,14 @@ window.EB = (function () {
     futianArchaeaComplete: 312,      // 312/312 archaea functional complete
     futianArchaeaCompleteLive: 312,
     futianBacteriaTotal: 2844,
-    futianBacteriaComplete: 2616,    // 2,616/2,844 complete in the report snapshot
-    futianBacteriaPending: 228,
+    futianBacteriaComplete: 2619,    // 2,619/2,844 complete in the reconciled release
+    futianBacteriaPending: 225,
 
-    triViewReady: 7481,              // 4,980 canonical + 2,501 source-scaffold
-    triViewReadyLive: 7481,
-    reportFreezeTriView: 7481,
-    canonicalMechanismTriView: 4980,
+    triViewReady: 7484,              // data-complete, not universally mechanism-comparable
+    triViewReadyLive: 7484,
+    reportFreezeTriView: 7484,
+    mechanismComparableTriView: 625,
+    annotationCompletePendingTriView: 4358,
     sourceScaffoldTriView: 2501,
     embeddingBearingUnits: 7710,     // registered ESM-2-bearing units
     plottedNodes: 7965,              // all registered rows, including explicit gaps
@@ -88,7 +89,7 @@ window.EB = (function () {
     futianMonths: 8,
 
     bridgeEdges: 2226,               // exported cross-domain k-NN and case-study links
-    bridgeNodes: 936,
+    bridgeNodes: 930,
     caseStudies: 36,
     pocBridgeGenomes: 14,            // POC 662 cohort
 
@@ -218,7 +219,7 @@ window.EB = (function () {
 
   /* ---- Scene 7 milestones ---- */
   const timeline = [
-    { phase: "Now",   label: "Molecular atlas", detail: "7,710 genomes in ESM-2 space; 7,481 all-view units under two explicit functional evidence contracts." },
+    { phase: "Now",   label: "Molecular atlas", detail: "7,710 genomes in ESM-2 space; 7,484 data-complete tri-views across three explicit evidence contracts." },
     { phase: "Field", label: "Cispatá Bay validation", detail: "Colombian Caribbean mangrove · paired methane-flux sampling." },
     { phase: "Pair",  label: "Paired data", detail: "Target: pair molecular evidence with field methane flux across seasons and habitats." },
     { phase: "Model", label: "Calibrated methane risk", detail: "Holdout-validated risk distribution; A–E tiers earn their thresholds." },
@@ -259,14 +260,14 @@ window.EB = (function () {
       id: "atlas", n: 5, label: "05 · The Evidence",
       kicker: "The evidence behind the ranking",
       headline: "Every call stands on a source-audited atlas.",
-      copy: "Each ranking traces to real genomes: 7,710 in molecular space and 7,481 with all three views across rumen, wetland, and two mangrove systems.",
+      copy: "The warehouse maps 7,710 genomes; 7,484 carry all three payloads. Only the 625-unit POC core is mechanism-comparable today.",
       data: "real-coords",
     },
     {
       id: "engine", n: 6, label: "06 · One Engine, Many Maps",
       kicker: "One engine, many maps",
-      headline: "One engine that keeps printing new risk maps.",
-      copy: "The engine that ranks methane risk can be pointed at the pathways behind nitrous oxide, the gas blue-carbon rules still let projects count as zero.",
+      headline: "One evidence engine, with every gas gated separately.",
+      copy: "Methane has a 625-unit comparable POC screen. Mangrove, MUCC, and every non-methane lens remain uncalibrated.",
       data: "real-coords",
     },
     {
