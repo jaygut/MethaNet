@@ -1,0 +1,7 @@
+claim	status	allowed_wording	blocking_gap
+Expanded atlas supports MAG/proteome molecular screening	allowed	MethaNet can inspect multiview molecular evidence for completed MAG/proteome units.	none for MAG/proteome screening
+Bridge candidates are review-ready hypotheses	allowed with caveats	Candidates can be prioritized for source-aware review using ESM-2 geometry, protocol-stratified gLM2 availability, evidence-contract state, QC, and taxonomy.	common mechanism-feature rebuild, source-aware nulls, phylogeny comparison, sample linkage
+All 7,484 tri-view units are fully mechanism harmonized	forbidden in current release	7,484 units are data-complete tri-views; 625 are currently mechanism-comparable.	common accepted/present mechanism-feature rebuild across MSM, Futian, and MUCC
+MUCC expression supports transcriptional detection	allowed with caveats	Processed MUCC tables support gene-expression detection/occupancy for named MAGs and source sample columns.	expression normalization units, exact environmental/flux crosswalk, abundance and uncertainty
+Cross-lane molecular attestation ranking	quarantined	No universal cross-lane mechanism rank is published in this release.	common feature aggregation, denominator validation, protocol calibration, and source-balance tests
+Final MRV risk score or A-E tier	forbidden	Not available from this artifact.	sample mapping, abundance, environmental covariates, uncertainty, and field/process validation
