@@ -24,8 +24,8 @@
     blindspot: [["≈ 0", "sites with paired flux + molecular data today", true], ["< " + EB.ext.vm0033SalinityPpt + " ppt", "salinity: no default methane factor"]],
     surveyor: [["screening", "signal, per site, ranked", true], ["not flux", "no units claimed, by design", false]],
     cheap: [["r > " + EB.ext.mcraFluxSpearman, "methanogen marker vs measured flux", true], ["salinity", "necessary, not sufficient", false]],
-    atlas: [[D.fmt(EB.num.triViewReady), "all-view genome units", true], [D.fmt(EB.num.canonicalMechanismTriView), "canonical mechanism tri-view"], [D.fmt(EB.num.sourceScaffoldTriView), "source-scaffold tri-view"]],
-    engine: [["273×", "N₂O vs CO₂ over 100 years", true], ["1", "gas map running today (screening)", false], ["0", "field assays for new gases", false]],
+    atlas: [[D.fmt(EB.num.triViewReady), "data-complete tri-view units", true], [D.fmt(EB.num.mechanismComparableTriView), "mechanism-comparable POC"], [D.fmt(EB.num.annotationCompletePendingTriView), "annotation-complete, harmonization pending"], [D.fmt(EB.num.sourceScaffoldTriView), "MUCC source-scaffold tri-view"]],
+    engine: [["273×", "N₂O vs CO₂ over 100 years", true], [D.fmt(EB.num.mechanismComparableTriView), "POC units in the comparable methane screen", false], ["0", "field assays for new gases", false]],
     platform: [[D.fmt(EB.num.evidenceAtoms), "evidence atoms", true], [D.fmt(EB.num.nearEsm2Edges), "embedding-neighbor links"]],
     ladder: [["rung 0", "product today · screening + triage", true], ["rungs 1-5", "path to calibrated MRV"]],
     path: [["< " + EB.num.pipelineDays + " days", "raw sequences to report", true], ["Cispatá Bay", "field validation, next rung"]],
@@ -94,8 +94,9 @@
       ["Calibration core (rumen + wetland)", D.fmt(EB.num.calibrationCore) + " genomes"],
       ["Mangrove · MSM China 2025", D.fmt(EB.num.msmCandidates) + " genomes (" + D.fmt(EB.num.msmFunctionalComplete) + " annotated)"],
       ["Mangrove · Futian 2026 (Qi et al.)", D.fmt(EB.num.futianRMAGs) + " genomes <span class='in-progress'>(" + D.fmt(EB.num.futianBacteriaComplete) + "/" + D.fmt(EB.num.futianBacteriaTotal) + " bacteria annotated)</span>"],
-      ["All-view genome units", D.fmt(EB.num.triViewReady)],
-      ["Canonical mechanism tri-view", D.fmt(EB.num.canonicalMechanismTriView)],
+      ["Data-complete tri-view units", D.fmt(EB.num.triViewReady) + " <span class='in-progress'>(payload completeness, not universal comparability)</span>"],
+      ["Mechanism-comparable POC tri-view", D.fmt(EB.num.mechanismComparableTriView)],
+      ["Annotation-complete, harmonization pending", D.fmt(EB.num.annotationCompletePendingTriView)],
       ["MUCC v1 source-scaffold tri-view", D.fmt(EB.num.sourceScaffoldTriView) + " <span class='in-progress'>(not mechanism-equivalent)</span>"],
       ["Genomes mapped (molecular space)", D.fmt(EB.num.embeddingBearingUnits)],
       ["MUCC v1 wetland source warehouse", D.fmt(EB.num.muccWarehouseGenomes) + " genomes"],
@@ -122,7 +123,7 @@
     const note = document.getElementById("reportNote");
     if (note) note.innerHTML =
       "The report is the full scientific narrative behind these numbers: molecular niche-space, bridge evidence, the attestation graph, and the sample-readiness ladder. Recomputed " +
-      EB.links.reportDate + ", in sync with the live atlas at " + D.fmt(EB.num.triViewReady) + " all-view genome units." +
+      EB.links.reportDate + ", in sync with the live atlas at " + D.fmt(EB.num.triViewReady) + " data-complete tri-view units." +
       ' <a href="' + rep + '" target="_blank" rel="noopener">Open the interactive atlas ↗</a>';
   }
 
