@@ -425,6 +425,13 @@ def rebuild_scoped_embedding_context(
 
 def add_molecular_metrics(atlas: pd.DataFrame) -> pd.DataFrame:
     atlas = atlas.copy()
+    evidence_groups = atlas.get(
+        "functional_evidence_class",
+        pd.Series(
+            "canonical_curated_mechanism_features",
+            index=atlas.index,
+        ),
+    ).fillna("canonical_curated_mechanism_features")
     protein_count = pd.to_numeric(atlas.get("prodigal_proteins"), errors="coerce")
     protein_count = protein_count.fillna(pd.to_numeric(atlas.get("n_proteins_used"), errors="coerce"))
     has_real_denominator = protein_count.notna() & protein_count.gt(0)
@@ -443,10 +450,14 @@ def add_molecular_metrics(atlas: pd.DataFrame) -> pd.DataFrame:
     )
     methane_count = methane_from_scores.where(methane_from_scores.notna(), methane_from_raw).fillna(0)
     sulfur_count = sulfur_from_scores.where(sulfur_from_scores.notna(), sulfur_from_raw).fillna(0)
-    substrate_count = (
+    canonical_substrate_count = (
         pd.to_numeric(atlas.get("cazy_family_count", 0), errors="coerce").fillna(0)
         + pd.to_numeric(atlas.get("merops_family_count", 0), errors="coerce").fillna(0)
     )
+    substrate_count = pd.to_numeric(
+        atlas.get("substrate_evidence_count", pd.Series(np.nan, index=atlas.index)),
+        errors="coerce",
+    ).fillna(canonical_substrate_count)
     atlas["methane_marker_count"] = methane_count
     atlas["sulfur_context_count"] = sulfur_count
     atlas["substrate_breadth_count"] = substrate_count
@@ -456,11 +467,28 @@ def add_molecular_metrics(atlas: pd.DataFrame) -> pd.DataFrame:
     atlas["methane_sulfur_balance"] = np.log1p(atlas["methane_marker_density_per_1k"]) - np.log1p(
         atlas["sulfur_context_density_per_1k"]
     )
-    atlas["annotation_breadth_index"] = (
+    canonical_annotation_breadth = (
         0.34 * norm01(pd.to_numeric(atlas.get("kofam_annotated_gene_fraction", 0), errors="coerce").fillna(0))
         + 0.22 * norm01(np.log1p(pd.to_numeric(atlas.get("metabolic_modules_present", 0), errors="coerce").fillna(0)))
         + 0.22 * norm01(np.log1p(pd.to_numeric(atlas.get("cazy_family_count", 0), errors="coerce").fillna(0)))
         + 0.22 * norm01(np.log1p(pd.to_numeric(atlas.get("merops_family_count", 0), errors="coerce").fillna(0)))
+    )
+    source_annotation_breadth = legacy.norm01_by_group(
+        np.log1p(
+            pd.to_numeric(
+                atlas.get(
+                    "broad_function_evidence_count",
+                    pd.Series(np.nan, index=atlas.index),
+                ),
+                errors="coerce",
+            )
+        ),
+        evidence_groups,
+    )
+    atlas["annotation_breadth_index"] = canonical_annotation_breadth
+    source_scaffold = evidence_groups.eq("source_annotation_scaffold")
+    atlas.loc[source_scaffold, "annotation_breadth_index"] = (
+        source_annotation_breadth.loc[source_scaffold]
     )
     qc_raw = (
         pd.to_numeric(atlas.get("checkm2_completeness", 0), errors="coerce").fillna(0)
@@ -472,10 +500,19 @@ def add_molecular_metrics(atlas: pd.DataFrame) -> pd.DataFrame:
         + 0.6 * pd.to_numeric(atlas.get("cross_domain_neighbor_fraction", 0), errors="coerce").fillna(0)
         + 0.25 * pd.to_numeric(atlas.get("mixing_coeff", 0), errors="coerce").fillna(0)
     )
-    atlas["methane_signal_index"] = norm01(np.log1p(methane_count))
-    atlas["sulfur_context_index"] = norm01(np.log1p(sulfur_count))
-    atlas["substrate_breadth_index"] = norm01(np.log1p(substrate_count))
-    atlas["glm_context_index"] = norm01(pd.to_numeric(atlas.get("glm_context_delta", 0), errors="coerce").fillna(0))
+    atlas["methane_signal_index"] = legacy.norm01_by_group(
+        np.log1p(methane_count), evidence_groups
+    )
+    atlas["sulfur_context_index"] = legacy.norm01_by_group(
+        np.log1p(sulfur_count), evidence_groups
+    )
+    atlas["substrate_breadth_index"] = legacy.norm01_by_group(
+        np.log1p(substrate_count), evidence_groups
+    )
+    atlas["glm_context_index"] = legacy.norm01_by_group(
+        pd.to_numeric(atlas.get("glm_context_delta", 0), errors="coerce").fillna(0),
+        evidence_groups,
+    )
     atlas["molecular_attestation_index"] = (
         0.24 * atlas["bridge_affinity_index"]
         + 0.14 * atlas["glm_context_index"]
@@ -485,13 +522,22 @@ def add_molecular_metrics(atlas: pd.DataFrame) -> pd.DataFrame:
         + 0.10 * atlas["annotation_breadth_index"]
         + 0.08 * atlas["qc_confidence_index"]
     )
-    atlas.loc[~atlas["has_functional"], "molecular_attestation_index"] = np.nan
+    mechanism_equivalent = atlas.get(
+        "mechanism_equivalence_status",
+        pd.Series("mechanism_equivalent", index=atlas.index),
+    ).eq("mechanism_equivalent")
+    atlas.loc[
+        ~atlas["has_functional"] | ~mechanism_equivalent,
+        "molecular_attestation_index",
+    ] = np.nan
     return atlas
 
 
 def classify_review_tier(row: pd.Series) -> str:
     if not bool(row.get("has_functional", False)):
         return "functional pending"
+    if row.get("mechanism_equivalence_status") != "mechanism_equivalent":
+        return "source-scaffold review"
     score = safe_float(row.get("molecular_attestation_index"))
     qc = safe_float(row.get("qc_confidence_index"))
     if score >= 0.72 and qc >= 0.55:
@@ -526,7 +572,15 @@ def apply_freeze_manifest(
 
     freeze = freeze.copy()
     freeze["proteome_id"] = freeze["proteome_id"].astype(str)
-    for col in ["has_esm2", "has_glm2", "has_functional", "tri_view_ready", "release_required", "release_excluded"]:
+    for col in [
+        "has_esm2",
+        "has_glm2",
+        "has_functional",
+        "tri_view_ready",
+        "mechanism_equivalent_tri_view",
+        "release_required",
+        "release_excluded",
+    ]:
         if col in freeze.columns:
             freeze[col] = truthy_series(freeze[col])
     keep_cols = [
@@ -538,6 +592,11 @@ def apply_freeze_manifest(
             "has_glm2",
             "has_functional",
             "tri_view_ready",
+            "functional_evidence_class",
+            "functional_harmonization_status",
+            "mechanism_equivalence_status",
+            "formal_tri_view_status",
+            "mechanism_equivalent_tri_view",
             "release_required",
             "release_excluded",
             "release_exclusion_reason",
@@ -557,6 +616,11 @@ def apply_freeze_manifest(
         "has_glm2": "freeze_has_glm2",
         "has_functional": "freeze_has_functional",
         "tri_view_ready": "freeze_tri_view_ready",
+        "functional_evidence_class": "freeze_functional_evidence_class",
+        "functional_harmonization_status": "freeze_functional_harmonization_status",
+        "mechanism_equivalence_status": "freeze_mechanism_equivalence_status",
+        "formal_tri_view_status": "freeze_formal_tri_view_status",
+        "mechanism_equivalent_tri_view": "freeze_mechanism_equivalent_tri_view",
         "release_required": "freeze_release_required",
         "release_excluded": "freeze_release_excluded",
         "release_exclusion_reason": "freeze_release_exclusion_reason",
@@ -580,6 +644,15 @@ def apply_freeze_manifest(
         if live_col in atlas.columns and freeze_col in atlas.columns:
             freeze_mask = atlas[freeze_col].notna()
             atlas.loc[freeze_mask, live_col] = truthy_series(atlas.loc[freeze_mask, freeze_col]).to_numpy()
+    for live_col, freeze_col in {
+        "functional_evidence_class": "freeze_functional_evidence_class",
+        "functional_harmonization_status": "freeze_functional_harmonization_status",
+        "mechanism_equivalence_status": "freeze_mechanism_equivalence_status",
+        "formal_tri_view_status": "freeze_formal_tri_view_status",
+    }.items():
+        if freeze_col in atlas.columns:
+            freeze_mask = atlas[freeze_col].fillna("").astype(str).str.strip().ne("")
+            atlas.loc[freeze_mask, live_col] = atlas.loc[freeze_mask, freeze_col]
     if "functional_status" in atlas.columns and "freeze_functional_status" in atlas.columns:
         freeze_status_mask = atlas["freeze_functional_status"].notna()
         atlas.loc[freeze_status_mask, "functional_status"] = atlas.loc[freeze_status_mask, "freeze_functional_status"]
@@ -677,6 +750,33 @@ def add_source_provenance_context(atlas: pd.DataFrame, repo_root: Path, msm_root
         for col, value in vals.items():
             atlas.loc[mask & atlas[col].fillna("").astype(str).eq(""), col] = value
     if "lane_id" in atlas.columns:
+        mucc_v1_mask = atlas["lane_id"].astype(str).eq(
+            "mucc_v1_owc_wetland"
+        )
+        mucc_v1_defaults = {
+            "source_paper_doi": "10.1128/msystems.00680-25",
+            "source_dataset_doi": "10.5281/zenodo.8194033",
+            "primary_accession_type": (
+                "checksum-validated Zenodo MUCC v1 MAG and annotation record"
+            ),
+            "provenance_resolution_tier": (
+                "exact_mag_archive_qc_source_scaffold"
+            ),
+            "metadata_caveat": (
+                "Exact MAG/QC/source-annotation provenance and processed "
+                "expression support are available, but exact sample/date/depth "
+                "and methane-process joins remain incomplete."
+            ),
+            "sample_rollup_status": (
+                "blocked_exact_sample_depth_environment_flux_join"
+            ),
+            "next_metadata_action": (
+                "Complete exact sample/date/depth, abundance, environmental, "
+                "and flux joins before ecological mechanism or MRV use."
+            ),
+        }
+        for col, value in mucc_v1_defaults.items():
+            atlas.loc[mucc_v1_mask, col] = value
         futian_mask = atlas["lane_id"].astype(str).eq("futian_mangrove_2026_qi")
         futian_defaults = {
             "source_paper_doi": "10.1038/s41597-026-07291-3",
@@ -969,25 +1069,57 @@ def build_candidate_cards(atlas: pd.DataFrame, top_n_poc: int, top_n_mangrove: i
     )
     msm_top["candidate_set"] = "Mangrove nearest-neighborhood candidate"
     msm_top["rank"] = np.arange(1, len(msm_top) + 1)
-    cards = pd.concat([poc_top, msm_top], ignore_index=True, sort=False)
+    scaffold = atlas[
+        atlas.get(
+            "functional_evidence_class",
+            pd.Series("", index=atlas.index),
+        ).eq("source_annotation_scaffold")
+        & atlas["has_esm2"]
+        & atlas["has_glm2"]
+        & atlas["has_functional"]
+    ].copy()
+    scaffold_top = (
+        scaffold.sort_values(
+            ["source_scaffold_review_score", "nearest_poc_similarity"],
+            ascending=False,
+        )
+        .head(top_n_poc)
+        .copy()
+    )
+    scaffold_top["candidate_set"] = "MUCC v1 source-scaffold review candidate"
+    scaffold_top["rank"] = np.arange(1, len(scaffold_top) + 1)
+    cards = pd.concat(
+        [poc_top, msm_top, scaffold_top], ignore_index=True, sort=False
+    )
     cards["review_tier"] = cards.apply(classify_review_tier, axis=1)
     cards["card_id"] = (
         cards["candidate_set"].str.lower().str.replace(r"[^a-z0-9]+", "_", regex=True).str.strip("_")
         + "_"
         + cards["rank"].fillna(0).astype(int).astype(str)
     )
-    cards["allowed_claim_wording"] = (
-        "Reviewable MAG/proteome bridge hypothesis supported by embedding-neighborhood, genomic-context, "
-        "functional, QC, and taxonomy evidence where present."
-    )
-    cards["blocking_gap"] = (
-        "sample mapping, abundance/read coverage, environmental covariates, uncertainty propagation, "
-        "phylogeny/source controls, and flux/process validation"
-    )
-    cards["next_validation_action"] = (
-        "inspect marker neighborhoods, compare phylogeny versus embedding proximity, run source-aware nulls, "
-        "and connect to sample metadata before MRV scoring"
-    )
+    defaults = {
+        "allowed_claim_wording": (
+            "Reviewable MAG/proteome bridge hypothesis supported by "
+            "embedding-neighborhood, genomic-context, functional, QC, and "
+            "taxonomy evidence where present."
+        ),
+        "blocking_gap": (
+            "sample mapping, abundance/read coverage, environmental covariates, "
+            "uncertainty propagation, phylogeny/source controls, and "
+            "flux/process validation"
+        ),
+        "next_validation_action": (
+            "inspect marker neighborhoods, compare phylogeny versus embedding "
+            "proximity, run source-aware nulls, and connect to sample metadata "
+            "before MRV scoring"
+        ),
+    }
+    for column, default in defaults.items():
+        if column not in cards.columns:
+            cards[column] = default
+        else:
+            existing = cards[column].fillna("").astype(str).str.strip()
+            cards.loc[existing.eq(""), column] = default
     return cards
 
 
@@ -997,10 +1129,19 @@ def build_evidence_flow(atlas: pd.DataFrame) -> dict[str, Any]:
     df["evidence_state"] = np.select(
         [
             df["atlas_inclusion_status"].eq("poc_core_complete"),
+            df.get(
+                "formal_tri_view_status",
+                pd.Series("", index=df.index),
+            ).eq("complete_source_scaffold_tri_view"),
             df["source_category"].eq("mangrove") & df["has_functional"],
             df["source_category"].eq("mangrove") & ~df["has_functional"],
         ],
-        ["POC tri-view complete", "Mangrove tri-view complete", "Mangrove function pending"],
+        [
+            "POC canonical tri-view complete",
+            "Wetland source-scaffold tri-view complete",
+            "Mangrove canonical tri-view complete",
+            "Mangrove function pending",
+        ],
         default="Other",
     )
     stage_cols = ["source_display", "evidence_state", "review_tier"]
@@ -1019,7 +1160,7 @@ def build_external_source_readiness(atlas: pd.DataFrame) -> list[dict[str, Any]]
     rows: list[dict[str, Any]] = []
     if "lane_id" not in atlas.columns:
         return rows
-    external = atlas[atlas["source_category"].astype(str).eq("mangrove")].copy()
+    external = atlas[~atlas["lane_id"].astype(str).eq("poc_core")].copy()
     for lane_id, frame in external.groupby("lane_id", dropna=False):
         lane_id = str(lane_id)
         report_units = int(len(frame))
@@ -1048,12 +1189,40 @@ def build_external_source_readiness(atlas: pd.DataFrame) -> list[dict[str, Any]]
                     "blocking_gap": "Bacteria functional completion, depth-resolved MAG-to-sample assignment, abundance/read coverage, and flux/process validation",
                 }
             )
+        elif lane_id == "mucc_v1_owc_wetland":
+            rows.append(
+                {
+                    "lane": "MUCC v1 Old Woman Creek wetland reference",
+                    "report_units": report_units,
+                    "metadata_universe": (
+                        "2,508 checksum-validated archive MAGs; 2,502 meet the "
+                        "paper-defined HQ/MQ screen; 7 lack direct source protein payload"
+                    ),
+                    "primary_source": (
+                        "Borton et al. 2026, 10.1128/msystems.00680-25; "
+                        "Zenodo 10.5281/zenodo.8194033"
+                    ),
+                    "resolution_now": (
+                        f"{tri_view:,}/{report_units:,} all-view units; ESM-2 "
+                        "plus multiwindow gLM2 plus a source-DRAM/expression scaffold"
+                    ),
+                    "use_now": (
+                        "Wetland molecular-reference screening and source-aware "
+                        "candidate review; not canonical mechanism comparison"
+                    ),
+                    "blocking_gap": (
+                        "Canonical MethaNet curated mechanism annotations and "
+                        "exact sample/date/depth, abundance, environmental, and "
+                        "flux/process joins"
+                    ),
+                }
+            )
         else:
             rows.append(
                 {
-                    "lane": f"Registered mangrove lane: {lane_id}",
+                    "lane": f"Registered external lane: {lane_id}",
                     "report_units": report_units,
-                    "metadata_universe": "registered external mangrove payload",
+                    "metadata_universe": "registered external payload",
                     "primary_source": lane_id,
                     "resolution_now": f"{tri_view:,}/{report_units:,} tri-view units in the current report input",
                     "use_now": "Source-aware molecular screening lane",
@@ -1148,6 +1317,75 @@ def build_report_validation_gates(atlas: pd.DataFrame, payload: dict[str, Any]) 
         f"examples={fake_denominator['proteome_id'].head(5).tolist()}",
     )
 
+    required_semantic_columns = {
+        "functional_evidence_class",
+        "functional_harmonization_status",
+        "mechanism_equivalence_status",
+        "formal_tri_view_status",
+    }
+    missing_semantic_columns = sorted(
+        required_semantic_columns - set(atlas.columns)
+    )
+    semantic_blank_rows = 0
+    if not missing_semantic_columns:
+        semantic_blank_rows = int(
+            atlas[list(required_semantic_columns)]
+            .fillna("")
+            .astype(str)
+            .apply(lambda col: col.str.strip().eq(""))
+            .any(axis=1)
+            .sum()
+        )
+    add(
+        "tri_view_semantic_contract_complete",
+        not missing_semantic_columns and semantic_blank_rows == 0,
+        (
+            f"missing_columns={missing_semantic_columns}; "
+            f"rows_with_blank_semantics={semantic_blank_rows}"
+        ),
+    )
+    scaffold_rows = atlas[
+        atlas.get(
+            "functional_evidence_class", pd.Series("", index=atlas.index)
+        ).eq("source_annotation_scaffold")
+    ]
+    invalid_scaffold = scaffold_rows[
+        scaffold_rows.get(
+            "mechanism_equivalence_status",
+            pd.Series("", index=scaffold_rows.index),
+        ).eq("mechanism_equivalent")
+        | pd.to_numeric(
+            scaffold_rows.get(
+                "molecular_attestation_index",
+                pd.Series(np.nan, index=scaffold_rows.index),
+            ),
+            errors="coerce",
+        ).notna()
+    ]
+    add(
+        "source_scaffold_not_promoted_to_canonical_mechanism_score",
+        invalid_scaffold.empty,
+        (
+            f"source_scaffold_rows={len(scaffold_rows)}; "
+            f"invalid_rows={len(invalid_scaffold)}"
+        ),
+    )
+    if "freeze_tri_view_ready" in atlas.columns:
+        freeze_present = atlas["freeze_tri_view_ready"].notna()
+        computed_tri = (
+            atlas["has_esm2"] & atlas["has_glm2"] & atlas["has_functional"]
+        )
+        frozen_tri = truthy_series(atlas["freeze_tri_view_ready"])
+        mismatch = int((freeze_present & computed_tri.ne(frozen_tri)).sum())
+        add(
+            "freeze_tri_view_reconciles_with_report_rows",
+            mismatch == 0,
+            (
+                f"freeze_annotated_rows={int(freeze_present.sum())}; "
+                f"mismatched_rows={mismatch}"
+            ),
+        )
+
     niche_nodes_df = pd.DataFrame(payload.get("niche", {}).get("nodes", []))
     if not niche_nodes_df.empty:
         atlas_embedding_rows = int(truthy_series(atlas.get("has_esm2", pd.Series(dtype=object))).sum())
@@ -1228,7 +1466,10 @@ def build_candidate_circos(cards: pd.DataFrame) -> dict[str, Any]:
             "short": "CH4",
             "metric": "methane_signal_index",
             "threshold": 0.55,
-            "source": "MCycDB plus METABOLIC methane-related evidence",
+            "source": (
+                "Harmonized methane axis: MCycDB plus METABOLIC for canonical "
+                "rows; source-derived DRAM/annotation terms for MUCC scaffold rows"
+            ),
         },
         {
             "id": "sulfur",
@@ -1236,7 +1477,11 @@ def build_candidate_circos(cards: pd.DataFrame) -> dict[str, Any]:
             "short": "Sulfur",
             "metric": "sulfur_context_index",
             "threshold": 0.55,
-            "source": "SCycDB plus METABOLIC sulfur/competition evidence",
+            "source": (
+                "Harmonized sulfur-context axis: SCycDB plus METABOLIC for "
+                "canonical rows; source-derived annotation terms for MUCC "
+                "scaffold rows"
+            ),
         },
         {
             "id": "substrate",
@@ -1244,7 +1489,10 @@ def build_candidate_circos(cards: pd.DataFrame) -> dict[str, Any]:
             "short": "Carbon",
             "metric": "substrate_breadth_index",
             "threshold": 0.55,
-            "source": "dbCAN/CAZy and MEROPS substrate-processing evidence",
+            "source": (
+                "Harmonized substrate axis: dbCAN/CAZy and MEROPS for canonical "
+                "rows; source-derived substrate terms for MUCC scaffold rows"
+            ),
         },
         {
             "id": "coverage",
@@ -1619,9 +1867,14 @@ def build_payloads(
         "review_tier",
         "plot_annotation_status",
         "functional_annotation_status",
+        "functional_evidence_class",
+        "functional_harmonization_status",
+        "mechanism_equivalence_status",
+        "formal_tri_view_status",
         "has_functional",
         "has_glm2",
         "molecular_attestation_index",
+        "source_scaffold_review_score",
         "bridge_affinity_index",
         "methane_marker_count",
         "sulfur_context_count",
@@ -1830,9 +2083,14 @@ def build_payloads(
                     "analysis_unit_type",
                     "claim_scope",
                     "functional_annotation_status",
+                    "functional_evidence_class",
+                    "functional_harmonization_status",
+                    "mechanism_equivalence_status",
+                    "formal_tri_view_status",
                     "plot_annotation_status",
                     "review_tier",
                     "molecular_attestation_index",
+                    "source_scaffold_review_score",
                     "bridge_affinity_index",
                     "methane_marker_count",
                     "sulfur_context_count",
@@ -1891,6 +2149,10 @@ def build_payloads(
                 "class",
                 "qc_tier",
                 "review_tier",
+                "functional_evidence_class",
+                "functional_harmonization_status",
+                "mechanism_equivalence_status",
+                "formal_tri_view_status",
                 "checkm2_completeness",
                 "checkm2_contamination",
                 "glm_context_delta",
@@ -1910,6 +2172,7 @@ def build_payloads(
                 "annotation_breadth_index",
                 "qc_confidence_index",
                 "molecular_attestation_index",
+                "source_scaffold_review_score",
                 "source_paper_doi",
                 "source_dataset_doi",
                 "primary_accession",
@@ -2062,9 +2325,9 @@ def render_html(
     metric_cards = "\n".join(
         [
             f"<div class='metric'><b>{release_multiview:,}</b><span>release-required tri-view MAG/proteome units explorable now</span></div>",
-            f"<div class='metric'><b>{release_functional:,}/{release_required_payload_total:,}</b><span>release-required registered mangrove payloads with all three views</span></div>",
-            f"<div class='metric'><b>{summary['msm_esm2']:,}/{summary['mangrove_ready_payload_total']:,}</b><span>registered mangrove proteome embeddings ready</span></div>",
-            f"<div class='metric'><b>{summary['msm_glm2']:,}/{summary['mangrove_ready_payload_total']:,}</b><span>registered mangrove genomic-context profiles ready</span></div>",
+            f"<div class='metric'><b>{summary['canonical_mechanism_tri_view']:,}</b><span>canonical curated-mechanism tri-view units</span></div>",
+            f"<div class='metric'><b>{summary['source_scaffold_tri_view']:,}</b><span>MUCC v1 source-scaffold tri-view units, explicitly non-equivalent</span></div>",
+            f"<div class='metric'><b>{summary['embedding_context_total']:,}</b><span>registered ESM-2 embedding-bearing units in the harmonized space</span></div>",
             f"<div class='metric'><b>{summary['knn_edges']:,}</b><span>high-dimensional embedding-neighborhood links audited</span></div>",
         ]
     )
@@ -2197,9 +2460,12 @@ def render_html(
         Nearest POC reference: ${clean(d.nearest_poc_id,'not applicable')}<br>
         Methane evidence score: ${fmt(Number(d.methane_marker_count || d.methane_evidence_score || 0))}<br>
         Sulfur context score: ${fmt(Number(d.sulfur_context_count || d.sulfur_competition_score || 0))}<br>
-        Substrate breadth: ${fmt(Number(d.substrate_breadth_count || 0))} CAZy/MEROPS signals<br>
+        Substrate breadth: ${fmt(Number(d.substrate_breadth_count || 0))} harmonized signals<br>
+        Functional evidence: ${clean(d.functional_evidence_class)} · ${clean(d.mechanism_equivalence_status)}<br>
         Rate status: ${clean(d.rate_metric_status)}<br>
-        Provisional internal MBAG review index: ${fixed(d.molecular_attestation_index,3)}</p>
+        ${d.mechanism_equivalence_status==='mechanism_equivalent'
+          ? `Provisional internal MBAG review index: ${fixed(d.molecular_attestation_index,3)}`
+          : `Source-scaffold review index: ${fixed(d.source_scaffold_review_score,3)} (not mechanism-equivalent)`}</p>
         <p>QC: ${fixed(d.checkm2_completeness,1)}% complete / ${fixed(d.checkm2_contamination,2)}% contamination · ${clean(d.qc_tier,'QC tier not available')}</p>
         <p>Provenance: ${clean(d.provenance_resolution_tier)} · ${clean(d.primary_accession || d.source_bucket)}<br><span class='muted'>${clean(d.metadata_caveat,'No extra metadata caveat recorded.')}</span></p>
         <p>Allowed claim: ${d.allowed_claim_wording || 'MAG/proteome-level molecular screening only.'}</p>
@@ -2398,8 +2664,8 @@ def render_html(
     <h2>Executive Summary</h2>
     <p>MethaNet's near-term product is not another annotation report; it is a molecular attestation layer for methane permanence-risk screening. MBAG, the MethaNet Bridge Attestation Graph, asks whether a latent ESM-2 bridge candidate is supported by independent functional biology, genomic context, QC, taxonomy, and provenance. That turns raw MAG outputs into reviewable evidence objects a partner can understand and a technical reviewer can challenge.</p>
     <p>The market problem is timing. Blue-carbon projects need earlier warning on methane permanence risk, but field flux data are expensive, sparse, and often retrospective. MBAG does not replace flux validation; it creates an auditable molecular intelligence layer that helps decide where monitoring, diligence, and experimental validation should focus before a project depends on late-stage surprises.</p>
-    <p>The atlas is now large enough to inspect cross-ecosystem molecular patterns, not just report run progress. This snapshot contains {release_multiview:,} release-required tri-view MAG/proteome units: {summary['poc_core_total']:,} MAG/bin-comparable POC rumen + wetland/MUCC units and {summary['mangrove_release_multiview']:,} registered mangrove units with ESM-2, gLM2, and functional evidence.</p>
-    <p>The registered mangrove expansion is now a target-domain screening surface, not yet a sample-level MRV layer. Across {summary['mangrove_ready_payload_total']:,} registered mangrove ready payloads, {summary['msm_esm2']:,} have ESM-2 embeddings, {summary['msm_glm2']:,} have gLM2 context, and {summary['msm_functional']:,} have functional evidence in this latest render. For this release, {release_functional:,}/{release_required_payload_total:,} release-required mangrove payloads have all three views; {release_pending:,} release-required ready payloads are retained as pending-functional records, and {summary['mangrove_gap_rows']:,} source-lane gap rows remain visible outside the ready payload denominator.{release_note}</p>
+    <p>The atlas is now large enough to inspect cross-ecosystem molecular patterns, not just report run progress. This snapshot contains {release_multiview:,} release-required all-view MAG/proteome units in a shared ESM-2 + gLM2 + harmonized-functional schema. The functional view has two deliberately separate evidence contracts: {summary['canonical_mechanism_tri_view']:,} units carry canonical curated mechanism features, while {summary['source_scaffold_tri_view']:,} MUCC v1 Old Woman Creek units carry a source-derived DRAM/gene-annotation/expression scaffold. Both are technically complete tri-views; only the first is mechanism-equivalent.</p>
+    <p>The registered mangrove expansion is a target-domain screening surface, not yet a sample-level MRV layer. Across {summary['mangrove_ready_payload_total']:,} registered mangrove ready payloads, {summary['msm_esm2']:,} have ESM-2 embeddings, {summary['msm_glm2']:,} have gLM2 context, and {summary['msm_functional']:,} have canonical functional evidence in this latest render. For this release, {release_functional:,}/{release_required_payload_total:,} release-required mangrove payloads have all three views; {release_pending:,} remain pending-functional, and {summary['mangrove_gap_rows']:,} source-lane gap rows remain visible outside the ready payload denominator. MUCC v1 contributes {summary['mucc_v1_tri_view']:,}/{summary['mucc_v1_total']:,} source-scaffold tri-views; its seven non-embedded archive rows remain explicit.{release_note}</p>
     <p>The strongest value today is decision-grade triage. This report identifies bridge-like molecular neighborhoods, candidate mechanism signatures, provenance readiness, and monitoring-priority hypotheses. It supports partner-facing proof points and MRV feature primitives, while explicitly stopping short of final sample-level risk tiers, measured methane flux, or crediting decisions.</p>
     <div class="metric-grid">{metric_cards}</div>
   </section>
@@ -2417,14 +2683,14 @@ def render_html(
       <thead><tr><th>Evidence lane</th><th>Report units</th><th>Metadata universe</th><th>Primary source</th><th>Resolution now</th><th>Use now</th><th>Blocking gap</th></tr></thead>
       <tbody>{provenance_rows_html}</tbody>
     </table>
-    <p class="note">Denominator note: the POC crosswalk and environmental reconciliation cover the broader 662 embedded POC proteome universe, while this report renders the 625 MAG/bin-comparable POC units plus the registered mangrove payloads selected by the lane registry. Rows that are pending, mixed-resolution, or not yet sample-linkable remain visible as readiness states rather than being treated as biological absence.</p>
+    <p class="note">Denominator note: the POC crosswalk covers a broader 662-proteome context, while this report renders 625 MAG/bin-comparable POC units plus all registered mangrove and MUCC v1 wetland lane rows. The embedding map contains {summary['embedding_context_total']:,} registered ESM-2-bearing units. Pending, source-gap, mixed-resolution, or non-sample-linkable rows remain visible as readiness states rather than being treated as biological absence.</p>
   </section>
   <section class="section">
     <h2>MBAG: Three Molecular Views, One Attestation Layer</h2>
     <p>The MethaNet Bridge Attestation Graph is designed to turn molecular similarity into a reviewable evidence trail. A 2D embedding bridge can be a powerful discovery signal, but it is not a mechanism. MBAG therefore treats each candidate as a convergence test across three molecular views plus explicit guardrails.</p>
     <div class="approach-grid">
       <div class="approach-card"><b>ESM-2 proteome geometry</b><span>Protein-language embeddings provide a high-dimensional hypothesis engine for MAG/proteome similarity. Bridge evidence is read from neighborhoods and graph links, not from a decorative UMAP alone.</span></div>
-      <div class="approach-card"><b>Functional annotations</b><span>Alignment/HMM-based calls from MCycDB, SCycDB, KOfam, dbCAN/CAZy, METABOLIC, MEROPS, and Bakta provide interpretable molecular machinery: methane routes, sulfur competition, substrate breadth, and pathway context.</span></div>
+      <div class="approach-card"><b>Functional annotations</b><span>Canonical rows use curated MCycDB, SCycDB, KOfam, dbCAN/CAZy, METABOLIC, MEROPS, and Bakta features. MUCC v1 rows are harmonized onto common screening axes from source DRAM/gene annotations and expression support, but remain explicitly non-equivalent to that canonical mechanism contract.</span></div>
       <div class="approach-card"><b>gLM2 genomic context</b><span>Native-minus-shuffled context checks test whether gene-neighborhood architecture carries extra signal beyond a bag of annotated genes. This is a complementary context layer, not a replacement for curated functional evidence.</span></div>
       <div class="approach-card"><b>QC and provenance guardrails</b><span>CheckM2, GUNC, GTDB-Tk, annotation coverage, source labels, and missingness protect against attractive artifacts. Weak evidence remains visible instead of being silently dropped.</span></div>
     </div>
@@ -2452,11 +2718,11 @@ def render_html(
   <section class="section">
     <h2>Candidate Signatures Turn Audit Tables Into Review Cards</h2>
     <p>MBAG candidates should be inspected as signatures, not as a long spreadsheet. The TSV evidence remains in the artifact package for audit, but the report view emphasizes the evidence pillars a scientist, partner, or investor can reason about: bridge geometry, gLM2 context, methane machinery, sulfur context, carbon/substrate breadth, annotation coverage, and QC support.</p>
-    <p>The matrix shows candidate-level support. The radial evidence-pillar view summarizes selected candidate-card support for POC rumen, POC wetland, and registered mangrove candidates; the wetland value is a single-card value in this render. These are review signals, not full-lane summaries and not final methane-risk scores.</p>
+    <p>The matrix shows candidate-level support. The radial evidence-pillar view includes POC rumen/wetland, registered mangrove, and MUCC v1 source-scaffold review cards. The shared axes are normalized within evidence class; a MUCC source-term score must not be compared as if it were a curated MCycDB/SCycDB/KOfam/dbCAN/METABOLIC mechanism score. These are review signals, not full-lane summaries and not final methane-risk scores.</p>
     <div class="signature-stack">
       <div class="signature-panel">
         <h3>MBAG candidate evidence matrix</h3>
-        <p class="chart-note">Rows are candidate cards and columns are normalized evidence pillars. The source-colored strip at left separates POC rumen, POC wetland, and registered mangrove candidates.</p>
+        <p class="chart-note">Rows are candidate cards and columns are evidence-class-normalized pillars. The source-colored strip separates rumen, wetland—including MUCC source-scaffold rows—and mangrove candidates.</p>
         <div id="signature-matrix" class="viz medium matrix"></div>
       </div>
       <div class="signature-panel">
@@ -2630,6 +2896,13 @@ def write_outputs(
             - Release-excluded units preserved: {summary['mangrove_release_excluded_units']:,}
             - Registered mangrove source-lane gap rows preserved: {summary['mangrove_gap_rows']:,}
             - Expanded release-required tri-view atlas: {summary['release_multiview_complete']:,}
+            - Canonical curated-mechanism tri-view: {summary['canonical_mechanism_tri_view']:,}
+            - MUCC v1 source-scaffold tri-view: {summary['source_scaffold_tri_view']:,}
+            - MUCC v1 ESM-2/gLM2/source-functional tri-view: {summary['mucc_v1_tri_view']:,}/{summary['mucc_v1_total']:,}
+            - Registered ESM-2 embedding context: {summary['embedding_context_total']:,}
+
+            MUCC v1 source-scaffold rows are harmonized for common screening and
+            navigation but are not canonical mechanism-equivalent rows.
 
             ## Claim Boundary
 
@@ -2727,8 +3000,8 @@ def main() -> None:
             how="left",
         )
     manifold_cols = [c for c in emb_meta.columns if c.endswith("_1") or c.endswith("_2")]
-    manifold_cols = [c for c in manifold_cols if c not in atlas.columns]
     if manifold_cols:
+        atlas = atlas.drop(columns=manifold_cols, errors="ignore")
         atlas = atlas.merge(
             emb_meta[["proteome_id"] + manifold_cols].drop_duplicates("proteome_id"),
             on="proteome_id",
@@ -2736,18 +3009,29 @@ def main() -> None:
         )
     atlas = add_molecular_metrics(atlas)
     atlas["review_tier"] = atlas.apply(classify_review_tier, axis=1)
-    atlas["allowed_claim_wording"] = (
-        "MAG/proteome-level molecular screening and monitoring-priority hypothesis only; "
-        "requires sample, abundance, environmental, uncertainty, and validation layers before MRV scoring."
-    )
-    atlas["blocking_gap"] = (
-        "sample mapping, abundance/read coverage, environmental covariates, uncertainty propagation, "
-        "phylogeny/source controls, and flux/process validation"
-    )
-    atlas["next_validation_action"] = (
-        "connect to sample metadata, run source-aware nulls, compare phylogeny versus embedding proximity, "
-        "and validate against flux or process measurements before risk scoring"
-    )
+    row_defaults = {
+        "allowed_claim_wording": (
+            "MAG/proteome-level molecular screening and monitoring-priority "
+            "hypothesis only; requires sample, abundance, environmental, "
+            "uncertainty, and validation layers before MRV scoring."
+        ),
+        "blocking_gap": (
+            "sample mapping, abundance/read coverage, environmental covariates, "
+            "uncertainty propagation, phylogeny/source controls, and "
+            "flux/process validation"
+        ),
+        "next_validation_action": (
+            "connect to sample metadata, run source-aware nulls, compare "
+            "phylogeny versus embedding proximity, and validate against flux or "
+            "process measurements before risk scoring"
+        ),
+    }
+    for column, default in row_defaults.items():
+        if column not in atlas.columns:
+            atlas[column] = default
+        else:
+            existing = atlas[column].fillna("").astype(str).str.strip()
+            atlas.loc[existing.eq(""), column] = default
     atlas = add_source_provenance_context(atlas, repo_root, msm_root)
     atlas = add_sample_linkage_context(atlas, repo_root, msm_root)
 
@@ -2755,6 +3039,10 @@ def main() -> None:
     # accounting uses the audited atlas, not stale loader slices.
     poc = atlas[atlas["atlas_inclusion_status"].astype(str).eq("poc_core_complete")].copy()
     msm = atlas[atlas["source_category"].astype(str).eq("mangrove")].copy()
+    external = atlas[~atlas["lane_id"].astype(str).eq("poc_core")].copy()
+    mucc_v1 = atlas[
+        atlas["lane_id"].astype(str).eq("mucc_v1_owc_wetland")
+    ].copy()
 
     cards = build_candidate_cards(atlas, args.top_n_poc, args.top_n_mangrove)
     if "functional_run_include" in msm.columns:
@@ -2772,6 +3060,27 @@ def main() -> None:
     mangrove_release_ready_mask = mangrove_ready_mask & mangrove_release_required_mask
     mangrove_tri_view_mask = msm["has_esm2"] & msm["has_glm2"] & msm["has_functional"]
     mangrove_release_tri_view_mask = mangrove_release_ready_mask & mangrove_tri_view_mask
+    all_tri_view_mask = (
+        atlas["has_esm2"] & atlas["has_glm2"] & atlas["has_functional"]
+    )
+    if "freeze_release_required" in atlas.columns:
+        all_release_required_mask = truthy_series(
+            atlas["freeze_release_required"]
+        )
+    else:
+        all_release_required_mask = atlas.get(
+            "functional_run_include",
+            pd.Series([True] * len(atlas), index=atlas.index),
+        ).map(legacy.truthy)
+    all_release_tri_view_mask = all_release_required_mask & all_tri_view_mask
+    canonical_tri_view_mask = atlas.get(
+        "formal_tri_view_status",
+        pd.Series("", index=atlas.index),
+    ).eq("complete_canonical_mechanism_tri_view")
+    source_scaffold_tri_view_mask = atlas.get(
+        "formal_tri_view_status",
+        pd.Series("", index=atlas.index),
+    ).eq("complete_source_scaffold_tri_view")
 
     summary = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -2794,10 +3103,33 @@ def main() -> None:
         "msm_function_pending": int((mangrove_ready_mask & ~msm["has_functional"]).sum()),
         "msm_esm_embedded_total_with_resume": int(msm_esm_stats.get("embedded_total_with_resume") or 0),
         "msm_esm_pending_remaining": int(msm_esm_stats.get("pending_remaining") or 0),
-        "multiview_complete": int(
-            poc["has_functional"].sum() + mangrove_tri_view_mask.sum()
+        "external_total": int(len(external)),
+        "external_esm2": int(external["has_esm2"].sum()),
+        "external_glm2": int(external["has_glm2"].sum()),
+        "external_functional": int(external["has_functional"].sum()),
+        "external_multiview": int(
+            (
+                external["has_esm2"]
+                & external["has_glm2"]
+                & external["has_functional"]
+            ).sum()
         ),
-        "release_multiview_complete": int(poc["has_functional"].sum() + mangrove_release_tri_view_mask.sum()),
+        "mucc_v1_total": int(len(mucc_v1)),
+        "mucc_v1_esm2": int(mucc_v1["has_esm2"].sum()),
+        "mucc_v1_glm2": int(mucc_v1["has_glm2"].sum()),
+        "mucc_v1_functional": int(mucc_v1["has_functional"].sum()),
+        "mucc_v1_tri_view": int(
+            (
+                mucc_v1["has_esm2"]
+                & mucc_v1["has_glm2"]
+                & mucc_v1["has_functional"]
+            ).sum()
+        ),
+        "multiview_complete": int(all_tri_view_mask.sum()),
+        "release_multiview_complete": int(all_release_tri_view_mask.sum()),
+        "canonical_mechanism_tri_view": int(canonical_tri_view_mask.sum()),
+        "source_scaffold_tri_view": int(source_scaffold_tri_view_mask.sum()),
+        "atlas_registered_units": int(len(atlas)),
         "embedding_context_total": int(len(emb_meta)),
         "knn_edges": int(len(edge_df)),
     }
@@ -2808,6 +3140,9 @@ def main() -> None:
             "poc_core": "POC core",
             "msm_china_2025": "Mangrove/MSM local MAG candidates",
             "futian_mangrove_2026_qi": "Phase 1 dereplicated rMAGs at 99% ANI",
+            "mucc_v1_owc_wetland": (
+                "MUCC v1 Old Woman Creek source-scaffold references"
+            ),
         }
         lane_order = [lane_id for lane_id in lane_label_by_id if lane_id in set(atlas["lane_id"].astype(str))]
         lane_order.extend(

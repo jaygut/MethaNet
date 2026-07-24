@@ -9,12 +9,9 @@ hero scene (Scene 3) and the atlas scene (Scene 4).
 PREFERENCE ORDER (per build spec) — option used: **(1) DIFFUSION MAP / PHATE**.
 The source `niche.json` carries REAL low-dimensional coordinates of the ESM2 (650M)
 proteome embeddings under five methods, all from the same cosine kNN affinity graph.
-The hero's 2D backbone (x,y) is **PHATE** — a diffusion-based method built for 2D
-manifold visualization, which preserves the mangrove expansion's within-lane
-structure that the raw diffusion eigenmap collapses into a line. The repo's primary
-diffusion-map coordinates (dx,dy) and PCA (px,py) are also exported, full-cohort, as
-real projection-sensitivity toggles. UMAP and t-SNE are POC-only (625) at the source
-and therefore not used as the multi-lane backbone.
+The hero's 2D backbone (x,y) is the report's primary diffusion map. The exporter
+also preserves PCA and the best available nonlinear sensitivity projection
+(PHATE when present, otherwise UMAP) for the full registered embedding context.
 
 Coordinates are REAL. The only transform is a per-axis standardize + symmetric
 scale + soft clip so the anisotropic eigenvector components render legibly; this is
@@ -40,15 +37,16 @@ from collections import Counter, OrderedDict
 REPO_ROOT_FROM_HERE = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 SOURCE_NICHE = os.path.join(
     REPO_ROOT_FROM_HERE,
-    "results/reports/mbag_nextgen_molecular_niche_atlas_20260629_interim_2364",
+    "results/reports/mbag_nextgen_molecular_niche_atlas_20260724_harmonized",
     "assets/data/niche.json",
 )
 OUT_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data", "atlas.json"))
-SNAPSHOT = "2026-06-29"
+SNAPSHOT = "2026-07-24"
 
 ECO_FROM_PREFIX = {
     "rumen": "rumen",
     "mucc": "wetland",
+    "mucc_v1": "wetland",
     "msm_china_2025": "mangrove_msm",
     "futian_mangrove_2026_qi": "mangrove_futian",
 }
@@ -151,11 +149,26 @@ def main():
 
     # --- per-projection display coords (REAL, structure-preserving) ---
     # Primary = diffusion map via linear min-max (faithful to the report's fan view).
-    # PHATE / PCA kept as secondary projection-sensitivity toggles (standardize+tanh).
+    # Best nonlinear projection / PCA kept as sensitivity toggles.
     proj = {}
     proj["d"] = (minmax_scale([n["diffusion_1"] for n in nodes]),
                  minmax_scale([n["diffusion_2"] for n in nodes]))
-    for key, (a, b) in {"p": ("pca_1", "pca_2"), "h": ("phate_1", "phate_2")}.items():
+    nonlinear_name = next(
+        (
+            name
+            for name in ("phate", "umap")
+            if all(
+                n.get(f"{name}_1") is not None
+                and n.get(f"{name}_2") is not None
+                for n in nodes
+            )
+        ),
+        "pca",
+    )
+    for key, (a, b) in {
+        "p": ("pca_1", "pca_2"),
+        "h": (f"{nonlinear_name}_1", f"{nonlinear_name}_2"),
+    }.items():
         proj[key] = (standardize_scale([n[a] for n in nodes]),
                      standardize_scale([n[b] for n in nodes]))
 
@@ -222,11 +235,11 @@ def main():
         ("meta", OrderedDict([
             ("artifact", "EmergentBiome/MethaNet atlas — Phase 1 data export"),
             ("source", os.path.relpath(src, REPO_ROOT_FROM_HERE)),
-            ("option_used", "1 — DIFFUSION MAP 2D coordinates of the proteome embeddings (REAL); PHATE + PCA also exported as toggles"),
+            ("option_used", f"1 — DIFFUSION MAP 2D coordinates of the proteome embeddings (REAL); {nonlinear_name.upper()} + PCA also exported as sensitivity views"),
             ("primary_projection", "diffusion"),
-            ("secondary_projections", ["phate", "pca"]),
-            ("coord_transform", "diffusion: per-axis linear min-max (0.3/99.7 clip), faithful to the report fan; phate/pca: standardize + tanh"),
-            ("projection_note", "The primary hero map is the diffusion map (built from the proteome-embedding cosine kNN affinity graph): rumen and wetland references form fans on the left, the mangrove expansion forms the line on the right, and the bridge links span between them. PHATE and PCA are exported as projection-sensitivity toggles."),
+            ("secondary_projections", [nonlinear_name, "pca"]),
+            ("coord_transform", f"diffusion: per-axis linear min-max (0.3/99.7 clip); {nonlinear_name}/pca: standardize + tanh"),
+            ("projection_note", f"The primary hero map is the diffusion map built from the proteome-embedding cosine kNN affinity graph. {nonlinear_name.upper()} and PCA are retained as projection-sensitivity views."),
             ("snapshot", snap),
             ("n_points", len(points)),
             ("n_bridges", len(bridges)),

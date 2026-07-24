@@ -2259,6 +2259,200 @@ def test_expanded_atlas_report_loader_preserves_external_lane_status_rows(tmp_pa
     assert stats == {}
 
 
+def test_expanded_atlas_discovers_multiwindow_glm2_summary(tmp_path: Path) -> None:
+    module = _load_script(
+        "scripts/reports/build_mbag_expanded_multiview_atlas.py",
+        "build_mbag_expanded_multiview_atlas_multiwindow",
+    )
+    glm_dir = tmp_path / "glm"
+    summary = glm_dir / "features/glm2_multiwindow_summary.parquet"
+    summary.parent.mkdir(parents=True)
+    module.pd.DataFrame(
+        [
+            {
+                "proteome_id": "wetland__mag1",
+                "mag_id": "mag1",
+                "n_native": 10,
+                "n_shuffle": 10,
+                "native_within_mag_dispersion": 0.12,
+                "native_vs_shuffle_centroid_dist": 0.25,
+                "native_vs_shuffle_matched_dist": 0.31,
+                "matched_minus_dispersion_raw": 0.19,
+                "permutation_p": 0.01,
+                "model_name": "gLM2",
+                "model_revision": "test",
+            }
+        ]
+    ).to_parquet(summary, index=False)
+
+    frame = module.aggregate_glm_dirs([glm_dir])
+
+    assert frame["proteome_id"].tolist() == ["wetland__mag1"]
+    assert bool(frame.loc[0, "has_glm2"]) is True
+    assert frame.loc[0, "native_window_count"] == 10
+    assert frame.loc[0, "shuffled_control_count"] == 10
+    assert frame.loc[0, "glm_context_delta"] == 0.19
+    assert (
+        frame.loc[0, "context_qc_tier"]
+        == "multiwindow_native_plus_shuffled_stability"
+    )
+
+
+def test_freeze_discovers_multiwindow_glm2_manifest(tmp_path: Path) -> None:
+    module = _load_script(
+        "scripts/reports/build_methanet_3view_payload_freeze.py",
+        "build_methanet_3view_payload_freeze_multiwindow",
+    )
+    glm_dir = tmp_path / "glm"
+    _write_tsv(
+        glm_dir / "manifests/glm2_multiwindow_manifest.tsv",
+        [
+            {
+                "proteome_id": "wetland__mag1",
+                "window_id": "native_1",
+            },
+            {
+                "proteome_id": "wetland__mag1",
+                "window_id": "shuffle_1",
+            },
+        ],
+    )
+
+    assert module.glm2_ids([glm_dir], {"wetland__mag1", "missing"}) == {
+        "wetland__mag1"
+    }
+
+
+def test_expanded_atlas_loads_source_scaffold_warehouse_without_mechanism_promotion(
+    tmp_path: Path,
+) -> None:
+    module = _load_script(
+        "scripts/reports/build_mbag_expanded_multiview_atlas.py",
+        "build_mbag_expanded_multiview_atlas_source_scaffold",
+    )
+    manifest = tmp_path / "source_lane.tsv"
+    esm = tmp_path / "esm"
+    glm = tmp_path / "glm"
+    warehouse = tmp_path / "warehouse"
+    _write_tsv(
+        manifest,
+        [
+            {
+                "proteome_id": "mucc__mag1",
+                "mag_id": "mag1",
+                "ecosystem": "freshwater_wetland",
+                "domain": "d__Archaea",
+                "protein_count": "1000",
+                "functional_run_include": "true",
+                "match_status": "matched",
+            }
+        ],
+    )
+    _write_tsv(
+        esm / "embedding_metadata.tsv",
+        [{"proteome_id": "mucc__mag1", "n_proteins_used": "1000"}],
+    )
+    glm_summary = glm / "features/glm2_multiwindow_summary.parquet"
+    glm_summary.parent.mkdir(parents=True)
+    module.pd.DataFrame(
+        [
+            {
+                "proteome_id": "mucc__mag1",
+                "mag_id": "mag1",
+                "n_native": 10,
+                "n_shuffle": 10,
+                "native_within_mag_dispersion": 0.1,
+                "matched_minus_dispersion_raw": 0.2,
+            }
+        ]
+    ).to_parquet(glm_summary, index=False)
+    readiness_path = (
+        warehouse
+        / "parquet/feature_mrv_readiness_mag_level/cohort_run_id=test/part-00000.parquet"
+    )
+    readiness_path.parent.mkdir(parents=True)
+    module.pd.DataFrame(
+        [
+            {
+                "proteome_id": "mucc__mag1",
+                "mag_id": "mag1",
+                "bin_completeness": "92",
+                "bin_contamination": "2",
+                "source_feature_rows": "1500",
+                "methane_term_rows": "12",
+                "sulfur_term_rows": "8",
+                "substrate_term_rows": "30",
+                "review_priority_score": "21",
+                "allowed_claim_wording": "Source-scaffold review only.",
+                "blocking_gap": "Canonical annotations and ecological joins.",
+                "next_validation_action": "Run canonical annotation workflow.",
+            }
+        ]
+    ).to_parquet(readiness_path, index=False)
+    dram_path = (
+        warehouse
+        / "parquet/feature_source_dram_mag_summary/cohort_run_id=test/part-00000.parquet"
+    )
+    dram_path.parent.mkdir(parents=True)
+    module.pd.DataFrame(
+        [
+            {
+                "proteome_id": "mucc__mag1",
+                "mag_id": "mag1",
+                "source_dram_rows": "1200",
+                "ko_rows": "400",
+                "cazy_rows": "20",
+                "pfam_rows": "700",
+                "peptidase_rows": "40",
+            }
+        ]
+    ).to_parquet(dram_path, index=False)
+    _write_tsv(
+        warehouse / "cohort_table_manifest.tsv",
+        [
+            {
+                "table": "feature_mrv_readiness_mag_level",
+                "path": str(readiness_path),
+                "rows": "1",
+            },
+            {
+                "table": "feature_source_dram_mag_summary",
+                "path": str(dram_path),
+                "rows": "1",
+            },
+        ],
+    )
+    lane = module.pd.Series(
+        {
+            "lane_id": "mucc_test",
+            "lane_role": "external_wetland",
+            "denominator_label": "MUCC test",
+            "source_lane_manifest": str(manifest),
+            "functional_manifest": str(manifest),
+            "functional_warehouse_dir": str(warehouse),
+            "esm2_artifacts_dirs": str(esm),
+            "glm2_artifacts_dirs": str(glm),
+            "claim_scope": "source-scaffold molecular reference only",
+        }
+    )
+
+    frame, status, _ = module.load_external_lane_features(tmp_path, lane)
+
+    assert len(frame) == 1
+    assert len(status) == 1
+    assert bool(frame.loc[0, "has_esm2"]) is True
+    assert bool(frame.loc[0, "has_glm2"]) is True
+    assert bool(frame.loc[0, "has_functional"]) is True
+    assert frame.loc[0, "source_category"] == "wetland"
+    assert frame.loc[0, "functional_evidence_class"] == "source_annotation_scaffold"
+    assert (
+        frame.loc[0, "mechanism_equivalence_status"]
+        == "not_canonical_mechanism_equivalent"
+    )
+    assert frame.loc[0, "methane_evidence_score"] == 12
+    assert frame.loc[0, "substrate_evidence_count"] == 30
+
+
 def test_expanded_atlas_report_loader_treats_newer_retry_as_partial(tmp_path: Path) -> None:
     module = _load_script(
         "scripts/reports/build_mbag_expanded_multiview_atlas.py",
