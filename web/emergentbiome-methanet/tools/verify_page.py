@@ -1,12 +1,23 @@
 #!/usr/bin/env python3
-"""Headless verification: console errors, offline-safety, per-scene screenshots."""
+"""Headless verification: landing scenes, report runtime, console errors, offline safety."""
 import sys, os, time
 from playwright.sync_api import sync_playwright
 
-BASE = "http://127.0.0.1:8848/index.html"
+BASE = os.environ.get("METHANET_SITE_BASE", "http://127.0.0.1:8848").rstrip("/")
 OUT = "/tmp/eb_shots"
 os.makedirs(OUT, exist_ok=True)
-SCENES = ["hero", "stakes", "blindspot", "insight", "atlas", "platform", "ladder", "path"]
+SCENES = [
+    "hero",
+    "stakes",
+    "blindspot",
+    "surveyor",
+    "cheap",
+    "atlas",
+    "engine",
+    "platform",
+    "ladder",
+    "path",
+]
 
 console_msgs, page_errors, requests = [], [], []
 
@@ -17,7 +28,7 @@ with sync_playwright() as pw:
     page.on("pageerror", lambda e: page_errors.append(str(e)))
     page.on("request", lambda r: requests.append(r.url))
 
-    page.goto(BASE, wait_until="networkidle", timeout=30000)
+    page.goto(f"{BASE}/index.html", wait_until="networkidle", timeout=30000)
     time.sleep(1.5)
 
     # how many canvases got created + atlas loaded?
@@ -25,7 +36,7 @@ with sync_playwright() as pw:
         canvases: document.querySelectorAll('canvas').length,
         atlasPts: (window.__dbg && window.__dbg.pts) || null,
         rail: document.querySelectorAll('.rail__item').length,
-        copyFilled: document.querySelector('[data-copy=\\"insight\\"]').children.length,
+        copyFilled: document.querySelector('[data-copy=\\"surveyor\\"]').children.length,
         claim: document.getElementById('claimText').textContent.slice(0,40),
         fs: document.querySelectorAll('.factsheet__row').length,
     })""")
@@ -52,6 +63,40 @@ with sync_playwright() as pw:
     page.screenshot(path=f"{OUT}/ask.png")
     print("shot: ask")
 
+    # Full report: load the render-complete /report/ package and require its
+    # high-volume data bundle to initialize the core interactive panels.
+    page.goto(f"{BASE}/report/index.html", wait_until="networkidle", timeout=120000)
+    page.wait_for_selector("#niche-map svg", timeout=120000)
+    report_info = page.evaluate("""() => ({
+        atlasNodes: ((window.METHANET_ATLAS || {}).niche || {}).nodes?.length || 0,
+        runtimeErrors: document.querySelectorAll('.runtime-error').length,
+        nicheSvg: document.querySelectorAll('#niche-map svg').length,
+        matrixSvg: document.querySelectorAll('#signature-matrix svg').length,
+        circosSvg: document.querySelectorAll('#candidate-circos svg').length,
+        sampleSvg: document.querySelectorAll('#sample-linkage svg').length,
+        hasUmapButton: Array.from(document.querySelectorAll('#method-buttons button')).some(
+          b => b.textContent.trim() === 'UMAP'
+        ),
+        bodyHasTriViewTotal: document.body.textContent.includes('7,481'),
+        bodyHasCanonicalTotal: document.body.textContent.includes('4,980'),
+        bodyHasScaffoldTotal: document.body.textContent.includes('2,501'),
+    })""")
+    print("REPORT INFO:", report_info)
+    page.screenshot(path=f"{OUT}/report.png", full_page=False)
+    if not (
+        report_info["atlasNodes"] == 7965
+        and report_info["runtimeErrors"] == 0
+        and report_info["nicheSvg"] == 1
+        and report_info["matrixSvg"] == 1
+        and report_info["circosSvg"] == 1
+        and report_info["sampleSvg"] == 1
+        and report_info["hasUmapButton"]
+        and report_info["bodyHasTriViewTotal"]
+        and report_info["bodyHasCanonicalTotal"]
+        and report_info["bodyHasScaffoldTotal"]
+    ):
+        page_errors.append(f"report contract failed: {report_info}")
+
     browser.close()
 
 print("\n==== CONSOLE (errors/warnings) ====")
@@ -66,7 +111,21 @@ for e in page_errors[:40]:
 print(f"total page errors: {len(page_errors)}")
 
 print("\n==== OFFLINE SAFETY: external requests ====")
-ext = [u for u in requests if not (u.startswith("http://127.0.0.1") or u.startswith("http://localhost") or u.startswith("data:") or u.startswith("blob:"))]
+ext = [
+    u
+    for u in requests
+    if not (
+        u.startswith(BASE)
+        or u.startswith("http://127.0.0.1")
+        or u.startswith("http://localhost")
+        or u.startswith("data:")
+        or u.startswith("blob:")
+    )
+]
 for u in ext:
     print("EXTERNAL:", u)
 print(f"total requests: {len(requests)}, external: {len(ext)}")
+
+console_errors = [m for m in console_msgs if m[0] == "error"]
+if console_errors or page_errors or ext:
+    sys.exit(1)

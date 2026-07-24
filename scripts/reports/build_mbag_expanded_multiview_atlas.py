@@ -56,7 +56,11 @@ DEFAULT_MSM_ESM_DIR = Path(
 DEFAULT_MSM_GLM_DIR = Path("results/contextual_genomics/glm2_msm_magbin_full_20260615_092737")
 DEFAULT_LANE_REGISTRY = Path("configs/methanet_atlas_lanes.tsv")
 TRUE_VALUES = {"true", "1", "yes", "y"}
-REPORT_SUPPORTED_LANE_ROLES = {"calibration_core", "external_mangrove"}
+REPORT_SUPPORTED_LANE_ROLES = {
+    "calibration_core",
+    "external_mangrove",
+    "external_wetland",
+}
 
 COLORS = {
     "rumen": "#d97706",
@@ -253,6 +257,16 @@ def norm01(values: pd.Series | np.ndarray) -> pd.Series:
     return ((s - lo) / (hi - lo)).fillna(0)
 
 
+def norm01_by_group(values: pd.Series, groups: pd.Series) -> pd.Series:
+    """Normalize only within comparable evidence classes."""
+    result = pd.Series(np.zeros(len(values)), index=values.index, dtype="float64")
+    for _, index in groups.fillna("unspecified").groupby(
+        groups.fillna("unspecified")
+    ).groups.items():
+        result.loc[index] = norm01(values.loc[index]).to_numpy()
+    return result
+
+
 def safe_float(value: Any, default: float = 0.0) -> float:
     try:
         if value is None or value == "":
@@ -434,6 +448,9 @@ def load_poc_features(warehouse_dir: Path, glm_dir: Path, esm_dir: Path) -> pd.D
     poc["has_esm2"] = True
     poc["has_glm2"] = poc["native_window_count"].fillna(0).astype(float) > 0
     poc["has_functional"] = True
+    poc["functional_evidence_class"] = "canonical_curated_mechanism_features"
+    poc["functional_harmonization_status"] = "canonical_feature_contract"
+    poc["mechanism_equivalence_status"] = "mechanism_equivalent"
     poc["is_poc_core"] = True
     poc["atlas_inclusion_status"] = "poc_core_complete"
     if "claim_scope" not in poc.columns:
@@ -454,6 +471,37 @@ def aggregate_glm_dirs(glm_dirs: list[Path]) -> pd.DataFrame:
                 ).fillna(0).gt(0)
             frames.append(mag_level)
             continue
+        multiwindow_path = glm_dir / "features/glm2_multiwindow_summary.parquet"
+        if multiwindow_path.exists():
+            multiwindow = pd.read_parquet(multiwindow_path)
+            if not multiwindow.empty:
+                multiwindow = multiwindow.rename(
+                    columns={
+                        "n_native": "native_window_count",
+                        "n_shuffle": "shuffled_control_count",
+                        "native_within_mag_dispersion": "native_embedding_std_mean",
+                        "matched_minus_dispersion_raw": "glm_context_delta",
+                    }
+                )
+                multiwindow["has_glm2"] = (
+                    pd.to_numeric(
+                        multiwindow.get("native_window_count", 0), errors="coerce"
+                    )
+                    .fillna(0)
+                    .gt(0)
+                    & pd.to_numeric(
+                        multiwindow.get("shuffled_control_count", 0), errors="coerce"
+                    )
+                    .fillna(0)
+                    .gt(0)
+                )
+                multiwindow["all_embeddings_finite"] = True
+                multiwindow["embedding_dim"] = 1280
+                multiwindow["context_qc_tier"] = (
+                    "multiwindow_native_plus_shuffled_stability"
+                )
+                frames.append(multiwindow)
+                continue
         windows = read_tsv(glm_dir / "features/glm2_smoke_window_embedding_summary.tsv")
         if not windows.empty:
             frames.append(windows)
@@ -473,6 +521,11 @@ def aggregate_glm_dirs(glm_dirs: list[Path]) -> pd.DataFrame:
             "glm_context_delta",
             "context_qc_tier",
             "has_glm2",
+            "native_vs_shuffle_centroid_dist",
+            "native_vs_shuffle_matched_dist",
+            "permutation_p",
+            "model_name",
+            "model_revision",
         ]
         out = glm[[c for c in keep if c in glm.columns]].drop_duplicates("proteome_id")
         if "has_glm2" not in out.columns:
@@ -652,6 +705,9 @@ def discover_external_functional(
             "functional_status": "complete",
             "run_dir": str(run_dir),
             "has_curated_manifest": True,
+            "functional_evidence_class": "canonical_curated_mechanism_features",
+            "functional_harmonization_status": "canonical_feature_contract",
+            "mechanism_equivalence_status": "mechanism_equivalent",
         }
         row["methane_evidence_score"] = row["mcycdb_hits"] + row["metabolic_hmm_rows"]
         row["sulfur_competition_score"] = row["scycdb_hits"] + row["metabolic_functions_present"]
@@ -672,6 +728,117 @@ def discover_external_functional(
         )
 
     return pd.DataFrame(rows), pd.DataFrame(status_rows)
+
+
+def read_warehouse_table(
+    warehouse_dirs: list[Path],
+    table_name: str,
+) -> pd.DataFrame:
+    """Read a registered Parquet table without assuming a cohort partition name."""
+    frames: list[pd.DataFrame] = []
+    for warehouse_dir in warehouse_dirs:
+        manifest = read_tsv(warehouse_dir / "cohort_table_manifest.tsv")
+        candidate_paths: list[Path] = []
+        if not manifest.empty and {"table", "path"}.issubset(manifest.columns):
+            for value in manifest.loc[manifest["table"].astype(str).eq(table_name), "path"]:
+                path = Path(str(value))
+                if not path.is_absolute():
+                    path = warehouse_dir / path
+                candidate_paths.append(path)
+        if not candidate_paths:
+            candidate_paths.extend(
+                sorted((warehouse_dir / "parquet" / table_name).rglob("*.parquet"))
+            )
+        for path in candidate_paths:
+            if path.exists():
+                frames.append(pd.read_parquet(path))
+    if not frames:
+        return pd.DataFrame()
+    return pd.concat(frames, ignore_index=True, sort=False).drop_duplicates(
+        "proteome_id"
+    )
+
+
+def discover_warehouse_functional(
+    manifest: pd.DataFrame,
+    warehouse_dirs: list[Path],
+    lane_id: str,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Load a source-scaffold functional layer with an explicit non-equivalence tag."""
+    readiness = read_warehouse_table(
+        warehouse_dirs, "feature_mrv_readiness_mag_level"
+    )
+    source_dram = read_warehouse_table(
+        warehouse_dirs, "feature_source_dram_mag_summary"
+    )
+    if readiness.empty or source_dram.empty:
+        return pd.DataFrame(), pd.DataFrame()
+
+    readiness["proteome_id"] = readiness["proteome_id"].astype(str)
+    source_dram["proteome_id"] = source_dram["proteome_id"].astype(str)
+    dram_keep = [
+        "proteome_id",
+        "source_dram_rows",
+        "ko_rows",
+        "cazy_rows",
+        "pfam_rows",
+        "peptidase_rows",
+        "vogdb_rows",
+        "source_dram_status",
+    ]
+    functional = readiness.merge(
+        source_dram[[c for c in dram_keep if c in source_dram.columns]],
+        on="proteome_id",
+        how="left",
+    )
+    functional["lane_id"] = lane_id
+    functional["checkm2_completeness"] = pd.to_numeric(
+        functional.get("bin_completeness"), errors="coerce"
+    )
+    functional["checkm2_contamination"] = pd.to_numeric(
+        functional.get("bin_contamination"), errors="coerce"
+    )
+    functional["methane_evidence_score"] = pd.to_numeric(
+        functional.get("methane_term_rows"), errors="coerce"
+    ).fillna(0)
+    functional["sulfur_competition_score"] = pd.to_numeric(
+        functional.get("sulfur_term_rows"), errors="coerce"
+    ).fillna(0)
+    functional["substrate_evidence_count"] = pd.to_numeric(
+        functional.get("substrate_term_rows"), errors="coerce"
+    ).fillna(0)
+    functional["broad_function_evidence_count"] = pd.to_numeric(
+        functional.get("source_feature_rows"), errors="coerce"
+    ).fillna(0)
+    functional["has_functional"] = functional[
+        "broad_function_evidence_count"
+    ].gt(0)
+    functional["functional_status"] = np.where(
+        functional["has_functional"],
+        "source_scaffold_complete",
+        "source_scaffold_missing",
+    )
+    functional["has_curated_manifest"] = False
+    functional["functional_evidence_class"] = "source_annotation_scaffold"
+    functional["functional_harmonization_status"] = (
+        "common_screening_axes_harmonized_with_source_scaffold_caveat"
+    )
+    functional["mechanism_equivalence_status"] = (
+        "not_canonical_mechanism_equivalent"
+    )
+    status_cols = [
+        "lane_id",
+        "proteome_id",
+        "mag_id",
+        "functional_status",
+        "has_functional",
+        "mrv_readiness_label",
+        "functional_evidence_class",
+        "functional_harmonization_status",
+        "mechanism_equivalence_status",
+    ]
+    status = functional[[c for c in status_cols if c in functional.columns]].copy()
+    return functional, status
 
 
 def discover_msm_functional(msm_root: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -896,7 +1063,16 @@ def load_external_lane_features(
         manifest["mag_id"] = manifest.get("mag_id_candidate", manifest["proteome_id"])
 
     per_mag_dirs = split_registry_paths(repo_root, lane.get("functional_per_mag_dirs"))
-    functional, status = discover_external_functional(functional_manifest, per_mag_dirs, lane_id)
+    warehouse_dirs = split_registry_paths(
+        repo_root, lane.get("functional_warehouse_dir")
+    )
+    functional, status = discover_warehouse_functional(
+        functional_manifest, warehouse_dirs, lane_id
+    )
+    if functional.empty:
+        functional, status = discover_external_functional(
+            functional_manifest, per_mag_dirs, lane_id
+        )
     glm = aggregate_glm_dirs(split_registry_paths(repo_root, lane.get("glm2_artifacts_dirs")))
     esm_dirs = split_registry_paths(repo_root, lane.get("esm2_artifacts_dirs"))
     esm_meta = read_esm_metadata(esm_dirs)
@@ -911,6 +1087,7 @@ def load_external_lane_features(
             "source",
             "ecosystem",
             "source_group",
+            "protein_count",
             "functional_run_include",
             "match_status",
         ]
@@ -955,14 +1132,30 @@ def load_external_lane_features(
         glm["proteome_id"] = glm["proteome_id"].astype(str)
         frame = frame.merge(glm.drop(columns=["mag_id"], errors="ignore"), on="proteome_id", how="left")
 
+    lane_role = str(lane.get("lane_role") or "external_mangrove")
+    source_category_value = (
+        "wetland" if lane_role == "external_wetland" else "mangrove"
+    )
+    default_ecosystem = (
+        "freshwater_wetland"
+        if source_category_value == "wetland"
+        else "mangrove_sediment"
+    )
+    status_prefix = (
+        "wetland_reference"
+        if source_category_value == "wetland"
+        else "mangrove"
+    )
     frame["lane_id"] = lane_id
     frame["source"] = lane_id
     if "ecosystem" not in frame.columns:
-        frame["ecosystem"] = "mangrove_sediment"
+        frame["ecosystem"] = default_ecosystem
     else:
-        frame["ecosystem"] = frame["ecosystem"].fillna("").replace("", "mangrove_sediment")
+        frame["ecosystem"] = (
+            frame["ecosystem"].fillna("").replace("", default_ecosystem)
+        )
     frame["cohort_label"] = str(lane.get("denominator_label") or lane_id)
-    frame["source_category"] = "mangrove"
+    frame["source_category"] = source_category_value
     frame["has_esm2"] = frame["proteome_id"].isin(esm_ids)
     if "has_glm2" not in frame.columns:
         frame["has_glm2"] = False
@@ -985,13 +1178,34 @@ def load_external_lane_features(
         ],
         [
             "manifest_gap_missing_payload",
-            "mangrove_multiview_complete",
-            "mangrove_esm_glm_only",
-            "mangrove_functional_only",
+            f"{status_prefix}_multiview_complete",
+            f"{status_prefix}_esm_glm_only",
+            f"{status_prefix}_functional_only",
         ],
-        default="mangrove_pending",
+        default=f"{status_prefix}_pending",
     )
     frame["claim_scope"] = str(lane.get("claim_scope") or "MAG/proteome molecular screening")
+    if "functional_evidence_class" not in frame.columns:
+        frame["functional_evidence_class"] = (
+            "canonical_curated_mechanism_features"
+        )
+    frame["functional_evidence_class"] = frame[
+        "functional_evidence_class"
+    ].fillna(
+        "canonical_curated_mechanism_features"
+    )
+    if "functional_harmonization_status" not in frame.columns:
+        frame["functional_harmonization_status"] = "canonical_feature_contract"
+    frame["functional_harmonization_status"] = frame[
+        "functional_harmonization_status"
+    ].fillna("canonical_feature_contract")
+    if "mechanism_equivalence_status" not in frame.columns:
+        frame["mechanism_equivalence_status"] = "mechanism_equivalent"
+    frame["mechanism_equivalence_status"] = frame[
+        "mechanism_equivalence_status"
+    ].fillna("mechanism_equivalent")
+    if "prodigal_proteins" not in frame.columns and "protein_count" in frame.columns:
+        frame["prodigal_proteins"] = frame["protein_count"]
     for col in [
         "checkm2_completeness",
         "checkm2_contamination",
@@ -1006,6 +1220,14 @@ def load_external_lane_features(
         "dbcan_overview_rows",
         "kofam_rows",
         "metabolic_hmm_rows",
+        "substrate_evidence_count",
+        "broad_function_evidence_count",
+        "review_priority_score",
+        "source_dram_rows",
+        "ko_rows",
+        "cazy_rows",
+        "pfam_rows",
+        "peptidase_rows",
     ]:
         if col not in frame.columns:
             frame[col] = 0
@@ -1159,6 +1381,24 @@ def add_report_metrics(atlas: pd.DataFrame, emb_meta: pd.DataFrame) -> pd.DataFr
         how="left",
     )
     atlas["source_display"] = atlas["source_category"].map(source_label)
+    if "functional_evidence_class" not in atlas.columns:
+        atlas["functional_evidence_class"] = (
+            "canonical_curated_mechanism_features"
+        )
+    atlas["functional_evidence_class"] = atlas[
+        "functional_evidence_class"
+    ].fillna("canonical_curated_mechanism_features")
+    if "functional_harmonization_status" not in atlas.columns:
+        atlas["functional_harmonization_status"] = "canonical_feature_contract"
+    atlas["functional_harmonization_status"] = atlas[
+        "functional_harmonization_status"
+    ].fillna("canonical_feature_contract")
+    if "mechanism_equivalence_status" not in atlas.columns:
+        atlas["mechanism_equivalence_status"] = "mechanism_equivalent"
+    atlas["mechanism_equivalence_status"] = atlas[
+        "mechanism_equivalence_status"
+    ].fillna("mechanism_equivalent")
+    evidence_groups = atlas["functional_evidence_class"]
     atlas["qc_confidence_raw"] = (
         pd.to_numeric(atlas["checkm2_completeness"], errors="coerce").fillna(0)
         - 4 * pd.to_numeric(atlas["checkm2_contamination"], errors="coerce").fillna(0)
@@ -1168,16 +1408,57 @@ def add_report_metrics(atlas: pd.DataFrame, emb_meta: pd.DataFrame) -> pd.DataFr
         + pd.to_numeric(atlas.get("cross_domain_neighbor_fraction", 0), errors="coerce").fillna(0)
         + pd.to_numeric(atlas.get("nearest_poc_similarity", 0), errors="coerce").fillna(0) * atlas["source_category"].eq("mangrove").astype(float)
     )
-    atlas["glm_context_norm"] = norm01(pd.to_numeric(atlas.get("glm_context_delta", 0), errors="coerce").fillna(0))
-    atlas["methane_signal_norm"] = norm01(np.log1p(pd.to_numeric(atlas["methane_evidence_score"], errors="coerce").fillna(0)))
-    atlas["sulfur_signal_norm"] = norm01(np.log1p(pd.to_numeric(atlas["sulfur_competition_score"], errors="coerce").fillna(0)))
-    atlas["substrate_signal_norm"] = norm01(np.log1p(pd.to_numeric(atlas["cazy_family_count"], errors="coerce").fillna(0)))
-    atlas["broad_function_norm"] = norm01(
-        np.log1p(
-            pd.to_numeric(atlas.get("kofam_rows", 0), errors="coerce").fillna(0)
-            + pd.to_numeric(atlas.get("metabolic_modules_present", 0), errors="coerce").fillna(0)
-            + pd.to_numeric(atlas.get("merops_family_count", 0), errors="coerce").fillna(0)
-        )
+    glm_raw = pd.to_numeric(
+        atlas.get("glm_context_delta", pd.Series(0, index=atlas.index)),
+        errors="coerce",
+    ).fillna(0)
+    methane_raw = np.log1p(
+        pd.to_numeric(atlas["methane_evidence_score"], errors="coerce").fillna(0)
+    )
+    sulfur_raw = np.log1p(
+        pd.to_numeric(atlas["sulfur_competition_score"], errors="coerce").fillna(0)
+    )
+    canonical_substrate = pd.to_numeric(
+        atlas.get("cazy_family_count", pd.Series(0, index=atlas.index)),
+        errors="coerce",
+    ).fillna(0)
+    substrate_raw = pd.to_numeric(
+        atlas.get(
+            "substrate_evidence_count", pd.Series(np.nan, index=atlas.index)
+        ),
+        errors="coerce",
+    ).fillna(canonical_substrate)
+    canonical_broad = (
+        pd.to_numeric(
+            atlas.get("kofam_rows", pd.Series(0, index=atlas.index)),
+            errors="coerce",
+        ).fillna(0)
+        + pd.to_numeric(
+            atlas.get(
+                "metabolic_modules_present", pd.Series(0, index=atlas.index)
+            ),
+            errors="coerce",
+        ).fillna(0)
+        + pd.to_numeric(
+            atlas.get("merops_family_count", pd.Series(0, index=atlas.index)),
+            errors="coerce",
+        ).fillna(0)
+    )
+    broad_raw = pd.to_numeric(
+        atlas.get(
+            "broad_function_evidence_count",
+            pd.Series(np.nan, index=atlas.index),
+        ),
+        errors="coerce",
+    ).fillna(canonical_broad)
+    atlas["glm_context_norm"] = norm01_by_group(glm_raw, evidence_groups)
+    atlas["methane_signal_norm"] = norm01_by_group(methane_raw, evidence_groups)
+    atlas["sulfur_signal_norm"] = norm01_by_group(sulfur_raw, evidence_groups)
+    atlas["substrate_signal_norm"] = norm01_by_group(
+        np.log1p(substrate_raw), evidence_groups
+    )
+    atlas["broad_function_norm"] = norm01_by_group(
+        np.log1p(broad_raw), evidence_groups
     )
     atlas["qc_signal_norm"] = norm01(atlas["qc_confidence_raw"])
     atlas["atlas_review_score"] = (
@@ -1189,7 +1470,37 @@ def add_report_metrics(atlas: pd.DataFrame, emb_meta: pd.DataFrame) -> pd.DataFr
         + 0.08 * atlas["broad_function_norm"]
         + 0.10 * atlas["qc_signal_norm"]
     )
-    atlas.loc[~atlas["has_functional"], "atlas_review_score"] = np.nan
+    mechanism_equivalent = atlas["mechanism_equivalence_status"].eq(
+        "mechanism_equivalent"
+    )
+    atlas.loc[
+        ~atlas["has_functional"] | ~mechanism_equivalent, "atlas_review_score"
+    ] = np.nan
+    review_priority = pd.to_numeric(
+        atlas.get("review_priority_score", pd.Series(np.nan, index=atlas.index)),
+        errors="coerce",
+    )
+    atlas["source_scaffold_review_score"] = norm01(
+        review_priority.where(~mechanism_equivalent)
+    )
+    atlas.loc[mechanism_equivalent, "source_scaffold_review_score"] = np.nan
+    atlas["tri_view_ready"] = (
+        atlas["has_esm2"] & atlas["has_glm2"] & atlas["has_functional"]
+    )
+    atlas["formal_tri_view_status"] = np.select(
+        [
+            ~atlas["tri_view_ready"],
+            mechanism_equivalent,
+        ],
+        [
+            "incomplete_tri_view",
+            "complete_canonical_mechanism_tri_view",
+        ],
+        default="complete_source_scaffold_tri_view",
+    )
+    atlas["mechanism_equivalent_tri_view"] = (
+        atlas["tri_view_ready"] & mechanism_equivalent
+    )
     return atlas
 
 
@@ -1207,24 +1518,57 @@ def build_candidate_cards(atlas: pd.DataFrame, top_n_poc: int, top_n_mangrove: i
     msm_top["candidate_set"] = "Mangrove nearest-neighborhood candidate"
     msm_top["rank"] = np.arange(1, len(msm_top) + 1)
 
-    cards = pd.concat([poc_top, msm_top], ignore_index=True, sort=False)
+    source_scaffold = atlas[
+        atlas["functional_evidence_class"].eq("source_annotation_scaffold")
+        & atlas["tri_view_ready"]
+    ].copy()
+    source_scaffold_top = (
+        source_scaffold.sort_values(
+            ["source_scaffold_review_score", "nearest_poc_similarity"],
+            ascending=False,
+        )
+        .head(top_n_poc)
+        .copy()
+    )
+    source_scaffold_top["candidate_set"] = (
+        "MUCC v1 source-scaffold review candidate"
+    )
+    source_scaffold_top["rank"] = np.arange(1, len(source_scaffold_top) + 1)
+
+    cards = pd.concat(
+        [poc_top, msm_top, source_scaffold_top],
+        ignore_index=True,
+        sort=False,
+    )
     cards["card_id"] = cards["candidate_set"].str.lower().str.replace(r"[^a-z0-9]+", "_", regex=True).str.strip("_") + "_" + cards["rank"].fillna(0).astype(int).astype(str)
-    cards["allowed_claim_wording"] = cards.apply(
+    default_allowed = cards.apply(
         lambda r: (
-            "Reviewable MAG/proteome bridge hypothesis with ESM-2, gLM2, functional, QC, and taxonomy evidence."
+            "Reviewable MAG/proteome bridge hypothesis with ESM-2, gLM2, "
+            "functional, QC, and taxonomy evidence."
             if bool(r.get("has_functional")) and bool(r.get("has_glm2"))
-            else "Candidate remains incomplete and should be interpreted only as a latent/context signal."
+            else "Candidate remains incomplete and should be interpreted only "
+            "as a latent/context signal."
         ),
         axis=1,
     )
-    cards["blocking_gap"] = cards.apply(
-        lambda r: "sample mapping, abundance/read coverage, environmental covariates, uncertainty propagation, and flux/process validation",
-        axis=1,
-    )
-    cards["next_validation_action"] = cards.apply(
-        lambda r: "inspect marker neighborhoods, source-aware nulls, taxonomy/phylogeny context, and sample metadata linkage",
-        axis=1,
-    )
+    for column, default in [
+        ("allowed_claim_wording", default_allowed),
+        (
+            "blocking_gap",
+            "sample mapping, abundance/read coverage, environmental covariates, "
+            "uncertainty propagation, and flux/process validation",
+        ),
+        (
+            "next_validation_action",
+            "inspect marker neighborhoods, source-aware nulls, taxonomy/phylogeny "
+            "context, and sample metadata linkage",
+        ),
+    ]:
+        if column not in cards.columns:
+            cards[column] = default
+        else:
+            existing = cards[column].fillna("").astype(str).str.strip()
+            cards[column] = cards[column].where(existing.ne(""), default)
     return cards
 
 
@@ -2008,7 +2352,9 @@ def load_registry_backed_atlas(
     ]
     esm_stats: dict[str, Any] = {}
 
-    external_lanes = registry[registry["lane_role"].eq("external_mangrove")]
+    external_lanes = registry[
+        registry["lane_role"].isin(["external_mangrove", "external_wetland"])
+    ]
     for _, lane in external_lanes.iterrows():
         frame, status, stats = load_external_lane_features(repo_root, lane)
         if frame.empty:
@@ -2018,13 +2364,18 @@ def load_registry_backed_atlas(
             status_frames.append(status)
         lane_ledger.append(lane_counts(frame, str(lane.get("denominator_label") or lane.get("lane_id"))))
         esm_stats[str(lane.get("lane_id"))] = stats
+        lane_source_category = (
+            "wetland"
+            if str(lane.get("lane_role")) == "external_wetland"
+            else "mangrove"
+        )
         for esm_dir in split_registry_paths(repo_root, lane.get("esm2_artifacts_dirs")):
             esm_inputs.append(
                 {
                     "path": esm_dir,
                     "key_candidates": ["proteome_id", "sample"],
                     "cohort_label": str(lane.get("denominator_label") or lane.get("lane_id")),
-                    "source_category": "mangrove",
+                    "source_category": lane_source_category,
                 }
             )
 
