@@ -1,0 +1,237 @@
+{
+  "evidence_contract": [
+    {
+      "lane_id": "poc_core",
+      "lane": "POC reference core",
+      "registered_units": 625,
+      "esm2_units": 625,
+      "glm2_units": 625,
+      "functional_payload_units": 625,
+      "data_complete_tri_view_units": 625,
+      "mechanism_comparable_tri_view_units": 625,
+      "annotation_complete_harmonization_pending_units": 0,
+      "source_scaffold_units": 0,
+      "single_window_glm2_units": 625,
+      "multiwindow_glm2_units": 0,
+      "esm2_cap_applied_units": 0,
+      "functional_contract": "canonical_mechanism_comparable"
+    },
+    {
+      "lane_id": "msm_china_2025",
+      "lane": "MSM mangrove",
+      "registered_units": 1428,
+      "esm2_units": 1428,
+      "glm2_units": 1428,
+      "functional_payload_units": 1427,
+      "data_complete_tri_view_units": 1427,
+      "mechanism_comparable_tri_view_units": 0,
+      "annotation_complete_harmonization_pending_units": 1427,
+      "source_scaffold_units": 0,
+      "single_window_glm2_units": 1428,
+      "multiwindow_glm2_units": 0,
+      "esm2_cap_applied_units": 66,
+      "functional_contract": "annotation_complete_harmonization_pending"
+    },
+    {
+      "lane_id": "futian_mangrove_2026_qi",
+      "lane": "Futian mangrove",
+      "registered_units": 3404,
+      "esm2_units": 3156,
+      "glm2_units": 3156,
+      "functional_payload_units": 2931,
+      "data_complete_tri_view_units": 2931,
+      "mechanism_comparable_tri_view_units": 0,
+      "annotation_complete_harmonization_pending_units": 2931,
+      "source_scaffold_units": 0,
+      "single_window_glm2_units": 3156,
+      "multiwindow_glm2_units": 0,
+      "esm2_cap_applied_units": 22,
+      "functional_contract": "annotation_complete_harmonization_pending"
+    },
+    {
+      "lane_id": "mucc_v1_owc_wetland",
+      "lane": "MUCC v1 wetland",
+      "registered_units": 2508,
+      "esm2_units": 2501,
+      "glm2_units": 2508,
+      "functional_payload_units": 2508,
+      "data_complete_tri_view_units": 2501,
+      "mechanism_comparable_tri_view_units": 0,
+      "annotation_complete_harmonization_pending_units": 0,
+      "source_scaffold_units": 2508,
+      "single_window_glm2_units": 0,
+      "multiwindow_glm2_units": 2508,
+      "esm2_cap_applied_units": 33,
+      "functional_contract": "source_scaffold_non_equivalent"
+    }
+  ],
+  "embedding_geometry": {
+    "embedding_units": 7710,
+    "dimensions": 1280,
+    "knn_k": 35,
+    "raw_directed_edges": 269850,
+    "raw_cross_domain_directed_edges": 57195,
+    "raw_cross_edge_similarity_mean": 0.9993802709704107,
+    "raw_cross_edge_similarity_median": 0.9994857311248779,
+    "raw_cross_edge_similarity_min": 0.9854006767272949,
+    "raw_reciprocal_unique_cross_pairs": 15728,
+    "raw_reciprocal_pair_counts": {
+      "rumen↔wetland": 1,
+      "mangrove↔wetland": 15727
+    },
+    "random_pair_similarity_mean": 0.9911808967590332,
+    "random_pair_similarity_median": 0.9936243295669556,
+    "similarity_to_global_centroid_median": 0.9968822002410889,
+    "dimension_zscore_cross_domain_directed_edges": 54043,
+    "dimension_zscore_cross_edge_similarity_median": 0.9855501055717468,
+    "dimension_zscore_reciprocal_unique_cross_pairs": 15064,
+    "dimension_zscore_reciprocal_pair_counts": {
+      "mangrove↔wetland": 15064
+    },
+    "interpretation": "Raw ESM-2 cosine space is strongly anisotropic. Mangrove↔wetland neighborhood continuity persists after per-dimension z-scoring, but rumen transfer does not; use the graph for navigation, not mechanism attestation."
+  },
+  "taxonomy": {
+    "target_target_reciprocal_pairs": 15727,
+    "pairs_with_both_phyla_usable": 11449,
+    "raw_exact_name_matches_all_pairs": 6951,
+    "raw_exact_name_share_usable": 0.6071272600227094,
+    "synonym_normalized_matches_all_pairs": 9066,
+    "synonym_normalized_share_usable": 0.7918595510524936,
+    "gtdb_release_by_lane": [
+      {
+        "lane_id": "futian_mangrove_2026_qi",
+        "gtdb_release": "missing",
+        "units": 3404
+      },
+      {
+        "lane_id": "msm_china_2025",
+        "gtdb_release": "missing",
+        "units": 1428
+      },
+      {
+        "lane_id": "mucc_v1_owc_wetland",
+        "gtdb_release": "missing",
+        "units": 2508
+      },
+      {
+        "lane_id": "poc_core",
+        "gtdb_release": "R232",
+        "units": 625
+      }
+    ],
+    "interpretation": "Reciprocal mangrove↔wetland neighborhoods are substantially taxonomically structured. GTDB release metadata is present only for the POC lane, so source and taxonomy-release effects cannot be cleanly separated in this freeze."
+  },
+  "functional_metric_provenance": {
+    "lane_metrics": [
+      {
+        "lane_id": "futian_mangrove_2026_qi",
+        "lane": "Futian mangrove",
+        "functional_units": 2931,
+        "numerator_provenance": "raw_many_to_many_annotation_hit_rows_plus_all_hmm_rows",
+        "raw_methane_row_count_median": 3757.0,
+        "protein_count_median": 2431.0,
+        "raw_rows_per_protein_gt_1_units": 2760,
+        "raw_rows_per_protein_gt_1_share": 0.9416581371545547,
+        "public_rate_metric_status": "quarantined_raw_hit_row_numerator_not_marker_density"
+      },
+      {
+        "lane_id": "msm_china_2025",
+        "lane": "MSM mangrove",
+        "functional_units": 1427,
+        "numerator_provenance": "raw_many_to_many_annotation_hit_rows_plus_all_hmm_rows",
+        "raw_methane_row_count_median": 4072.0,
+        "protein_count_median": 2886.0,
+        "raw_rows_per_protein_gt_1_units": 1328,
+        "raw_rows_per_protein_gt_1_share": 0.9306236860546602,
+        "public_rate_metric_status": "quarantined_raw_hit_row_numerator_not_marker_density"
+      },
+      {
+        "lane_id": "mucc_v1_owc_wetland",
+        "lane": "MUCC v1 wetland",
+        "functional_units": 2508,
+        "numerator_provenance": "source_dram_term_rows_and_processed_expression_detection",
+        "raw_methane_row_count_median": 18.0,
+        "protein_count_median": 2568.0,
+        "raw_rows_per_protein_gt_1_units": 0,
+        "raw_rows_per_protein_gt_1_share": 0.0,
+        "public_rate_metric_status": "source_scaffold_term_density_non_equivalent"
+      },
+      {
+        "lane_id": "poc_core",
+        "lane": "POC reference core",
+        "functional_units": 625,
+        "numerator_provenance": "curated_accepted_or_present_mechanism_features",
+        "raw_methane_row_count_median": 2.0,
+        "protein_count_median": 1945.0,
+        "raw_rows_per_protein_gt_1_units": 0,
+        "raw_rows_per_protein_gt_1_share": 0.0,
+        "public_rate_metric_status": "comparable_curated_feature_density"
+      }
+    ],
+    "legacy_score_methane_component_pearson_r": 0.6053764703031478,
+    "legacy_top_500_source_counts": {
+      "mangrove": 497,
+      "rumen": 3
+    },
+    "legacy_top_500_mangrove_share": 0.994,
+    "public_action": "Cross-lane methane/sulfur/substrate densities and the universal attestation ranking are quarantined. Raw annotation counts remain only as provenance diagnostics until the common accepted/present feature rebuild is complete."
+  },
+  "mucc_validation_readiness": {
+    "mag_units": 2508,
+    "processed_expression_supported_mags": 1948,
+    "methane_expression_detected_mags": 1358,
+    "sulfur_expression_detected_mags": 1868,
+    "expression_units_status": "processed detection/occupancy support; source normalization units remain unresolved, so no activity magnitude or flux inference",
+    "warehouse_status": "available",
+    "expression_sample_columns": 133,
+    "chamber_flux_rows": 275,
+    "chamber_flux_valid_rows": 188,
+    "porewater_rows": 5280,
+    "porewater_valid_rows": 1563,
+    "tower_flux_rows": 29280,
+    "exact_sample_environment_flux_links": 0,
+    "ecological_join_blocked_samples": 133,
+    "flashweave_edges": 694,
+    "flashweave_stable_edges": 126,
+    "wgcna_non_grey_modules": 3,
+    "claim_boundary": "Expression is orthogonal processed detection evidence. ESS-DIVE flux and porewater observations are staged site/time context only: 0/133 sequencing samples currently have an authoritative exact sample-depth-environment-flux join."
+  },
+  "findings": [
+    {
+      "severity": "contract correction",
+      "finding": "Data-complete tri-view is not the same as mechanism-comparable tri-view.",
+      "result": "7,484 data-complete; 625 mechanism-comparable; 4,358 annotation-complete/harmonization-pending; 2,501 source-scaffold.",
+      "report_action": "Use the four-state evidence contract everywhere; remove the former 4,980 canonical/mechanism-equivalent claim."
+    },
+    {
+      "severity": "blocking defect",
+      "finding": "The former cross-lane methane density mixed incompatible numerators.",
+      "result": "MSM/Futian used raw many-to-many annotation rows plus all HMM rows; POC used curated accepted/present features; MUCC used source DRAM terms.",
+      "report_action": "Cross-lane methane/sulfur/substrate densities and the universal attestation ranking are quarantined. Raw annotation counts remain only as provenance diagnostics until the common accepted/present feature rebuild is complete."
+    },
+    {
+      "severity": "ranking impact",
+      "finding": "The quarantined score was materially coupled to pipeline-specific methane counts.",
+      "result": "Pearson r=0.605; 99.4% of the legacy top 500 were mangrove rows.",
+      "report_action": "Mangrove candidates are now selected by geometry and QC only, with no cross-lane mechanism rank."
+    },
+    {
+      "severity": "geometry boundary",
+      "finding": "ESM-2 supports target-target neighborhood navigation, not rumen transfer.",
+      "result": "Raw reciprocal unique pairs: 15,727 mangrove↔wetland, 1 rumen↔wetland, 0 mangrove↔rumen. After dimension z-scoring: 15,064, 0, 0, respectively.",
+      "report_action": "Describe ESM-2 links as latent neighborhoods; forbid source-independent ecological or mechanism transfer claims."
+    },
+    {
+      "severity": "confounding",
+      "finding": "Bridge taxonomy is structured and GTDB release is source-confounded.",
+      "result": "79.2% of usable reciprocal mangrove↔wetland pairs match phylum after conservative synonym normalization; release metadata is absent outside POC.",
+      "report_action": "Treat bridge continuity as partly taxonomic homophily and require harmonized taxonomy/phylogeny-aware nulls."
+    },
+    {
+      "severity": "orthogonal evidence",
+      "finding": "MUCC expression and field-observation lanes are valuable but not yet joined.",
+      "result": "1,358 MAGs have processed methane-gene detection and 1,868 sulfur; exact sample-environment-flux links=0/133.",
+      "report_action": "Surface expression as detection/occupancy support and staged flux as a validation lane; do not infer activity magnitude or flux."
+    }
+  ]
+}

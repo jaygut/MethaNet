@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MethaNet Molecular Niche Atlas</title>
+  <title>MethaNet Molecular Atlas · Scientific Evidence Reconciliation</title>
   <style>
     :root{--ink:#16202a;--muted:#64748b;--panel:#ffffff;--surface:#f6fafb;--line:#dbe5ee;--rumen:#c56a13;--wetland:#0284a8;--mangrove:#168a48;--gold:#d89b14}
     *{box-sizing:border-box} body{margin:0;background:var(--surface);color:var(--ink);font-family:Inter,Aptos,Segoe UI,Arial,sans-serif;line-height:1.48}
@@ -13,7 +13,7 @@
     h2{font-size:26px;margin:0 0 12px} h3{font-size:18px;margin:18px 0 8px}
     .subtitle{max-width:980px;font-size:18px;color:#ddfff2}.claim{display:inline-block;margin-top:18px;border:1px solid #85dff1;padding:9px 12px;border-radius:999px;color:#e8fbff}
     main{max-width:1280px;margin:auto;padding:28px 24px 76px}.section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;margin:18px 0;box-shadow:0 10px 30px rgba(15,23,42,.05)}
-    .metric-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:16px}.metric{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:14px}.metric b{display:block;font-size:28px}.metric span{font-size:12px;color:var(--muted)}
+    .metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}.metric{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:14px}.metric b{display:block;font-size:28px}.metric span{font-size:12px;color:var(--muted)}
     .viz{min-height:540px;border:1px solid var(--line);border-radius:12px;background:#fbfdff;position:relative;overflow:hidden}.viz.tall{min-height:700px}.viz.medium{min-height:470px}.viz.matrix{min-height:760px;overflow:auto}.viz.circos{min-height:720px}
     .grid2{display:grid;grid-template-columns:1.35fr .65fr;gap:18px}.grid2-even{display:grid;grid-template-columns:1fr 1fr;gap:18px}
     .signature-stack{display:grid;grid-template-columns:1fr;gap:22px}.signature-panel{min-width:0}
@@ -31,6 +31,7 @@
     .fallback{margin-top:12px}.fallback img{max-width:100%;border:1px solid var(--line);border-radius:10px}.note{color:var(--muted)}.warn{background:#fff7ed;border-left:4px solid var(--gold);padding:12px;border-radius:10px}
     .pill{display:inline-block;padding:5px 8px;border:1px solid var(--line);border-radius:999px;margin:4px 4px 0 0;color:#334155;background:#f8fafc;font-size:12px}
     .readiness-table{width:100%;border-collapse:collapse;font-size:13px}.readiness-table th{background:#eef7f5;text-align:left}.readiness-table th,.readiness-table td{border:1px solid var(--line);padding:9px;vertical-align:top}.readiness-table td:nth-child(2){font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+    .status-tag{display:inline-block;border:1px solid #d89b14;background:#fff7ed;color:#7c2d12;border-radius:999px;padding:3px 7px;font-size:11px;font-weight:700;white-space:nowrap}
     a{color:#075985} .closing{font-size:18px;line-height:1.58}
     @media (max-width:1020px){.metric-grid{grid-template-columns:repeat(2,1fr)}.approach-grid{grid-template-columns:1fr 1fr}.sample-score-grid{grid-template-columns:1fr 1fr}.grid2,.grid2-even{grid-template-columns:1fr}.viz.tall{min-height:560px}}
     @media (max-width:720px){.approach-grid{grid-template-columns:1fr}.metric-grid{grid-template-columns:1fr}.sample-score-grid{grid-template-columns:1fr}}
@@ -38,38 +39,54 @@
 </head>
 <body>
 <header>
-  <div class="eyebrow">MethaNet Bridge Attestation Graph · Molecular Niche Atlas</div>
-  <h1>Molecular intelligence for blue-carbon methane risk starts here</h1>
-  <p class="subtitle">From latent proteome geometry to auditable bridge evidence: a MAG/proteome atlas built to prioritize where methane-risk mechanisms deserve monitoring, validation, and product attention.</p>
+  <div class="eyebrow">MethaNet Molecular Atlas · Evidence-Reconciled Release</div>
+  <h1>Cross-ecosystem molecular evidence, with comparability made explicit</h1>
+  <p class="subtitle">A scientifically bounded MAG/proteome atlas integrating ESM-2 geometry, gLM2 context, functional payloads, MUCC expression evidence, QC, taxonomy, provenance, and ecological-validation readiness.</p>
   <div class="claim">MAG/proteome-level molecular screening and bridge-candidate prioritization only; not a final MRV risk score, not measured methane flux, and not carbon-credit approval.</div>
 </header>
 <main>
   <section class="section">
     <h2>Executive Summary</h2>
-    <p>MethaNet's near-term product is not another annotation report; it is a molecular attestation layer for methane permanence-risk screening. MBAG, the MethaNet Bridge Attestation Graph, asks whether a latent ESM-2 bridge candidate is supported by independent functional biology, genomic context, QC, taxonomy, and provenance. That turns raw MAG outputs into reviewable evidence objects a partner can understand and a technical reviewer can challenge.</p>
-    <p>The market problem is timing. Blue-carbon projects need earlier warning on methane permanence risk, but field flux data are expensive, sparse, and often retrospective. MBAG does not replace flux validation; it creates an auditable molecular intelligence layer that helps decide where monitoring, diligence, and experimental validation should focus before a project depends on late-stage surprises.</p>
-    <p>The atlas is now large enough to inspect cross-ecosystem molecular patterns, not just report run progress. This snapshot contains 7,481 release-required all-view MAG/proteome units in a shared ESM-2 + gLM2 + harmonized-functional schema. The functional view has two deliberately separate evidence contracts: 4,980 units carry canonical curated mechanism features, while 2,501 MUCC v1 Old Woman Creek units carry a source-derived DRAM/gene-annotation/expression scaffold. Both are technically complete tri-views; only the first is mechanism-equivalent.</p>
-    <p>The registered mangrove expansion is a target-domain screening surface, not yet a sample-level MRV layer. Across 4,584 registered mangrove ready payloads, 4,584 have ESM-2 embeddings, 4,584 have gLM2 context, and 4,355 have canonical functional evidence in this latest render. For this release, 4,355/4,584 release-required mangrove payloads have all three views; 229 remain pending-functional, and 248 source-lane gap rows remain visible outside the ready payload denominator. MUCC v1 contributes 2,501/2,508 source-scaffold tri-views; its seven non-embedded archive rows remain explicit.</p>
-    <p>The strongest value today is decision-grade triage. This report identifies bridge-like molecular neighborhoods, candidate mechanism signatures, provenance readiness, and monitoring-priority hypotheses. It supports partner-facing proof points and MRV feature primitives, while explicitly stopping short of final sample-level risk tiers, measured methane flux, or crediting decisions.</p>
-    <div class="metric-grid"><div class='metric'><b>7,481</b><span>release-required tri-view MAG/proteome units explorable now</span></div>
-<div class='metric'><b>4,980</b><span>canonical curated-mechanism tri-view units</span></div>
-<div class='metric'><b>2,501</b><span>MUCC v1 source-scaffold tri-view units, explicitly non-equivalent</span></div>
-<div class='metric'><b>7,710</b><span>registered ESM-2 embedding-bearing units in the harmonized space</span></div>
-<div class='metric'><b>269,850</b><span>high-dimensional embedding-neighborhood links audited</span></div></div>
+    <p>The atlas has substantial and genuine coverage: 7,965 registered MAG/proteome rows, 7,710 ESM-2 embeddings, 7,717 gLM2 payloads, and 7,484 data-complete tri-views. The scientific correction in this release is that <b>data completeness is not mechanism comparability</b>. Only 625 POC units currently satisfy the common curated mechanism-feature contract.</p>
+    <p>The other completed functional views remain valuable but have different meanings. The 4,358 MSM/Futian mangrove tri-views contain real completed KOfam, MCycDB, SCycDB, METABOLIC, dbCAN/CAZy, MEROPS, Bakta, and QC outputs, but their current report-level methane/sulfur numerators are raw annotation-row aggregates and are not yet comparable to the POC feature contract. The 2,501 MUCC v1 tri-views combine source DRAM/gene annotations and processed expression detection; they are intentionally retained as a non-equivalent wetland source scaffold.</p>
+    <p>Accordingly, this release quarantines the former universal molecular-attestation ranking, the cross-lane marker-density plot, and any mechanism-strength comparison built from those fields. Mangrove candidates are now geometry-led review hypotheses with functional harmonization explicitly pending. ESM-2 neighborhoods remain useful for navigation, and MUCC expression remains useful orthogonal detection evidence, but neither establishes source-independent transfer, activity magnitude, methane flux, or a final MRV risk tier.</p>
+    <p>The strategic asset is therefore an auditable evidence warehouse and a disciplined route to stronger claims: rebuild one common accepted/present mechanism feature axis across all lanes; harmonize taxonomy and phylogeny-aware nulls; resolve gLM2 protocol comparability; connect MAGs to exact samples and abundance; and validate against environmental and flux/process observations. That is more scientifically credible—and more commercially durable—than preserving a visually compelling but provenance-driven ranking.</p>
+    <div class="metric-grid"><div class='metric'><b>7,484</b><span>data-complete tri-view units: ESM-2 + gLM2 + functional payload</span></div>
+<div class='metric'><b>625</b><span>mechanism-comparable tri-view units; current cross-lane scoring ceiling</span></div>
+<div class='metric'><b>4,358</b><span>annotation-complete tri-views awaiting common feature aggregation</span></div>
+<div class='metric'><b>2,501</b><span>MUCC source-scaffold tri-views, explicitly non-equivalent</span></div>
+<div class='metric'><b>7,710</b><span>ESM-2-bearing units for latent-neighborhood navigation</span></div>
+<div class='metric'><b>57,195</b><span>directed cross-domain kNN edges audited in raw ESM-2 space</span></div></div>
   </section>
   <section class="section">
-    <h2>How To Read This Report</h2>
-    <p>This artifact is a standalone demonstration of MethaNet's operating thesis: molecular evidence can make methane-risk diligence earlier, more explainable, and more auditable before expensive field validation arrives. It should be read as a bridge from raw MAG/proteome computation to partner-facing decisions: which molecular neighborhoods deserve attention, which mechanisms support or weaken the concern, which evidence is missing, and what field or metadata work would convert a hypothesis into a stronger MRV feature.</p>
-    <p>It is not a warehouse snapshot with nicer charts. The warehouse is the substrate; the report is the decision layer that organizes ESM-2 geometry, functional machinery, genomic context, source provenance, and claim boundaries into a reviewable molecular-attestation narrative.</p>
-    <p>The report deliberately separates three levels. The first level is discovery: ESM-2 neighborhoods identify candidates that are molecularly near a reference domain or target-domain pattern. The second is attestation: functional annotations, gLM2 context, QC, taxonomy, and provenance test whether a candidate has reviewable biological support. The third is product translation: sample linkage, abundance, environmental covariates, uncertainty, and flux/process validation are still required before sample-level risk scoring. That hierarchy is the value proposition: MethaNet is not claiming final risk from a pretty map; it is creating an evidence chain that tells partners where to look, why to care, and what must be validated next.</p>
+    <h2>Scientific Reconciliation: What Survived, What Changed</h2>
+    <p>The table below records the consequential findings from reconciling the current warehouse against the prior V9 ledger, raw per-MAG outputs, embedding protocols, taxonomy fields, MUCC expression tables, and staged ecological evidence. “Correction” does not mean the underlying runs were false; it means the report had promoted unlike feature contracts into one numerical interpretation.</p>
+    <table class="readiness-table">
+      <thead><tr><th>Audit class</th><th>Finding</th><th>Observed result</th><th>Report action</th></tr></thead>
+      <tbody><tr><td><span class='status-tag'>contract correction</span></td><td><b>Data-complete tri-view is not the same as mechanism-comparable tri-view.</b></td><td>7,484 data-complete; 625 mechanism-comparable; 4,358 annotation-complete/harmonization-pending; 2,501 source-scaffold.</td><td>Use the four-state evidence contract everywhere; remove the former 4,980 canonical/mechanism-equivalent claim.</td></tr>
+<tr><td><span class='status-tag'>blocking defect</span></td><td><b>The former cross-lane methane density mixed incompatible numerators.</b></td><td>MSM/Futian used raw many-to-many annotation rows plus all HMM rows; POC used curated accepted/present features; MUCC used source DRAM terms.</td><td>Cross-lane methane/sulfur/substrate densities and the universal attestation ranking are quarantined. Raw annotation counts remain only as provenance diagnostics until the common accepted/present feature rebuild is complete.</td></tr>
+<tr><td><span class='status-tag'>ranking impact</span></td><td><b>The quarantined score was materially coupled to pipeline-specific methane counts.</b></td><td>Pearson r=0.605; 99.4% of the legacy top 500 were mangrove rows.</td><td>Mangrove candidates are now selected by geometry and QC only, with no cross-lane mechanism rank.</td></tr>
+<tr><td><span class='status-tag'>geometry boundary</span></td><td><b>ESM-2 supports target-target neighborhood navigation, not rumen transfer.</b></td><td>Raw reciprocal unique pairs: 15,727 mangrove↔wetland, 1 rumen↔wetland, 0 mangrove↔rumen. After dimension z-scoring: 15,064, 0, 0, respectively.</td><td>Describe ESM-2 links as latent neighborhoods; forbid source-independent ecological or mechanism transfer claims.</td></tr>
+<tr><td><span class='status-tag'>confounding</span></td><td><b>Bridge taxonomy is structured and GTDB release is source-confounded.</b></td><td>79.2% of usable reciprocal mangrove↔wetland pairs match phylum after conservative synonym normalization; release metadata is absent outside POC.</td><td>Treat bridge continuity as partly taxonomic homophily and require harmonized taxonomy/phylogeny-aware nulls.</td></tr>
+<tr><td><span class='status-tag'>orthogonal evidence</span></td><td><b>MUCC expression and field-observation lanes are valuable but not yet joined.</b></td><td>1,358 MAGs have processed methane-gene detection and 1,868 sulfur; exact sample-environment-flux links=0/133.</td><td>Surface expression as detection/occupancy support and staged flux as a validation lane; do not infer activity magnitude or flux.</td></tr></tbody>
+    </table>
+    <p class="note">Interpretation hierarchy: (1) payload availability, (2) within-protocol exploratory signal, (3) cross-lane mechanism comparability, and (4) sample/ecological validation. A unit may pass an earlier level without passing the later ones.</p>
+    <p class="note">Download the machine-readable audit: <a href="audit/scientific_audit.json">scientific audit JSON</a>, <a href="audit/evidence_contract_summary.tsv">evidence-contract summary</a>, <a href="audit/scientific_reconciliation_findings.tsv">reconciliation findings</a>, <a href="audit/functional_metric_provenance_audit.tsv">functional-metric provenance</a>, <a href="audit/report_validation_gates.tsv">validation gates</a>, and <a href="audit/claim_boundary_matrix.tsv">claim-boundary matrix</a>.</p>
   </section>
-  
-        <section class="section">
-          <h2>The Operating Model Behind The Atlas</h2>
-          <img class="infographic" src="assets/figures/methanet_agentic_workflow_moat_v3.png" alt="MethaNet agent-assisted molecular intelligence workflow infographic">
-          <p class="legend-note">The infographic summarizes the operating flywheel: concept framing, compute-agnostic environment setup, reference database assembly, MAG/proteome processing, multiview feature generation, report-ready interpretation, and future API/MCP delivery. This is MethaNet's execution moat, while the biological claims below still come only from audited ESM-2, functional annotation, gLM2, QC, taxonomy, and provenance evidence.</p>
-        </section>
-        
+  <section class="section">
+    <h2>Formal Tri-View Evidence Contract</h2>
+    <p>A formal tri-view row has three payloads—ESM-2, gLM2, and function—but the evidence state also records whether those payloads support a common quantitative interpretation. This distinction is now encoded at row level, in the freeze manifest, in the candidate cards, and in release validation gates.</p>
+    <table class="readiness-table">
+      <thead><tr><th>Lane</th><th>Registered</th><th>ESM-2</th><th>gLM2</th><th>Functional payload</th><th>Data-complete tri-view</th><th>Mechanism-comparable tri-view</th><th>Functional contract</th></tr></thead>
+      <tbody><tr><td>POC reference core</td><td>625</td><td>625</td><td>625</td><td>625</td><td>625</td><td>625</td><td>Curated accepted/present mechanism features (comparable)</td></tr>
+<tr><td>MSM mangrove</td><td>1,428</td><td>1,428</td><td>1,428</td><td>1,427</td><td>1,427</td><td>0</td><td>Annotation-complete; common feature aggregation pending</td></tr>
+<tr><td>Futian mangrove</td><td>3,404</td><td>3,156</td><td>3,156</td><td>2,931</td><td>2,931</td><td>0</td><td>Annotation-complete; common feature aggregation pending</td></tr>
+<tr><td>MUCC v1 wetland</td><td>2,508</td><td>2,501</td><td>2,508</td><td>2,508</td><td>2,501</td><td>0</td><td>DRAM/gene/expression source scaffold (non-equivalent)</td></tr></tbody>
+    </table>
+    <div id="evidence-contract-chart" class="viz medium"></div>
+    <details class="fallback"><summary>Static fallback</summary><img src="assets/figures/fallback_03_evidence_contract.png" alt="Atlas evidence-contract counts by lane"></details>
+    <p class="note">gLM2 is also protocol-stratified: 5,209 units use one native plus one shuffled window, whereas 2,508 MUCC units use 10 native plus 10 shuffled windows. The model family/revision is shared, but the resulting summary metrics are compared only within protocol class. ESM-2 uses the same 650M model family and a 6,000-protein cap; 121 rows are explicitly flagged as capped.</p>
+  </section>
   <section class="section">
     <h2>Source Provenance And Environmental Readiness</h2>
     <p>Environmental metadata now makes MBAG provenance-aware, not sample-scoreable. The report can explain where each evidence lane comes from and how close it is to sample/site rollup, but it cannot yet convert MAG-level molecular potential into final environmental methane-risk scores. That distinction is strategically valuable: it tells partners what is already auditable and tells the team exactly what metadata gaps must close next.</p>
@@ -77,34 +94,35 @@
       <thead><tr><th>Evidence lane</th><th>Report units</th><th>Metadata universe</th><th>Primary source</th><th>Resolution now</th><th>Use now</th><th>Blocking gap</th></tr></thead>
       <tbody><tr><td>Rumen reference</td><td>518</td><td>555 embedded POC rumen proteomes</td><td>Stewart et al. 2019; ENA PRJEB31266</td><td>555/555 exact ERZ analysis-accession matches</td><td>Methane-domain reference provenance and source-aware bridge comparison</td><td>Animal/sample-level environmental metadata is mostly cohort-level; not blue-carbon sample context</td></tr>
 <tr><td>Wetland/MUCC target</td><td>107</td><td>107 embedded wetland/MUCC Methanoregula proteomes</td><td>Bechtold et al. 2025; MUCC v2.0.0 Zenodo 10.5281/zenodo.14532347</td><td>20 exact NCBI assembly/BioSample; 23 OWC bin plus site/project; 64 source-bucket rows</td><td>Target-domain provenance, wetland source-bucket context, and metadata-readiness triage</td><td>Uniform MAG-to-sample BioSample mapping for JGI/PPR/STM/source-bucket rows</td></tr>
-<tr><td>Mangrove/Futian target</td><td>3,404</td><td>3,404 phase-1 rMAGs; 3,156 ready payload rows; 248 explicit gap rows</td><td>Qi et al. 2026; Figshare 10.6084/m9.figshare.30883646.v3</td><td>2,928/3,404 tri-view units in the current functional snapshot; 65 exact sediment sample metadata rows</td><td>Interim mangrove/mudflat molecular niche expansion and time/depth/habitat readiness design</td><td>Bacteria functional completion, depth-resolved MAG-to-sample assignment, abundance/read coverage, and flux/process validation</td></tr>
+<tr><td>Mangrove/Futian target</td><td>3,404</td><td>3,404 phase-1 rMAGs; 3,156 ready payload rows; 248 explicit gap rows</td><td>Qi et al. 2026; Figshare 10.6084/m9.figshare.30883646.v3</td><td>2,931/3,404 tri-view units in the current functional snapshot; 65 exact sediment sample metadata rows</td><td>Interim mangrove/mudflat molecular niche expansion and time/depth/habitat readiness design</td><td>Bacteria functional completion, depth-resolved MAG-to-sample assignment, abundance/read coverage, and flux/process validation</td></tr>
 <tr><td>Mangrove/MSM target</td><td>1,428</td><td>1,428 local MAG candidates; source paper reports 966 final MAGs</td><td>Pan et al. 2025; GigaDB 10.5524/102702; NCBI PRJNA1150796</td><td>1,427/1,428 tri-view units; 82 sediment sample rows; 71 exact BioSample rows</td><td>Target-domain molecular screening and sample-readiness prioritization</td><td>MAG-to-sample assignment and 966-vs-1428 denominator reconciliation before sample/site rollups</td></tr>
-<tr><td>MUCC v1 Old Woman Creek wetland reference</td><td>2,508</td><td>2,508 checksum-validated archive MAGs; 2,502 meet the paper-defined HQ/MQ screen; 7 lack direct source protein payload</td><td>Borton et al. 2026, 10.1128/msystems.00680-25; Zenodo 10.5281/zenodo.8194033</td><td>2,501/2,508 all-view units; ESM-2 plus multiwindow gLM2 plus a source-DRAM/expression scaffold</td><td>Wetland molecular-reference screening and source-aware candidate review; not canonical mechanism comparison</td><td>Canonical MethaNet curated mechanism annotations and exact sample/date/depth, abundance, environmental, and flux/process joins</td></tr></tbody>
+<tr><td>MUCC v1 Old Woman Creek wetland reference</td><td>2,508</td><td>2,508 checksum-validated archive MAGs; 2,502 meet the paper-defined HQ/MQ screen; 7 lack direct source protein payload</td><td>Borton et al. 2026, 10.1128/msystems.00680-25; Zenodo 10.5281/zenodo.8194033</td><td>2,501/2,508 data-complete source-scaffold tri-views; processed expression supports 1,948 MAGs across 133 source sample columns; 275 chamber-flux, 5,280 porewater, and 29,280 tower-flux rows are staged</td><td>Wetland molecular-reference screening and source-aware candidate review; not canonical mechanism comparison</td><td>Canonical MethaNet curated mechanism annotations and an authoritative sample/date/depth/environment/flux crosswalk: exact ecological validation joins remain 0/133; expression normalization units also remain unresolved</td></tr></tbody>
     </table>
     <p class="note">Denominator note: the POC crosswalk covers a broader 662-proteome context, while this report renders 625 MAG/bin-comparable POC units plus all registered mangrove and MUCC v1 wetland lane rows. The embedding map contains 7,710 registered ESM-2-bearing units. Pending, source-gap, mixed-resolution, or non-sample-linkable rows remain visible as readiness states rather than being treated as biological absence.</p>
   </section>
   <section class="section">
-    <h2>MBAG: Three Molecular Views, One Attestation Layer</h2>
-    <p>The MethaNet Bridge Attestation Graph is designed to turn molecular similarity into a reviewable evidence trail. A 2D embedding bridge can be a powerful discovery signal, but it is not a mechanism. MBAG therefore treats each candidate as a convergence test across three molecular views plus explicit guardrails.</p>
+    <h2>Three Molecular Views, Explicitly Stratified</h2>
+    <p>The MethaNet Bridge Attestation Graph organizes molecular similarity into a reviewable evidence trail. A 2D embedding bridge can be a useful discovery signal, but it is not a mechanism. Each view therefore carries its own protocol, eligible comparison set, and blocking gaps.</p>
     <div class="approach-grid">
       <div class="approach-card"><b>ESM-2 proteome geometry</b><span>Protein-language embeddings provide a high-dimensional hypothesis engine for MAG/proteome similarity. Bridge evidence is read from neighborhoods and graph links, not from a decorative UMAP alone.</span></div>
-      <div class="approach-card"><b>Functional annotations</b><span>Canonical rows use curated MCycDB, SCycDB, KOfam, dbCAN/CAZy, METABOLIC, MEROPS, and Bakta features. MUCC v1 rows are harmonized onto common screening axes from source DRAM/gene annotations and expression support, but remain explicitly non-equivalent to that canonical mechanism contract.</span></div>
-      <div class="approach-card"><b>gLM2 genomic context</b><span>Native-minus-shuffled context checks test whether gene-neighborhood architecture carries extra signal beyond a bag of annotated genes. This is a complementary context layer, not a replacement for curated functional evidence.</span></div>
+      <div class="approach-card"><b>Functional annotations</b><span>POC rows expose curated accepted/present mechanism features. MSM/Futian expose complete raw annotation outputs pending a common feature rebuild. MUCC exposes a source DRAM/gene/expression scaffold. Availability is not treated as equivalence.</span></div>
+      <div class="approach-card"><b>gLM2 genomic context</b><span>Native-versus-shuffled context is available for 7,717 units, but single-window and 10-window protocols produce different numerical regimes. Availability is global; metric comparison is protocol-stratified.</span></div>
       <div class="approach-card"><b>QC and provenance guardrails</b><span>CheckM2, GUNC, GTDB-Tk, annotation coverage, source labels, and missingness protect against attractive artifacts. Weak evidence remains visible instead of being silently dropped.</span></div>
     </div>
-    <p class="note">For partner communication, the useful output is a candidate card, a feature primitive, or a monitoring-priority hypothesis. The proprietary scoring details can remain internal; the report exposes the evidence pillars and claim boundaries needed for trust.</p>
+    <p class="note">The public report now exposes evidence availability, protocol class, numerator provenance, and allowed claim wording. A universal cross-lane mechanism score remains withheld until the common feature contract is rebuilt and validated.</p>
   </section>
   <section class="section">
-    <h2>Why Molecular Niche Space Is The Right Lens</h2>
-    <p>The core question is geometric and biological at the same time. Methane permanence risk is not driven by one marker in isolation; it emerges from molecular machinery, substrate access, redox and sulfur context, genome quality, ecological source, and eventually sample abundance and environmental conditions. Molecular niche space gives MethaNet a way to ask whether MAGs occupy similar biological neighborhoods before claiming anything about site-level methane behavior.</p>
-    <p>In this report, ESM-2 defines the latent neighborhood structure, functional annotations explain what those neighborhoods encode, and gLM2 tests whether local genomic organization adds contextual support. The right interpretation is not "this MAG emits methane"; it is "this MAG deserves review because multiple molecular views point to a methane-relevant niche hypothesis."</p>
-    <p>The bridge rationale is therefore intentionally conservative. A bridge MAG is not defined by where a dot falls on a 2D projection. It is a MAG/proteome unit whose high-dimensional ESM-2 neighborhood, nearest reference-domain similarity, functional mechanisms, gLM2 context, QC, taxonomy, and provenance jointly make it worth review. Diffusion coordinates are used as the primary navigation view because they are built from the same neighborhood graph used for evidence inspection. UMAP, t-SNE, and PCA are included as sensitivity views; PHATE is supported when available, but the report does not require it and does not treat any projection as proof.</p>
-    <p class="note">Scientific anchors: <a href='https://www.science.org/doi/10.1126/science.ade2574'>ESM-2 protein language model</a> <a href='https://www.nature.com/articles/s41598-025-05674-x'>medium-sized protein language models for transfer learning</a> <a href='https://www.nature.com/articles/s42003-022-03628-x'>dimension-reduction evaluation principles</a> <a href='https://www.math.pku.edu.cn/teachers/yaoy/Fall2011/Lafon06.pdf'>Diffusion maps</a> <a href='https://www.nature.com/articles/s41587-019-0336-3'>PHATE for biological manifolds</a> <a href='https://www.nature.com/articles/nmeth.2810'>similarity network fusion</a> <a href='https://www.nature.com/articles/s41416-024-02706-7'>graph ML for integrated multi-omics</a> <a href='https://umap-learn.readthedocs.io/'>UMAP documentation</a>. Recent dimensionality-reduction benchmarks reinforce the design choice: visual methods differ in local and global preservation, so the report exposes the high-dimensional kNN substrate and candidate evidence cards rather than letting a single projection carry the claim.</p>
+    <h2>ESM-2 Geometry: Useful Signal, Measured Limitations</h2>
+    <p>ESM-2 defines a high-dimensional proteome-neighborhood surface for 7,710 units. The current raw cosine space is strongly anisotropic: random-pair cosine has mean 0.9912 and median 0.9936; median similarity to the global centroid is 0.9969. Raw cross-domain kNN edges therefore occupy a highly saturated range (median 0.999486). Absolute cosine magnitude is not used as mechanism evidence.</p>
+    <p>The graph nevertheless contains a reproducible target-target pattern. In raw space there are 15,727 unique reciprocal mangrove↔wetland pairs, 1 rumen↔wetland pair, and 0 rumen↔mangrove pairs. After per-dimension z-scoring, 15,064 mangrove↔wetland reciprocal pairs remain, while both rumen transfer categories fall to zero. The defensible finding is target-domain neighborhood continuity—not source-independent rumen transfer.</p>
+    <p>Taxonomy explains an important fraction of that continuity. Among reciprocal mangrove↔wetland pairs with usable phylum labels, 60.7% are exact raw-name matches and 79.2% match after conservative synonym normalization. Because GTDB release metadata is recorded only for the POC lane, source and taxonomy-release effects are confounded. Harmonized taxonomy and phylogeny-aware source nulls are required before interpreting neighborhood enrichment as functional convergence.</p>
+    <p>Diffusion coordinates are the primary navigation view because they are built from the same neighborhood graph used for inspection. UMAP, t-SNE, and PCA remain sensitivity views; no projection is treated as proof.</p>
+    <p class="note">Scientific anchors: <a href='https://www.science.org/doi/10.1126/science.ade2574'>ESM-2 protein language model</a> · <a href='https://www.nature.com/articles/s41598-025-05674-x'>medium-sized protein language models for transfer learning</a> · <a href='https://www.nature.com/articles/s42003-022-03628-x'>dimension-reduction evaluation principles</a> · <a href='https://www.math.pku.edu.cn/teachers/yaoy/Fall2011/Lafon06.pdf'>Diffusion maps</a> · <a href='https://www.nature.com/articles/s41587-019-0336-3'>PHATE for biological manifolds</a> · <a href='https://www.nature.com/articles/nmeth.2810'>similarity network fusion</a> · <a href='https://www.nature.com/articles/s41416-024-02706-7'>graph ML for integrated multi-omics</a> · <a href='https://umap-learn.readthedocs.io/'>UMAP documentation</a> · <a href='https://journals.asm.org/doi/10.1128/msystems.00680-25'>Old Woman Creek wetland microbiome study</a> · <a href='https://doi.org/10.5281/zenodo.8194033'>MUCC v1 source dataset</a>. Recent dimensionality-reduction benchmarks reinforce the design choice: visual methods differ in local and global preservation, so the report exposes the high-dimensional kNN substrate and candidate evidence cards rather than letting a single projection carry the claim.</p>
   </section>
   <section class="section">
     <h2>Molecular Niche-Space Bridge Map</h2>
     <p>The bridge map is a navigation layer, not the final decision rule. It displays every embedding-bearing MAG/proteome unit in the release payload and overlays auditable high-dimensional evidence links from the original 1,280-dimensional ESM-2 space. Rows that lack embeddings, such as source-lane gap records, remain in the status tables instead of being forced onto the manifold.</p>
-    <p>Gold links connect selected case-study candidates to their nearest POC reference neighbor. Gray and teal links show cross-domain kNN evidence from the ESM-2 neighborhood graph. Points are colored by source ecosystem, point size follows the provisional internal MBAG review index, and dim points mark units that still lack functional evidence. The practical use is fast triage: click a case-study halo, inspect the nearest reference, then ask whether the functional, gLM2, QC, taxonomy, and provenance layers support or contradict the bridge hypothesis.</p>
+    <p>Gold links connect selected case-study candidates to their nearest POC reference neighbor. Gray and teal links show cross-domain kNN evidence from the ESM-2 neighborhood graph. Points are colored by source ecosystem; size indicates only whether a functional payload is present. The former score-based size encoding has been removed. Click a halo to inspect the row's evidence contract, gLM2 protocol, numerator provenance, QC, taxonomy, expression detection, and claim boundary.</p>
     <div class="toolbar" id="method-buttons"></div>
     <div class="legend"><span><i class="dot" style="background:var(--rumen)"></i>Rumen</span><span><i class="dot" style="background:var(--wetland)"></i>Wetland/MUCC</span><span><i class="dot" style="background:var(--mangrove)"></i>Mangrove expansion</span></div>
     <div class="grid2">
@@ -114,29 +132,41 @@
     <details class="fallback"><summary>Static fallback</summary><img src="assets/figures/fallback_01_molecular_niche_space.png" alt="Molecular niche-space fallback"></details>
   </section>
   <section class="section">
-    <h2>Candidate Signatures Turn Audit Tables Into Review Cards</h2>
-    <p>MBAG candidates should be inspected as signatures, not as a long spreadsheet. The TSV evidence remains in the artifact package for audit, but the report view emphasizes the evidence pillars a scientist, partner, or investor can reason about: bridge geometry, gLM2 context, methane machinery, sulfur context, carbon/substrate breadth, annotation coverage, and QC support.</p>
-    <p>The matrix shows candidate-level support. The radial evidence-pillar view includes POC rumen/wetland, registered mangrove, and MUCC v1 source-scaffold review cards. The shared axes are normalized within evidence class; a MUCC source-term score must not be compared as if it were a curated MCycDB/SCycDB/KOfam/dbCAN/METABOLIC mechanism score. These are review signals, not full-lane summaries and not final methane-risk scores.</p>
+    <h2>Candidate Cards As Evidence-Eligibility Objects</h2>
+    <p>The candidate layer now answers a narrower and more useful question: which evidence exists for each review hypothesis, and which comparisons are authorized? POC cards retain their historical internal bridge ordering. Mangrove cards are selected by ESM-2 neighborhood geometry and QC—not by the quarantined functional score. MUCC cards remain source-scaffold review objects with processed expression detection where present.</p>
+    <p>The matrix and wheel show evidence availability or contract eligibility: ESM-2, gLM2, functional payload, common mechanism contract, expression, QC, taxonomy, and sample context. A filled cell means the evidence is present or eligible; it does not mean the mechanism is strong, active, or causally linked to flux.</p>
     <div class="signature-stack">
       <div class="signature-panel">
-        <h3>MBAG candidate evidence matrix</h3>
-        <p class="chart-note">Rows are candidate cards and columns are evidence-class-normalized pillars. The source-colored strip separates rumen, wetland—including MUCC source-scaffold rows—and mangrove candidates.</p>
+        <h3>Candidate evidence-eligibility matrix</h3>
+        <p class="chart-note">Rows are review cards; columns are binary evidence availability or comparability gates. The source-colored strip separates POC, mangrove, and MUCC review objects.</p>
         <div id="signature-matrix" class="viz medium matrix"></div>
       </div>
       <div class="signature-panel">
-        <h3>Evidence pillar wheel</h3>
-        <p class="chart-note">Each ring is a selected candidate source group; longer arcs indicate stronger average support for that evidence pillar across the selected candidate cards.</p>
+        <h3>Evidence coverage wheel</h3>
+        <p class="chart-note">Each ring is a candidate group; longer arcs mean a larger share of selected cards has that evidence or eligibility state—not stronger biology.</p>
         <div id="candidate-circos" class="viz medium circos"></div>
       </div>
     </div>
     <details class="fallback"><summary>Static fallback</summary><img src="assets/figures/fallback_02_candidate_signature_matrix.png" alt="Candidate signature matrix fallback"></details>
   </section>
   <section class="section">
-    <h2>Mangrove Molecular Fingerprint Landscape</h2>
-    <p>Mangrove turns the report from a POC bridge story into a target-domain screening surface. This panel uses only mangrove MAGs with completed functional outputs. The axes are normalized by protein count, so the pattern reflects marker density rather than raw annotation volume: x is methane marker density per 1,000 proteins, y is sulfur-context density per 1,000 proteins, size is CAZy/MEROPS substrate breadth per 1,000 proteins, and color is nearest POC embedding similarity.</p>
-    <p>Commercially, this is the first layer of a monitoring-priority map: candidates with strong methane machinery, weak sulfur competition context, broad substrate capacity, and good QC are not "high-risk sites" yet, but they are the kind of molecular signal that should shape sampling, flux validation, and partner diligence.</p>
-    <div id="mangrove-scatter" class="viz"></div>
-    <details class="fallback"><summary>Static fallback</summary><img src="assets/figures/fallback_03_mangrove_fingerprints.png" alt="Mangrove molecular fingerprint fallback"></details>
+    <h2>Functional Metric Provenance And Quarantine</h2>
+    <p>The prior report labeled a lane-dependent row aggregate as “methane marker density per 1,000 proteins.” That label was valid only for the curated POC feature contract. In MSM/Futian, the numerator combined raw MCycDB hit rows with every METABOLIC HMM output row; many proteins can contribute multiple hit rows, so the ratio can exceed one without representing more than one marker gene per protein. MUCC uses a third source-term contract.</p>
+    <table class="readiness-table">
+      <thead><tr><th>Lane</th><th>Functional units</th><th>Numerator provenance</th><th>Median raw methane rows</th><th>Median proteins</th><th>Raw rows/protein &gt;1</th><th>Public status</th></tr></thead>
+      <tbody><tr><td>Futian mangrove</td><td>2,931</td><td>Raw many-to-many annotation-hit rows plus all HMM rows</td><td>3,757.0</td><td>2,431.0</td><td>94.2%</td><td>Quarantined: raw hit-row numerator is not a marker density</td></tr>
+<tr><td>MSM mangrove</td><td>1,427</td><td>Raw many-to-many annotation-hit rows plus all HMM rows</td><td>4,072.0</td><td>2,886.0</td><td>93.1%</td><td>Quarantined: raw hit-row numerator is not a marker density</td></tr>
+<tr><td>MUCC v1 wetland</td><td>2,508</td><td>Source DRAM term rows plus processed expression detection</td><td>18.0</td><td>2,568.0</td><td>0.0%</td><td>Source-scaffold term density; not cross-lane equivalent</td></tr>
+<tr><td>POC reference core</td><td>625</td><td>Curated accepted/present mechanism features</td><td>2.0</td><td>1,945.0</td><td>0.0%</td><td>Comparable curated-feature density within the POC contract</td></tr></tbody>
+    </table>
+    <p>The contaminated methane component correlated with the former combined index at Pearson r=0.605; 99.4% of the former top 500 were mangrove rows. This is sufficient to quarantine the universal ranking. Raw counts remain in the downloadable audit table under explicitly named provenance fields; public mechanism densities and cross-lane ranks are null outside the POC contract.</p>
+    <div class="warn"><b>Closure condition:</b> recompute methane, sulfur, and substrate features for every lane from one accepted/present event contract—preferably accepted KOfam calls plus present METABOLIC functions and/or the lane-independent marker_db_core—then validate denominator, duplicate-hit, missingness, and source-balance behavior before re-enabling a cross-lane score.</div>
+  </section>
+  <section class="section">
+    <h2>MUCC v1: Orthogonal Expression Evidence, Ecological Join Still Blocked</h2>
+    <p>The Old Woman Creek lane is strategically important because it adds a different evidence axis: processed metatranscriptome detection across 133 source sample columns. Expression support is present for 1,948 MAGs; 1,358 have at least one processed methane-associated expressed-gene row and 1,868 have sulfur-associated rows. These are detection/occupancy signals from the deposited processed tables; unresolved normalization units prevent activity-magnitude comparisons.</p>
+    <p>The warehouse also stages 275 chamber-flux rows (188 source-valid), 5,280 porewater rows (1,563 source-valid), and 29,280 half-hourly gap-filled tower rows. It includes 694 exploratory FlashWeave associations, of which 126 pass the current stability filter, plus 3 non-grey descriptive WGCNA modules.</p>
+    <p>The decisive limitation is linkage: 0/133 sequencing samples currently have an authoritative exact sample-depth-environment-flux join, and all 133 remain blocked for ecological validation. Flux records are therefore staged validation context—not evidence that a given MAG, expression signature, or network edge caused measured methane flux.</p>
   </section>
   <section class="section">
     <h2>Sample-Linkage Readiness: Where MAG Signals Can Start Rolling Up</h2>
@@ -146,12 +176,12 @@
   </section>
   <section class="section">
     <h2>From MAG Fingerprints To Environmental Methane-Risk Scoring</h2>
-    <p>The atlas becomes commercially transformative when MAG/proteome fingerprints can be rolled up to physical samples, metagenomes, sites, and monitoring periods. The current report is deliberately MAG-level: it says which genomes encode methane-relevant potential, sulfur competition context, substrate-processing capacity, QC confidence, and bridge-neighborhood evidence. Environmental methane-risk scoring begins only when those molecular fingerprints are weighted by abundance, connected to sample provenance, and interpreted alongside measured or carefully tiered environmental covariates.</p>
+    <p>The atlas becomes operationally stronger when validated MAG/proteome features can be rolled up to physical samples, metagenomes, sites, and monitoring periods. Today, only the POC lane has mechanism-comparable methane/sulfur/substrate feature primitives. MSM/Futian have completed annotations awaiting a common feature rebuild, while MUCC contributes source-scaffold and expression-detection evidence. Environmental methane-risk scoring begins only after comparable molecular features are weighted by abundance, connected to exact sample provenance, and interpreted alongside measured or carefully tiered environmental covariates.</p>
     
         <img class="sample-risk-abstract" src="assets/figures/figure_04_mag_to_sample_risk_readiness_graphical_abstract.png" alt="Graphical abstract showing MethaNet MAG/proteome molecular fingerprints flowing through sample linkage, abundance weighting, environmental covariates, uncertainty, and validation gates into sample risk readiness labels before any final MRV risk score.">
         <p class="figure-caption">Graphical abstract. MethaNet's current evidence layer operates at MAG/proteome grain: ESM-2 and gLM2 context, methane/sulfur/substrate annotations, QC, taxonomy, and provenance define molecular fingerprints for bridge-candidate review. The next product layer links those fingerprints to physical samples or metagenomes, weights them by MAG/read abundance and unbinned marker evidence, adds environmental permissiveness covariates, uncertainty, and flux/process validation status, then emits sample risk readiness labels such as not_scoreable, needs_metadata, needs_abundance, needs_environment, needs_flux_validation, monitor_more, or scoreable_provisional when evidence is sufficient. This is an evidence-to-readiness workflow for monitoring and validation design, not a final MRV risk score, measured methane-flux result, A-E risk tier, or carbon-credit approval.</p>
         
-    <p>A defensible sample score should therefore combine four layers. First, the molecular layer estimates methane machinery, sulfur competition, substrate breadth, genomic context, and annotation confidence across all MAGs and unbinned marker evidence in the sample. Second, the community layer weights those signals by read coverage, relative or absolute abundance, pathway redundancy, and the fraction of community signal left unassembled or unbinned. Third, the environmental layer captures whether local conditions make methane expression plausible: salinity, sulfate, redox or oxygen proxies, pH, temperature, organic carbon quantity and quality, sediment depth, vegetation, tidal/hydrologic regime, season, and restoration status. Fourth, the validation layer anchors the score against chamber fluxes, dissolved methane, porewater chemistry, incubation assays, or repeated field observations.</p>
+    <p>A defensible sample score should therefore combine four gated layers. First, the molecular layer uses one common, validated mechanism-feature contract across MAGs and unbinned marker evidence. Second, the community layer weights those features by read coverage, relative or absolute abundance, pathway redundancy, and unassembled/unbinned signal. Third, the environmental layer captures permissiveness—salinity, sulfate, redox or oxygen proxies, pH, temperature, organic carbon, depth, vegetation, hydrology, season, and management. Fourth, the validation layer anchors predictions against chamber fluxes, dissolved methane, porewater chemistry, incubations, or repeated field observations with explicit temporal and spatial joins.</p>
     <div class="sample-score-grid">
       <div class="sample-score-card"><h3>1. Link molecules to samples</h3><p>Resolve MAG-to-sample and MAG-to-site provenance, keep resolution tiers, and preserve unlinked MAGs as not scoreable rather than forcing a risk estimate.</p></div>
       <div class="sample-score-card"><h3>2. Weight by community abundance</h3><p>Turn genome potential into sample capacity using MAG coverage, marker abundance, unbinned functional reads, and uncertainty from incomplete assembly.</p></div>
@@ -162,10 +192,10 @@
     <p>The immediate product interpretation is a sample risk readiness layer, not a final A-E risk tier. A sample can be labeled scoreable, monitor more, needs metadata, needs abundance, needs environmental covariates, or needs flux validation. That language is honest, useful for partners, and strategically powerful: it converts MethaNet's current molecular evidence into a concrete sampling and diligence plan while building the evidence base needed for future calibrated methane-risk scoring.</p>
   </section>
   <section class="section">
-    <h2>Strategic Readout: From Molecular Attestation To MRV Product Readiness</h2>
-    <p class="closing">Bottom line: MBAG is no longer just a visualization or a warehouse snapshot; it is a defensible evidence product. The expanded atlas turns thousands of MAG/proteome artifacts into a queryable evidence surface where bridge-neighborhood structure, methane/sulfur/substrate annotations, genomic-context perturbation, QC, taxonomy, and provenance can be inspected together. That is already valuable for partner proof, candidate prioritization, monitoring design, and future dashboard/API feature delivery.</p>
-    <p class="closing">Now, MethaNet can show that molecular bridge candidates are not selected from embedding geometry alone; they are audited against independent functional machinery, genome context, quality controls, taxonomy, and provenance readiness. Next, those MAG/proteome signatures must be converted into sample-linked, abundance-aware, uncertainty-aware MRV feature primitives. Not yet: no final risk tiers, no measured methane flux, and no carbon-crediting conclusion should be inferred from this artifact.</p>
-    <p class="closing">The strategic implication is clear and bounded. MethaNet is building an upstream molecular attestation layer for blue-carbon methane diligence: a system that can flag where permanence risk deserves attention, explain why a candidate is plausible or weak, and preserve the evidence chain for technical review. This is what makes the platform different from a generic data wrapper: the output is an auditable molecular decision object with an explicit path to validation. The stronger MRV claim comes only after MAG-to-sample links, abundance/read coverage, environmental covariates, phylogeny/source controls, uncertainty propagation, and validation against flux or process measurements are in place.</p>
+    <h2>Strategic Readout: A Stronger Asset Because The Boundaries Are Enforced</h2>
+    <p class="closing">The durable achievement is a queryable, provenance-rich warehouse spanning 7,965 registered units and multiple independent evidence lanes. It can already support payload auditing, latent-neighborhood exploration, protocol-aware candidate review, expression-detection queries, metadata-gap prioritization, and validation-study design. Those capabilities survive this reconciliation.</p>
+    <p class="closing">What changed is the level of authorized inference. MethaNet cannot yet claim one fully harmonized mechanism space across all 7,484 data-complete tri-views. It can claim a 625-unit mechanism-comparable POC core, a 4,358-unit annotation-complete expansion awaiting common feature aggregation, and a 2,501-unit MUCC source scaffold with substantial processed expression evidence. Keeping those states separate makes future improvements measurable and protects downstream partner decisions from pipeline artifacts.</p>
+    <p class="closing">The highest-value next build is now unambiguous: produce one lane-independent mechanism-feature table; harmonize taxonomy and phylogeny-aware nulls; standardize or explicitly calibrate gLM2 protocols; map comparable MAG features and expression to exact samples and abundance; and validate against field/process observations with uncertainty. Once those gates pass, MethaNet can responsibly reintroduce cross-lane mechanism ranking and begin calibrated sample-risk modeling.</p>
     <div class="warn">Forbidden claims remain locked: no final A-E risk tiers, no measured methane flux, no carbon-credit approval, and no source-independent rumen-to-wetland/mangrove transfer claims from this artifact alone.</div>
   </section>
 </main>
@@ -176,7 +206,7 @@
     const ATLAS = window.METHANET_ATLAS;
     const COLORS = {rumen:'#c56a13', wetland:'#0284a8', mangrove:'#168a48', context:'#94a3b8', pending:'#d89b14'};
     const fmt = v => Number.isFinite(Number(v)) ? Number(v).toLocaleString() : String(v);
-    const panelIds = ['niche-map','signature-matrix','candidate-circos','mangrove-scatter','sample-linkage'];
+    const panelIds = ['niche-map','signature-matrix','candidate-circos','evidence-contract-chart','sample-linkage'];
     function renderFailure(err){
       console.error(err);
       panelIds.forEach(id => {
@@ -227,9 +257,12 @@
       Lane: ${clean(d.source_display || d.source_category)} · Status: ${clean(d.plot_annotation_status || d.review_tier || d.atlas_inclusion_status)}<br>
       Scope: ${clean(d.analysis_unit_type,'MAG/proteome unit')} · ${clean(d.claim_scope,'MAG/proteome molecular screening')}<br>
       Taxonomy: ${taxonomyText(d)}<br>
-      Evidence: methane ${fmt(Number(d.methane_marker_count || d.methane_evidence_score || 0))}; sulfur ${fmt(Number(d.sulfur_context_count || d.sulfur_competition_score || 0))}; substrate ${fmt(Number(d.substrate_breadth_count || 0))}<br>
+      Functional contract: ${clean(d.functional_comparability_tier)}<br>
+      Numerator provenance: ${clean(d.functional_numerator_provenance)}<br>
+      gLM2 protocol: ${clean(d.glm2_protocol_class)}<br>
       Nearest POC reference: ${clean(d.nearest_poc_id,'not applicable')}<br>
-      Densities: CH4 ${densityText(d,'methane_marker_density_per_1k')}; sulfur ${densityText(d,'sulfur_context_density_per_1k')}<br>
+      Public mechanism score: ${clean(d.public_attestation_score_status)}<br>
+      Expression detection: methane ${fmt(Number(d.methane_expressed_gene_rows || 0))} rows; sulfur ${fmt(Number(d.sulfur_expressed_gene_rows || 0))} rows<br>
       QC: ${qcText(d)}<br>
       Provenance: ${provenanceText(d)}<br>
       Sample context: ${sampleContextText(d)}`;
@@ -244,14 +277,14 @@
         <p class='muted'>${clean(d.source_display || d.source_category)} · ${clean(d.plot_annotation_status || d.review_tier)}<br>${taxonomyText(d)}</p>
         <p>Bridge affinity: ${fixed(d.bridge_affinity_index || d.nearest_poc_similarity,3)}<br>
         Nearest POC reference: ${clean(d.nearest_poc_id,'not applicable')}<br>
-        Methane evidence score: ${fmt(Number(d.methane_marker_count || d.methane_evidence_score || 0))}<br>
-        Sulfur context score: ${fmt(Number(d.sulfur_context_count || d.sulfur_competition_score || 0))}<br>
-        Substrate breadth: ${fmt(Number(d.substrate_breadth_count || 0))} harmonized signals<br>
-        Functional evidence: ${clean(d.functional_evidence_class)} · ${clean(d.mechanism_equivalence_status)}<br>
+        Functional evidence: ${clean(d.functional_comparability_tier)} · ${clean(d.mechanism_equivalence_status)}<br>
+        Numerator provenance: ${clean(d.functional_numerator_provenance)}<br>
         Rate status: ${clean(d.rate_metric_status)}<br>
+        gLM2: ${clean(d.glm2_protocol_class)} · ${clean(d.glm2_metric_comparability_status)}<br>
         ${d.mechanism_equivalence_status==='mechanism_equivalent'
-          ? `Provisional internal MBAG review index: ${fixed(d.molecular_attestation_index,3)}`
-          : `Source-scaffold review index: ${fixed(d.source_scaffold_review_score,3)} (not mechanism-equivalent)`}</p>
+          ? `POC-internal review index: ${fixed(d.molecular_attestation_index,3)}`
+          : `Cross-lane mechanism score: withheld (${clean(d.public_attestation_score_status)})`}</p>
+        <p>Processed expression detection: methane ${fmt(Number(d.methane_expressed_gene_rows || 0))} rows · sulfur ${fmt(Number(d.sulfur_expressed_gene_rows || 0))} rows.<br><span class='muted'>Detection/occupancy support only; not normalized activity or flux.</span></p>
         <p>QC: ${fixed(d.checkm2_completeness,1)}% complete / ${fixed(d.checkm2_contamination,2)}% contamination · ${clean(d.qc_tier,'QC tier not available')}</p>
         <p>Provenance: ${clean(d.provenance_resolution_tier)} · ${clean(d.primary_accession || d.source_bucket)}<br><span class='muted'>${clean(d.metadata_caveat,'No extra metadata caveat recorded.')}</span></p>
         <p>Allowed claim: ${d.allowed_claim_wording || 'MAG/proteome-level molecular screening only.'}</p>
@@ -291,10 +324,10 @@
       svg.append('g').selectAll('circle.case-halo').data(caseNodes).join('circle')
         .attr('class','case-halo')
         .attr('cx',d=>x(+d[`${method}_1`])).attr('cy',d=>y(+d[`${method}_2`]))
-        .attr('r',d=>8+6*Number(d.molecular_attestation_index||0)).attr('fill','none').attr('stroke','#d89b14').attr('stroke-width',1.5).attr('opacity',.82);
+        .attr('r',9).attr('fill','none').attr('stroke','#d89b14').attr('stroke-width',1.5).attr('opacity',.82);
       svg.append('g').selectAll('circle').data(plotted).join('circle')
         .attr('cx',d=>x(+d[`${method}_1`])).attr('cy',d=>y(+d[`${method}_2`]))
-        .attr('r',d=>d.has_functional ? 3.2 + 7*Number(d.molecular_attestation_index||0) : 2.4)
+        .attr('r',d=>d.has_functional ? 3.8 : 2.4)
         .attr('fill',d=>COLORS[d.source_category] || COLORS.context).attr('stroke',d=>d.is_case_study?'#fff7ed':'white').attr('stroke-width',d=>d.is_case_study?1.2:.45).attr('opacity',d=>d.has_functional?.78:.28).style('cursor','pointer')
         .on('mouseover',(e,d)=>tip.style('opacity',1).html(tipText(d))).on('mousemove',e=>tip.style('left',`${e.pageX+12}px`).style('top',`${e.pageY+12}px`)).on('mouseout',()=>tip.style('opacity',0)).on('click',(e,d)=>updateCard(d.proteome_id));
       const labelNodes=caseNodes.filter(d=>Number(d.case_study_rank||999)<=8);
@@ -315,24 +348,38 @@
       const svg=el.append('svg').attr('viewBox',[0,0,w,h]).attr('width',w).attr('height',h);
       const x=d3.scaleBand().domain(metrics).range([m.l,w-m.r]).padding(.08), y=d3.scaleBand().domain(rows).range([m.t,h-m.b]).padding(.08);
       const c=d3.scaleSequential(d3.interpolateYlGnBu).domain([0,1]), rowMeta=new Map(rec.map(d=>[d.label,d]));
-      svg.append('text').attr('x',m.l).attr('y',24).attr('font-size',13).attr('fill','#64748b').text('Rows are review cards; columns are normalized evidence pillars. Click a cell to inspect the candidate.');
+      svg.append('text').attr('x',m.l).attr('y',24).attr('font-size',13).attr('fill','#64748b').text('Rows are review cards; columns show evidence availability or contract eligibility—not biological strength. Click a cell to inspect.');
       svg.append('g').selectAll('rect.row').data(rows).join('rect').attr('class','row').attr('x',m.l-10).attr('y',d=>y(d)).attr('width',w-m.l-m.r+10).attr('height',y.bandwidth()).attr('fill',(d,i)=>i%2?'#f8fafc':'#ffffff');
       svg.selectAll('rect.cell').data(rec).join('rect').attr('class','cell').attr('x',d=>x(d.metric)).attr('y',d=>y(d.label)).attr('width',x.bandwidth()).attr('height',y.bandwidth()).attr('rx',4).attr('fill',d=>c(d.value)).attr('stroke','white').attr('stroke-width',1.6).style('cursor','pointer').on('click',(e,d)=>updateCard(d.proteome_id)).append('title').text(d=>`${d.label}\n${d.metric_label}: ${d.value.toFixed(2)}\n${d.metric_source || ''}`);
       svg.append('g').selectAll('rect.strip').data(rows).join('rect').attr('class','strip').attr('x',m.l-24).attr('y',d=>y(d)).attr('width',9).attr('height',y.bandwidth()).attr('rx',4).attr('fill',d=>COLORS[(rowMeta.get(d)||{}).source_category] || '#64748b');
       svg.append('g').attr('transform',`translate(0,${m.t-12})`).call(d3.axisTop(x).tickFormat(d=>((metricDefs.find(m=>m.id===d)||{}).label)||d)).call(g=>g.select('.domain').remove()).selectAll('text').attr('font-weight',700).attr('font-size',13).attr('fill','#172033');
       svg.append('g').attr('transform',`translate(${m.l-30},0)`).call(d3.axisLeft(y)).call(g=>g.select('.domain').remove()).call(g=>g.selectAll('.tick line').remove()).selectAll('text').attr('font-size',12).attr('fill',d=>COLORS[(rowMeta.get(d)||{}).source_category] || '#334155');
     }
-    function renderMangrove(){
-      const data=ATLAS.mangrove || [], el=d3.select('#mangrove-scatter'), w=panelWidth(el,820), h=520, m={t:22,r:30,b:58,l:72}, tip=tooltip();
+    function renderEvidenceContract(){
+      const data=ATLAS.evidence_contract || [], el=d3.select('#evidence-contract-chart'), w=panelWidth(el,900), h=520, m={t:72,r:60,b:72,l:230};
       el.selectAll('*').remove();
-      if(!data.length){ el.append('div').attr('class','runtime-error').html('No completed mangrove functional rows are available for this panel.'); return; }
-      const svg=el.append('svg').attr('viewBox',[0,0,w,h]); const x=d3.scaleLinear().domain(d3.extent(data,d=>Math.log1p(d.methane_marker_density_per_1k||0))).nice().range([m.l,w-m.r]);
-      const y=d3.scaleLinear().domain(d3.extent(data,d=>Math.log1p(d.sulfur_context_density_per_1k||0))).nice().range([h-m.b,m.t]);
-      const r=d3.scaleSqrt().domain(d3.extent(data,d=>d.substrate_breadth_per_1k||0)).range([3,16]); const col=d3.scaleSequential(d3.interpolateYlGnBu).domain(d3.extent(data,d=>d.nearest_poc_similarity||0));
-      svg.append('g').attr('transform',`translate(0,${h-m.b})`).call(d3.axisBottom(x)); svg.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(y));
-      svg.append('text').attr('x',w/2).attr('y',h-12).attr('text-anchor','middle').text('methane marker density per 1k proteins, log1p');
-      svg.append('text').attr('transform','rotate(-90)').attr('x',-h/2).attr('y',20).attr('text-anchor','middle').text('sulfur context density per 1k proteins, log1p');
-      svg.selectAll('circle').data(data).join('circle').attr('cx',d=>x(Math.log1p(d.methane_marker_density_per_1k||0))).attr('cy',d=>y(Math.log1p(d.sulfur_context_density_per_1k||0))).attr('r',d=>r(d.substrate_breadth_per_1k||0)).attr('fill',d=>col(d.nearest_poc_similarity||0)).attr('stroke','white').attr('stroke-width',.6).attr('opacity',.77).style('cursor','pointer').on('mouseover',(e,d)=>tip.style('opacity',1).html(tipText({...d,label:d.proteome_id,source_display:d.source_display||'Mangrove expansion'}))).on('mousemove',e=>tip.style('left',`${e.pageX+12}px`).style('top',`${e.pageY+12}px`)).on('mouseout',()=>tip.style('opacity',0)).on('click',(e,d)=>updateCard(d.proteome_id));
+      if(!data.length){ el.append('div').attr('class','runtime-error').html('Evidence-contract summary is unavailable.'); return; }
+      const svg=el.append('svg').attr('viewBox',[0,0,w,h]);
+      const series=[
+        {key:'registered_units',label:'Registered',color:'#cbd5e1'},
+        {key:'data_complete_tri_view_units',label:'Data-complete tri-view',color:'#0284a8'},
+        {key:'mechanism_comparable_tri_view_units',label:'Mechanism-comparable',color:'#d89b14'}
+      ];
+      const y0=d3.scaleBand().domain(data.map(d=>d.lane)).range([m.t,h-m.b]).padding(.24);
+      const y1=d3.scaleBand().domain(series.map(d=>d.key)).range([0,y0.bandwidth()]).padding(.12);
+      const x=d3.scaleLinear().domain([0,d3.max(data,d=>d.registered_units)||1]).nice().range([m.l,w-m.r]);
+      svg.append('text').attr('x',m.l).attr('y',24).attr('font-weight',800).attr('font-size',14).text('Registered, data-complete, and mechanism-comparable units by lane');
+      svg.append('text').attr('x',m.l).attr('y',44).attr('font-size',12).attr('fill','#64748b').text('Data-complete = ESM-2 + gLM2 + functional payload. Only the POC lane currently meets the common mechanism-feature contract.');
+      svg.append('g').attr('transform',`translate(0,${h-m.b})`).call(d3.axisBottom(x).ticks(6));
+      svg.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(y0)).call(g=>g.select('.domain').remove());
+      const rows=svg.append('g').selectAll('g').data(data).join('g').attr('transform',d=>`translate(0,${y0(d.lane)})`);
+      rows.selectAll('rect').data(d=>series.map(s=>({...s,row:d,value:Number(d[s.key]||0)}))).join('rect')
+        .attr('x',m.l).attr('y',d=>y1(d.key)).attr('width',d=>Math.max(0,x(d.value)-m.l)).attr('height',y1.bandwidth()).attr('rx',4)
+        .attr('fill',d=>d.color).attr('stroke','#475569').attr('stroke-width',.45);
+      rows.selectAll('text.value').data(d=>series.map(s=>({...s,row:d,value:Number(d[s.key]||0)}))).join('text').attr('class','value')
+        .attr('x',d=>x(d.value)+5).attr('y',d=>y1(d.key)+y1.bandwidth()/2+4).attr('font-size',10).attr('fill','#334155').text(d=>fmt(d.value));
+      const legend=svg.append('g').attr('transform',`translate(${m.l},${h-42})`);
+      legend.selectAll('g').data(series).join('g').attr('transform',(d,i)=>`translate(${i*210},0)`).each(function(d){const r=d3.select(this);r.append('rect').attr('width',12).attr('height',12).attr('rx',3).attr('fill',d.color).attr('stroke','#475569').attr('stroke-width',.4);r.append('text').attr('x',18).attr('y',10).attr('font-size',11).text(d.label);});
     }
     function renderSampleLinkage(){
       const payload=ATLAS.sample_linkage || {}, contexts=payload.contexts || [];
@@ -360,7 +407,7 @@
         .attr('class','context-triview').attr('x',m.l).attr('y',d=>y(d.sample_context_label || d.sample_context_key)+y.bandwidth()*.18)
         .attr('width',d=>Math.max(1,x(d.tri_view_units||0)-m.l)).attr('height',y.bandwidth()*.64).attr('rx',5)
         .attr('fill',d=>color(d.sample_linkage_bucket)).attr('opacity',.86)
-        .on('mouseover',(e,d)=>tip.style('opacity',1).html(`${clean(d.sample_context_label || d.sample_context_key)}<br>Units: ${fmt(d.units||0)} · tri-view: ${fmt(d.tri_view_units||0)}<br>Context: ${clean(d.sample_context_resolution)}<br>Mean MBAG review index: ${fixed(d.average_molecular_attestation,3)}<br>CH4: ${fixed(d.average_methane_signal,2)} · sulfur: ${fixed(d.average_sulfur_context,2)} · carbon: ${fixed(d.average_substrate_breadth,2)}<br>Sample contexts: ${fmt(d.linked_sample_context_count||0)} · env fields: ${fmt(d.environmental_context_fields_present||0)}<br>${clean(d.sample_context_blocking_gap)}`))
+        .on('mouseover',(e,d)=>tip.style('opacity',1).html(`${clean(d.sample_context_label || d.sample_context_key)}<br>Units: ${fmt(d.units||0)} · data-complete tri-view: ${fmt(d.tri_view_units||0)}<br>Context: ${clean(d.sample_context_resolution)}<br>Sample contexts: ${fmt(d.linked_sample_context_count||0)} · environmental fields: ${fmt(d.environmental_context_fields_present||0)}<br>${clean(d.sample_context_blocking_gap)}<br><b>No sample methane-risk score is computed.</b>`))
         .on('mousemove',e=>tip.style('left',`${e.pageX+12}px`).style('top',`${e.pageY+12}px`)).on('mouseout',()=>tip.style('opacity',0));
       svg.append('text').attr('x',m.l).attr('y',h-28).attr('font-size',12).attr('fill','#64748b')
         .text('Use: prioritize metadata reconciliation, abundance mapping, and field validation contexts; do not infer sample methane flux or final MRV score.');
@@ -385,7 +432,7 @@
       g.selectAll('path.bar').data(records).join('path').attr('class','bar')
         .attr('d',d=>{const gi=groups.findIndex(g=>g.id===d.group); const base=inner+gi*ringStep+6; const maxLen=ringStep-16; return arc({innerRadius:base, outerRadius:base+4+Math.max(1,maxLen*d.average_value), startAngle:angle(d.pillar), endAngle:angle(d.pillar)+angle.bandwidth()});})
         .attr('fill',d=>groupColor.get(d.group) || '#64748b').attr('opacity',d=>0.36+0.58*Math.max(d.high_share,d.average_value)).attr('stroke','white').attr('stroke-width',.8)
-        .append('title').text(d=>`${d.group_label} · ${d.pillar_label}\nAverage support: ${d.average_value.toFixed(2)}\nHigh-support candidates: ${d.high_count}/${d.candidate_count}\nEvidence source: ${d.source}`);
+        .append('title').text(d=>`${d.group_label} · ${d.pillar_label}\nAvailability share: ${d.average_value.toFixed(2)}\nAvailable/eligible cards: ${d.high_count}/${d.candidate_count}\nEvidence source: ${d.source}`);
       g.selectAll('text.pillar').data(pillars).join('text').attr('class','pillar').attr('font-size',11).attr('font-weight',700).attr('fill','#334155')
         .attr('x',d=>{const a=angle(d.id)+angle.bandwidth()/2-Math.PI/2; return Math.cos(a)*labelR;})
         .attr('y',d=>{const a=angle(d.id)+angle.bandwidth()/2-Math.PI/2; return Math.sin(a)*labelR+4;})
@@ -393,18 +440,18 @@
         .text(d=>d.short);
       g.append('circle').attr('r',inner-22).attr('fill','#f8fafc').attr('stroke','#dbe5ee');
       g.append('text').attr('text-anchor','middle').attr('y',-8).attr('font-weight',800).attr('font-size',16).text('MBAG');
-      g.append('text').attr('text-anchor','middle').attr('y',14).attr('font-size',11).attr('fill','#64748b').text('candidate pillars');
+      g.append('text').attr('text-anchor','middle').attr('y',14).attr('font-size',11).attr('fill','#64748b').text('evidence coverage');
       const legend=svg.append('g').attr('transform',`translate(${Math.max(24,cx-310)},22)`);
       groups.forEach((grp,i)=>{const count=records.find(r=>r.group===grp.id)?.candidate_count || 0; const row=legend.append('g').attr('transform',`translate(${i*205},0)`); row.append('rect').attr('width',12).attr('height',12).attr('rx',3).attr('fill',grp.color); row.append('text').attr('x',18).attr('y',10).attr('font-size',12).attr('fill','#334155').text(`${grp.label} cards n=${count}`);});
       const footer=svg.append('text').attr('x',cx).attr('y',h-48).attr('text-anchor','middle').attr('font-size',12).attr('fill','#64748b');
-      footer.append('tspan').attr('x',cx).text('Ring length shows average support across selected candidate cards.');
-      footer.append('tspan').attr('x',cx).attr('dy','1.35em').text('Opacity increases when more cards clear the support threshold; wetland is single-card in this render.');
+      footer.append('tspan').attr('x',cx).text('Ring length shows evidence availability or contract eligibility across selected cards.');
+      footer.append('tspan').attr('x',cx).attr('dy','1.35em').text('This is a completeness audit, not a comparison of biological mechanism strength.');
     }
     function startReport(){
       requireAtlas();
       renderMethodButtons();
       renderMatrix();
-      renderMangrove();
+      renderEvidenceContract();
       renderCircos();
       renderSampleLinkage();
       updateCard((ATLAS.cards[0]||{}).proteome_id);
