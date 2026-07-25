@@ -19,6 +19,22 @@ here traces back to the repo artifacts cited in each row. Read this before editi
   `results/functional_metagenomics/mucc_v1_owc_wetland_20260626/reports/atlas_lane_registry_summary.md`,
   `results/functional_metagenomics/mucc_v1_owc_wetland_20260626/reports/mucc_v1_integration_completion_audit.json`.
 
+### Public terminology contract
+
+- **MBAG** means MethaNet Bridge Attestation Graph. It is the knowledge graph
+  that connects each molecular evidence unit to representations, mechanisms,
+  provenance, quality gates, claim scope, and validation actions.
+- **MAG** means metagenome-assembled genome.
+- **ESM-2** names the protein-language-model view. **gLM2** names the
+  genome-context language-model view.
+- **Tri-view** means ESM-2, gLM2, and a functional payload are present.
+  Mechanism comparability remains a separate evidence state.
+- **MRV** means monitoring, reporting, and verification. Calibrated MRV remains
+  downstream of sample linkage, abundance, environment, uncertainty, and
+  field or process validation.
+- **MUCC v1** identifies the Old Woman Creek wetland source warehouse.
+  **VM0033** identifies Verra's tidal-wetland and seagrass methodology context.
+
 ---
 
 ## 1. Headline numbers (verified) — and corrections to the spec's expected values

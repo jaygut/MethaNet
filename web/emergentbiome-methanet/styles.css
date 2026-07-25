@@ -166,6 +166,10 @@ main { position: relative; z-index: 1; }
 .hero__def b { color: var(--text-primary); font-weight: 500; }
 .hero__def .plat { color: var(--emergence); }
 .hero__def .app { color: var(--methane-a); }
+@media (max-width: 560px) {
+  .hero__defs { margin-top: 22px; gap: 8px; }
+  .hero__def { width: 100%; max-width: 390px; font-size: 0.61rem; }
+}
 
 /* ---------- CLOSING / ASK ---------- */
 .closing { position: relative; padding: clamp(60px, 12vh, 140px) clamp(20px, 6vw, 80px) calc(var(--footer-h) + 60px); border-top: 1px solid var(--hairline); background: radial-gradient(120% 90% at 50% 0%, rgba(18, 26, 34, 0.6), var(--bg-base)); }
@@ -184,6 +188,24 @@ main { position: relative; z-index: 1; }
 .factsheet__k { color: var(--text-muted); font-size: 0.86rem; }
 .factsheet__v { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-primary); font-size: 0.92rem; text-align: right; }
 .factsheet__v .in-progress { color: var(--methane-a); }
+.terminology { max-width: 1080px; margin: clamp(42px, 7vw, 72px) auto 0; }
+.terminology__intro { display: grid; grid-template-columns: minmax(210px, 0.65fr) minmax(0, 1.35fr); column-gap: clamp(24px, 5vw, 64px); align-items: end; margin-bottom: 20px; }
+.terminology__intro .smallcaps { grid-column: 1; color: var(--emergence); margin-bottom: 7px; }
+.terminology__intro h3 { grid-column: 1; font-family: var(--font-display); font-size: clamp(1.35rem, 2.6vw, 1.85rem); line-height: 1.12; }
+.terminology__intro p { grid-column: 2; grid-row: 1 / span 2; color: var(--text-muted); max-width: 650px; line-height: 1.55; }
+.terminology__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--hairline); border-radius: 4px; overflow: hidden; background: var(--hairline); gap: 1px; }
+.terminology__item { min-width: 0; padding: 18px 20px; background: rgba(12, 18, 24, 0.94); }
+.terminology__item dt { display: flex; align-items: baseline; gap: 10px; min-width: 0; margin-bottom: 7px; }
+.terminology__term { flex: none; color: var(--attested); font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; }
+.terminology__full { min-width: 0; color: var(--text-primary); font-family: var(--font-display); font-weight: 600; overflow-wrap: anywhere; }
+.terminology__item dd { color: var(--text-muted); font-size: 0.86rem; line-height: 1.5; overflow-wrap: anywhere; }
+@media (max-width: 720px) {
+  .terminology__intro { grid-template-columns: 1fr; }
+  .terminology__intro .smallcaps, .terminology__intro h3, .terminology__intro p { grid-column: 1; grid-row: auto; }
+  .terminology__intro p { margin-top: 12px; }
+  .terminology__grid { grid-template-columns: 1fr; }
+  .terminology__item dt { align-items: flex-start; flex-direction: column; gap: 2px; }
+}
 .contact { margin-top: 26px; text-align: center; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.72rem; }
 .contact a { color: var(--emergence); text-decoration: none; }
 .contact a:hover { text-decoration: underline; }

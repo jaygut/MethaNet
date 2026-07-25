@@ -84,6 +84,7 @@
         <div class="hero__eyebrow smallcaps" id="heroEyebrow" style="color:var(--emergence)"></div>
         <h1 class="hero__title"><span class="plat">EmergentBiome</span> <span class="sep" style="color:var(--text-muted);font-weight:400">/</span> <span class="app">MethaNet</span></h1>
         <p class="hero__sub" id="heroSub"></p>
+        <div class="hero__defs" id="heroDefs" aria-label="Key terms"></div>
       </div>
       <div class="scrollhint">
         <span>Scroll</span>
@@ -132,7 +133,7 @@
     <section class="closing" id="scene-ask">
       <div class="closing__grid">
         <div>
-          <h2 class="ask__title">From molecular map to <span class="accent">calibrated methane MRV</span>.</h2>
+          <h2 class="ask__title">From molecular map to <span class="accent">calibrated methane risk</span>.</h2>
           <p class="ask__body" id="askBody"></p>
           <ul class="ask__points" id="askPoints"></ul>
         </div>
@@ -141,6 +142,14 @@
           <div id="factsheet"></div>
         </aside>
       </div>
+      <section class="terminology" aria-labelledby="terminologyTitle">
+        <div class="terminology__intro">
+          <span class="smallcaps">How to read the evidence</span>
+          <h3 id="terminologyTitle">The language behind the atlas</h3>
+          <p>Each term names a specific evidence object or maturity stage. The definitions keep molecular screening, mechanism comparison, and future field-calibrated risk distinct.</p>
+        </div>
+        <dl class="terminology__grid" id="terminologyList"></dl>
+      </section>
       <div class="closing__cta">
         <a class="btn btn--primary" id="reportCta" href="report/" target="_blank" rel="noopener">Read the full MBAG report <span aria-hidden="true">→</span></a>
         <a class="btn btn--ghost" id="contactCta" href="mailto:jg@graphoflife.com">Get in touch</a>

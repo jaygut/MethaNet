@@ -66,7 +66,7 @@
       p.fill(EB.color.textPrimary); p.textFont("Bricolage Grotesque"); p.textStyle(p.BOLD); p.textSize(14); p.textAlign(p.LEFT, p.BOTTOM);
       p.text("Cispatá Bay", pin.x + 8, pin.y - 34); p.textStyle(p.NORMAL);
       p.fill(D.rgba(EB.color.textMuted, 0.95)); p.textFont("IBM Plex Mono"); p.textSize(9); p.textAlign(p.LEFT, p.TOP);
-      p.text("Colombian Caribbean mangrove · VM0033 context", pin.x + 8, pin.y - 32);
+      p.text("Colombian Caribbean · Verra VM0033 context", pin.x + 8, pin.y - 32);
       p.pop();
     }
 
@@ -117,7 +117,7 @@
 
     function drawMilestones(w, h, t, tm) {
       const reveal = D.easeInOut(t);
-      D.label(p, "THE PATH TO CALIBRATED METHANE MRV", miles[0].x, miles[0].y - 40, EB.color.textMuted, 11);
+      D.label(p, "THE PATH TO CALIBRATED METHANE RISK", miles[0].x, miles[0].y - 40, EB.color.textMuted, 11);
       // connecting line drawn with progress
       for (let i = 1; i < miles.length; i++) {
         const a = miles[i - 1], b = miles[i];

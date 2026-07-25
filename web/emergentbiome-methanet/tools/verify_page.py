@@ -39,6 +39,9 @@ with sync_playwright() as pw:
         copyFilled: document.querySelector('[data-copy=\\"surveyor\\"]').children.length,
         claim: document.getElementById('claimText').textContent.slice(0,40),
         fs: document.querySelectorAll('.factsheet__row').length,
+        heroDefs: document.querySelectorAll('.hero__def').length,
+        terminologyItems: document.querySelectorAll('.terminology__item').length,
+        horizontalOverflow: document.documentElement.scrollWidth > window.innerWidth,
     })""")
     landing_audit = page.evaluate("""async () => {
         const atlas = await fetch('data/atlas.json').then(r => r.json());
@@ -65,6 +68,9 @@ with sync_playwright() as pw:
         info["canvases"] >= 1
         and info["rail"] == 9
         and info["fs"] == 15
+        and info["heroDefs"] == 2
+        and info["terminologyItems"] == 8
+        and not info["horizontalOverflow"]
         and landing_audit["points"] == 7710
         and landing_audit["bridges"] == 2226
         and landing_audit["mechanismComparable"] == 625
@@ -118,8 +124,8 @@ with sync_playwright() as pw:
         bodyHasHarmonizationPendingTotal: document.body.textContent.includes('4,358'),
         bodyHasScaffoldTotal: document.body.textContent.includes('2,501'),
         bodyHasQuarantineBoundary: document.body.textContent.toLowerCase().includes('quarantin'),
-        bodyHasCompletenessBoundary: document.body.textContent.includes(
-          'data completeness is not mechanism comparability'
+        bodyHasTriViewContractBoundary: document.body.textContent.includes(
+          'Its evidence state records whether those payloads support a common quantitative interpretation'
         ),
         bodyHasRetired5457Infographic: document.body.textContent.includes('5,457'),
         hasRetiredOperatingModel: Array.from(document.querySelectorAll('h2')).some(
@@ -127,7 +133,7 @@ with sync_playwright() as pw:
         ),
         auditLinks: document.querySelectorAll('a[href^="audit/"]').length,
     })""")
-    audit_status = {
+    excluded_raw_status = {
         name: page.request.get(f"{BASE}/report/audit/{name}").status
         for name in (
             "scientific_audit.json",
@@ -138,14 +144,14 @@ with sync_playwright() as pw:
             "claim_boundary_matrix.tsv",
         )
     }
-    report_info["auditStatus"] = audit_status
+    report_info["excludedRawStatus"] = excluded_raw_status
     print("REPORT INFO:", report_info)
     page.screenshot(path=f"{OUT}/report.png", full_page=False)
     for label, heading in (
-        ("report-contract", "Formal Tri-View Evidence Contract"),
-        ("report-geometry", "ESM-2 Geometry: Useful Signal, Measured Limitations"),
-        ("report-functional", "Functional Metric Provenance And Quarantine"),
-        ("report-mucc", "MUCC v1: Orthogonal Expression Evidence, Ecological Join Still Blocked"),
+        ("report-contract", "The Tri-View Evidence Contract"),
+        ("report-geometry", "ESM-2 Geometry With Measured Limitations"),
+        ("report-functional", "Functional Metric Harmonization"),
+        ("report-mucc", "MUCC v1 Adds Expression Evidence And A Field-Validation Lane"),
     ):
         page.get_by_role("heading", name=heading).scroll_into_view_if_needed()
         time.sleep(0.3)
@@ -165,11 +171,11 @@ with sync_playwright() as pw:
         and report_info["bodyHasHarmonizationPendingTotal"]
         and report_info["bodyHasScaffoldTotal"]
         and report_info["bodyHasQuarantineBoundary"]
-        and report_info["bodyHasCompletenessBoundary"]
+        and report_info["bodyHasTriViewContractBoundary"]
         and not report_info["bodyHasRetired5457Infographic"]
         and not report_info["hasRetiredOperatingModel"]
-        and report_info["auditLinks"] == 6
-        and all(status == 200 for status in report_info["auditStatus"].values())
+        and report_info["auditLinks"] == 0
+        and all(status == 404 for status in report_info["excludedRawStatus"].values())
     ):
         page_errors.append(f"report contract failed: {report_info}")
 

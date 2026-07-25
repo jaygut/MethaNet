@@ -2,14 +2,15 @@
 
 This directory builds the
 [EmergentBiome landing page](https://emergentbiome.earth/) and publishes the
-stable [MBAG report alias](https://emergentbiome.earth/report/).
+stable [MBAG report alias](https://emergentbiome.earth/report/). MBAG means
+MethaNet Bridge Attestation Graph.
 
 The shared position is:
 
 > MethaNet is a molecular-attestation system for blue-carbon methane
-> diligence. MBAG turns sequencing into an evidence graph for candidate review,
-> monitoring design, validation planning, and future calibrated methane-risk
-> intelligence.
+> diligence. The MethaNet Bridge Attestation Graph, or MBAG, turns sequencing
+> into a knowledge graph for candidate review, monitoring design, validation
+> planning, and future calibrated methane-risk intelligence.
 
 The repository-wide narrative and claim rules live in
 [`../../docs/methanet_positioning_and_claims.md`](../../docs/methanet_positioning_and_claims.md).
@@ -41,6 +42,11 @@ Both surfaces use the July 24, 2026 scientific-reconciliation release:
 Data-complete and mechanism-comparable describe different evidence states.
 This distinction remains visible in page copy, report tables, candidate cards,
 and claim boundaries.
+
+The landing page defines MBAG and monitoring, reporting, and verification in
+the hero. Its closing evidence-language key also defines MAG, ESM-2, gLM2,
+tri-view, MUCC v1, and VM0033. Public narrative copy expands or removes other
+shorthand when the abbreviation would add friction.
 
 ## Landing Page Story
 
