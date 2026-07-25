@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # =====================================================================
-# publish_site.sh — assemble the public GitHub Pages site for
+# publish_site.sh assembles the public GitHub Pages site for
 # EmergentBiome / MethaNet, and (optionally) deploy it to the gh-pages branch.
 #
 #   site root  = the scrollytelling landing (this folder)
-#   /report/   = the full molecular-intelligence report, RENDER-COMPLETE
-#                (only the files report.html actually loads: ~35 MB, not 112 MB)
+#   /report/   = the full molecular-intelligence report, self-contained for
+#                public viewing without raw JSON, TSV, audit, or source-pointer files
 #   legacy dated report paths on gh-pages are preserved (no broken links).
 #
 # Usage:
@@ -41,17 +41,14 @@ build() {
   #     custom-domain binding across republishes; harmless no-op when absent) ---
   if [[ -f "$HERE/CNAME" ]]; then cp "$HERE/CNAME" "$OUT/CNAME"; echo "    CNAME   : $(cat "$HERE/CNAME")"; fi
 
-  # --- report → /report/ (render-complete: exactly what report.html loads) ---
-  mkdir -p "$OUT/report/assets/js" "$OUT/report/assets/data" "$OUT/report/assets/figures" "$OUT/report/audit"
+  # --- report → /report/ (render-complete and self-contained) ---
+  # The report embeds its interactive evidence payload. Detailed tables and audit
+  # products remain in the internal warehouse and are deliberately excluded from
+  # the public site.
+  mkdir -p "$OUT/report/assets/js" "$OUT/report/assets/figures"
   cp "$REPORT/report.html"                  "$OUT/report/index.html"
   cp "$REPORT/assets/js/d3.v7.min.js"       "$OUT/report/assets/js/"
-  cp "$REPORT/assets/data/atlas_bundle.js"  "$OUT/report/assets/data/"
   cp "$REPORT"/assets/figures/*.png         "$OUT/report/assets/figures/"
-  cp "$REPORT"/audit/*                      "$OUT/report/audit/"
-
-  # provenance breadcrumb (which freeze backs the published report)
-  printf '{"published_report":"%s","built_for":"gh-pages site root + /report/"}\n' \
-    "$(basename "$REPORT")" > "$OUT/report/SOURCE.json"
 
   echo "✓ built $OUT  ($(du -sh "$OUT" | cut -f1) total; report/ = $(du -sh "$OUT/report" | cut -f1))"
 }

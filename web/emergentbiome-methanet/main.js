@@ -22,8 +22,8 @@
   const READOUTS = {
     stakes: [["~" + EB.num.methaneGWP20 + "×", "CH₄ vs CO₂ over 20 years", true], ["$" + EB.ext.dbcRecordPrice + "/t", "blue-carbon record price, Aug 2025"]],
     blindspot: [["≈ 0", "sites with paired flux + molecular data today", true], ["< " + EB.ext.vm0033SalinityPpt + " ppt", "salinity: no default methane factor"]],
-    surveyor: [["screening", "signal, per site, ranked", true], ["not flux", "no units claimed, by design", false]],
-    cheap: [["r > " + EB.ext.mcraFluxSpearman, "methanogen marker vs measured flux", true], ["salinity", "necessary, not sufficient", false]],
+    surveyor: [["evidence profile", "per site with a next measurement", true], ["validation path", "paired field evidence calibrates flux inference", false]],
+    cheap: [["r > " + EB.ext.mcraFluxSpearman, "methanogen marker vs measured flux", true], ["salinity", "contextual covariate for field design", false]],
     atlas: [[D.fmt(EB.num.triViewReady), "data-complete tri-view units", true], [D.fmt(EB.num.mechanismComparableTriView), "mechanism-comparable POC"], [D.fmt(EB.num.annotationCompletePendingTriView), "annotation-complete, harmonization pending"], [D.fmt(EB.num.sourceScaffoldTriView), "MUCC source-scaffold tri-view"]],
     engine: [["273×", "N₂O vs CO₂ over 100 years", true], [D.fmt(EB.num.mechanismComparableTriView), "POC units in the comparable methane screen", false], ["0", "field assays for new gases", false]],
     platform: [[D.fmt(EB.num.evidenceAtoms), "evidence atoms", true], [D.fmt(EB.num.nearEsm2Edges), "embedding-neighbor links"]],
@@ -77,11 +77,9 @@
     // ask + factsheet
     document.getElementById("fsDate").textContent = EB.num.snapshot;
     document.getElementById("askBody").innerHTML =
-      "MethaNet sells integrity into the one market whose upside is gated on it. Blue carbon is its premium, " +
-      "methane-blocked frontier, and the sediment microbiome is the evidence layer no incumbent reads. " +
-      "Built for blue-carbon developers, verifiers, raters, and buyers doing diligence. " +
-      "We have mapped <b>" + D.fmt(EB.num.embeddingBearingUnits) + "</b> genomes and begun linking them to real samples and sites; " +
-      "the pre-seed unlocks field validation at Cispatá Bay, and the paired flux data that turns molecular screening into calibrated methane MRV.";
+      "MethaNet gives blue-carbon developers, verifiers, raters, and buyers a traceable molecular evidence layer for methane-sensitive diligence. " +
+      "The molecular-attestation graph connects <b>" + D.fmt(EB.num.embeddingBearingUnits) + "</b> embedded genomes to functional evidence, provenance, and the next validation action. " +
+      "Field validation at Cispatá Bay will add the paired evidence required for calibrated methane MRV.";
     const points = [
       "Field validation at Cispatá Bay (Colombian Caribbean mangrove, VM0033 context)",
       "Pair molecular evidence with field methane flux (target " + EB.num.pairedFluxTargetLo + "–" + EB.num.pairedFluxTargetHi + " samples)",
@@ -94,10 +92,10 @@
       ["Calibration core (rumen + wetland)", D.fmt(EB.num.calibrationCore) + " genomes"],
       ["Mangrove · MSM China 2025", D.fmt(EB.num.msmCandidates) + " genomes (" + D.fmt(EB.num.msmFunctionalComplete) + " annotated)"],
       ["Mangrove · Futian 2026 (Qi et al.)", D.fmt(EB.num.futianRMAGs) + " genomes <span class='in-progress'>(" + D.fmt(EB.num.futianBacteriaComplete) + "/" + D.fmt(EB.num.futianBacteriaTotal) + " bacteria annotated)</span>"],
-      ["Data-complete tri-view units", D.fmt(EB.num.triViewReady) + " <span class='in-progress'>(payload completeness, not universal comparability)</span>"],
+      ["Data-complete tri-view units", D.fmt(EB.num.triViewReady) + " <span class='in-progress'>(payload completeness; common mechanism comparability is tracked separately)</span>"],
       ["Mechanism-comparable POC tri-view", D.fmt(EB.num.mechanismComparableTriView)],
       ["Annotation-complete, harmonization pending", D.fmt(EB.num.annotationCompletePendingTriView)],
-      ["MUCC v1 source-scaffold tri-view", D.fmt(EB.num.sourceScaffoldTriView) + " <span class='in-progress'>(not mechanism-equivalent)</span>"],
+      ["MUCC v1 source-scaffold tri-view", D.fmt(EB.num.sourceScaffoldTriView) + " <span class='in-progress'>(separate mechanism contract)</span>"],
       ["Genomes mapped (molecular space)", D.fmt(EB.num.embeddingBearingUnits)],
       ["MUCC v1 wetland source warehouse", D.fmt(EB.num.muccWarehouseGenomes) + " genomes"],
       ["Total evidence reach", D.fmt(EB.num.warehouseReach) + " genomes"],
@@ -111,7 +109,7 @@
       '<div class="factsheet__row"><span class="factsheet__k">' + r[0] + '</span><span class="factsheet__v">' + r[1] + "</span></div>"
     ).join("");
     document.getElementById("contact").innerHTML =
-      EB.claims.boundaries[0] + " &nbsp;·&nbsp; A–E tiers are target vocabulary, not yet calibrated. &nbsp;·&nbsp; " +
+      EB.claims.boundaries[0] + " &nbsp;·&nbsp; A–E tiers remain a calibration target. &nbsp;·&nbsp; " +
       'Graph of Life &nbsp;·&nbsp; <a href="mailto:' + EB.links.contactEmail + '">' + EB.links.contactEmail + "</a>";
 
     // report CTAs - single source of truth is EB.links.report
@@ -122,9 +120,9 @@
     setHref("contactCta", "mailto:" + EB.links.contactEmail);
     const note = document.getElementById("reportNote");
     if (note) note.innerHTML =
-      "The report is the full scientific narrative behind these numbers: molecular niche-space, bridge evidence, the attestation graph, and the sample-readiness ladder. Recomputed " +
+      "The report presents the molecular-attestation knowledge graph, bridge evidence, and sample-readiness ladder behind these numbers. Recomputed " +
       EB.links.reportDate + ", in sync with the live atlas at " + D.fmt(EB.num.triViewReady) + " data-complete tri-view units." +
-      ' <a href="' + rep + '" target="_blank" rel="noopener">Open the interactive atlas ↗</a>';
+      ' <a href="' + rep + '" target="_blank" rel="noopener">Open the interactive report ↗</a>';
   }
 
   // ---------- scene lifecycle ----------
