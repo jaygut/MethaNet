@@ -157,11 +157,10 @@ window.EB = (function () {
 
   /* ---- hero copy (decision-first; the first sentence a stranger reads is their decision) ---- */
   const hero = {
-    eyebrow: "Methane-risk screening for blue carbon",
+    eyebrow: "Molecular attestation for blue-carbon methane diligence",
     sub:
-      "Carbon credits price the carbon a wetland stores and ignore the methane it can leak. " +
-      "MethaNet reads the sediment community from a single sample and flags which sites carry the pathway " +
-      "signature of a hidden methane source, so you know where to measure and which credits to scrutinize before you spend.",
+      "Carbon credits price the carbon a wetland stores while methane can erase the climate value. " +
+      "MethaNet turns blue-carbon sequencing into an evidence graph that shows pathway evidence, provenance, and the next measurement to prioritize.",
   };
 
   /* ---- model views (kept jargon-free for the public page) ---- */
@@ -173,13 +172,13 @@ window.EB = (function () {
   /* ---- non-negotiable claim boundaries (visible, not buried) ---- */
   const claims = {
     footer:
-      "Current results are genome-level molecular screening, candidate triage, and monitoring prioritization. " +
+      "Current results are MAG/proteome-level molecular screening, candidate triage, evidence-card review, and monitoring prioritization. " +
       "Measured methane flux, final risk scores, A–E tiers, and carbon-credit decisions require paired abundance, environmental, uncertainty, and field-validation evidence. " +
       "A–E risk tiers remain target product vocabulary while calibration is completed. " +
       "Snapshot " + num.snapshot + ".",
-    short: "Molecular screening, candidate triage, and monitoring prioritization. Calibrated MRV follows paired validation.",
+    short: "Molecular attestation, candidate triage, and monitoring prioritization. Calibrated MRV follows paired validation.",
     boundaries: [
-      "Molecular screening, candidate triage, and monitoring prioritization, at the genome level.",
+      "Molecular attestation, candidate triage, and monitoring prioritization, at the MAG/proteome level.",
       "A–E risk tiers are target product vocabulary. Calibration requires paired validation.",
       "Measured flux, final MRV scores, and carbon-credit decisions require evidence beyond the molecular map.",
       "Reference-to-target signals stay provisional until source-balanced validation exists.",
@@ -188,8 +187,8 @@ window.EB = (function () {
 
   /* ---- maturity ladder (MRV roadmap Levels 0–5, + 6 horizon) ---- */
   const ladder = [
-    { rung: 0, title: "Molecular screening", state: "lit",
-      unlock: "Proteome embeddings, genomic context, functional annotation, quality control, and the attestation graph. Done now." },
+    { rung: 0, title: "Molecular attestation", state: "lit",
+      unlock: "Proteome embeddings, genomic context, functional annotation, quality control, and MBAG evidence cards. Done now." },
     { rung: 1, title: "Sample identity & metadata", state: "progress",
       unlock: "Underway: sample, site, and season metadata recovered for the mangrove lanes (147 sediment samples, 71 environmental rows). Full genome-to-sample mapping is next." },
     { rung: 2, title: "Abundance & community capacity", state: "dim",
@@ -205,10 +204,10 @@ window.EB = (function () {
 
   /* ---- attestation evidence chain (Scene 5): one claim, traced ---- */
   const attestation = {
-    claimText: "This genome carries molecular evidence of a methane pathway, consistent with a methane-relevant review hypothesis.",
+    claimText: "This MAG or proteome carries molecular evidence of a methane pathway, consistent with a methane-relevant review hypothesis.",
     forbidden: "“This genome emits methane.”",
     chain: [
-      { stage: "Genome",            detail: "One genome, quality-controlled and taxonomically placed", node: "genome" },
+      { stage: "MAG or proteome",   detail: "One molecular evidence unit, quality-controlled and taxonomically placed", node: "genome" },
       { stage: "Pathway markers",   detail: "Methane pathway marker evidence across producing and consuming guilds is screened and linked", node: "pathway markers" },
       { stage: "Embedding neighbors", detail: "Nearest neighbors in molecular space land on known methanogens", node: "embedding neighbor" },
       { stage: "Quality gate",      detail: "Completeness, contamination, and annotation-coverage checks", node: "validation gate" },
@@ -219,7 +218,7 @@ window.EB = (function () {
 
   /* ---- Scene 7 milestones ---- */
   const timeline = [
-    { phase: "Now",   label: "Molecular atlas", detail: "7,710 genomes in ESM-2 space; 7,484 data-complete tri-views across three explicit evidence contracts." },
+    { phase: "Now",   label: "MBAG evidence graph", detail: "7,710 genomes in ESM-2 space; 7,484 data-complete tri-views across three explicit evidence contracts." },
     { phase: "Field", label: "Cispatá Bay validation", detail: "Colombian Caribbean mangrove · paired methane-flux sampling." },
     { phase: "Pair",  label: "Paired data", detail: "Target: pair molecular evidence with field methane flux across seasons and habitats." },
     { phase: "Model", label: "Calibrated methane risk", detail: "Holdout-validated risk distribution; A–E tiers earn their thresholds." },
@@ -245,15 +244,15 @@ window.EB = (function () {
     {
       id: "surveyor", n: 3, label: "03 · What You Get",
       kicker: "What you get",
-      headline: "A ranked list of where methane risk hides, and where to measure first.",
-      copy: "For each site, a methane-capacity evidence profile with its confidence, provenance, and next measurement. It directs field attention to the highest-information contexts.",
+      headline: "Evidence cards that show where to measure first.",
+      copy: "For each candidate or site context, MBAG returns molecular evidence, confidence, provenance, and the next measurement needed for calibrated risk.",
       data: "illustrative",
     },
     {
       id: "cheap", n: 4, label: "04 · Versus the Cheap Method",
       kicker: "Versus the cheap method",
-      headline: "One gene tells you little. We read the whole pathway balance.",
-      copy: "Salinity sets the baseline. The balance of methane-making and methane-eating guilds sets the exception, exactly where a project's methane assumption is most likely wrong.",
+      headline: "One gene tells you little. The graph reads the pathway balance.",
+      copy: "Salinity sets the baseline. Methane-making, methane-eating, sulfur, substrate, and QC evidence show where that assumption needs testing.",
       data: "illustrative",
     },
     {
@@ -274,7 +273,7 @@ window.EB = (function () {
       id: "platform", n: 7, label: "07 · The Platform & the Moat",
       kicker: "EmergentBiome substrate",
       headline: "Every claim traces to its evidence.",
-      copy: "Embeddings, an attestation graph, and an agentic pipeline. The atlas grows with every project sequenced, and every new pathway inherits the same evidence trail.",
+      copy: "Embeddings, MBAG, and an agentic pipeline. The atlas grows with every project sequenced, and every new pathway inherits the same evidence trail.",
       data: "real-schema",
     },
     {
@@ -307,7 +306,7 @@ window.EB = (function () {
     platform: "EmergentBiome",
     application: "MethaNet",
     lockup: "EmergentBiome / MethaNet",
-    tagline: "molecular methane intelligence for blue carbon",
+    tagline: "molecular attestation for blue-carbon methane diligence",
     platformDef: "molecular attestation graph + evidence pipeline",
     applicationDef: "the first application on a substrate architected to generalize beyond methane",
   };
