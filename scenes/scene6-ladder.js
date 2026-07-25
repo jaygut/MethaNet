@@ -25,7 +25,7 @@
       const tm = ctx.reduced ? 0 : p.frameCount * 0.02;
 
       // heading
-      D.label(p, "MRV MATURITY LADDER", w * 0.08, h * 0.12, EB.color.textMuted, 11);
+      D.label(p, "METHANE EVIDENCE MATURITY", w * 0.08, h * 0.12, EB.color.textMuted, 11);
       p.push(); p.fill(D.rgba(EB.color.textPrimary, 0.9)); p.textFont("IBM Plex Mono"); p.textSize(10);
       p.text("LIT NOW: rung 0 · molecular screening      TARGET: rung 5 · calibrated A–E risk (not yet calibrated)", w * 0.08, h * 0.12 + 16);
       p.pop();
