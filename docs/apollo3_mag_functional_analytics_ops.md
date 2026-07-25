@@ -1,7 +1,7 @@
 # Apollo-3 MAG Functional Analytics Operations
 
 Date: 2026-06-13
-Documentation refresh: 2026-06-25
+Documentation refresh: 2026-07-24
 
 This page is the operational path for running MethaNet MAG functional analytics
 on Apolo-3 with the databases that are actually installed and validated under:
@@ -89,7 +89,10 @@ carbon-credit approval.
 The active mangrove lanes use the same curated per-MAG evidence-bundle contract
 as the POC production run, but they are not yet finalized cohort warehouses.
 
-Current dated snapshot: 2026-06-25 10:39 America/Bogota / 15:39 UTC.
+The table below preserves the July 8 operational shard snapshot for scheduler
+provenance. The July 24 scientific-reconciliation release carries 2,931 Futian
+annotation-complete functional payloads. Refresh the lane registry and Slurm
+state before operational decisions.
 
 | Payload | Current state |
 | --- | ---: |
@@ -103,18 +106,37 @@ Current dated snapshot: 2026-06-25 10:39 America/Bogota / 15:39 UTC.
 | Futian ready MAG/proteome payload rows | 3,156 |
 | Futian ESM2 embeddings | 3,156 / 3,156 complete |
 | Futian gLM2 contextual units | 3,156 / 3,156 complete |
-| Futian archaea functional MAGs complete | 302 / 312 |
-| Futian archaea functional MAGs running/partial | 2 |
+| Futian archaea functional MAGs complete | 312 / 312 |
+| Futian archaea functional MAGs running/partial | 0 |
+| Futian bacteria functional MAGs complete at historical shard snapshot | 15 / 2,844 |
+| Futian bacteria pending at historical shard snapshot | 2,829 / 2,844 |
 | Futian manifest-scoped failed rows | 0 |
-| Futian archaea pending/not-started | 8 |
-| Futian bacteria shards | 3 x 948 pending by dependency |
+| Futian archaea pending/not-started | 0 |
+| Futian bacteria shards | 3 x 948 dependency-free shards; shard 001 has 7 complete MAGs, shards 002 and 003 have 4 complete MAGs each, and remaining rows are pending/not complete |
 
-Scheduler caveat: `sacct` for array `10557` records two failed task states
-(`10557_17` and `10557_18`, exit 127), but the selected per-MAG evidence scan
-has complete curated bundles for 302 manifest-scoped units at the 15:39 UTC live
-refresh. The external report freeze remains fixed at 300 Futian archaea. Treat curated
-`status.tsv`/`parquet_manifest.tsv` sentinels as the payload-readiness source
-and Slurm task state as operational telemetry.
+Scheduler caveat: the selected per-MAG evidence scan has complete curated
+bundles for all 312 manifest-scoped archaea, even though Slurm evaluated the
+parent archaea array dependency as failed for downstream `afterok` purposes.
+Treat curated `status.tsv`/`parquet_manifest.tsv` sentinels as the
+payload-readiness source for the archaea tranche and Slurm task state as
+operational telemetry. The old dependent bacteria arrays were canceled and
+replaced with explicit split-manifest arrays:
+
+```text
+11644 -> futian_phase1_functional_bacteria_001_rows_1_948.tsv
+11645 -> futian_phase1_functional_bacteria_002_rows_949_1896.tsv
+11646 -> futian_phase1_functional_bacteria_003_rows_1897_2844.tsv
+```
+
+All split bacteria shards are dependency-free at the manifest level. The first
+15 bacteria tasks have complete curated evidence bundles on disk. Earlier
+`CG`/`TIMEOUT` scheduler discrepancies were traced by Apolo admins to a Slurm
+controller cleanup misconfiguration; the controller has reportedly been fixed,
+so new completed jobs should release resources normally. Rows without a
+curated `COMPLETE` sentinel remain pending in an operational snapshot. The
+current report freeze is
+`methanet_3view_payload_freeze_20260724_scientific_reconciliation`, with 7,484
+data-complete tri-views and explicit evidence-contract states.
 
 Current sidecar paths:
 

@@ -1,7 +1,7 @@
 # Data Aggregation Strategy
 
 Date: 2026-06-12
-Documentation refresh: 2026-06-25
+Documentation refresh: 2026-07-24
 
 Scope: integrative analysis for the 662-genome MethaNet POC cohort, combining
 geometry-aware ESM2 protein embeddings with MAG-level functional genomics from
@@ -77,17 +77,18 @@ needs explicit target-domain lanes for mangrove/MSM and mangrove/Futian MAGs.
 | Lane | Backbone rule | Current molecular layers | Special caveat |
 | --- | --- | --- | --- |
 | POC rumen + wetland/MUCC | 662-row ESM2 backbone, with 625 MAG/bin-comparable units and 37 assembly-context units | ESM2, functional warehouse, gLM2, metadata, attestation graph | source and ecosystem are still confounded; assembly-context units are not MAG-bin feature rows |
-| Mangrove/MSM expansion | 1,428 local candidate manifest under `data/external/msm_china_2025/` | ESM2 1,428/1,428, gLM2 1,428/1,428, functional tranche 1,427/1,428 complete at the 2026-06-25 snapshot | local 1,428 candidates must be reconciled to the paper-reported 966 final medium/high-quality MAG denominator before sample-level rollups |
-| Mangrove/Futian 2026 expansion | 3,404 phase-1 rMAG source-lane manifest under `data/external/futian_mangrove_2026_qi/`, with 3,156 ready payload rows and 248 gap rows | ESM2 3,156/3,156, gLM2 3,156/3,156, functional annotation active: 302/312 archaea complete at the 2026-06-25 15:39 UTC live refresh while the current external report freeze remains fixed at 300/312, and bacteria shards queued | site/month/habitat metadata are strong, but depth-resolved MAG-to-sample assignment, abundance/read coverage, and flux/process validation remain pending |
-| Multi-view atlas union | explicit left join across lane-specific backbones; current release freezes should be generated from `scripts/reports/build_methanet_3view_payload_freeze.py` | ESM2 + functional + gLM2 + QC/taxonomy + provenance + report features | never infer sample-level risk without MAG-to-sample mapping, abundance/read coverage, environmental covariates, and validation |
+| Mangrove/MSM expansion | 1,428 local candidate manifest under `data/external/msm_china_2025/` | ESM2 1,428/1,428, gLM2 1,428/1,428, functional tranche 1,427/1,428 complete | local 1,428 candidates must be reconciled to the paper-reported 966 final medium/high-quality MAG denominator before sample-level rollups |
+| Mangrove/Futian 2026 expansion | 3,404 phase-1 rMAG source-lane manifest under `data/external/futian_mangrove_2026_qi/`, with 3,156 ready payload rows and 248 gap rows | ESM-2 3,156/3,156, gLM2 3,156/3,156, and 2,931 annotation-complete functional payloads in the July 24 release; common mechanism-feature aggregation remains pending | site/month/habitat metadata are strong, but depth-resolved MAG-to-sample assignment, abundance/read coverage, and flux/process validation remain pending |
+| MUCC v1 Old Woman Creek | 2,508 checksum-validated archive MAGs | ESM-2 2,501/2,508, gLM2 2,508/2,508, source-functional payload 2,508/2,508, and 2,501 data-complete source-scaffold tri-views | DRAM, gene, and processed expression evidence remains under a distinct contract; exact sample/environment/flux joins are 0/133 |
+| Multi-view atlas union | explicit left join across lane-specific backbones; current release freezes should be generated from `scripts/reports/build_methanet_3view_payload_freeze.py` | ESM-2 + functional + gLM2 + QC/taxonomy + provenance + evidence-contract + report features | sample-level risk requires MAG-to-sample mapping, abundance/read coverage, environmental covariates, and validation |
 
 Recommended union identity fields:
 
 ```text
 atlas_unit_id
 proteome_id
-lane_id                      # poc_core, msm_china_2025, futian_mangrove_2026_qi
-lane                         # poc_rumen, poc_wetland_mucc, mangrove_msm, mangrove_futian
+lane_id                      # poc_core, msm_china_2025, futian_mangrove_2026_qi, mucc_v1_owc_wetland
+lane                         # poc_rumen, poc_wetland_mucc, mangrove_msm, mangrove_futian, wetland_mucc_v1
 source_project
 source_dataset
 mag_id
@@ -102,6 +103,7 @@ glm2_status
 metadata_resolution
 sample_rollup_status
 claim_status
+sample_linkage_basis           # exact sample, sample-group set, site-month, source-bucket, missing
 ```
 
 The operational uniqueness key for the expanded atlas is:

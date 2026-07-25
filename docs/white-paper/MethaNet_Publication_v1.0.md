@@ -1,4 +1,20 @@
-# MethaNet: A Metagenomic Framework for Carbon Permanence Risk Classification in Blue Carbon Ecosystems
+# Archived Concept Draft: MethaNet Carbon Permanence Risk Classification
+
+> **Status: historical concept document.**
+>
+> This 1.0 draft predates the current evidence reconciliation. Its classifier
+> performance, A to E risk tiers, paired-cohort results, market claims, and
+> registry language are proposed or unvalidated and should not be cited as
+> current MethaNet results. The current validated layer is MAG/proteome
+> molecular attestation, evidence-card review, and monitoring-readiness design.
+> See [`../methanet_positioning_and_claims.md`](../methanet_positioning_and_claims.md),
+> [`../current_artifact_inventory.md`](../current_artifact_inventory.md), and
+> the [public MBAG report](https://emergentbiome.earth/report/).
+>
+> A future scientific manuscript should be rebuilt from the dated MBAG freeze,
+> the common cross-lane mechanism-feature contract, and paired
+> molecular-environmental-field validation. This file is retained for design
+> provenance.
 
 **Authors:**
 Alon Philosof^1,2,*^, Jay Gutierrez^1,3,*^

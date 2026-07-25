@@ -1,111 +1,114 @@
-# EmergentBiome / MethaNet — investor-demo scrollytelling landing page
+# EmergentBiome / MethaNet Public Site
 
-A self-contained, fully-offline scrollytelling artifact for **EmergentBiome** (the
-molecular-intelligence platform) featuring **MethaNet** (its flagship methane-risk
-application for blue carbon). The visual backbone is seeded, reproducible algorithmic
-art (p5.js, instance mode); **every scene's generative visual encodes a real part of
-the science**, not decoration.
+This directory builds the
+[EmergentBiome landing page](https://emergentbiome.earth/) and publishes the
+stable [MBAG report alias](https://emergentbiome.earth/report/).
 
-> **Read first:** [`DIGEST.md`](DIGEST.md) — the verified ground truth (numbers, snapshot
-> dates, claim boundaries) every pixel traces back to. **Honesty is a feature of this page.**
+The shared position is:
 
----
+> MethaNet is a molecular-attestation system for blue-carbon methane
+> diligence. MBAG turns sequencing into an evidence graph for candidate review,
+> monitoring design, validation planning, and future calibrated methane-risk
+> intelligence.
 
-## What it is
+The repository-wide narrative and claim rules live in
+[`../../docs/methanet_positioning_and_claims.md`](../../docs/methanet_positioning_and_claims.md).
+[`DIGEST.md`](DIGEST.md) records the verified page numbers, evidence sources,
+and real-versus-illustrative visual contract.
 
-Seven scroll-driven scenes plus a title intro and a closing ask:
+## Public Reading Path
 
-| # | Scene | What the visual encodes | Data |
-| --- | --- | --- | --- |
-| — | Hero intro | particles condensing into a node — "molecular dark matter → verifiable structure" | brand |
-| 1 | The Stakes | CO₂ settling vs CH₄ (×30 GWP) eroding a net-benefit meter | illustrative (×30 real) |
-| 2 | The Blind Spot | a vast grey unknown-genome field; present paired-flux + molecular coverage reads as approximately zero at scale | illustrative gap |
-| 3 | The Insight **(HERO)** | the **real diffusion-map manifold** of ESM2 embeddings; 372 real bridge edges illuminate reviewable hypotheses | **real coordinates** |
-| 4 | The Atlas | mangrove particles pour in; counter 625 → 2,360; 2,508 MUCC wetland genomes enter the warehouse scaffold | real counts |
-| 5 | Platform & Moat | EmergentBiome substrate + MethaNet lit; the attestation graph traces one claim | real schema |
-| 6 | The Honest Ladder | 6-rung MRV maturity gauge; rung 0 lit, rung 5 the dimmed target | real roadmap |
-| 7 | The Path & Ask | Cispatá Bay pin; agentic pipeline (<4 days); milestone timeline | real path |
+The landing page and report perform different jobs while telling the same
+story:
 
-A persistent footer and Scene 6 state the molecular-screening claim boundary with the
-snapshot date, on every screen.
+| Surface | Primary audience | Role |
+| --- | --- | --- |
+| Landing page | Blue-carbon developers, verifiers, raters, buyers, partners, and funders | Explain the methane blind spot, present molecular attestation as the current product, and show the route to calibrated MRV |
+| MBAG report | Scientific, technical, and diligence reviewers | Expose the tri-view evidence contract, comparability boundaries, candidate cards, source provenance, and validation agenda |
 
-## How to serve
+Both surfaces use the July 24, 2026 scientific-reconciliation release:
 
-The page loads `data/atlas.json` via `fetch`, so it must be served over HTTP (not
-opened as a `file://` URL). No build step, no network, no CDN.
+| Measure | Current release |
+| --- | ---: |
+| Registered MAG/proteome units | 7,965 |
+| ESM-2-bearing units | 7,710 |
+| gLM2 payloads | 7,717 |
+| Data-complete tri-views | 7,484 |
+| Mechanism-comparable POC tri-views | 625 |
+| Harmonization-pending mangrove tri-views | 4,358 |
+| MUCC v1 source-scaffold tri-views | 2,501 |
+
+Data-complete and mechanism-comparable describe different evidence states.
+This distinction remains visible in page copy, report tables, candidate cards,
+and claim boundaries.
+
+## Landing Page Story
+
+The page uses a title sequence, nine scroll-driven scenes, and a closing ask:
+
+| Scene | Reader takeaway | Evidence mode |
+| --- | --- | --- |
+| Hero | Sequencing becomes a traceable molecular evidence graph | Real ESM-2 coordinates |
+| 1. The Stakes | Methane can erode blue-carbon climate value | Sourced climate facts with illustrative motion |
+| 2. The Blind Spot | Direct monitoring is costly and spatially sparse | Illustrative measurement gap |
+| 3. What You Get | Evidence cards identify a candidate, its confidence, and the next measurement | Illustrative product shape grounded in the real evidence contract |
+| 4. Versus the Cheap Method | Single environmental proxies miss microbial pathway structure | Illustrative teaching plot with sourced anchors |
+| 5. The Evidence | The warehouse carries 7,484 data-complete tri-views under three explicit functional contracts | Real counts and coordinates |
+| 6. One Engine, Many Maps | Each gas or mechanism lens requires its own harmonization and validation gate | Real atlas geometry with bounded lens states |
+| 7. Platform And Moat | MBAG preserves evidence, provenance, claim scope, and validation actions | Real graph schema |
+| 8. The Honest Ladder | Molecular attestation is available now; calibrated MRV follows paired validation | Real MRV roadmap |
+| 9. Path And Ask | Field partnerships convert the evidence graph into a calibrated risk system | Real roadmap and partnership target |
+
+## Claim Boundary
+
+Current authorization covers MAG/proteome molecular screening, candidate
+triage, evidence-card review, monitoring prioritization, and validation-study
+design.
+
+Calibrated sample and project methane-risk estimates require exact sample
+linkage, abundance or read coverage, environmental covariates, uncertainty
+propagation, and paired field or process validation. A to E risk tiers remain
+target product vocabulary until those gates pass. Carbon-credit determinations
+require methodology integration and independent review.
+
+## Local Preview
+
+The landing page loads its local visualization payload over HTTP:
 
 ```bash
 cd web/emergentbiome-methanet
 python3 -m http.server 8848
-# open http://localhost:8848/index.html
 ```
 
-Any static file server works (`npx serve`, `caddy file-server`, nginx, etc.). All
-assets — p5.js and the three webfont families — are bundled under `vendor/` and load
-locally; the page works with the network cable unplugged.
+Open `http://localhost:8848/`.
 
-## How to update the numbers
+## Refresh Workflow
 
-**`config.js` is the single source of truth.** All headline numbers, the snapshot date,
-brand tokens, scene copy, the maturity ladder, the attestation chain, and the milestone
-timeline live there. To refresh after a new MethaNet run:
+`config.js` is the landing-page source of truth for headline numbers, snapshot
+dates, public copy, the maturity ladder, claim boundaries, and milestones.
 
-1. Re-verify against the repo (see `DIGEST.md` for which artifact backs each number).
-2. Edit the relevant fields in `config.js` (e.g. `num.futianArchaeaComplete`,
-   `num.triViewReady`). Nothing else needs to change — copy and chrome are injected
-   from `config.js` at load.
-3. To refresh the hero's atlas data, re-run the seeded export (reads the latest
-   freeze-backed niche projection, writes `data/atlas.json`):
+1. Reconcile the new release against `DIGEST.md` and the dated report freeze.
+2. Update the relevant values and copy in `config.js`.
+3. Refresh the landing visualization with `tools/export_atlas.py`.
+4. Build the public tree with `tools/publish_site.sh build`.
+5. Verify the landing page, the stable `/report/` alias, claim-boundary text,
+   and the absence of public raw report bundles.
 
-   ```bash
-   python3 tools/export_atlas.py          # deterministic; same source → identical output
-   python3 tools/export_atlas.py --check  # summarize without writing
-   ```
+## File Map
 
-   Point `SOURCE_NICHE` in `tools/export_atlas.py` at a newer report freeze to advance
-   the manifold.
-
-To re-verify the page end-to-end (console errors, offline-safety, per-scene
-screenshots), run `python3 tools/verify_page.py` with a server running (needs Playwright
-+ Chromium).
-
-## File map
-
-```
-index.html              semantic scaffold (header lockup, 7 sticky stages, closing, claim strip)
-styles.css              "Deep Field" brand system (tokens, scrolly layout, responsive, reduced-motion)
-config.js               SINGLE SOURCE OF TRUTH — numbers, snapshot date, brand tokens, copy
-main.js                 orchestration: copy injection, scroll progress, scene lifecycle, a11y
-lib/prng.js             seeded PRNG (mulberry32 / xmur3) — reproducible randomness
-lib/scene-base.js       shared draw + easing + colour helpers (bloom, grid, vignette)
-scenes/hero.js          title-intro field
-scenes/scene1-stakes.js … scene7-path.js   one p5 instance-mode sketch per scene
-data/atlas.json         Phase-1 export: 5,209 real diffusion-map points + 372 bridge edges
-tools/export_atlas.py   seeded, reproducible atlas exporter (reads repo niche.json)
-tools/verify_page.py    headless verification (console / offline / screenshots)
-vendor/                 p5.js + Space Grotesk / Inter / JetBrains Mono (OFL), all local
-DIGEST.md               verified ground truth + real-vs-stylized-per-scene summary
+```text
+index.html              public semantic scaffold and metadata
+styles.css              responsive visual and accessibility system
+config.js               verified numbers, public copy, claims, and milestones
+main.js                 page orchestration, copy injection, and accessibility
+scenes/                 seeded visual scenes
+data/atlas.json         local landing visualization feed
+tools/export_atlas.py   deterministic atlas exporter
+tools/verify_page.py    browser verification helper
+tools/publish_site.sh   public-tree builder and GitHub Pages publisher
+DIGEST.md               evidence reconciliation and visual honesty contract
 ```
 
-## Claim-boundary note (non-negotiable)
-
-This page presents **MAG/proteome-level molecular screening and monitoring
-prioritization**. It does **not** claim measured methane flux, final sample/project MRV
-risk scores, final A–E risk tiers, source-independent rumen→wetland transfer, or
-carbon-credit approval from the molecular atlas alone. **A–E risk tiers are target
-product vocabulary, explicitly not yet calibrated.** Scene 6 (the honest ladder) and the
-persistent footer state this plainly, with the `2026-06-26` snapshot date. The platform's
-"beyond methane" framing is stated as design intent (the future-application slots are
-honestly empty), not a demonstrated capability.
-
-## Tech & accessibility
-
-- Vanilla HTML/CSS/JS + p5.js **instance mode**; one sketch module per scene; no build step.
-- **Seeded** randomness throughout (reproducible across loads/machines).
-- 60fps target: only the on-screen scene loops; offscreen sketches are paused, and the
-  tab pauses all sketches when hidden.
-- Fully responsive (desktop hero → graceful mobile).
-- `prefers-reduced-motion`: each scene renders a single static representative frame
-  (no animation), still scroll-linked.
-- Near-black AA-contrast palette; keyboard/scroll accessible; rail navigation buttons.
-- Verified: 0 console errors, 0 page errors, **0 external network requests**.
+The public `/report/` alias contains the reader-facing report and its visual
+assets. Internal audit tables, raw report data bundles, and source JSON remain
+outside that stable public path.

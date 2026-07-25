@@ -1,9 +1,12 @@
 # MethaNet Current Artifact Inventory
 
-Documentation refresh: 2026-06-25
+Documentation refresh: 2026-07-24
 
 This page summarizes the datasets, databases, generated warehouses, and graph
-artifacts that currently define the MethaNet operational arc. It complements
+artifacts that currently define the MethaNet operational arc. The shared
+product language and claim matrix live in
+[`methanet_positioning_and_claims.md`](methanet_positioning_and_claims.md). This
+inventory complements
 the deeper system map in
 `ai_docs/system_operational_map_20260619/TECHNICAL_BRIEF.md`.
 
@@ -13,11 +16,34 @@ requeue, pruning, report rebuild, or external-sharing decisions.
 
 ## Claim Boundary
 
-Current artifacts support MAG/proteome-level molecular evidence, functional
-atlas analytics, bridge-candidate triage, and molecular attestation. They do
-not support final sample/project MRV risk scores, final A-E methane-risk tiers,
-measured methane flux claims, source-independent transfer proof, or carbon-credit
-approval.
+Current artifacts support MAG/proteome molecular attestation, functional-atlas
+analytics, evidence-card review, bridge-candidate triage, monitoring
+prioritization, and validation-study design. Calibrated sample and project risk
+requires exact sample linkage, abundance or read coverage, environmental
+covariates, uncertainty propagation, and paired field or process validation.
+Final A to E tiers and carbon-market determinations follow independent
+calibration and methodology review.
+
+## Current Published Evidence Contract
+
+The public [landing page](https://emergentbiome.earth/) and
+[MBAG report](https://emergentbiome.earth/report/) use the July 24, 2026
+scientific-reconciliation release:
+
+| Measure | Release count | Interpretation |
+| --- | ---: | --- |
+| Registered MAG/proteome units | 7,965 | Warehouse registry, including explicit gaps and incomplete states |
+| ESM-2-bearing units | 7,710 | Proteome-neighborhood navigation |
+| gLM2 payloads | 7,717 | Genomic context, stratified by protocol |
+| Data-complete tri-views | 7,484 | ESM-2, gLM2, and functional payload present |
+| Mechanism-comparable tri-views | 625 | Common curated accepted/present feature contract |
+| Annotation-complete, harmonization-pending tri-views | 4,358 | MSM and Futian expansion |
+| Source-scaffold tri-views | 2,501 | MUCC v1 DRAM, gene, and expression evidence |
+
+The 7,484 total records payload availability. Cross-lane mechanism comparison
+currently stops at the 625-unit POC contract. MSM, Futian, and MUCC v1 retain
+their separate functional evidence classes in the warehouse, candidate cards,
+and report.
 
 ## Canonical Backbones
 
@@ -34,11 +60,11 @@ requires another key.
 
 ## Multi-Lane Molecular Payload Snapshot
 
-MethaNet now has four analytically distinct molecular lanes: the rumen and
-wetland POC lanes (fused as the closed `poc_core` calibration lane) plus two
-mangrove expansion lanes (MSM China 2025 and the new Futian 2026 lane). Keep
-their denominators and claim boundaries separate until a deliberate multi-view
-union is rebuilt.
+MethaNet now has five analytically distinct evidence lanes. The rumen and
+wetland POC lanes form the closed `poc_core` mechanism-comparison contract. MSM
+China 2025 and Futian 2026 form the mangrove expansion contract. MUCC v1 Old
+Woman Creek forms a wetland source-scaffold contract with processed expression
+evidence.
 
 The authoritative live-state source is the lane registry
 `configs/methanet_atlas_lanes.tsv`, summarized by
@@ -46,42 +72,31 @@ The authoritative live-state source is the lane registry
 sentinel-based, dedup-aware). Counts below are reconciled against that
 summarizer.
 
-Snapshot time: 2026-06-25 10:39 America/Bogota / 15:39 UTC. Counts were
-refreshed from Slurm, per-MAG sentinels, manifests, ESM2 checkpoint metadata,
-and gLM2 validation manifests. Regenerate the lane registry with
-`scripts/reports/refresh_atlas_lane_registry_status.sh` before freezing any
-external report.
+Release snapshot: 2026-07-24. Counts are tied to
+`results/reports/methanet_3view_payload_freeze_20260724_scientific_reconciliation/`
+and the corresponding MBAG report bundle. Refresh the lane registry before a
+new operational or external release.
 
 | Lane | Current molecular payload | Current use | Claim boundary |
 | --- | --- | --- | --- |
 | Rumen POC | 555 ESM2 proteomes in the 662-row backbone; 518 MAG/bin-comparable units in the POC functional/gLM2 denominator; 37 no-bin or assembly-context rumen units quarantined from MAG-bin feature tables | source reference lane for methane-system molecular neighborhoods and bridge hypotheses | source and ecosystem remain confounded; rumen evidence is not direct wetland risk evidence |
 | Wetland/MUCC POC | 107 ESM2 proteomes; 107 MAG/bin-comparable functional outputs; 107 gLM2 contextual units | target-domain wetland POC lane for bridge-candidate validation and molecular-attestation cards | MAG-level potential only; sample abundance, environmental covariates, and flux validation are incomplete |
 | Mangrove/MSM expansion | 1,428 local MAG/proteome candidates; 1,428 ESM2 embeddings complete; 1,428 gLM2 units complete; 1,427 functional MAGs complete (manifest-scoped), 1 partial, 0 not started, 0 manifest-scoped failed; 4 proteome IDs have duplicate complete attempts and 2 raw failed attempts are preserved on disk | target-domain expansion lane for broader blue-carbon molecular niche-space and future sample-level readiness | local 1,428-candidate denominator must be reconciled with the paper-reported 966 final medium/high-quality MAGs before final ecological denominators or sample MRV rollups |
-| Mangrove/Futian 2026 expansion (new) | 3,404 phase-1 dereplicated rMAGs at 99% ANI (3,156 ready payload rows + 248 explicit missing-payload gap rows); 3,156/3,156 ESM2 complete across four shards; 3,156/3,156 gLM2 complete; 302/312 archaea functional MAGs complete, 2 running/partial, 8 archaea pending/not-started, 0 manifest-scoped failed rows; three 948-task bacteria shards are queued behind dependencies | newest blue-carbon mangrove target lane; broadens molecular niche-space and future sample-level readiness | local 3,156-ready denominator; functional coverage remains archaea-only until bacteria shards run; no consolidated warehouse yet |
+| Mangrove/Futian 2026 expansion | 3,404 phase-1 dereplicated rMAGs at 99% ANI (3,156 ready payload rows + 248 explicit missing-payload gap rows); 3,156/3,156 ESM-2 complete; 3,156/3,156 gLM2 complete; 2,931 annotation-complete functional payloads in the release | target-domain expansion for molecular neighborhood and candidate review | common accepted/present mechanism-feature aggregation, depth-resolved MAG-to-sample mapping, abundance, and field validation remain pending |
+| MUCC v1 Old Woman Creek wetland | 2,508 checksum-validated archive MAGs; 2,501 ESM-2; 2,508 gLM2; 2,508 source-functional payloads; 2,501 data-complete source-scaffold tri-views | wetland molecular-reference screening, expression-detection review, and field-validation planning | source-scaffold mechanism features remain distinct; exact sample, depth, environmental, abundance, and flux joins are 0/133 |
 
-The POC rumen + wetland MAG-bin layer is already coherent for MBAG reporting:
-625/625 MAG-bin units have ESM2, functional warehouse rows, and gLM2 context.
-Current live tri-view-ready units across all lanes total **2,354** (625 POC
-core + 1,427 MSM + 302 Futian archaea). The current external HTML report remains
-backed by the earlier 2,352-unit release freeze (625 POC + 1,427 MSM + 300
-Futian archaea), so distinguish live operational status from frozen report
-state. Both mangrove lanes have complete ESM2 and gLM2 coverage, but Futian
-functional annotation is still moving and neither mangrove lane has a
-consolidated warehouse yet; rebuild the expanded atlas only after a deliberate
-interim snapshot or lane completion.
+The POC rumen plus wetland MAG-bin layer is coherent for mechanism comparison.
+All 625 units carry ESM-2, functional warehouse rows, and gLM2 context. The
+current release contains 7,484 data-complete tri-views across three functional
+evidence states. The two mangrove lanes contribute 4,358
+annotation-complete, harmonization-pending rows. MUCC v1 contributes 2,501
+source-scaffold rows under a distinct functional contract.
 
-Live functional jobs on Apolo-3 at snapshot time:
-
-- Futian functional arrays: archaea (`10557`, 1-312) has selected complete
-  per-MAG evidence bundles for 302 manifest-scoped units, two tasks running
-  around the live refresh, and tasks 305-312 pending under `%2`. `sacct` still records two failed scheduler
-  task states (`10557_17` and `10557_18`, exit 127), so use curated per-MAG
-  sentinels/manifests rather than Slurm state alone for payload readiness. Three
-  bacteria shards (`10560`/`10561`/`10562`, 948 each) are pending in a strict
-  sequential `afterok` dependency chain.
-- MSM China 2025 has no active Slurm array in the current queue; it is
-  1,427/1,428 manifest-scoped complete, with one partial unit requiring review
-  or rerun before final consolidation.
+Scheduler state changes faster than this release inventory. Use curated
+per-MAG sentinels and manifests for payload readiness, then use Slurm state as
+operational telemetry. Run
+`scripts/reports/refresh_atlas_lane_registry_status.sh` before launch, requeue,
+or new release decisions.
 
 ## External Tool And Database Layer
 
@@ -265,7 +280,7 @@ results/functional_metagenomics/futian_mangrove_2026_phase1_bacteria_002/
 results/functional_metagenomics/futian_mangrove_2026_phase1_bacteria_003/
 ```
 
-Live snapshot status (2026-06-25 10:39 Bogota / 15:39 UTC):
+Scientific-reconciliation release status (2026-07-24):
 
 | Item | Value |
 | --- | ---: |
@@ -273,54 +288,72 @@ Live snapshot status (2026-06-25 10:39 Bogota / 15:39 UTC):
 | Ready payload rows (functional include) | 3,156 |
 | Explicit missing-payload gap rows | 248 |
 | Functional denominator split | 312 Archaea + 2,844 Bacteria |
-| Complete functional MAGs (manifest-scoped, authoritative) | 302 / 3,156 |
-| Archaea functional complete | 302 / 312 |
-| Archaea running/partial | 2 |
+| Annotation-complete functional payloads in release | 2,931 / 3,156 |
+| Archaea functional complete | 312 / 312 |
+| Archaea running/partial | 0 |
 | Archaea failed (manifest-scoped) | 0 |
-| Archaea pending/not-started | 8 |
-| Bacteria functional complete | 0 / 2,844 |
-| Bacteria pending | 2,844 across three 948-task dependency shards |
+| Archaea pending/not-started | 0 |
+| Bacteria represented in annotation-complete release | 2,619 / 2,844 |
+| Ready rows without annotation-complete release payload | 225 |
 | ESM2 embeddings | 3,156 / 3,156 complete across four shards |
 | gLM2 contextual units | 3,156 / 3,156 complete |
 
-Functional coverage is archaea-only so far (the archaea array runs first; the
-three bacteria shards are queued behind it in a strict sequential `afterok`
-dependency chain), so the bacterial bulk is the long pole. The live registry
-currently reports zero manifest-scoped failed rows for Futian; any historical
-failed attempts should remain audit records, not biological failures.
-Aggregate rows across the 302 completed Futian archaea runs on disk (summed from
-per-run parquet manifests):
+The release includes every completed Futian functional payload admitted by the
+dated freeze and preserves 225 ready rows without an annotation-complete
+functional payload. Common mechanism-feature aggregation remains the main
+scientific blocker for cross-lane ranking. Slurm timeout or canceled task states
+remain scheduler-status records when a complete curated evidence bundle exists.
+The earlier 312-archaea aggregate remains a dated operational diagnostic:
 
 | Table | Rows |
 | --- | ---: |
-| `fact_kofam_hits` | 7,997,008 |
-| `fact_metabolic_module_step_presence` | 604,302 |
-| `fact_scycdb_hits` | 523,586 |
-| `fact_mcycdb_hits` | 485,098 |
-| `fact_bakta_features` | 446,834 |
-| `fact_metabolic_module_presence` | 141,940 |
-| `fact_metabolic_hmm_hits` | 95,130 |
-| `fact_metabolic_function_presence` | 31,408 |
-| `fact_dbcan_hits` | 10,969 |
-| `fact_merops_hits` | 2,393 |
-| `fact_cazy_hits` | 1,260 |
-| `fact_qc_checkm2` | 302 |
-| `fact_qc_gunc` | 302 |
+| `fact_kofam_hits` | 8,428,544 |
+| `fact_metabolic_module_step_presence` | 624,312 |
+| `fact_scycdb_hits` | 552,492 |
+| `fact_mcycdb_hits` | 511,204 |
+| `fact_bakta_features` | 468,909 |
+| `fact_metabolic_module_presence` | 146,640 |
+| `fact_metabolic_hmm_hits` | 98,280 |
+| `fact_metabolic_function_presence` | 32,448 |
+| `fact_dbcan_hits` | 11,491 |
+| `fact_merops_hits` | 2,550 |
+| `fact_cazy_hits` | 1,322 |
+| `fact_qc_checkm2` | 312 |
+| `fact_qc_gunc` | 312 |
 
-QC snapshot across the 302 completed Futian archaea runs:
+An early 12-bacteria operational tranche added the following raw per-run
+Parquet rows before lane-level consolidation:
+
+| Table | Rows |
+| --- | ---: |
+| `fact_kofam_hits` | 728,673 |
+| `fact_scycdb_hits` | 51,874 |
+| `fact_bakta_features` | 32,952 |
+| `fact_mcycdb_hits` | 33,642 |
+| `fact_metabolic_module_step_presence` | 24,012 |
+| `fact_metabolic_module_presence` | 5,640 |
+| `fact_metabolic_hmm_hits` | 3,780 |
+| `fact_dbcan_hits` | 2,305 |
+| `fact_metabolic_function_presence` | 1,248 |
+| `fact_merops_hits` | 257 |
+| `fact_cazy_hits` | 261 |
+| `fact_qc_checkm2` | 12 |
+| `fact_qc_gunc` | 12 |
+
+QC snapshot across the 312 completed Futian archaea runs:
 
 | QC field | Value |
 | --- | ---: |
-| High-quality-like MAGs | 32 |
-| Medium-quality-like MAGs | 269 |
+| High-quality-like MAGs | 33 |
+| Medium-quality-like MAGs | 278 |
 | Lower-quality or QC-gated MAGs | 1 |
 | Median completeness | 73.75% |
-| Median contamination | 0.87% |
-| GUNC pass | 288 |
+| Median contamination | 0.875% |
+| GUNC pass | 298 |
 | GUNC fail | 14 |
 
 The archaea tranche is comparatively clean (near-zero median contamination and
-288/302 GUNC pass), but it is a small, taxonomically biased slice of the lane;
+298/312 GUNC pass), but it is a small, taxonomically biased slice of the lane;
 do not generalize lane-level QC until the bacteria shards complete.
 Source provenance and checksums live under
 `data/external/futian_mangrove_2026_qi/source_docs/`; the 248-row gap register is
@@ -385,32 +418,29 @@ joined with explicit resolution tiers.
 
 ## Latest Partner-Facing Report Artifacts
 
-Latest generated expanded HTML atlas:
+Current generated scientific-reconciliation atlas:
 
 ```text
-results/reports/mbag_nextgen_molecular_niche_atlas_20260625_release_freeze_145509_bridge_v4/report.html
+results/reports/mbag_nextgen_molecular_niche_atlas_20260724_scientific_reconciliation/report.html
 ```
 
 That report is backed by the dated freeze:
 
 ```text
-results/reports/methanet_3view_payload_freeze_20260625_145509/
+results/reports/methanet_3view_payload_freeze_20260724_scientific_reconciliation/
 ```
 
-It exposes 2,352 release-required tri-view MAG/proteome units
-(625 POC core + 1,427 MSM + 300 Futian archaea), preserves one MSM
-release-excluded partial unit in `excluded_units.tsv` and
-`tables/release_exclusions.tsv`, and keeps 248 Futian source-lane gap rows
-visible outside the ready-payload denominator. Treat older published/static
-reports as historical snapshots unless they are rebuilt from a dated freeze.
-The `bridge_v4` render adds the hardened molecular niche-space bridge contract:
-all 5,209 embedding-bearing units are plotted, 248 non-embedded gap rows remain
-in status tables, 26 case-study candidates are labeled, and 16 mangrove
-case-study candidates carry explicit nearest-POC reference links.
+It registers 7,965 MAG/proteome units and exposes 7,710 ESM-2 embeddings, 7,717
+gLM2 payloads, and 7,484 data-complete tri-views. The tri-views comprise 625
+mechanism-comparable POC rows, 4,358 annotation-complete mangrove rows awaiting
+common feature aggregation, and 2,501 MUCC v1 source-scaffold rows. One
+incomplete MSM unit remains a release exclusion. Source gaps and missing
+payloads remain explicit status records. Treat older published reports as
+historical snapshots.
 
 ## Molecular Attestation Graph
 
-Current graph snapshot:
+Foundational graph MVP:
 
 ```text
 results/attestation/mmag_mvp_20260617/
@@ -451,11 +481,19 @@ Readiness distribution:
 | `molecular_attestation_ready_with_qc_caveat` | 188 |
 | `blocked_noncomparable_unit` | 37 |
 
+The July 24 release projects the same evidence-governance principle across the
+full 7,965-unit warehouse. It adds release-level evidence contracts, candidate
+cards, source provenance, protocol classes, authorized claim wording,
+validation gaps, and next actions. The 662-node MVP remains the foundational
+queryable graph artifact, while the current report is the warehouse-wide MBAG
+decision surface.
+
 ## Core Docs To Keep In Sync
 
 | Document | Role |
 | --- | --- |
 | `README.md` | public-facing project overview and current artifact arc |
+| `docs/methanet_positioning_and_claims.md` | canonical product narrative, terminology, release counts, and claim matrix |
 | `docs/apollo3_functional_mag_runbook.md` | Apolo-3 database/tool setup |
 | `docs/apollo3_mag_functional_analytics_ops.md` | executable operations and current generated artifacts |
 | `docs/functional_metagenomics_expansion.md` | phase gates and current implementation status |

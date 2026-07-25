@@ -1,26 +1,35 @@
 # MethaNet Functional-Metagenomics Expansion Package
 
 Date: 2026-06-13
-Documentation refresh: 2026-06-25
+Documentation refresh: 2026-07-24
 Scope: Blue Catalyst/MethaNet functional expansion from the 662-genome rumen +
-wetland/MUCC POC into a broader multi-lane molecular atlas spanning rumen,
-wetland/MUCC, mangrove/MSM, and mangrove/Futian MAG/proteome evidence.
+wetland/MUCC POC into a broader molecular-attestation warehouse spanning rumen,
+wetland/MUCC, mangrove/MSM, mangrove/Futian, and MUCC v1 Old Woman Creek
+MAG/proteome evidence.
 
 ## Purpose
 
-This folder turns the v2.0 report roadmap into an operational plan that can be run first on one MAG, then scaled across the full MAG/proteome set on Apolo-3.
+This folder turns the functional-atlas and MBAG roadmap into an operational
+plan that can be run first on one MAG, then scaled across the full
+MAG/proteome set on Apolo-3. The canonical product language and claim matrix
+live in `../../docs/methanet_positioning_and_claims.md`.
 
-The objective is to convert the current claim:
+The original POC claim was:
 
 > 662 genomes embedded with zero attrition; the ESM2 latent space separates methane-producing ecosystems while preserving cross-ecosystem bridges.
 
-into a stronger, fundable platform claim:
+The current platform claim is:
 
-> MethaNet can rank methane-relevant genomes by combining latent protein-language geometry with independently measured genome quality, taxonomy, methane-cycle mechanism, substrate/electron-transfer function, sulfur competition, and source-aware transfer validation.
+> MethaNet links molecular representations, functional and expression
+> evidence, QC, taxonomy, provenance, comparability states, and validation gaps
+> through MBAG so partners can review candidates and prioritize the next
+> measurement.
 
 ## Current Implemented Arc And Artifact State
 
-By the 2026-06-20 documentation refresh, this folder was no longer only a planning package. As of the 2026-06-25 refresh, the same architecture is being extended across the MSM and Futian mangrove lanes:
+By the 2026-06-20 documentation refresh, this folder had become an implemented
+evidence architecture. The July 24 release extends that architecture across
+MSM, Futian, and MUCC v1:
 
 1. `embedded_662_proteome_id_crosswalk.tsv` remains the 662-proteome ESM2 backbone.
 2. Unit-scope manifests split that backbone into 625 MAG/bin-comparable units and 37 assembly-context rumen no-bin units.
@@ -62,34 +71,32 @@ It preserves 662 MAG/proteome nodes, separates 625 MAG-bin units from 37 assembl
 The functional expansion is no longer a single POC denominator. Current local
 work should be interpreted as related but distinct evidence lanes:
 
-| Lane | Status at 2026-06-25 documentation refresh | Operational meaning |
+| Lane | Status in the 2026-07-24 release | Operational meaning |
 | --- | --- | --- |
 | Rumen POC | 555 ESM2 proteomes; 518 MAG/bin-comparable units in the completed POC functional/gLM2 layer; 37 assembly-context rumen units quarantined from MAG-bin tables | source reference lane for methane-system molecular neighborhoods and cross-domain bridge hypotheses |
 | Wetland/MUCC POC | 107 ESM2 proteomes; 107 completed functional MAG/bin outputs; 107 gLM2 units | target wetland POC lane for MBAG bridge-candidate evidence |
-| Mangrove/MSM expansion | 1,428 ESM2 proteome embeddings complete; 1,428 gLM2 units complete; 1,427/1,428 functional MAGs complete at the 2026-06-25 snapshot | broader blue-carbon target expansion; one partial unit remains before final consolidation |
-| Mangrove/Futian 2026 expansion | 3,404 dereplicated rMAGs (3,156 ready payload rows + 248 gap rows); 3,156/3,156 ESM2 complete; 3,156/3,156 gLM2 complete; live functional status is 302/312 archaea complete, 2 running/partial, 8 pending/not-started, 0 manifest-scoped failed rows at the 2026-06-25 15:39 UTC refresh; 2,844 bacteria queued | newest blue-carbon mangrove target lane; archaea-only functional coverage so far; no consolidated warehouse yet |
+| Mangrove/MSM expansion | 1,428 ESM2 proteome embeddings complete; 1,428 gLM2 units complete; 1,427/1,428 functional MAGs complete, with one partial unit release-excluded in the 2026-06-25 freeze | broader blue-carbon target expansion; one partial unit remains before final consolidation |
+| Mangrove/Futian 2026 expansion | 3,404 registered rMAGs; 3,156 ESM-2; 3,156 gLM2; 2,931 annotation-complete functional payloads | blue-carbon target lane awaiting common accepted/present mechanism-feature aggregation |
+| MUCC v1 Old Woman Creek | 2,508 registered MAGs; 2,501 ESM-2; 2,508 gLM2 and source-functional payloads; 2,501 data-complete source-scaffold tri-views | wetland reference and expression-detection lane under a distinct functional contract |
 
 The latest expanded HTML atlas is:
 
 ```text
-results/reports/mbag_nextgen_molecular_niche_atlas_20260625_release_freeze_145509_bridge_v4/report.html
+results/reports/mbag_nextgen_molecular_niche_atlas_20260724_scientific_reconciliation/report.html
 ```
 
 It is backed by:
 
 ```text
-results/reports/methanet_3view_payload_freeze_20260625_145509/
+results/reports/methanet_3view_payload_freeze_20260724_scientific_reconciliation/
 ```
 
-This freeze contains 2,352 release-required tri-view MAG/proteome units
-(625 POC core + 1,427 MSM + 300 Futian archaea), explicitly preserves one
-release-excluded MSM partial unit, and retains 248 Futian source-lane gap rows
-outside the ready-payload denominator. Live production has moved beyond that
-freeze to 2,354 tri-view units as of the 2026-06-25 15:39 UTC registry refresh,
-but external reports should remain tied to their dated freeze manifests. The
-`bridge_v4` render keeps that denominator fixed while improving the molecular
-niche-space bridge view with all embedding-bearing units, case-study halos,
-nearest-POC evidence links, and diffusion/UMAP/t-SNE/PCA sensitivity views.
+This freeze registers 7,965 units and contains 7,484 data-complete tri-views.
+The evidence contract keeps 625 mechanism-comparable POC rows, 4,358
+annotation-complete mangrove rows awaiting common feature aggregation, and
+2,501 MUCC v1 source-scaffold rows separate. One incomplete MSM row remains a
+release exclusion, and source gaps remain visible. External reports should stay
+tied to dated freeze manifests.
 Future rebuilds should continue to use `configs/methanet_atlas_lanes.tsv` and a
 dated freeze manifest from
 `scripts/reports/build_methanet_3view_payload_freeze.py`, not ad hoc folder

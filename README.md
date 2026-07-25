@@ -1,47 +1,100 @@
-# MethaNet: Transfer Learning for Methane Flux Prediction
+# MethaNet: Molecular Attestation For Blue-Carbon Methane Diligence
 
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 ![Status](https://img.shields.io/badge/Status-In%20Development-yellow)
 
-**Bridging Rumen Microbiome Data to Climate Verification Through Cross-Ecosystem Genomic Analysis**
+**A molecular evidence graph for candidate review, monitoring design, and
+validation-ready methane-risk intelligence**
+
+[Landing page](https://emergentbiome.earth/) ·
+[Interactive MBAG report](https://emergentbiome.earth/report/) ·
+[Positioning and claim contract](docs/methanet_positioning_and_claims.md)
 
 ---
 
 ## Overview
 
-MethaNet is a research initiative developing molecular intelligence methods for methane permanence-risk screening in coastal ecosystems, with the long-term goal of calibrated net methane-flux prediction. By leveraging data-rich rumen methane systems as a reference domain and expanding into wetland/MUCC, mangrove/MSM, and mangrove/Futian MAG/proteome evidence, we aim to decode complex coastal wetland systems that are critical for carbon sequestration but remain data-sparse.
+MethaNet is a molecular-attestation system for blue-carbon methane diligence.
+It links protein-language geometry, genomic context, functional machinery,
+expression evidence, genome quality, taxonomy, provenance, and validation
+readiness through the MethaNet Bridge Attestation Graph, or MBAG. The current
+system helps reviewers inspect molecular evidence, prioritize candidates, and
+decide which measurement will most improve a monitoring or validation plan.
 
-Methane has a global warming potential approximately 30× that of CO₂ over a 100-year horizon. Coastal wetlands can be net carbon sinks or sources depending on the balance between carbon uptake and methane emissions. Current measurement methods (chamber measurements, flux towers) are expensive, sparse, and unable to scale. This project addresses a critical gap in climate accounting: the inability to distinguish net climate benefits from net climate harms using molecular data.
+Methane can materially reduce the climate value of coastal carbon storage.
+Chambers, flux towers, and process assays provide essential field evidence,
+although their cost and spatial coverage limit portfolio-scale use. MethaNet
+adds a traceable molecular layer that can guide diligence and measurement
+design today. Calibrated sample and project risk follows after molecular
+evidence is paired with abundance, environmental context, uncertainty, and
+field or process validation.
 
 ### Core Hypothesis
 
-MAG/proteome-level molecular fingerprints, including methanogenesis markers such
-as `mcrA`, methane-oxidation markers such as `pmoA`, sulfur-competition signals,
-substrate-processing capacity, genome context, QC, taxonomy, and environmental
-metadata, can identify where methane permanence risk is more plausible and where
-field validation should be prioritized. Calibrated net methane-flux prediction
-requires sample mapping, abundance/read coverage, environmental covariates,
-uncertainty propagation, and measured flux/process validation.
+MAG/proteome-level molecular fingerprints can help identify biologically
+plausible methane pathways and prioritize field validation. These fingerprints
+include methanogenesis and methane-oxidation markers, sulfur competition,
+substrate-processing capacity, genomic context, QC, taxonomy, and source
+provenance. Sample methane-risk estimation requires exact sample linkage,
+abundance or read coverage, environmental covariates, uncertainty propagation,
+and measured flux or process validation.
+
+## What Works Today
+
+The July 24, 2026 scientific-reconciliation release is a governed molecular
+warehouse and evidence graph:
+
+| Evidence layer | Current release | Decision use |
+| --- | ---: | --- |
+| Registered MAG/proteome units | 7,965 | Auditable warehouse denominator |
+| ESM-2-bearing units | 7,710 | Proteome-neighborhood navigation |
+| gLM2 payloads | 7,717 | Protocol-aware genomic context |
+| Data-complete tri-views | 7,484 | Three-view evidence availability |
+| Mechanism-comparable tri-views | 625 | Current common-feature comparison ceiling |
+| Harmonization-pending mangrove tri-views | 4,358 | Candidate review and common-feature rebuild |
+| MUCC v1 source-scaffold tri-views | 2,501 | Wetland reference and expression-detection review |
+
+A data-complete tri-view contains ESM-2, gLM2, and a functional payload. Its
+evidence state records whether those payloads share a common quantitative
+contract. The 625-unit POC core is mechanism-comparable. The mangrove and MUCC
+v1 lanes remain valuable under their explicit annotation-complete and
+source-scaffold contracts.
+
+Current outputs include candidate evidence cards, molecular diligence,
+monitoring prioritization, validation-gap routing, and study design. Final
+sample/project methane-risk scores, calibrated A to E tiers, measured methane
+flux, source-independent transfer conclusions, and carbon-credit decisions
+remain validation outcomes.
 
 ---
 
 ## Research Objectives
 
-1. **Discover transferable feature sets**: Identify minimal molecular feature sets that maximize flux prediction while remaining transferable across ecosystems, ranked by sequence conservation.
+1. **Build reviewable molecular attestation.** Link each MAG or proteome to
+   ESM-2, gLM2, functional evidence, QC, taxonomy, provenance, and claim
+   eligibility.
 
-2. **Characterize domain shift**: Quantify distribution shift between rumen and mangrove communities using clustering and embedding analysis to identify "bridge" training examples.
+2. **Characterize domain shift.** Quantify source, ecosystem, taxonomy, and
+   protocol effects before interpreting molecular neighborhoods as transferable
+   biology.
 
-3. **Identify novel flux predictors**: Discover non-obvious gene associations beyond mcrA, including heterodisulfide reductase variants and electron-bifurcating complexes.
+3. **Prioritize mechanism hypotheses.** Combine methane, sulfur, substrate, and
+   genomic-context evidence into candidate cards with explicit comparability and
+   missingness states.
 
-4. **Validate net flux prediction**: Test the mcrA/pmoA ratio against environmental covariates in mangrove samples with paired flux measurements.
+4. **Earn calibrated methane-risk outputs.** Link molecular evidence to physical
+   samples, abundance, environmental conditions, uncertainty, and paired field
+   measurements under site and season holdouts.
 
 ---
 
-## Datasets
+## Evidence Sources
 
-### Primary Dataset: Ruminant Gut Archaeome Catalogue
+### Rumen Reference Resources
 
-The most comprehensive methanogen genomic resource with paired methane emission measurements.
+Rumen genomes provide a data-rich reference for methane-system molecular
+biology. Current MethaNet transfer claims remain source-aware because ecosystem
+and source are confounded in the original POC.
 
 | Resource | Description | Size | Source |
 |----------|-------------|------|--------|
@@ -49,27 +102,26 @@ The most comprehensive methanogen genomic resource with paired methane emission 
 | RUG2 Catalog | Metagenome-assembled genomes from rumen | 4,941 MAGs | [Stewart et al., 2019](https://doi.org/10.1038/s41587-019-0202-3) |
 | Hungate1000 | Cultivated rumen microbiome isolates | 410 genomes | [Seshadri et al., 2018](https://doi.org/10.1038/nbt.4110) |
 
-**Why rumen data?** The rumen system provides:
-- High-resolution genomic templates paired with flux measurements
-- Standardized functional annotations and biochemical pathway data
-- Detailed environmental metadata enabling predictive model training
+### Blue-Carbon And Wetland Evidence Lanes
 
-### Target Dataset: Coastal Sediment Metagenomes
+| Lane | Registered or source denominator | Current role |
+| --- | ---: | --- |
+| Wetland/MUCC POC | 107 MAG/proteome units | Mechanism-comparable target-domain POC |
+| MSM China mangrove | 1,428 local candidates | Annotation-complete target expansion with one release exclusion |
+| Futian mangrove | 3,404 rMAGs, including 3,156 ready payload rows | Time, depth, and habitat expansion |
+| MUCC v1 Old Woman Creek | 2,508 archive MAGs | Wetland source-scaffold, expression detection, and field-validation lane |
 
-Target environmental datasets for model validation and transfer learning.
-
-| Dataset | Description | Source |
-|---------|-------------|--------|
-| Global Mangrove Metagenomes | ~127 curated samples (from ~150 public samples) | NCBI SRA |
-| Mangrove Methanogen Study | 13 MAGs with pathway analysis | [Zhang et al., 2020](https://doi.org/10.1186/s40168-020-00876-z) |
-
-**Data disparity:** ~26,000 rumen microbiome sequencing runs exist in NCBI SRA compared to ~2,400 from mangrove sites, a >10× disparity that motivates our transfer learning approach.
-
-**Validation strategy:** We are curating publicly available coastal metagenomes with co-located flux tower or chamber measurements for model validation, with 23 samples targeted for paired-flux evaluation.
+Each source retains its own denominator, metadata resolution, functional
+contract, and provenance. Sample-level ecological interpretation begins after
+MAG-to-sample, abundance, environmental, and outcome joins are authoritative.
 
 ### Blue Catalyst POC (Completed on Apolo-3)
 
-We completed a cross-ecosystem proteome embedding POC between MUCC wetland genomes and rumen genomes (PRJEB31266) using ESM2-650M protein language model embeddings. The POC was developed for the [Hatch Blue — Blue Catalyst](https://www.hatch.blue/programs/blue-catalyst) accelerator program (Singapore, May 2026).
+We completed a cross-ecosystem proteome embedding POC between MUCC wetland
+genomes and rumen genomes (PRJEB31266) using ESM2-650M protein language model
+embeddings. The POC was developed for the
+[Hatch Blue Blue Catalyst](https://www.hatch.blue/programs/blue-catalyst)
+accelerator program in Singapore in May 2026.
 
 **662-genome cohort (current, `apolo_full_20260228_080644_embed_20260305_061952`)**
 
@@ -84,15 +136,23 @@ We completed a cross-ecosystem proteome embedding POC between MUCC wetland genom
 | Bridge genomes | 14 with ≥1 opposite-ecosystem k-NN neighbor | Out of 662 total |
 | Top bridge | bin.8 (Archaea), alpha-transfer score=3.47 | >6 SDs above cohort mean; all top 11 are rumen Archaea |
 
-**Key scientific findings:**
-- Rumen Archaea dominate bridge candidate rankings — all top 11 alpha-transfer scores are Archaea, consistent with conserved methanogenesis machinery (mcrA, HdrABC) across ecosystems
-- Perfect classifier separation (AUC=1.0) under real-world class imbalance confirms the embedding manifold encodes a learnable ecosystem boundary
-- **P0 caveat**: Source and ecosystem are perfectly confounded (all rumen = PRJEB31266, all wetland = MUCC). Deconfounding with additional sources is the highest-priority next step.
+**Key scientific findings**
+
+- Rumen Archaea dominate the historical bridge-candidate ranking. All top 11
+  alpha-transfer scores are Archaea, which is consistent with conserved
+  methanogenesis machinery and remains a hypothesis for functional review.
+- Classifier performance of AUC 1.0 documents strong source and ecosystem label
+  separability within this POC. Methane transfer and activity remain separate
+  validation questions.
+- **P0 caveat.** Source and ecosystem are perfectly confounded. All rumen
+  genomes come from PRJEB31266, and all wetland genomes come from MUCC.
+  Deconfounding with additional sources is the highest-priority next step.
 
 **40-genome baseline (initial validation, `apolo_20260226_194505`)**
 - 40 samples (20 MUCC + 20 rumen), PERMANOVA R²=0.517, silhouette=0.433, trajectory t=13.97 (p=1.5e-16)
 - bin.23 (Archaea) embeds 100% inside wetland cluster (mixing_coeff=1.0)
-- The R² decrease from 0.517→0.202 at scale is expected: adding 515 rumen genomes increases intra-class diversity while the ecosystem boundary remains perfectly classifiable
+- The R² decrease from 0.517 to 0.202 at scale is consistent with greater
+  within-rumen diversity after adding 515 rumen genomes.
 
 **Deep-dive analytics report**
 - 6 publication-grade figures + Word report: `results/blue_catalyst_poc/interim_snapshots/apolo_full_20260228_080644_embed_20260305_061952_notebook_interim_20260306_055012/deep_dive_report/`
@@ -123,9 +183,13 @@ We completed a cross-ecosystem proteome embedding POC between MUCC wetland genom
 - Numerical stability (NaN/Inf guards at every aggregation step)
 - Portable checksum verification in artifact pulls (normalization of remote-path SHA entries)
 
-### Functional Atlas And MRV Roadmap
+### MBAG Molecular Attestation Warehouse And MRV Roadmap
 
-The 662-genome ESM2 POC is being expanded into a source-audited functional atlas and MBAG evidence layer for methane-risk screening. The current claim boundary is strict: MAG-level molecular evidence can prioritize bridge candidates and monitoring follow-up, but final sample/project MRV risk scoring requires sample mapping, abundance/read coverage, environmental covariates, uncertainty propagation, and flux/process validation.
+The original 662-genome ESM-2 POC has developed into a source-audited
+multi-lane molecular atlas and MBAG evidence graph. MAG-level evidence supports
+candidate review and monitoring follow-up. Sample and project MRV requires
+sample mapping, abundance or read coverage, environmental covariates,
+uncertainty propagation, and flux or process validation.
 
 Current implemented artifact arc:
 
@@ -137,21 +201,30 @@ Current implemented artifact arc:
 | POC gLM2 context | `results/contextual_genomics/glm2_integration_20260616_poc_catchup_20260616_073441/` | 625/625 MAG-bin units complete after rumen catch-up |
 | Mangrove/MSM ESM2 expansion | `results/blue_catalyst_poc/runs/msm_china_2025_esm2_20260616_082112/artifacts/` | 1,428/1,428 local mangrove/MSM proteomes embedded |
 | Mangrove/MSM gLM2 expansion | `results/contextual_genomics/glm2_msm_magbin_full_20260615_092737/` | 1,428/1,428 contextual genome units complete |
-| Mangrove/MSM functional expansion | `results/functional_metagenomics/msm_china_2025_20260615/` | near-complete expansion lane; 1,427/1,428 functional MAGs complete at the 2026-06-25 snapshot |
+| Mangrove/MSM functional expansion | `results/functional_metagenomics/msm_china_2025_20260615/` | near-complete expansion lane; 1,427/1,428 functional MAGs complete, with one release-excluded partial unit preserved in the 2026-06-25 freeze |
 | Mangrove/Futian ESM2 + gLM2 expansion | `results/blue_catalyst_poc/runs/futian_mangrove_2026_esm2_phase1_shard*_20260621/` and `results/contextual_genomics/glm2_futian_phase1_shard*_20260621/` | 3,156/3,156 ready Futian MAG/proteome units complete in both ESM2 and gLM2 |
-| Mangrove/Futian functional expansion | `results/functional_metagenomics/futian_mangrove_2026_phase1_archaea/` and queued bacteria shards | active expansion lane; live status is 302/312 archaea complete, 2 running/partial, 8 pending/not-started at the 2026-06-25 15:39 UTC refresh; bacteria shards queued behind the archaea dependency. The current external report remains backed by the earlier 300-archaea release freeze. |
+| Mangrove/Futian functional expansion | `results/functional_metagenomics/futian_mangrove_2026_phase1_archaea/` and `results/functional_metagenomics/futian_mangrove_2026_phase1_bacteria_00*/` | 2,931/3,156 ready-payload rows carry annotation-complete functional output in the July 24 release; common accepted/present mechanism-feature aggregation remains pending |
+| MUCC v1 Old Woman Creek wetland lane | `results/functional_metagenomics/mucc_v1_owc_wetland_20260626/` | 2,508 registered wetland MAGs; 2,501 ESM-2-bearing and data-complete source-scaffold tri-views; processed expression detection and staged field evidence retain explicit linkage gaps |
 | Metadata provenance | `results/functional_metagenomics/environmental_metadata_recovery_20260612/`, `data/external/msm_china_2025/metadata/`, and `data/external/futian_mangrove_2026_qi/metadata/` | source/environmental metadata with resolution tiers across rumen, wetland/MUCC, MSM, and Futian lanes |
-| Molecular attestation graph | `results/attestation/mmag_mvp_20260617/` | POC graph snapshot over the 662-row denominator; not yet rebuilt over the full mangrove expansion |
-| Latest expanded HTML atlas | `results/reports/mbag_nextgen_molecular_niche_atlas_20260625_release_freeze_145509_bridge_v4/report.html` | current freeze-backed report over 2,352 release-required tri-view MAG/proteome units: 625 POC core + 1,427 MSM + 300 Futian archaea; preserves one MSM release exclusion and 248 Futian source-lane gap rows; hardens the molecular niche-space view with all embedding-bearing units, case-study halos, nearest-POC bridge links, and projection sensitivity views |
+| Molecular attestation graph | `results/attestation/mmag_mvp_20260617/` plus the release-level MBAG projection | POC graph MVP plus current warehouse-wide evidence-contract, candidate-card, and validation-readiness views |
+| Current interactive atlas | `results/reports/mbag_nextgen_molecular_niche_atlas_20260724_scientific_reconciliation/report.html` | 7,965 registered units, 7,710 ESM-2 embeddings, 7,717 gLM2 payloads, and 7,484 data-complete tri-views across three explicit functional evidence states |
 
-These artifacts support MAG/proteome-level molecular attestation, bridge-candidate prioritization, and MRV feature-readiness design. They do **not** assign final sample/project methane-risk scores, final A-E MRV tiers, measured methane flux, source-independent transfer proof, or carbon-credit approval.
+These artifacts support MAG/proteome-level molecular attestation,
+bridge-candidate prioritization, evidence-card review, and monitoring-readiness
+design. The [positioning and claim contract](docs/methanet_positioning_and_claims.md)
+records the shared language used by the repository, landing page, and report.
 
-The current system should be read as a four-lane molecular atlas:
+The current system should be read as five evidence lanes:
 
 - rumen POC: source reference lane for methane-system molecular neighborhoods;
 - wetland/MUCC POC: target-domain wetland lane with complete MAG-bin molecular evidence;
-- mangrove/MSM expansion: broader blue-carbon target lane with ESM2 and gLM2 complete and functional annotations almost complete.
-- mangrove/Futian expansion: larger time/depth/habitat mangrove target lane with ESM2 and gLM2 complete, archaea functional annotation active at 302/312 live complete, and bacteria shards queued.
+- mangrove/MSM expansion: broader blue-carbon target lane with ESM2 and gLM2 complete, functional annotations at 1,427/1,428, and source metadata that links local MAG candidates to grouped sediment-sample metadata rather than final abundance-weighted sample scores.
+- mangrove/Futian expansion: larger time, depth, and habitat target lane with
+  ESM-2 and gLM2 complete for 3,156 ready rows and 2,931 annotation-complete
+  functional payloads in the current release;
+- MUCC v1 Old Woman Creek: wetland reference lane with 2,501 data-complete
+  source-scaffold tri-views, processed expression detection, and staged
+  field-validation evidence whose exact ecological joins remain unresolved.
 
 For the freshest dated payload inventory, see `docs/current_artifact_inventory.md`.
 For live multi-lane payload state, regenerate the registry summary with
@@ -168,30 +241,31 @@ Key roadmap and contract documents:
 
 ---
 
-## Feature Engineering
+## Evidence Engineering
 
-Planned feature matrices for genomic language model analysis (designed for immediate analysis after data access and QC):
+The current system separates evidence availability from quantitative
+comparability:
 
 | Feature Type | Description | Tools |
 |--------------|-------------|-------|
-| Pathway completeness | MCR complex, HdrABC completeness scores | KEGG, MetaCyc |
-| Protein embeddings | Embeddings for mcrA/pmoA marker genes | [ESM-2](https://github.com/facebookresearch/esm), [GenomeOcean](https://doi.org/10.1101/2025.01.30.635558) |
-| Gene co-occurrence | Network-based features from marker associations | Custom pipeline |
-| Environmental covariates | Salinity, temperature, sediment depth | Paired metadata |
+| Functional mechanism | Accepted/present methane, sulfur, substrate, and pathway evidence | KOfam, MCycDB, SCycDB, METABOLIC, dbCAN |
+| Proteome representation | Genome-level aggregation of protein embeddings | [ESM-2](https://github.com/facebookresearch/esm) |
+| Genomic context | Native and shuffled context under protocol-stratified comparison | gLM2 |
+| Reliability | QC, taxonomy, provenance, annotation coverage, and missingness | CheckM2, GUNC, GTDB-Tk, source manifests |
+| Environmental readiness | Sample identity, abundance, covariates, uncertainty, and field validation | Current integration roadmap |
 
 ---
 
 ## Methodology
 
-### Transfer Learning Approach
+### Evidence-To-Validation Approach
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  SOURCE DOMAIN  │     │   THE BRIDGE     │     │  TARGET DOMAIN  │
+│  REFERENCE      │     │  MBAG EVIDENCE   │     │  TARGET DOMAIN  │
 │                 │     │                  │     │                 │
-│  Rumen Archaeome│ ──▶ │ Genomic Language │ ──▶ │ Coastal         │
-│  998 genomes    │     │ Model + Domain   │     │ Ecosystems      │
-│  Paired CH₄     │     │ Adaptation       │     │ 127 metagenomes │
-│  measurements   │     │                  │     │ 23 with flux    │
+│  Rumen + POC    │ ──▶ │ Tri-view graph + │ ──▶ │ Coastal wetland │
+│  molecular      │     │ QC + provenance  │     │ monitoring and  │
+│  context        │     │ + claim gates    │     │ validation      │
 └─────────────────┘     └──────────────────┘     └─────────────────┘
 ```
 
@@ -207,7 +281,9 @@ MethaNet uses a strategic set of **12 HMM markers** (TIGRFAMs v15.0) to capture 
 | **mtaB** | Methanol MT | Methylotrophic | **"Sulfate Bypass"** in saline/mangrove systems |
 | **dsrA** | Dissimilatory sulfite reductase | Sulfate Reduction | Competitive exclusion signal |
 
-**The mcrA/pmoA ratio** (augmented by mmoX) captures the balance between methane production and consumption. The inclusion of **mtaB** and **dsrA** allows the model to adjust for the unique thermodynamic constraints of coastal ecosystems.
+The marker panel provides mechanism-relevant molecular potential. Marker ratios
+and pathway balances become sample-level predictors only after abundance,
+environmental context, uncertainty, and field validation are joined.
 
 ### Methanogenesis Pathways
 
@@ -228,16 +304,18 @@ MethaNet/
 ├── CITATION.cff
 ├── pyproject.toml
 ├── uv.lock                 # Lockfile (reproducible installs)
-├── configs/                 # Pipeline configuration (template/spec)
-├── workflow/                # Snakemake pipeline (template/spec)
-├── .github/                 # CI workflows
-├── src/methanet/           # Core package
-│   ├── features.py         # Feature extraction
-│   ├── models.py           # Transfer learning models
-│   └── utils.py            # Utilities
-├── notebooks/              # Analysis notebooks
-├── tests/                  # Unit tests
-└── data/                   # Data directory (not in git)
+├── docs/                    # Positioning, methods, inventory, and runbooks
+├── ai_docs/functional_metagenomics_expansion/
+│                             # Scientific contracts and MRV roadmap
+├── configs/                 # Pipeline and atlas-lane configuration
+├── scripts/                 # Curation, warehouse, attestation, and report builders
+├── workflow/                # Snakemake template and execution rules
+├── src/methanet/            # Core package
+├── notebooks/               # Analysis notebooks
+├── tests/                   # Unit and integration tests
+├── web/emergentbiome-methanet/
+│                             # Landing page and public report publisher
+└── data/                    # Local data directory, excluded from git
 ```
 
 ---
@@ -346,15 +424,17 @@ ML (optional): torch, transformers
 
 ---
 
-## Timeline
+## Product Maturity
 
-| Phase | Date | Milestone |
-|-------|------|-----------|
-| ✅ | Q4 2025 | Project initiation, data curation |
-| 🔄 | Q1 2026 | Feature matrix construction, QC |
-| ⏳ | Q2 2026 | Model development, domain adaptation |
-| ⏳ | Q3 2026 | Validation, preprint, data release |
-| ⏳ | Q4 2026 | Field validation planning |
+| Level | Current state | Decision unlocked |
+| --- | --- | --- |
+| 0. Molecular attestation | Available now | Candidate review, evidence cards, and monitoring prioritization |
+| 1. Sample identity and metadata | In progress | Physical sample and site rollups |
+| 2. Abundance and community capacity | Planned | Abundance-weighted molecular capacity |
+| 3. Environmental permissiveness | Planned | Context-aware methane-pathway interpretation |
+| 4. Flux and process validation | Planned | Target-domain outcome calibration |
+| 5. Probabilistic methane risk | Target | Calibrated sample and site risk distributions |
+| 6. MRV and audit integration | Horizon | Registry-aligned evidence packages after independent review |
 
 ---
 
@@ -364,7 +444,7 @@ If you use MethaNet in your research, please cite:
 ```bibtex
 @software{methanet2025,
   author       = {Philosof, Alon and Gutierrez, Jay},
-  title        = {{MethaNet: Transfer Learning for Methane Flux Prediction}},
+  title        = {{MethaNet: Molecular Attestation for Blue-Carbon Methane Diligence}},
   year         = {2025},
   publisher    = {GitHub},
   url          = {https://github.com/jaygut/MethaNet}

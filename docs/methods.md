@@ -1,6 +1,43 @@
 # MethaNet Methods
 
-This document provides detailed technical descriptions of the computational methods used in MethaNet for predicting methane emission risk in coastal ecosystems.
+This document records implemented molecular-atlas methods alongside earlier
+prediction-model specifications. The current validated product layer is MBAG
+molecular attestation at MAG/proteome grain. It supports molecular
+neighborhood navigation, functional evidence review, QC and provenance
+guardrails, candidate cards, and monitoring-readiness design.
+
+Calibrated sample or project methane-risk prediction requires exact sample
+linkage, abundance or read coverage, environmental covariates, uncertainty
+propagation, and paired field or process validation. Sections that describe
+domain adaptation, ensemble classification, A to E tiers, or model export are
+design specifications until those gates pass.
+
+Use the following sources for current interpretation:
+
+- [`methanet_positioning_and_claims.md`](methanet_positioning_and_claims.md)
+  for product language and claim boundaries;
+- [`current_artifact_inventory.md`](current_artifact_inventory.md) for
+  release counts and artifact paths;
+- [the public MBAG report](https://emergentbiome.earth/report/) for the current
+  tri-view evidence contract and scientific reconciliation.
+
+## Current MBAG Method Stack
+
+The July 24, 2026 release links 7,965 registered MAG/proteome units through:
+
+1. ESM-2 proteome embeddings for molecular-neighborhood navigation;
+2. gLM2 native and shuffled genomic context under protocol-stratified
+   comparison;
+3. functional and expression payloads under explicit evidence contracts;
+4. CheckM2, GUNC, GTDB-Tk, annotation coverage, source provenance, and
+   missingness guardrails;
+5. evidence cards that carry authorized claim wording, blocking gaps, and the
+   next validation action.
+
+The release contains 7,484 data-complete tri-views. The 625-unit POC core is
+mechanism-comparable. The 4,358 mangrove rows await common accepted/present
+feature aggregation. The 2,501 MUCC v1 rows retain their source-scaffold
+functional contract.
 
 ## Table of Contents
 
@@ -16,7 +53,10 @@ This document provides detailed technical descriptions of the computational meth
 
 ### 1.1 Functional Gene Quantification
 
-MethaNet quantifies an expanded set of **12 key marker genes** to capture complex methane dynamics, specifically addressing the "Sulfate Bypass" in saline environments and "Copper-Switch" oxidation.
+The marker-screening workflow quantifies 12 selected genes as
+mechanism-relevant molecular evidence. Their presence records functional
+potential. Activity and sample-level pathway balance require expression,
+abundance, environmental, and process evidence.
 
 | Marker | Function | Rationale | HMM Source |
 |--------|----------|-----------|------------|
