@@ -1,5 +1,0 @@
-lane_id	lane	registered_units	esm2_units	glm2_units	functional_payload_units	data_complete_tri_view_units	mechanism_comparable_tri_view_units	annotation_complete_harmonization_pending_units	source_scaffold_units	single_window_glm2_units	multiwindow_glm2_units	esm2_cap_applied_units	functional_contract
-poc_core	POC reference core	625	625	625	625	625	625	0	0	625	0	0	canonical_mechanism_comparable
-msm_china_2025	MSM mangrove	1428	1428	1428	1427	1427	0	1427	0	1428	0	66	annotation_complete_harmonization_pending
-futian_mangrove_2026_qi	Futian mangrove	3404	3156	3156	2931	2931	0	2931	0	3156	0	22	annotation_complete_harmonization_pending
-mucc_v1_owc_wetland	MUCC v1 wetland	2508	2501	2508	2508	2501	0	0	2508	0	2508	33	source_scaffold_non_equivalent

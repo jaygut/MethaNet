@@ -64,7 +64,7 @@ window.EB = (function () {
     futianBacteriaComplete: 2619,    // 2,619/2,844 complete in the reconciled release
     futianBacteriaPending: 225,
 
-    triViewReady: 7484,              // data-complete, not universally mechanism-comparable
+    triViewReady: 7484,              // data-complete; mechanism comparability is tracked separately
     triViewReadyLive: 7484,
     reportFreezeTriView: 7484,
     mechanismComparableTriView: 625,
@@ -174,14 +174,14 @@ window.EB = (function () {
   const claims = {
     footer:
       "Current results are genome-level molecular screening, candidate triage, and monitoring prioritization. " +
-      "No measured methane flux, final risk scores, A–E tiers, or carbon-credit approval are claimed " +
-      "from the molecular map alone. A–E risk tiers are target product vocabulary, not yet calibrated. " +
+      "Measured methane flux, final risk scores, A–E tiers, and carbon-credit decisions require paired abundance, environmental, uncertainty, and field-validation evidence. " +
+      "A–E risk tiers remain target product vocabulary while calibration is completed. " +
       "Snapshot " + num.snapshot + ".",
-    short: "Molecular screening and candidate triage, not calibrated MRV. A–E tiers are target vocabulary.",
+    short: "Molecular screening, candidate triage, and monitoring prioritization. Calibrated MRV follows paired validation.",
     boundaries: [
       "Molecular screening, candidate triage, and monitoring prioritization, at the genome level.",
-      "A–E risk tiers are TARGET product vocabulary, explicitly not yet calibrated.",
-      "No measured flux, final MRV scores, or carbon-credit approval from the map alone.",
+      "A–E risk tiers are target product vocabulary. Calibration requires paired validation.",
+      "Measured flux, final MRV scores, and carbon-credit decisions require evidence beyond the molecular map.",
       "Reference-to-target signals stay provisional until source-balanced validation exists.",
     ],
   };
@@ -246,7 +246,7 @@ window.EB = (function () {
       id: "surveyor", n: 3, label: "03 · What You Get",
       kicker: "What you get",
       headline: "A ranked list of where methane risk hides, and where to measure first.",
-      copy: "For each site: a methane-capacity signal from the sediment community, plus a confidence band and the evidence. Not a flux number. Where to measure first.",
+      copy: "For each site, a methane-capacity evidence profile with its confidence, provenance, and next measurement. It directs field attention to the highest-information contexts.",
       data: "illustrative",
     },
     {
@@ -259,15 +259,15 @@ window.EB = (function () {
     {
       id: "atlas", n: 5, label: "05 · The Evidence",
       kicker: "The evidence behind the ranking",
-      headline: "Every call stands on a source-audited atlas.",
-      copy: "The warehouse maps 7,710 genomes; 7,484 carry all three payloads. Only the 625-unit POC core is mechanism-comparable today.",
+      headline: "Every decision traces through a source-audited evidence graph.",
+      copy: "The warehouse maps 7,710 genomes and 7,484 data-complete tri-views. MBAG carries the 625-unit mechanism-comparable POC core as a distinct evidence state.",
       data: "real-coords",
     },
     {
       id: "engine", n: 6, label: "06 · One Engine, Many Maps",
       kicker: "One engine, many maps",
       headline: "One evidence engine, with every gas gated separately.",
-      copy: "Methane has a 625-unit comparable POC screen. Mangrove, MUCC, and every non-methane lens remain uncalibrated.",
+      copy: "Methane has a 625-unit comparable POC screen. Mangrove, MUCC, and additional gas lenses follow dedicated harmonization and validation paths.",
       data: "real-coords",
     },
     {
@@ -280,8 +280,8 @@ window.EB = (function () {
     {
       id: "ladder", n: 8, label: "08 · The Honest Ladder",
       kicker: "MRV maturity",
-      headline: "We are at molecular screening, and we say so.",
-      copy: "Rung 0 is a product today: screening, triage, and monitoring prioritization buyers and raters can use now. Rungs 1 to 5 climb to calibrated MRV.",
+      headline: "Molecular screening is the current product layer.",
+      copy: "Rung 0 delivers screening, triage, and monitoring prioritization for buyers and raters today. Rungs 1 to 5 add the paired evidence needed for calibrated MRV.",
       data: "real-ladder",
     },
     {
@@ -296,7 +296,7 @@ window.EB = (function () {
   /* ---- outbound links (single place to update the published report path) ---- */
   const links = {
     report: "report/",                 // stable alias on GitHub Pages → current freeze
-    reportName: "MethaNet Molecular Niche Atlas (full scientific report)",
+    reportName: "MethaNet Molecular Attestation Graph (full scientific report)",
     reportDate: "2026-07-24",
     siteUrl: "https://emergentbiome.earth/",
     contactEmail: "jg@graphoflife.com",
@@ -307,8 +307,8 @@ window.EB = (function () {
     platform: "EmergentBiome",
     application: "MethaNet",
     lockup: "EmergentBiome / MethaNet",
-    tagline: "methane-risk intelligence for blue carbon",
-    platformDef: "embeddings + attestation graph + agentic pipeline",
+    tagline: "molecular methane intelligence for blue carbon",
+    platformDef: "molecular attestation graph + evidence pipeline",
     applicationDef: "the first application on a substrate architected to generalize beyond methane",
   };
 
