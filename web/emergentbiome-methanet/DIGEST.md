@@ -9,7 +9,8 @@ here traces back to the repo artifacts cited in each row. Read this before editi
 - **Authoritative report snapshot:** `2026-07-24 scientific reconciliation release`
 - **Payload-freeze audit:** 7,709 release-required rows; 7,484 data-complete tri-views;
   one incomplete MSM unit preserved as a release exclusion
-- **Primary sources digested:** `README.md`, `AGENTS.md`, `docs/current_artifact_inventory.md`,
+- **Primary sources digested:** `README.md`, `AGENTS.md`,
+  `docs/methanet_positioning_and_claims.md`, `docs/current_artifact_inventory.md`,
   `ai_docs/functional_metagenomics_expansion/final_mrv_risk_scoring_roadmap.md`,
   `ai_docs/.../queryable_molecular_attestation_moat/methanet_queryable_molecular_attestation_moat.md`,
   `configs/methanet_atlas_lanes.tsv`,

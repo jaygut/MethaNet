@@ -1,12 +1,16 @@
-# Functional Metagenomics Expansion Contracts
+# MBAG Molecular Attestation And Functional Expansion Contracts
 
-The 662-genome POC proves that ESM2 latent space separates rumen and wetland
-ecosystems while retaining bridge candidates. It does not yet prove the bridge
-genomes are mechanistically methane-relevant, source-balanced, or robust to
-annotation missingness. This page defines the gated work needed to move from
-latent geometry to source-aware methane MRV features.
+The 662-genome POC established a source-confounded ESM-2 separation and a set
+of bridge hypotheses. The current MBAG release extends that starting point into
+a governed molecular-attestation warehouse. This page defines the gates that
+connect representation context to functional mechanism evidence, monitoring
+readiness, and future calibrated methane-risk features.
 
-Documentation refresh: 2026-06-25.
+Documentation refresh: 2026-07-24.
+
+Use [`methanet_positioning_and_claims.md`](methanet_positioning_and_claims.md)
+for the shared narrative and claim contract used by the repository, landing
+page, and public report.
 
 The early gates below remain the conceptual contract, but much of the first
 implementation arc now exists as generated local artifacts:
@@ -20,20 +24,29 @@ implementation arc now exists as generated local artifacts:
 - molecular attestation graph:
   `results/attestation/mmag_mvp_20260617/`
 
-The current implemented product primitive is MAG/proteome-level molecular
-screening and attestation. Sample/project MRV scoring remains blocked pending
-sample mapping, abundance/read coverage, environmental covariates, uncertainty
-propagation, and flux/process validation.
+The current implemented product primitive is MAG/proteome molecular attestation
+through evidence cards, candidate review, monitoring prioritization, and
+validation-study design. Sample and project MRV scoring becomes eligible after
+sample mapping, abundance or read coverage, environmental covariates,
+uncertainty propagation, and flux or process validation.
 
-The same contract is now being extended beyond the original 662-row POC. The
-current molecular atlas has four lanes:
+The July 24 scientific-reconciliation release contains 7,965 registered units,
+7,710 ESM-2 embeddings, 7,717 gLM2 payloads, and 7,484 data-complete
+tri-views. The molecular atlas has five evidence lanes:
 
 | Lane | Current state | Interpretation |
 | --- | --- | --- |
 | Rumen POC | 555 ESM2 proteomes; 518 MAG/bin-comparable multi-view units plus 37 assembly-context units | source reference lane for methane-system bridge hypotheses |
 | Wetland/MUCC POC | 107 ESM2/function/gLM2 MAG-bin units | target wetland POC lane |
 | Mangrove/MSM expansion | 1,428/1,428 ESM2 embeddings and 1,428/1,428 gLM2 units complete; 1,427/1,428 functional MAGs complete | broader blue-carbon target expansion, not yet a final sample-level MRV layer |
-| Mangrove/Futian expansion | 3,156/3,156 ESM2 embeddings and 3,156/3,156 gLM2 units complete; 302/312 archaea functional MAGs complete at the 2026-06-25 15:39 UTC live refresh while the current external report freeze remains fixed at 300/312, bacteria queued | largest target-domain expansion, still functionally incomplete and not warehouse-consolidated |
+| Mangrove/Futian expansion | 3,156/3,156 ESM-2 embeddings and 3,156/3,156 gLM2 units; 2,931 annotation-complete functional payloads | largest target-domain expansion; common mechanism-feature aggregation remains pending |
+| MUCC v1 Old Woman Creek | 2,508 registered MAGs; 2,501 ESM-2; 2,508 gLM2 and source-functional payloads; 2,501 data-complete source-scaffold tri-views | wetland reference and expression-detection lane under a distinct non-equivalent functional contract |
+
+The evidence contract separates 625 mechanism-comparable POC tri-views, 4,358
+annotation-complete mangrove tri-views awaiting common feature aggregation, and
+2,501 MUCC v1 source-scaffold tri-views. Data completeness records payload
+availability. Quantitative mechanism comparability requires the common
+accepted/present feature contract.
 
 For dated counts, paths, and report freshness, use
 `docs/current_artifact_inventory.md`.

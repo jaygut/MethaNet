@@ -1,7 +1,7 @@
 # Functional MAG Cohort Data Architecture Hardening
 
 Date: 2026-06-13
-Documentation refresh: 2026-06-25
+Documentation refresh: 2026-07-24
 
 ## Purpose
 
@@ -102,7 +102,8 @@ folders happen to be complete on disk.
 | POC MAG-bin rumen + wetland/MUCC | completed reference warehouse for current MBAG reporting | 625 MAG/bin-comparable units from the 662-row ESM2 backbone |
 | POC assembly-context units | preserved evidence/status lane, not MAG-bin feature denominator | 37 rumen no-bin or assembly-context records, explicitly quarantined |
 | Mangrove/MSM expansion | target-domain expansion warehouse after active functional tranche completion or dated interim snapshot | 1,428 local candidates as the local processing denominator, with a separate reconciled view for the paper-reported 966 final medium/high-quality MAG denominator |
-| Mangrove/Futian 2026 expansion | target-domain expansion warehouse after archaea and bacteria shards complete or a dated interim snapshot is deliberately frozen | 3,156 ready payload rows plus a preserved 248-row missing-payload gap register from the 3,404 phase-1 rMAG denominator |
+| Mangrove/Futian 2026 expansion | target-domain expansion warehouse; the July 24 release carries 2,931 annotation-complete functional payloads and awaits common mechanism-feature aggregation | 3,156 ready payload rows plus a preserved 248-row missing-payload gap register from the 3,404 phase-1 rMAG denominator |
+| MUCC v1 Old Woman Creek | wetland source-scaffold warehouse with source DRAM, gene, expression, network, and staged field evidence | 2,508 registered archive MAGs, 2,501 data-complete source-scaffold tri-views, and explicit ecological-linkage blocks |
 | Multi-view atlas/report layer | report/query union across ESM2, functional warehouse, gLM2, provenance, and QC | manifest-driven left joins with explicit missingness and lane labels |
 
 For every warehouse, the manifest is authoritative. Completed folders indicate
@@ -155,7 +156,7 @@ results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse_poc_ma
 ## Mangrove Expansion Readiness
 
 The mangrove lanes are active expansions, not yet final consolidated warehouses.
-Snapshot at the 2026-06-25 documentation refresh:
+Snapshot at the 2026-07-04 documentation refresh:
 
 | Item | Value |
 | --- | ---: |
@@ -171,8 +172,10 @@ Snapshot at the 2026-06-25 documentation refresh:
 | Futian missing-payload gap rows | 248 |
 | Futian ESM2 embeddings | 3,156 / 3,156 complete |
 | Futian gLM2 contextual units | 3,156 / 3,156 complete |
-| Futian functional MAGs complete | 302 / 3,156 live; 300 / 3,156 in the current release freeze |
-| Futian functional status | live status is 302/312 archaea complete at the 2026-06-25 15:39 UTC registry refresh; the current 2,352-unit report freeze remains fixed at 300/312 archaea; bacteria shards queued |
+| Futian annotation-complete functional payloads | 2,931 / 3,156 in the July 24 release |
+| Futian functional status | annotation-complete and tri-view available; common accepted/present mechanism-feature aggregation pending |
+| MUCC v1 registered MAGs | 2,508 |
+| MUCC v1 data-complete source-scaffold tri-views | 2,501 |
 
 When these tranches are consolidated, use the same per-run curated Parquet
 contract and validation gates as the POC warehouse. Add denominator fields to

@@ -1,7 +1,7 @@
 # Pipeline Reproducibility Contract
 
 Date: 2026-06-13
-Documentation refresh: 2026-06-25
+Documentation refresh: 2026-07-24
 
 Scope: MethaNet functional-metagenomics code, documentation, generated outputs,
 and downstream analytics for the 662-proteome POC cohort plus the
@@ -81,6 +81,14 @@ Every mixed-lane MBAG report should additionally record:
 
 If any of these are absent, the run can still be useful, but it is not fully
 reproducible until the gap is documented.
+
+Current reproducibility note, 2026-07-24: the scientific-reconciliation release
+is backed by
+`results/reports/methanet_3view_payload_freeze_20260724_scientific_reconciliation/`
+and the matching MBAG report bundle. It registers 7,965 units and carries 7,484
+data-complete tri-views across three explicit functional contracts. Every new
+denominator requires a fresh lane-registry snapshot, freeze manifest, report
+bundle, and validation-gate pass.
 
 ## Metadata Contract
 

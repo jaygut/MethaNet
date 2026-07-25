@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 type: software
-title: "MethaNet: Transfer Learning for Methane Flux Prediction"
+title: "MethaNet: Molecular Attestation for Blue-Carbon Methane Diligence"
 authors:
   - family-names: "Philosof"
     given-names: "Alon"
@@ -16,16 +16,20 @@ url: "https://github.com/jaygut/MethaNet"
 repository-code: "https://github.com/jaygut/MethaNet"
 license: "CC-BY-4.0"
 keywords:
-  - methane flux
-  - transfer learning
+  - molecular attestation
+  - methane risk
+  - evidence graph
   - metagenomics
-  - carbon verification
+  - blue carbon
+  - monitoring design
   - rumen microbiome
   - coastal ecosystems
   - archaeal genomics
 abstract: >
-  MethaNet is a research initiative developing computational methods
-  to predict net methane flux in coastal ecosystems using transfer
-  learning from agricultural microbiome data. By leveraging the
-  ruminant gut archaeome, we aim to decode complex coastal wetland
-  systems critical for carbon sequestration.
+  MethaNet is a molecular-attestation system for blue-carbon methane
+  diligence. It links protein-language geometry, genomic context,
+  functional evidence, quality control, taxonomy, provenance, and
+  validation readiness through an evidence graph. Current outputs support
+  MAG/proteome screening, candidate review, and monitoring design. Calibrated
+  sample and project methane-risk outputs require paired abundance,
+  environmental, uncertainty, and field-validation evidence.

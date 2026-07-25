@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "methanet"
 version = "1.0.0"
-description = "Transfer learning for methane flux prediction from microbiome data"
+description = "Molecular attestation and evidence graphs for blue-carbon methane diligence"
 readme = "README.md"
 license = "CC-BY-4.0"
 requires-python = ">=3.10"
@@ -16,6 +16,8 @@ authors = [
 keywords = [
     "methane",
     "metagenomics",
+    "molecular-attestation",
+    "evidence-graph",
     "transfer-learning",
     "microbiome",
     "climate",

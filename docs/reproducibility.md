@@ -1,6 +1,25 @@
 # MethaNet Reproducibility Guide
 
-This document provides comprehensive instructions for reproducing the MethaNet analysis results, from raw data acquisition through final model validation.
+This guide contains reproducibility instructions for the implemented
+molecular-atlas workflow and earlier model-development templates. The current
+validated release supports MAG/proteome molecular attestation, evidence-card
+review, and monitoring-readiness design. Final sample or project methane-risk
+models remain gated by abundance, environmental, uncertainty, and field
+validation evidence.
+
+For the current release contract, read
+[`methanet_positioning_and_claims.md`](methanet_positioning_and_claims.md) and
+[`current_artifact_inventory.md`](current_artifact_inventory.md). The
+scientific-reconciliation report is generated from:
+
+```text
+results/reports/methanet_3view_payload_freeze_20260724_scientific_reconciliation/
+results/reports/mbag_nextgen_molecular_niche_atlas_20260724_scientific_reconciliation/
+```
+
+Sections below that describe supervised training, validation, and final model
+export are template workflows until paired target-domain outcomes and the
+roadmap validation gates are available.
 
 ## Table of Contents
 
