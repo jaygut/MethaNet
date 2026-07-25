@@ -24,8 +24,8 @@
     blindspot: [["≈ 0", "sites with paired flux + molecular data today", true], ["< " + EB.ext.vm0033SalinityPpt + " ppt", "salinity: no default methane factor"]],
     surveyor: [["evidence profile", "per site with a next measurement", true], ["validation path", "paired field evidence calibrates flux inference", false]],
     cheap: [["r > " + EB.ext.mcraFluxSpearman, "methanogen marker vs measured flux", true], ["salinity", "contextual covariate for field design", false]],
-    atlas: [[D.fmt(EB.num.triViewReady), "data-complete tri-view units", true], [D.fmt(EB.num.mechanismComparableTriView), "mechanism-comparable POC"], [D.fmt(EB.num.annotationCompletePendingTriView), "annotation-complete, harmonization pending"], [D.fmt(EB.num.sourceScaffoldTriView), "MUCC source-scaffold tri-view"]],
-    engine: [["273×", "N₂O vs CO₂ over 100 years", true], [D.fmt(EB.num.mechanismComparableTriView), "POC units in the comparable methane screen", false], ["0", "field assays for new gases", false]],
+    atlas: [[D.fmt(EB.num.triViewReady), "data-complete tri-view units", true], [D.fmt(EB.num.mechanismComparableTriView), "mechanism-comparable proof-of-concept core"], [D.fmt(EB.num.annotationCompletePendingTriView), "annotation-complete, harmonization pending"], [D.fmt(EB.num.sourceScaffoldTriView), "Old Woman Creek source-scaffold tri-view"]],
+    engine: [["273×", "N₂O vs CO₂ over 100 years", true], [D.fmt(EB.num.mechanismComparableTriView), "units in the comparable methane screen", false], ["0", "field assays for new gases", false]],
     platform: [[D.fmt(EB.num.evidenceAtoms), "evidence atoms", true], [D.fmt(EB.num.nearEsm2Edges), "embedding-neighbor links"]],
     ladder: [["rung 0", "product today · screening + triage", true], ["rungs 1-5", "path to calibrated MRV"]],
     path: [["< " + EB.num.pipelineDays + " days", "raw sequences to report", true], ["Cispatá Bay", "field validation, next rung"]],
@@ -60,6 +60,9 @@
     // hero (decision-first copy from the single source of truth)
     document.getElementById("heroEyebrow").textContent = EB.hero.eyebrow;
     document.getElementById("heroSub").textContent = EB.hero.sub;
+    document.getElementById("heroDefs").innerHTML = EB.terminology.filter((t) => t.hero).map((t) =>
+      '<span class="hero__def"><b>' + t.term + '</b> · ' + t.full + "</span>"
+    ).join("");
     // header meta
     document.getElementById("headerMeta").innerHTML =
       '<span class="dot">●</span> live snapshot ' + EB.num.snapshot +
@@ -78,13 +81,13 @@
     document.getElementById("fsDate").textContent = EB.num.snapshot;
     document.getElementById("askBody").innerHTML =
       "MethaNet gives blue-carbon developers, verifiers, raters, and buyers a traceable molecular attestation layer for methane-sensitive diligence. " +
-      "MBAG connects <b>" + D.fmt(EB.num.embeddingBearingUnits) + "</b> embedded genomes to functional evidence, provenance, claim boundaries, and the next validation action. " +
-      "Field validation at Cispatá Bay will add the paired evidence required for calibrated methane MRV.";
+      "The MethaNet Bridge Attestation Graph (MBAG) connects <b>" + D.fmt(EB.num.embeddingBearingUnits) + "</b> embedded genomes to functional evidence, provenance, claim boundaries, and the next validation action. " +
+      "Field validation at Cispatá Bay will add the paired evidence required for calibrated methane monitoring, reporting, and verification.";
     const points = [
-      "Field validation at Cispatá Bay (Colombian Caribbean mangrove, VM0033 context)",
+      "Field validation at Cispatá Bay (Colombian Caribbean mangrove, Verra VM0033 methodology context)",
       "Pair molecular evidence with field methane flux (target " + EB.num.pairedFluxTargetLo + "–" + EB.num.pairedFluxTargetHi + " samples)",
       "Calibrate the probabilistic risk model to earn the A–E tiers under holdout validation",
-      "Harden MBAG into a partner-facing, registry-aligned evidence product",
+      "Harden the knowledge graph into a partner-facing evidence product",
     ];
     document.getElementById("askPoints").innerHTML = points.map((p) => "<li>" + p + "</li>").join("");
     // factsheet rows
@@ -93,11 +96,11 @@
       ["Mangrove · MSM China 2025", D.fmt(EB.num.msmCandidates) + " genomes (" + D.fmt(EB.num.msmFunctionalComplete) + " annotated)"],
       ["Mangrove · Futian 2026 (Qi et al.)", D.fmt(EB.num.futianRMAGs) + " genomes <span class='in-progress'>(" + D.fmt(EB.num.futianBacteriaComplete) + "/" + D.fmt(EB.num.futianBacteriaTotal) + " bacteria annotated)</span>"],
       ["Data-complete tri-view units", D.fmt(EB.num.triViewReady) + " <span class='in-progress'>(payload completeness; common mechanism comparability is tracked separately)</span>"],
-      ["Mechanism-comparable POC tri-view", D.fmt(EB.num.mechanismComparableTriView)],
+      ["Mechanism-comparable proof-of-concept tri-view", D.fmt(EB.num.mechanismComparableTriView)],
       ["Annotation-complete, harmonization pending", D.fmt(EB.num.annotationCompletePendingTriView)],
-      ["MUCC v1 source-scaffold tri-view", D.fmt(EB.num.sourceScaffoldTriView) + " <span class='in-progress'>(separate mechanism contract)</span>"],
+      ["Old Woman Creek source-scaffold tri-view", D.fmt(EB.num.sourceScaffoldTriView) + " <span class='in-progress'>(separate mechanism contract)</span>"],
       ["Genomes mapped (molecular space)", D.fmt(EB.num.embeddingBearingUnits)],
-      ["MUCC v1 wetland source warehouse", D.fmt(EB.num.muccWarehouseGenomes) + " genomes"],
+      ["Old Woman Creek wetland source warehouse", D.fmt(EB.num.muccWarehouseGenomes) + " genomes"],
       ["Total evidence reach", D.fmt(EB.num.warehouseReach) + " genomes"],
       ["Sample metadata recovered", (EB.num.msmSedimentSamples + EB.num.futianSedimentSamples) + " sediment samples · " + EB.num.msmBiosampleRows + " environmental rows"],
       ["Evidence views per unit", "proteome geometry + genomic context + functional mechanism"],
@@ -107,6 +110,9 @@
     ];
     document.getElementById("factsheet").innerHTML = F.map((r) =>
       '<div class="factsheet__row"><span class="factsheet__k">' + r[0] + '</span><span class="factsheet__v">' + r[1] + "</span></div>"
+    ).join("");
+    document.getElementById("terminologyList").innerHTML = EB.terminology.map((t) =>
+      '<div class="terminology__item"><dt><span class="terminology__term">' + t.term + '</span><span class="terminology__full">' + t.full + '</span></dt><dd>' + t.detail + "</dd></div>"
     ).join("");
     document.getElementById("contact").innerHTML =
       EB.claims.boundaries[0] + " &nbsp;·&nbsp; A–E tiers remain a calibration target. &nbsp;·&nbsp; " +
@@ -120,7 +126,7 @@
     setHref("contactCta", "mailto:" + EB.links.contactEmail);
     const note = document.getElementById("reportNote");
     if (note) note.innerHTML =
-      "The report presents the MBAG molecular-attestation knowledge graph, bridge evidence, and sample-readiness ladder behind these numbers. Recomputed " +
+      "The report presents the MethaNet Bridge Attestation Graph, bridge evidence, and sample-readiness ladder behind these numbers. Recomputed " +
       EB.links.reportDate + ", in sync with the live atlas at " + D.fmt(EB.num.triViewReady) + " data-complete tri-view units." +
       ' <a href="' + rep + '" target="_blank" rel="noopener">Open the interactive report ↗</a>';
   }
