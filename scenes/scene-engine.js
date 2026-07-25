@@ -19,7 +19,7 @@
     const ECOC = {}; EB.ecosystems.forEach((e) => (ECOC[e.code] = e.color));
     const COOL_N2O = "#7C8CC4", COOL_S = "#A9B6CE", NEUTRAL = "#52606C";
     const LENSES = [
-      { name: "METHANE", sub: "POC mechanism screen", col: EB.color.methaneA },
+      { name: "METHANE", sub: "comparable mechanism screen", col: EB.color.methaneA },
       { name: "NITROUS OXIDE", sub: "candidate, not built", col: COOL_N2O },
       { name: "SULFUR · DMS", sub: "not built", col: COOL_S },
     ];
@@ -218,7 +218,7 @@
         p.text((i === 0 ? "MAP 01 · " : i === 1 ? "LENS 02 · " : "SLOT 03 · ") + L.name, sx + sw + 10, y + ph / 2); p.textStyle(p.NORMAL);
         p.textAlign(p.LEFT, p.TOP); p.textFont("IBM Plex Mono"); p.textSize(8);
         p.fill(D.rgba(i === 0 ? EB.color.methaneA : EB.color.textMuted, 0.85 * a));
-        p.text(i === 0 ? "625-unit POC screen · 0 flux" : i === 1 ? "candidate · 0 paired flux" : "not built", sx + sw + 10, y + ph / 2 + 2);
+        p.text(i === 0 ? "625-unit comparable screen · 0 flux" : i === 1 ? "candidate · 0 paired flux" : "not built", sx + sw + 10, y + ph / 2 + 2);
         p.pop();
       }
     }
@@ -229,7 +229,7 @@
       D.label(p, "same atlas, swap the gene lens", x, y + 15, D.rgba(EB.color.textMuted, 0.9 * settle), 9.5);
       // One mechanism-comparable core / two candidate lenses.
       p.push(); p.textAlign(p.LEFT, p.TOP); p.textFont("IBM Plex Mono");
-      p.fill(D.rgba(EB.color.methaneA, settle)); p.textSize(12); p.text("625-unit POC screen live", x, y + 34);
+      p.fill(D.rgba(EB.color.methaneA, settle)); p.textSize(12); p.text("625-unit comparable screen live", x, y + 34);
       p.fill(D.rgba(EB.color.textMuted, 0.9 * settle)); p.textSize(10); p.text("2 lenses ready, uncalibrated", x, y + 50);
       p.pop();
     }
@@ -250,7 +250,7 @@
     function drawHonestyBand(w, h, settle) {
       p.push(); p.textAlign(p.CENTER, p.BOTTOM); p.textFont("IBM Plex Mono"); p.textSize(9.5);
       p.fill(D.rgba(EB.color.textMuted, 0.85 * settle));
-      p.text("POC mechanism screen only; other lanes await harmonization. no flux rate is inferred.", w / 2, h - 16);
+      p.text("Mechanism-comparable core only; other lanes await harmonization. No flux rate is inferred.", w / 2, h - 16);
       p.pop();
     }
 

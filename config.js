@@ -40,7 +40,7 @@ window.EB = (function () {
 
   const ecosystems = [
     { key: "rumen",           code: 0, label: "Rumen",           sub: "source reference",      color: color.rumen,          count: 518 },
-    { key: "wetland",         code: 1, label: "Wetland / MUCC",  sub: "POC + MUCC v1 reference", color: color.wetland,      count: 2608 },
+    { key: "wetland",         code: 1, label: "Old Woman Creek", sub: "wetland reference lane", color: color.wetland,      count: 2608 },
     { key: "mangrove_msm",    code: 2, label: "Mangrove · MSM",  sub: "China 2025 expansion",  color: color.mangroveMsm,    count: 1428 },
     { key: "mangrove_futian", code: 3, label: "Mangrove · Futian", sub: "2026 expansion (Qi et al.)", color: color.mangroveFutian, count: 3156 },
   ];
@@ -169,16 +169,62 @@ window.EB = (function () {
     views: ["Proteome embedding", "Genomic context", "Functional annotation"],
   };
 
+  /* ---- public terminology: visible in the hero and closing glossary ---- */
+  const terminology = [
+    {
+      term: "MBAG",
+      full: "MethaNet Bridge Attestation Graph",
+      detail: "The knowledge graph linking each molecular evidence unit to representations, mechanism features, provenance, quality gates, claim scope, and next validation actions.",
+      hero: true,
+    },
+    {
+      term: "MRV",
+      full: "Monitoring, reporting, and verification",
+      detail: "The calibrated application layer. It requires sample linkage, abundance, environmental context, uncertainty, and field or process validation.",
+      hero: true,
+    },
+    {
+      term: "MAG",
+      full: "Metagenome-assembled genome",
+      detail: "A reconstructed microbial genome used as one molecular evidence unit. Sample-level conclusions require community mapping and weighting.",
+    },
+    {
+      term: "ESM-2",
+      full: "Protein language model view",
+      detail: "A protein-sequence representation used to map molecular neighborhoods and nominate candidates for review.",
+    },
+    {
+      term: "gLM2",
+      full: "Genome-context language model view",
+      detail: "Gene-order and neighborhood context. Numerical comparisons remain within the applicable protocol class.",
+    },
+    {
+      term: "Tri-view",
+      full: "Three coordinated evidence views",
+      detail: "ESM-2, gLM2, and a functional payload. MBAG tracks payload completeness and mechanism comparability as separate states.",
+    },
+    {
+      term: "MUCC v1",
+      full: "Old Woman Creek wetland reference lane",
+      detail: "A genome and metatranscriptome source warehouse. Its current functional evidence uses a source-scaffold contract.",
+    },
+    {
+      term: "VM0033",
+      full: "Verra Methodology for Tidal Wetland and Seagrass Restoration",
+      detail: "A project-methodology context for blue-carbon restoration and MethaNet validation planning.",
+    },
+  ];
+
   /* ---- non-negotiable claim boundaries (visible, not buried) ---- */
   const claims = {
     footer:
-      "Current results are MAG/proteome-level molecular screening, candidate triage, evidence-card review, and monitoring prioritization. " +
+      "Current results are molecular screening, candidate triage, evidence-card review, and monitoring prioritization at metagenome-assembled genome or proteome grain. " +
       "Measured methane flux, final risk scores, A–E tiers, and carbon-credit decisions require paired abundance, environmental, uncertainty, and field-validation evidence. " +
       "A–E risk tiers remain target product vocabulary while calibration is completed. " +
       "Snapshot " + num.snapshot + ".",
     short: "Molecular attestation, candidate triage, and monitoring prioritization. Calibrated MRV follows paired validation.",
     boundaries: [
-      "Molecular attestation, candidate triage, and monitoring prioritization, at the MAG/proteome level.",
+      "Molecular attestation, candidate triage, and monitoring prioritization at metagenome-assembled genome or proteome grain.",
       "A–E risk tiers are target product vocabulary. Calibration requires paired validation.",
       "Measured flux, final MRV scores, and carbon-credit decisions require evidence beyond the molecular map.",
       "Reference-to-target signals stay provisional until source-balanced validation exists.",
@@ -188,7 +234,7 @@ window.EB = (function () {
   /* ---- maturity ladder (MRV roadmap Levels 0–5, + 6 horizon) ---- */
   const ladder = [
     { rung: 0, title: "Molecular attestation", state: "lit",
-      unlock: "Proteome embeddings, genomic context, functional annotation, quality control, and MBAG evidence cards. Done now." },
+      unlock: "Proteome embeddings, genomic context, functional annotation, quality control, and MethaNet Bridge Attestation Graph evidence cards. Done now." },
     { rung: 1, title: "Sample identity & metadata", state: "progress",
       unlock: "Underway: sample, site, and season metadata recovered for the mangrove lanes (147 sediment samples, 71 environmental rows). Full genome-to-sample mapping is next." },
     { rung: 2, title: "Abundance & community capacity", state: "dim",
@@ -204,10 +250,10 @@ window.EB = (function () {
 
   /* ---- attestation evidence chain (Scene 5): one claim, traced ---- */
   const attestation = {
-    claimText: "This MAG or proteome carries molecular evidence of a methane pathway, consistent with a methane-relevant review hypothesis.",
+    claimText: "This metagenome-assembled genome or proteome carries molecular evidence of a methane pathway, consistent with a methane-relevant review hypothesis.",
     forbidden: "“This genome emits methane.”",
     chain: [
-      { stage: "MAG or proteome",   detail: "One molecular evidence unit, quality-controlled and taxonomically placed", node: "genome" },
+      { stage: "Genome or proteome", detail: "One molecular evidence unit, quality-controlled and taxonomically placed", node: "genome" },
       { stage: "Pathway markers",   detail: "Methane pathway marker evidence across producing and consuming guilds is screened and linked", node: "pathway markers" },
       { stage: "Embedding neighbors", detail: "Nearest neighbors in molecular space land on known methanogens", node: "embedding neighbor" },
       { stage: "Quality gate",      detail: "Completeness, contamination, and annotation-coverage checks", node: "validation gate" },
@@ -218,11 +264,11 @@ window.EB = (function () {
 
   /* ---- Scene 7 milestones ---- */
   const timeline = [
-    { phase: "Now",   label: "MBAG evidence graph", detail: "7,710 genomes in ESM-2 space; 7,484 data-complete tri-views across three explicit evidence contracts." },
+    { phase: "Now",   label: "MBAG knowledge graph", detail: "7,710 genomes in protein-representation space; 7,484 data-complete tri-views across three explicit evidence contracts." },
     { phase: "Field", label: "Cispatá Bay validation", detail: "Colombian Caribbean mangrove · paired methane-flux sampling." },
     { phase: "Pair",  label: "Paired data", detail: "Target: pair molecular evidence with field methane flux across seasons and habitats." },
     { phase: "Model", label: "Calibrated methane risk", detail: "Holdout-validated risk distribution; A–E tiers earn their thresholds." },
-    { phase: "MRV",   label: "Registry integration", detail: "Reproducible evidence packets aligned to VM0033 / ICVCM review." },
+    { phase: "Audit", label: "Methodology integration", detail: "Reproducible evidence packets aligned to relevant methodology and integrity review." },
   ];
 
   /* ---- 9 scenes: kicker, headline, copy (<=25 words), data honesty. See THE STANDING BAR up top. ---- */
@@ -245,42 +291,42 @@ window.EB = (function () {
       id: "surveyor", n: 3, label: "03 · What You Get",
       kicker: "What you get",
       headline: "Evidence cards that show where to measure first.",
-      copy: "For each candidate or site context, MBAG returns molecular evidence, confidence, provenance, and the next measurement needed for calibrated risk.",
+      copy: "The MethaNet Bridge Attestation Graph (MBAG) returns molecular evidence, confidence, provenance, and the next measurement needed to calibrate risk.",
       data: "illustrative",
     },
     {
       id: "cheap", n: 4, label: "04 · Versus the Cheap Method",
       kicker: "Versus the cheap method",
       headline: "One gene tells you little. The graph reads the pathway balance.",
-      copy: "Salinity sets the baseline. Methane-making, methane-eating, sulfur, substrate, and QC evidence show where that assumption needs testing.",
+      copy: "Salinity sets the baseline. Methane-making, methane-eating, sulfur, substrate, and quality-control evidence show where that assumption needs testing.",
       data: "illustrative",
     },
     {
       id: "atlas", n: 5, label: "05 · The Evidence",
       kicker: "The evidence behind the ranking",
       headline: "Every decision traces through a source-audited evidence graph.",
-      copy: "The warehouse maps 7,710 genomes and 7,484 data-complete tri-views. MBAG carries the 625-unit mechanism-comparable POC core as a distinct evidence state.",
+      copy: "The warehouse maps 7,710 genomes and 7,484 data-complete tri-views. MBAG keeps the 625-unit mechanism-comparable proof-of-concept core as a distinct evidence state.",
       data: "real-coords",
     },
     {
       id: "engine", n: 6, label: "06 · One Engine, Many Maps",
       kicker: "One engine, many maps",
       headline: "One evidence engine, with every gas gated separately.",
-      copy: "Methane has a 625-unit comparable POC screen. Mangrove, MUCC, and additional gas lenses follow dedicated harmonization and validation paths.",
+      copy: "Methane has a 625-unit comparable proof-of-concept screen. Mangrove and the Old Woman Creek reference (MUCC v1) follow dedicated harmonization and validation paths.",
       data: "real-coords",
     },
     {
       id: "platform", n: 7, label: "07 · The Platform & the Moat",
       kicker: "EmergentBiome substrate",
       headline: "Every claim traces to its evidence.",
-      copy: "Embeddings, MBAG, and an agentic pipeline. The atlas grows with every project sequenced, and every new pathway inherits the same evidence trail.",
+      copy: "MBAG joins molecular representations, mechanism evidence, provenance, and validation gaps. The atlas grows with every project sequenced while preserving each evidence trail.",
       data: "real-schema",
     },
     {
       id: "ladder", n: 8, label: "08 · The Honest Ladder",
-      kicker: "MRV maturity",
+      kicker: "Evidence maturity",
       headline: "Molecular screening is the current product layer.",
-      copy: "Rung 0 delivers screening, triage, and monitoring prioritization for buyers and raters today. Rungs 1 to 5 add the paired evidence needed for calibrated MRV.",
+      copy: "Rung 0 delivers screening, triage, and monitoring prioritization. Rungs 1 to 5 add the paired evidence required for calibrated monitoring, reporting, and verification.",
       data: "real-ladder",
     },
     {
@@ -295,7 +341,7 @@ window.EB = (function () {
   /* ---- outbound links (single place to update the published report path) ---- */
   const links = {
     report: "report/",                 // stable alias on GitHub Pages → current freeze
-    reportName: "MethaNet Molecular Attestation Graph (full scientific report)",
+    reportName: "MethaNet Bridge Attestation Graph (full scientific report)",
     reportDate: "2026-07-24",
     siteUrl: "https://emergentbiome.earth/",
     contactEmail: "jg@graphoflife.com",
@@ -307,12 +353,12 @@ window.EB = (function () {
     application: "MethaNet",
     lockup: "EmergentBiome / MethaNet",
     tagline: "molecular attestation for blue-carbon methane diligence",
-    platformDef: "molecular attestation graph + evidence pipeline",
+    platformDef: "molecular-attestation knowledge graph + evidence pipeline",
     applicationDef: "the first application on a substrate architected to generalize beyond methane",
   };
 
   return {
-    color, ecosystems, num, ext, hero, stack, claims, ladder, ladderHorizon,
+    color, ecosystems, num, ext, hero, stack, terminology, claims, ladder, ladderHorizon,
     attestation, timeline, scenes, brand, links,
     // global seed for all reproducible sketches
     seed: 0xE13B10,
