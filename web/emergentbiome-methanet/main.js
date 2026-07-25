@@ -77,14 +77,14 @@
     // ask + factsheet
     document.getElementById("fsDate").textContent = EB.num.snapshot;
     document.getElementById("askBody").innerHTML =
-      "MethaNet gives blue-carbon developers, verifiers, raters, and buyers a traceable molecular evidence layer for methane-sensitive diligence. " +
-      "The molecular-attestation graph connects <b>" + D.fmt(EB.num.embeddingBearingUnits) + "</b> embedded genomes to functional evidence, provenance, and the next validation action. " +
+      "MethaNet gives blue-carbon developers, verifiers, raters, and buyers a traceable molecular attestation layer for methane-sensitive diligence. " +
+      "MBAG connects <b>" + D.fmt(EB.num.embeddingBearingUnits) + "</b> embedded genomes to functional evidence, provenance, claim boundaries, and the next validation action. " +
       "Field validation at Cispatá Bay will add the paired evidence required for calibrated methane MRV.";
     const points = [
       "Field validation at Cispatá Bay (Colombian Caribbean mangrove, VM0033 context)",
       "Pair molecular evidence with field methane flux (target " + EB.num.pairedFluxTargetLo + "–" + EB.num.pairedFluxTargetHi + " samples)",
       "Calibrate the probabilistic risk model to earn the A–E tiers under holdout validation",
-      "Harden the attestation graph into a partner-facing, registry-aligned evidence product",
+      "Harden MBAG into a partner-facing, registry-aligned evidence product",
     ];
     document.getElementById("askPoints").innerHTML = points.map((p) => "<li>" + p + "</li>").join("");
     // factsheet rows
@@ -100,7 +100,7 @@
       ["MUCC v1 wetland source warehouse", D.fmt(EB.num.muccWarehouseGenomes) + " genomes"],
       ["Total evidence reach", D.fmt(EB.num.warehouseReach) + " genomes"],
       ["Sample metadata recovered", (EB.num.msmSedimentSamples + EB.num.futianSedimentSamples) + " sediment samples · " + EB.num.msmBiosampleRows + " environmental rows"],
-      ["Model views per genome", "proteome + genomic-context embeddings, plus function"],
+      ["Evidence views per unit", "proteome geometry + genomic context + functional mechanism"],
       ["Cross-ecosystem bridge links", D.fmt(EB.num.bridgeEdges)],
       ["Pipeline speed", "&lt;" + EB.num.pipelineDays + " days, vs months of manual analysis"],
       ["Field site", "Cispatá Bay, Colombia"],
@@ -120,7 +120,7 @@
     setHref("contactCta", "mailto:" + EB.links.contactEmail);
     const note = document.getElementById("reportNote");
     if (note) note.innerHTML =
-      "The report presents the molecular-attestation knowledge graph, bridge evidence, and sample-readiness ladder behind these numbers. Recomputed " +
+      "The report presents the MBAG molecular-attestation knowledge graph, bridge evidence, and sample-readiness ladder behind these numbers. Recomputed " +
       EB.links.reportDate + ", in sync with the live atlas at " + D.fmt(EB.num.triViewReady) + " data-complete tri-view units." +
       ' <a href="' + rep + '" target="_blank" rel="noopener">Open the interactive report ↗</a>';
   }

@@ -4,7 +4,7 @@
 # EmergentBiome / MethaNet, and (optionally) deploy it to the gh-pages branch.
 #
 #   site root  = the scrollytelling landing (this folder)
-#   /report/   = the full molecular-intelligence report, self-contained for
+#   /report/   = the full molecular-attestation report, self-contained for
 #                public viewing without raw JSON, TSV, audit, or source-pointer files
 #   legacy dated report paths on gh-pages are preserved (no broken links).
 #
