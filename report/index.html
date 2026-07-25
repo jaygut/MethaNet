@@ -14,7 +14,7 @@
     .subtitle{max-width:980px;font-size:18px;color:#ddfff2}.claim{display:inline-block;margin-top:18px;border:1px solid #85dff1;padding:9px 12px;border-radius:999px;color:#e8fbff}
     main{max-width:1280px;margin:auto;padding:28px 24px 76px}.section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;margin:18px 0;box-shadow:0 10px 30px rgba(15,23,42,.05)}
     .metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}.metric{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:14px}.metric b{display:block;font-size:28px}.metric span{font-size:12px;color:var(--muted)}
-    .viz{min-height:540px;border:1px solid var(--line);border-radius:12px;background:#fbfdff;position:relative;overflow:hidden}.viz.tall{min-height:700px}.viz.medium{min-height:470px}.viz.graph{min-height:560px}.viz.matrix{min-height:760px;overflow:auto}.viz.circos{min-height:620px}
+    .viz{min-height:540px;border:1px solid var(--line);border-radius:12px;background:#fbfdff;position:relative;overflow:hidden}.viz.tall{min-height:700px}.viz.medium{min-height:470px}.viz.graph{min-height:660px}.viz.graph>svg{width:100%;display:block}.viz.matrix{min-height:760px;overflow:auto}.viz.circos{min-height:620px}
     .grid2{display:grid;grid-template-columns:1.35fr .65fr;gap:18px}.grid2-even{display:grid;grid-template-columns:1fr 1fr;gap:18px}
     .signature-stack{display:grid;grid-template-columns:1fr;gap:22px}.signature-panel{min-width:0}
     .chart-note{font-size:13px;color:var(--muted);margin:8px 0 10px}
@@ -309,17 +309,20 @@
     function renderKnowledgeGraph(){
       const el=d3.select('#mbag-knowledge-graph'); el.selectAll('*').remove();
       const summary=ATLAS.summary || {}, audit=ATLAS.scientific_audit || {}, mucc=audit.mucc_validation_readiness || {};
-      const w=panelWidth(el,980), h=540, svg=el.append('svg').attr('viewBox',[0,0,w,h]);
+      const w=panelWidth(el,1120), h=650, margin=44, svg=el.append('svg').attr('width','100%').attr('height',h).attr('viewBox',[0,0,w,h]).attr('preserveAspectRatio','xMidYMid meet');
+      const leftW=270, rightW=310, coreW=310, gateW=Math.max(250, Math.min(300, (w-margin*2-64)/3));
+      const gateGap=Math.max(32, Math.min(220, (w-margin*2-gateW*3)/2));
+      const gateX=(w-gateW*3-gateGap*2)/2;
       const nodes=[
-        {id:'esm2',x:42,y:74,w:208,h:78,kind:'context',eyebrow:'representation context',line1:'ESM-2 neighborhoods',meta:`${fmt(summary.embedding_context_total || 0)} embedded units`},
-        {id:'function',x:42,y:226,w:208,h:78,kind:'direct',eyebrow:'mechanism evidence',line1:'Functional machinery',meta:`${fmt(summary.release_multiview_complete || 0)} data-complete tri-views`},
-        {id:'glm2',x:42,y:378,w:208,h:78,kind:'context',eyebrow:'genomic context',line1:'gLM2 architecture',meta:`${fmt((summary.glm2_single_window_units || 0) + (summary.glm2_multiwindow_units || 0))} protocol-stratified units`},
-        {id:'qc',x:w-256,y:74,w:214,h:78,kind:'guardrail',eyebrow:'reliability guardrails',line1:'QC, taxonomy, provenance',meta:'claim scope travels with the evidence'},
-        {id:'core',x:(w-204)/2,y:214,w:204,h:100,kind:'core',eyebrow:'molecular attestation graph',line1:'MAG / proteome record',meta:`${fmt(summary.atlas_registered_units || 0)} registered evidence units`},
-        {id:'card',x:w-256,y:232,w:214,h:82,kind:'output',eyebrow:'decision output',line1:'Evidence card and next action',meta:'review, diligence, and study design'},
-        {id:'sample',x:184,y:438,w:192,h:70,kind:'gate',eyebrow:'validation gate',line1:'Exact sample linkage',meta:`${fmt(mucc.exact_sample_environment_flux_links || 0)} / ${fmt(mucc.expression_sample_columns || 0)} MUCC joins`},
-        {id:'context',x:(w-184)/2,y:438,w:184,h:70,kind:'gate',eyebrow:'validation gate',line1:'Abundance and environment',meta:'community weighting and conditions'},
-        {id:'field',x:w-376,y:438,w:192,h:70,kind:'gate',eyebrow:'validation gate',line1:'Field and process evidence',meta:'calibration and uncertainty'}
+        {id:'esm2',x:margin,y:74,w:leftW,h:102,kind:'context',eyebrow:'representation context',lines:['ESM-2 neighborhoods'],meta:[`${fmt(summary.embedding_context_total || 0)} embedded units`]},
+        {id:'function',x:margin,y:244,w:leftW,h:102,kind:'direct',eyebrow:'mechanism evidence',lines:['Functional machinery'],meta:[`${fmt(summary.release_multiview_complete || 0)} data-complete`, 'tri-views']},
+        {id:'glm2',x:margin,y:414,w:leftW,h:102,kind:'context',eyebrow:'genomic context',lines:['gLM2 architecture'],meta:[`${fmt((summary.glm2_single_window_units || 0) + (summary.glm2_multiwindow_units || 0))} protocol-stratified`, 'units']},
+        {id:'qc',x:w-margin-rightW,y:74,w:rightW,h:108,kind:'guardrail',eyebrow:'reliability guardrails',lines:['QC, taxonomy,', 'provenance'],meta:['claim scope travels with evidence']},
+        {id:'core',x:(w-coreW)/2,y:258,w:coreW,h:124,kind:'core',eyebrow:'molecular attestation graph',lines:['MAG / proteome', 'record'],meta:[`${fmt(summary.atlas_registered_units || 0)} registered`, 'evidence units']},
+        {id:'card',x:w-margin-rightW,y:258,w:rightW,h:108,kind:'output',eyebrow:'decision output',lines:['Evidence card', 'and next action'],meta:['review, diligence, study design']},
+        {id:'sample',x:gateX,y:526,w:gateW,h:98,kind:'gate',eyebrow:'validation gate',lines:['Exact sample linkage'],meta:[`${fmt(mucc.exact_sample_environment_flux_links || 0)} / ${fmt(mucc.expression_sample_columns || 0)} MUCC joins`]},
+        {id:'context',x:gateX+gateW+gateGap,y:526,w:gateW,h:98,kind:'gate',eyebrow:'validation gate',lines:['Abundance and', 'environment'],meta:['community weighting, conditions']},
+        {id:'field',x:gateX+2*(gateW+gateGap),y:526,w:gateW,h:98,kind:'gate',eyebrow:'validation gate',lines:['Field and process', 'evidence'],meta:['calibration, uncertainty']}
       ];
       const byId=new Map(nodes.map(d=>[d.id,d]));
       const links=[
@@ -328,21 +331,32 @@
       ];
       const palette={core:['#0d3c42','#e7fff4','#9ee6c0'],direct:['#168a48','#edfff2','#9fe0b5'],context:['#0284a8','#edf9ff','#9ad8ee'],guardrail:['#475569','#f7fafc','#cbd5e1'],output:['#c56a13','#fff8ed','#f2c78e'],gate:['#a16207','#fff9e8','#efca7d']};
       const defs=svg.append('defs');
+      defs.append('filter').attr('id','mbag-card-shadow').attr('x','-10%').attr('y','-18%').attr('width','120%').attr('height','140%')
+        .append('feDropShadow').attr('dx',0).attr('dy',8).attr('stdDeviation',10).attr('flood-color','#0f172a').attr('flood-opacity',.08);
       defs.append('marker').attr('id','mbag-arrow').attr('viewBox','0 -5 10 10').attr('refX',9).attr('refY',0).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#94a3b8');
       function center(node){ return [node.x+node.w/2,node.y+node.h/2]; }
+      function edgePoint(from,to){
+        const [fx,fy]=center(from), [tx,ty]=center(to), dx=tx-fx, dy=ty-fy;
+        const sx=dx===0 ? Infinity : (from.w/2)/Math.abs(dx), sy=dy===0 ? Infinity : (from.h/2)/Math.abs(dy);
+        const scale=Math.min(sx,sy);
+        return [fx+dx*scale, fy+dy*scale];
+      }
+      svg.append('rect').attr('x',18).attr('y',18).attr('width',w-36).attr('height',h-36).attr('rx',16).attr('fill','#ffffff').attr('opacity',.28);
       svg.append('g').selectAll('line').data(links).join('line')
-        .attr('x1',d=>center(byId.get(d[0]))[0]).attr('y1',d=>center(byId.get(d[0]))[1])
-        .attr('x2',d=>center(byId.get(d[1]))[0]).attr('y2',d=>center(byId.get(d[1]))[1])
+        .attr('x1',d=>edgePoint(byId.get(d[0]),byId.get(d[1]))[0]).attr('y1',d=>edgePoint(byId.get(d[0]),byId.get(d[1]))[1])
+        .attr('x2',d=>edgePoint(byId.get(d[1]),byId.get(d[0]))[0]).attr('y2',d=>edgePoint(byId.get(d[1]),byId.get(d[0]))[1])
         .attr('stroke',d=>d[2]==='gate'?'#d89b14':'#8ca2b3').attr('stroke-width',d=>d[2]==='gate'?2.2:1.7)
         .attr('stroke-dasharray',d=>d[2]==='gate'?'7 6':null).attr('opacity',.9).attr('marker-end','url(#mbag-arrow)');
       const group=svg.append('g').selectAll('g.node').data(nodes).join('g').attr('class','node').attr('transform',d=>`translate(${d.x},${d.y})`);
-      group.append('rect').attr('width',d=>d.w).attr('height',d=>d.h).attr('rx',14).attr('fill',d=>palette[d.kind][1]).attr('stroke',d=>palette[d.kind][2]).attr('stroke-width',1.3);
+      group.append('rect').attr('width',d=>d.w).attr('height',d=>d.h).attr('rx',14).attr('fill',d=>palette[d.kind][1]).attr('stroke',d=>palette[d.kind][2]).attr('stroke-width',1.3).attr('filter','url(#mbag-card-shadow)');
       group.append('rect').attr('width',5).attr('height',d=>d.h-20).attr('x',11).attr('y',10).attr('rx',3).attr('fill',d=>palette[d.kind][0]);
-      group.append('text').attr('x',27).attr('y',24).attr('font-size',10).attr('font-weight',800).attr('letter-spacing','.08em').attr('fill',d=>palette[d.kind][0]).text(d=>d.eyebrow.toUpperCase());
-      group.append('text').attr('x',27).attr('y',47).attr('font-size',14).attr('font-weight',800).attr('fill','#172033').text(d=>d.line1);
-      group.append('text').attr('x',27).attr('y',66).attr('font-size',11).attr('fill','#475569').text(d=>d.meta);
-      group.append('title').text(d=>`${d.line1}
-${d.meta}`);
+      group.append('text').attr('x',27).attr('y',25).attr('font-size',10).attr('font-weight',800).attr('letter-spacing','.08em').attr('fill',d=>palette[d.kind][0]).text(d=>d.eyebrow.toUpperCase());
+      group.append('text').attr('x',27).attr('y',53).attr('font-size',14).attr('font-weight',800).attr('fill','#172033')
+        .selectAll('tspan').data(d=>d.lines.map((line,i)=>({line,i}))).join('tspan').attr('x',27).attr('dy',d=>d.i===0?0:18).text(d=>d.line);
+      group.append('text').attr('x',27).attr('y',d=>d.lines.length>1?88:74).attr('font-size',11).attr('fill','#475569')
+        .selectAll('tspan').data(d=>d.meta.map((line,i)=>({line,i}))).join('tspan').attr('x',27).attr('dy',d=>d.i===0?0:15).text(d=>d.line);
+      group.append('title').text(d=>`${d.lines.join(' ')}
+${d.meta.join(' ')}`);
     }
     function renderNiche(method='diffusion'){
       const el=d3.select('#niche-map'); el.selectAll('*').remove();
