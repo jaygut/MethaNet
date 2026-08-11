@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">EmergentBiome / MethaNet molecular attestation</title>
+  <desc id="desc">Controlled-diligence molecular evidence cards for blue-carbon methane review and next-measurement design.</desc>
+  <defs>
+    <radialGradient id="field" cx="70%" cy="42%" r="72%">
+      <stop offset="0" stop-color="#102a2b"/>
+      <stop offset="0.48" stop-color="#091419"/>
+      <stop offset="1" stop-color="#06090d"/>
+    </radialGradient>
+    <linearGradient id="methane" x1="0" x2="1">
+      <stop stop-color="#ff8a4c"/>
+      <stop offset="1" stop-color="#ff5c3a"/>
+    </linearGradient>
+    <filter id="glow" x="-300%" y="-300%" width="700%" height="700%">
+      <feGaussianBlur stdDeviation="8" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#field)"/>
+  <g opacity="0.18" stroke="#2fe3c2" stroke-width="1">
+    <path d="M735 126L825 182L936 143L1030 224L952 314L1082 386L984 496"/>
+    <path d="M681 244L796 288L900 249L952 314L842 397L984 496"/>
+    <path d="M825 182L796 288L681 244L735 126"/>
+  </g>
+  <g fill="#2fe3c2" filter="url(#glow)">
+    <circle cx="735" cy="126" r="3"/><circle cx="825" cy="182" r="5"/>
+    <circle cx="936" cy="143" r="3"/><circle cx="1030" cy="224" r="4"/>
+    <circle cx="681" cy="244" r="4"/><circle cx="796" cy="288" r="3"/>
+    <circle cx="900" cy="249" r="5"/><circle cx="952" cy="314" r="4"/>
+    <circle cx="1082" cy="386" r="3"/><circle cx="842" cy="397" r="4"/>
+    <circle cx="984" cy="496" r="5"/>
+  </g>
+  <g font-family="Inter,Arial,sans-serif">
+    <g transform="translate(54 45)">
+      <circle cx="12" cy="12" r="5" fill="#2fe3c2" filter="url(#glow)"/>
+      <circle cx="12" cy="12" r="10" fill="none" stroke="#2fe3c2" stroke-opacity="0.55"/>
+      <text x="34" y="18" fill="#eaf2f2" font-size="21" font-weight="700">EmergentBiome</text>
+      <text x="197" y="18" fill="#8a9ba5" font-size="21">/</text>
+      <text x="216" y="18" fill="#ff7547" font-size="21" font-weight="700">MethaNet</text>
+    </g>
+    <text x="56" y="141" fill="#2fe3c2" font-size="15" font-weight="700" letter-spacing="3">MOLECULAR ATTESTATION FOR BLUE-CARBON DILIGENCE</text>
+    <text x="54" y="226" fill="#eaf2f2" font-size="58" font-weight="750">Know what to inspect.</text>
+    <text x="54" y="294" fill="url(#methane)" font-size="58" font-weight="750">Know what to measure next.</text>
+    <text x="57" y="352" fill="#b9c8cd" font-size="23">Evidence cards connect molecular screening, provenance, quality gates,</text>
+    <text x="57" y="385" fill="#b9c8cd" font-size="23">uncertainty, and the next validation action.</text>
+    <g transform="translate(56 435)">
+      <rect width="205" height="68" rx="8" fill="#0c1218" stroke="#1b3d3c"/>
+      <text x="18" y="31" fill="#eaf2f2" font-size="25" font-weight="700">7,965</text>
+      <text x="18" y="53" fill="#8a9ba5" font-size="13" letter-spacing="1">REGISTERED UNITS</text>
+      <rect x="221" width="205" height="68" rx="8" fill="#0c1218" stroke="#1b3d3c"/>
+      <text x="239" y="31" fill="#eaf2f2" font-size="25" font-weight="700">7,710</text>
+      <text x="239" y="53" fill="#8a9ba5" font-size="13" letter-spacing="1">TRI-VIEW READY</text>
+      <rect x="442" width="250" height="68" rx="8" fill="#0c1218" stroke="#5a3026"/>
+      <text x="460" y="31" fill="#ff7547" font-size="25" font-weight="700">0</text>
+      <text x="460" y="53" fill="#8a9ba5" font-size="13" letter-spacing="1">CALIBRATED SAMPLE RISK</text>
+    </g>
+    <line x1="0" y1="574" x2="1200" y2="574" stroke="#1b2730"/>
+    <text x="56" y="608" fill="#86f0e0" font-size="14" font-weight="700" letter-spacing="1">CONTROLLED DILIGENCE</text>
+    <text x="264" y="608" fill="#8a9ba5" font-size="14">Molecular screening and monitoring design, not measured flux or final MRV risk.</text>
+    <text x="1092" y="608" fill="#8a9ba5" font-size="14">2026-08-10</text>
+  </g>
+</svg>

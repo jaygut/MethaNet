@@ -25,14 +25,24 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <noscript><div class="noscript">This is an interactive, algorithmically-rendered briefing. Please enable JavaScript to view it.</div></noscript>
+  <noscript>
+    <style>.site-header,.skip-nav,.rail,main,.claimbar{display:none!important}.noscript{position:static;min-height:100vh;text-align:left;place-items:start;max-width:760px;margin:auto}.noscript h1{color:#EAF2F2;margin-bottom:18px}.noscript p{margin:0 0 14px;line-height:1.65}.noscript a{color:#2FE3C2}</style>
+    <article class="noscript">
+      <div>
+        <h1>EmergentBiome / MethaNet</h1>
+        <p>MethaNet organizes MAG and proteome representations, functional screening evidence, provenance, quality gates, and validation gaps into reviewable evidence cards.</p>
+        <p>The current artifact supports molecular evidence review and next-measurement design. It does not provide measured methane flux, sample or project risk scores, final tiers, carbon-credit approval, or source-independent transfer proof.</p>
+        <p><a href="report/">Open the static-first technical report</a>. Enable JavaScript for the immersive atlas interactions.</p>
+      </div>
+    </article>
+  </noscript>
 
   <!-- Accessible scene navigation (keyboard/screen-reader; works on every viewport, incl. mobile where the rail is hidden) -->
   <nav class="skip-nav" aria-label="Jump to scene">
     <a href="#scene-stakes">1 · The Stakes</a>
     <a href="#scene-blindspot">2 · The Blind Spot</a>
     <a href="#scene-surveyor">3 · What You Get</a>
-    <a href="#scene-cheap">4 · Versus the Cheap Method</a>
+    <a href="#scene-cheap">4 · Beyond Proxy-Only Screening</a>
     <a href="#scene-atlas">5 · The Evidence</a>
     <a href="#scene-engine">6 · One Engine, Many Maps</a>
     <a href="#scene-platform">7 · Platform &amp; Moat</a>
@@ -65,7 +75,7 @@
       </svg>
       <span class="lockup__text">
         <span class="lockup__brand"><span class="plat">EmergentBiome</span><span class="sep">/</span><span class="app">MethaNet</span></span>
-        <span class="lockup__tag">methane-risk intelligence for blue carbon</span>
+        <span class="lockup__tag">molecular attestation for blue carbon</span>
       </span>
     </a>
     <div class="header__right">
@@ -114,7 +124,15 @@
     </section>
 
     <section class="scene" id="scene-engine" data-scene="engine" data-accent="--emergence" style="height:320vh; --copy-h:flex-start; --copy-v:flex-end;">
-      <div class="scene__stage"><div class="scene__canvas" id="canvas-engine" aria-hidden="true"></div><div class="scene__overlay"><div class="copy" data-copy="engine"></div></div></div>
+      <div class="scene__stage">
+        <div class="scene__canvas" id="canvas-engine" aria-hidden="true"></div>
+        <div class="scene__controls" id="engineLensControls" role="group" aria-label="Evidence lens">
+          <button type="button" data-engine-lens="0" aria-pressed="true">Methane</button>
+          <button type="button" data-engine-lens="1" aria-pressed="false">Nitrous oxide</button>
+          <button type="button" data-engine-lens="2" aria-pressed="false">Sulfur / DMS</button>
+        </div>
+        <div class="scene__overlay"><div class="copy" data-copy="engine"></div></div>
+      </div>
     </section>
 
     <section class="scene" id="scene-platform" data-scene="platform" data-accent="--emergence" style="height:300vh; --copy-h:flex-start; --copy-v:flex-end;">

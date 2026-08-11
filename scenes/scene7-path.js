@@ -1,7 +1,6 @@
-/* SCENE 7 - THE PATH & THE ASK  ·  REAL PATH
-   A pin at Cispatá Bay (Colombian Caribbean mangrove, the real validation site),
-   the agentic pipeline turning raw sequences into a report in <4 days (vs 6-12
-   months of analyst work), and the milestone timeline: molecular atlas -> field
+/* SCENE 7 - THE PATH & THE ASK  ·  VALIDATION PATH
+   An illustrative partner-cohort pin, the calibration-core pipeline benchmark,
+   and the milestone timeline: molecular atlas -> field
    validation -> paired data -> calibrated risk -> registry integration. */
 (function () {
   window.EBScenes = window.EBScenes || {};
@@ -12,7 +11,7 @@
     function layout() {
       rng = window.EBRandom.RNG("path");
       const w = ctx.W, h = ctx.H;
-      // stylized Caribbean coast curve (illustrative geography; site name is real)
+      // stylized coastline curve; geography and pin are illustrative
       coast = [];
       const cy = h * 0.30;
       for (let i = 0; i <= 40; i++) {
@@ -64,9 +63,9 @@
       p.push(); p.noStroke();
       p.stroke(D.rgba(EB.color.methaneA, 0.6)); p.strokeWeight(1); p.line(pin.x, pin.y, pin.x, pin.y - 34); p.noStroke();
       p.fill(EB.color.textPrimary); p.textFont("Bricolage Grotesque"); p.textStyle(p.BOLD); p.textSize(14); p.textAlign(p.LEFT, p.BOTTOM);
-      p.text("Cispatá Bay", pin.x + 8, pin.y - 34); p.textStyle(p.NORMAL);
+      p.text("Partner validation cohort", pin.x + 8, pin.y - 34); p.textStyle(p.NORMAL);
       p.fill(D.rgba(EB.color.textMuted, 0.95)); p.textFont("IBM Plex Mono"); p.textSize(9); p.textAlign(p.LEFT, p.TOP);
-      p.text("Colombian Caribbean · Verra VM0033 context", pin.x + 8, pin.y - 32);
+      p.text("illustrative location · paired evidence required", pin.x + 8, pin.y - 32);
       p.pop();
     }
 
@@ -82,7 +81,7 @@
       p.fill(EB.color.attested); p.noStroke(); p.textFont("IBM Plex Mono"); p.textSize(16);
       p.text("< " + N.pipelineDays + " days", w * 0.5, py - 38);
       p.fill(D.rgba(EB.color.textMuted, 0.85)); p.textSize(10);
-      p.text("raw sequences to a reproducible report · vs months of manual analysis", w * 0.5, py - 22);
+      p.text("calibration-core benchmark to a reproducible report", w * 0.5, py - 22);
       p.pop();
 
       // input / output labels above the rail ends (clear of stage labels below)

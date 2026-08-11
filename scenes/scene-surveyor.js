@@ -126,7 +126,7 @@
       const y = G.twoColY, colW = (G.x1 - sx0 - (G.narrow ? 0 : w * 0.02)) / (G.narrow ? 1 : 2);
       const give = {
         x: sx0, title: "WE GIVE YOU", col: LINK,
-        rows: ["a ranked methane-risk signal per site", "where to spend the first flux measurement", "which credits deserve scrutiny", "an evidence trail for every call"],
+        rows: ["an illustrative context review priority", "where a first process measurement adds information", "which evidence gaps need diligence", "an evidence trail for every review"],
       };
       const dont = {
         x: G.narrow ? sx0 : sx0 + colW + w * 0.02, title: "WE DO NOT GIVE YOU (YET)", col: MUT,
