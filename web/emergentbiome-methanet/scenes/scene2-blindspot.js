@@ -78,13 +78,13 @@
         D.label(p, "0 lit", x0 - 12, rowY, D.rgba(LIT, 0.7), 11, [p.RIGHT, p.CENTER]);
       }
 
-      // counter readout - honest present state
+      // counter readout - exact current-atlas join state, not a global site count
       p.push();
       D.label(p, "PAIRED METHANE-FLUX MEASUREMENTS", w * 0.5, h * 0.15, EB.color.textMuted, 11, [p.CENTER, p.CENTER]);
       p.fill(LIT); p.noStroke(); p.textFont("IBM Plex Mono"); p.textAlign(p.CENTER, p.CENTER);
       p.textSize(Math.min(72, w * 0.1));
-      p.text("≈ 0", w * 0.5, h * 0.15 + 48);
-      D.label(p, "sites today with paired flux + molecular data", w * 0.5, h * 0.15 + 88, D.rgba(EB.color.textPrimary, 0.7), 11, [p.CENTER, p.CENTER]);
+      p.text("0 exact", w * 0.5, h * 0.15 + 48);
+      D.label(p, "authoritative sample + environment + process joins in this atlas", w * 0.5, h * 0.15 + 88, D.rgba(EB.color.textPrimary, 0.7), 11, [p.CENTER, p.CENTER]);
       D.label(p, "grey: ~" + D.fmt(field.length) + " unknown genomes in this view (illustrative scale)", w * 0.5, h * 0.15 + 106, D.rgba(EB.color.textMuted, 0.7), 9.5, [p.CENTER, p.CENTER]);
       p.pop();
 

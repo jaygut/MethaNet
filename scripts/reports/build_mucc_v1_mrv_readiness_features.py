@@ -2,9 +2,10 @@
 """Build claim-safe MUCC v1 MAG-level MRV readiness features.
 
 The output is a warehouse-facing feature primitive for triage only. It combines
-source DRAM-style annotations, processed expression support, source protein
-readiness, and Prodigal-derived gLM2 input readiness without assigning final
-MRV scores, A-E tiers, measured flux, crediting status, or transfer claims.
+source DRAM-style annotations, processed expression support, completed ESM2 and
+gLM2 evidence, and source-aware molecular-neighbor evidence without assigning
+final MRV scores, A-E tiers, measured flux, crediting status, or transfer
+claims.
 """
 
 from __future__ import annotations
@@ -15,11 +16,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-
 BASE = Path("results/functional_metagenomics/mucc_v1_owc_wetland_20260626")
 LANE_ID = "mucc_v1_owc_wetland"
 CLAIM_BOUNDARY = (
-    "MAG-level source-scaffold readiness only; no final MRV score, A-E tier, "
+    "MAG-level source-scaffold and molecular-reference readiness only; no final MRV score, A-E tier, "
     "measured methane flux, carbon-crediting claim, or source-independent "
     "transfer claim."
 )
@@ -110,7 +110,20 @@ def readiness_label(
     has_expression: bool,
     direct_esm2_ready: bool,
     prodigal_glm2_ready: bool,
+    completed_esm2_embedding: bool,
+    completed_glm2_context: bool,
+    source_aware_neighbor_evidence: bool,
 ) -> str:
+    if (
+        has_source_features
+        and has_expression
+        and completed_esm2_embedding
+        and completed_glm2_context
+        and source_aware_neighbor_evidence
+    ):
+        return "molecular_reference_ready_ecological_validation_pending"
+    if has_source_features and completed_glm2_context and not completed_esm2_embedding:
+        return "context_reference_ready_missing_direct_source_esm2_protein"
     if has_source_features and has_expression and direct_esm2_ready and prodigal_glm2_ready:
         return "mrv_feature_scaffold_ready_pending_embedding_outputs"
     if has_source_features and prodigal_glm2_ready and not direct_esm2_ready:
@@ -123,6 +136,18 @@ def readiness_label(
 
 
 def allowed_wording(label: str) -> str:
+    if label == "molecular_reference_ready_ecological_validation_pending":
+        return (
+            "This MAG has source-derived functional terms, processed expression support, "
+            "completed ESM2 and gLM2 molecular evidence, and source-stratified reference "
+            "neighbors. It is a molecular reference candidate only; exact ecological and "
+            "methane-process validation remain required."
+        )
+    if label == "context_reference_ready_missing_direct_source_esm2_protein":
+        return (
+            "This MAG has source-derived functional terms and completed gLM2 context evidence, "
+            "but lacks direct source-protein support for the current ESM2 lane."
+        )
     if label == "mrv_feature_scaffold_ready_pending_embedding_outputs":
         return (
             "This MAG has source-derived functional terms, processed expression support, "
@@ -157,6 +182,10 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
         run_dir / "functional_features/feature_mucc_v1_source_dram_mag_summary.tsv",
         "mag_id",
     )
+    source_qc = read_tsv(
+        run_dir / "functional_features/feature_mucc_v1_zenodo_source_qc.tsv",
+        "mag_id",
+    )
     mag_expr = read_tsv(run_dir / "expression/feature_mucc_v1_expression_mag_summary.tsv", "mag_id")
     gene_expr = read_tsv(
         run_dir / "expression/feature_mucc_v1_gene_expression_mag_summary.tsv",
@@ -164,15 +193,25 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     )
     esm2 = read_tsv(run_dir / "manifests/mucc_v1_esm2_input_manifest.tsv", "mag_id")
     glm2 = read_tsv(run_dir / "manifests/mucc_v1_glm2_ready_manifest.tsv", "mag_id")
+    embedding_status = read_tsv(
+        run_dir / "functional_features/feature_mucc_v1_embedding_status.tsv", "mag_id"
+    )
+    neighbor_summary = read_tsv(
+        run_dir / "bridge_reanchoring/integrated_atlas/wetland_reference_neighbor_summary.tsv",
+        "mag_id",
+    )
 
     rows: list[dict[str, Any]] = []
     for mag_id in sorted(catalog):
         ann = gene_ann.get(mag_id, {})
         src = dram.get(mag_id, {})
+        qc = source_qc.get(mag_id, {})
         mex = mag_expr.get(mag_id, {})
         gex = gene_expr.get(mag_id, {})
         esm = esm2.get(mag_id, {})
         gl = glm2.get(mag_id, {})
+        embedding = embedding_status.get(mag_id, {})
+        neighbor = neighbor_summary.get(mag_id, {})
 
         methane_terms = safe_int(ann.get("methane_term_rows")) + safe_int(src.get("methane_term_rows"))
         sulfur_terms = safe_int(ann.get("sulfur_term_rows")) + safe_int(src.get("sulfur_term_rows"))
@@ -185,19 +224,36 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
         source_feature_rows = safe_int(ann.get("gene_annotation_rows")) + safe_int(
             src.get("source_dram_rows")
         )
-        completeness = safe_float(ann.get("bin_completeness"))
-        contamination = safe_float(ann.get("bin_contamination"))
+        direct_qc_reconciled = (
+            qc.get("source_qc_evidence_status") == "direct_Zenodo_DRAM_QC_values_reconciled"
+        )
+        qc_completeness = qc.get("bin_completeness", "") if direct_qc_reconciled else ""
+        qc_contamination = qc.get("bin_contamination", "") if direct_qc_reconciled else ""
+        completeness_value = qc_completeness or ann.get("bin_completeness", "")
+        contamination_value = qc_contamination or ann.get("bin_contamination", "")
+        completeness = safe_float(completeness_value)
+        contamination = safe_float(contamination_value)
         mag_expr_support = mag_id in mag_expr and safe_float(mex.get("sum_expression")) > 0.0
         gene_expr_support = safe_int(gex.get("gene_expression_rows")) > 0
         direct_esm2_ready = truthy(esm.get("functional_run_include")) and safe_int(
             esm.get("protein_count")
         ) > 0
         prodigal_glm2_ready = truthy(gl.get("glm2_include")) and safe_int(gl.get("protein_count")) > 0
+        completed_esm2_embedding = (
+            embedding.get("esm2_embedding_status") == "complete_finite_embedding"
+        )
+        completed_glm2_context = (
+            embedding.get("glm2_context_status") == "complete_multiwindow_stability_summary"
+        )
+        source_aware_neighbor_evidence = bool(neighbor)
         label = readiness_label(
             source_feature_rows > 0,
             mag_expr_support or gene_expr_support,
             direct_esm2_ready,
             prodigal_glm2_ready,
+            completed_esm2_embedding,
+            completed_glm2_context,
+            source_aware_neighbor_evidence,
         )
         marker_breadth = sum(
             value > 0 for value in [methane_terms, sulfur_terms, methyl_terms, substrate_terms]
@@ -219,6 +275,9 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
             - min(contamination / 5.0, 5.0)
             + (1.0 if direct_esm2_ready else 0.0)
             + (1.0 if prodigal_glm2_ready else 0.0)
+            + (1.0 if completed_esm2_embedding else 0.0)
+            + (1.0 if completed_glm2_context else 0.0)
+            + (1.0 if source_aware_neighbor_evidence else 0.0)
         )
 
         rows.append(
@@ -232,9 +291,22 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
                 "order": ann.get("order", ""),
                 "family": ann.get("family", ""),
                 "genus": ann.get("genus", ""),
-                "bin_completeness": ann.get("bin_completeness", ""),
-                "bin_contamination": ann.get("bin_contamination", ""),
+                "bin_completeness": completeness_value,
+                "bin_contamination": contamination_value,
                 "source_qc_label": qc_label(completeness, contamination),
+                "source_qc_evidence_status": qc.get(
+                    "source_qc_evidence_status",
+                    "gene_annotation_QC_fallback_or_missing",
+                ),
+                "source_qc_mapping_status": qc.get("source_qc_mapping_status", ""),
+                "published_mq_hq_membership_status": qc.get(
+                    "published_mq_hq_membership_status",
+                    "not_reconciled_from_direct_Zenodo_QC",
+                ),
+                "source_qc_value_consistency_status": qc.get(
+                    "source_qc_value_consistency_status",
+                    "not_reconciled_from_direct_Zenodo_QC",
+                ),
                 "source_feature_rows": source_feature_rows,
                 "methane_term_rows": methane_terms,
                 "sulfur_term_rows": sulfur_terms,
@@ -262,17 +334,23 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
                 ),
                 "direct_source_esm2_input_ready": str(direct_esm2_ready).lower(),
                 "prodigal_glm2_input_ready": str(prodigal_glm2_ready).lower(),
+                "completed_esm2_embedding": str(completed_esm2_embedding).lower(),
+                "completed_glm2_context": str(completed_glm2_context).lower(),
+                "source_aware_neighbor_evidence": str(source_aware_neighbor_evidence).lower(),
                 "mrv_readiness_label": label,
                 "review_priority_score": fmt(review_priority_score),
                 "allowed_claim_wording": allowed_wording(label),
                 "blocking_gap": (
-                    "completed ESM2/gLM2 outputs, wetland-neighbor bridge tables, environmental "
-                    "sample/depth joins, abundance/read coverage, uncertainty propagation, and "
-                    "flux/process validation"
+                    "exact sample/date/depth joins, environmental or metabolite covariates, "
+                    "abundance/read coverage, uncertainty propagation, and flux/process validation"
+                    if label == "molecular_reference_ready_ecological_validation_pending"
+                    else "completed molecular outputs or ecological validation evidence required"
                 ),
                 "next_validation_action": (
-                    "after embeddings complete, join nearest-neighbor evidence and promote only "
-                    "reviewable rows into mechanism cards with source-aware caveats"
+                    "join molecular evidence to exact sample, depth, environmental, abundance, and "
+                    "flux records before ecological mechanism review"
+                    if label == "molecular_reference_ready_ecological_validation_pending"
+                    else "complete missing molecular evidence, then join exact ecological validation records"
                 ),
                 "claim_boundary": CLAIM_BOUNDARY,
             }
@@ -296,6 +374,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
         "family",
         "genus",
         "source_qc_label",
+        "published_mq_hq_membership_status",
         "mrv_readiness_label",
         "review_priority_score",
         "marker_breadth_count",
@@ -313,7 +392,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     candidates = [
         row
         for row in rows
-        if row["mrv_readiness_label"] == "mrv_feature_scaffold_ready_pending_embedding_outputs"
+        if row["mrv_readiness_label"] == "molecular_reference_ready_ecological_validation_pending"
         and safe_int(row["marker_breadth_count"]) >= 2
         and safe_int(row["expression_marker_breadth_count"]) >= 1
     ]
@@ -345,16 +424,16 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
         "candidate_cards": str(card_path.relative_to(repo_root)),
         "mag_rows": len(rows),
         "candidate_card_rows": len(card_rows),
-        "mrv_feature_scaffold_ready_pending_embedding_outputs": sum(
+        "molecular_reference_ready_ecological_validation_pending": sum(
             1
             for row in rows
-            if row["mrv_readiness_label"] == "mrv_feature_scaffold_ready_pending_embedding_outputs"
+            if row["mrv_readiness_label"] == "molecular_reference_ready_ecological_validation_pending"
         ),
-        "context_feature_scaffold_ready_missing_direct_source_esm2_protein": sum(
+        "context_reference_ready_missing_direct_source_esm2_protein": sum(
             1
             for row in rows
             if row["mrv_readiness_label"]
-            == "context_feature_scaffold_ready_missing_direct_source_esm2_protein"
+            == "context_reference_ready_missing_direct_source_esm2_protein"
         ),
         "catalog_only_pending_feature_evidence": sum(
             1 for row in rows if row["mrv_readiness_label"] == "catalog_only_pending_feature_evidence"

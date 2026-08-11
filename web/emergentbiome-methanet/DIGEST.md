@@ -1,193 +1,124 @@
-# DIGEST — verified ground truth for the EmergentBiome / MethaNet landing page
+# DIGEST: EmergentBiome / MethaNet controlled-diligence release
 
-This file is the reconciliation between the build spec's *expected* numbers and the
-**live repository snapshot**. Everything the page asserts traces back to here, and
-here traces back to the repo artifacts cited in each row. Read this before editing
-`config.js`.
+Snapshot date: **2026-08-10**
 
-- **Snapshot date:** 2026-07-24
-- **Authoritative report snapshot:** `2026-07-24 scientific reconciliation release`
-- **Payload-freeze audit:** 7,709 release-required rows; 7,484 data-complete tri-views;
-  one incomplete MSM unit preserved as a release exclusion
-- **Primary sources digested:** `README.md`, `AGENTS.md`,
-  `docs/methanet_positioning_and_claims.md`, `docs/current_artifact_inventory.md`,
-  `ai_docs/functional_metagenomics_expansion/final_mrv_risk_scoring_roadmap.md`,
-  `ai_docs/.../queryable_molecular_attestation_moat/methanet_queryable_molecular_attestation_moat.md`,
-  `configs/methanet_atlas_lanes.tsv`,
-  `results/reports/methanet_3view_payload_freeze_20260724_scientific_reconciliation/freeze_summary.tsv`,
-  `results/reports/mbag_nextgen_molecular_niche_atlas_20260724_scientific_reconciliation/report_bundle_manifest.json`,
-  `results/functional_metagenomics/mucc_v1_owc_wetland_20260626/reports/atlas_lane_registry_summary.md`,
-  `results/functional_metagenomics/mucc_v1_owc_wetland_20260626/reports/mucc_v1_integration_completion_audit.json`.
+This digest is the public rendering contract for the August 10 source and
+locally built experience. The dated `release_ledger.json` in
+`results/reports/methanet_3view_payload_freeze_20260810_end_to_end/` is the
+numerical authority. A payload-freeze state of `ready` does not mean the public
+deployment is authorized; publication remains separately gated.
 
-### Public terminology contract
+<!-- METHANET_RELEASE_LEDGER_BEGIN -->
+```json
+{
+  "registered_units": 7965,
+  "esm2_units": 7710,
+  "glm2_units": 7717,
+  "functional_payload_units": 7710,
+  "release_required_units": 7710,
+  "explicit_non_runnable_gaps": 255,
+  "tri_view_ready_units": 7710,
+  "schema_normalized_units": 7710,
+  "schema_normalized_tri_view_units": 7710,
+  "pipeline_normalized_tri_view_units": 5209,
+  "mechanism_comparable_units": 0,
+  "annotation_complete_tri_view_units": 0,
+  "source_scaffold_tri_view_units": 2501,
+  "blocking_units": 0,
+  "schema_version": "1.0.0",
+  "snapshot_date": "2026-08-10",
+  "freeze_manifest_sha256": "7dd870ac3cdf0142b8050dbeec4f310ac18e6c21d1f34c4728e43b18df986cfc",
+  "release_state": "ready",
+  "indexing_decision": "noindex_controlled_diligence",
+  "allowed_public_wording": "Molecular screening evidence and review priorities; metadata-rich contexts are not scored samples.",
+  "forbidden_public_wording": "Sample risk, measured flux, activity magnitude, final tiers, source-independent transfer, or MRV/crediting approval."
+}
+```
+<!-- METHANET_RELEASE_LEDGER_END -->
 
-- **MBAG** means MethaNet Bridge Attestation Graph. It is the knowledge graph
-  that connects each molecular evidence unit to representations, mechanisms,
-  provenance, quality gates, claim scope, and validation actions.
-- **MAG** means metagenome-assembled genome.
-- **ESM-2** names the protein-language-model view. **gLM2** names the
-  genome-context language-model view.
-- **Tri-view** means ESM-2, gLM2, and a functional payload are present.
-  Mechanism comparability remains a separate evidence state.
-- **MRV** means monitoring, reporting, and verification. Calibrated MRV remains
-  downstream of sample linkage, abundance, environment, uncertainty, and
-  field or process validation.
-- **MUCC v1** identifies the Old Woman Creek wetland source warehouse.
-  **VM0033** identifies Verra's tidal-wetland and seagrass methodology context.
+## Verified release snapshot
 
----
+| Lane | Registered | Release-required | ESM-2 | gLM2 | Functional | Tri-view | Evidence contract |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| POC core | 625 | 625 | 625 | 625 | 625 | 625 | pipeline-normalized; cross-lane comparability pending |
+| MSM China 2025 | 1,428 | 1,428 | 1,428 | 1,428 | 1,428 | 1,428 | pipeline-normalized; cross-lane comparability pending |
+| Futian 2026 | 3,404 | 3,156 | 3,156 | 3,156 | 3,156 | 3,156 | pipeline-normalized; cross-lane comparability pending |
+| MUCC v1 Old Woman Creek | 2,508 | 2,501 | 2,501 | 2,508 | 2,501 | 2,501 | source scaffold; non-equivalent |
+| **Total** | **7,965** | **7,710** | **7,710** | **7,717** | **7,710** | **7,710** | **0 mechanism-comparable** |
 
-## 1. Headline numbers (verified) — and corrections to the spec's expected values
+The 255 non-runnable rows are explicit source gaps: 248 Futian rows and seven
+MUCC rows. They remain in the registered-unit ledger and are not plotted as
+embedding-bearing points.
 
-| Quantity | Spec expected | **Verified live** | Notes / source |
-| --- | --- | --- | --- |
-| Calibration core (rumen + wetland POC) | 625 MAGs | **625** ✓ | Consolidated DuckDB warehouse, 625/625 tri-view, 711 validation gates pass. `cohort_warehouse_poc_magbin_union_20260616_075022` |
-| Mangrove / MSM China 2025 candidates | 1,428 | **1,428** ✓ | ESM2 1,428/1,428; gLM2 1,428/1,428; functional **1,427/1,428** (99.93%, 1 partial) at snapshot |
-| Mangrove / Futian 2026 (Qi et al.) rMAGs | 3,404 | **3,404** ✓ | Phase-1 dereplicated at 99% ANI. 3,156 ready payload + 248 explicit gap rows |
-| Futian ESM2 / gLM2 | complete | **3,156 / 3,156 both** ✓ | Across four shards |
-| Futian functional | in progress | **312/312 archaea + 2,619/2,844 bacteria complete** | 2,931/3,156 ready payload rows have annotation-complete outputs; common mechanism-feature aggregation remains pending |
-| Data-complete tri-view units | 2,317 | **7,484** | 625 mechanism-comparable POC + 4,358 annotation-complete/harmonization-pending mangrove + 2,501 MUCC source-scaffold |
-| ESM-2 molecular space | ~5,200 | **7,710 embedding-bearing units** | 625 POC + 1,428 MSM + 3,156 Futian + 2,501 MUCC v1 |
-| MUCC v1 OWC wetland warehouse | not in original page | **2,508 wetland genomes** ✓ | 2,501 ESM-2; 2,508 multiwindow gLM2; 2,508 source-functional scaffold; 2,501 data-complete tri-view |
-| Foundation models | ESM2 + gLM2 | **ESM2 (650M, `esm2_t33_650M_UR50D`) + gLM2 (650M)** ✓ | |
-| Speed | <4 days vs 6–12 mo | **<4 days (calibration run)** ✓ | Raw sequences → consolidated reports for the calibration core |
-| Paired CH₄-flux samples | 23 → 80–100 | **23 targeted → 80–100 target** ✓ | README validation strategy |
-| Benchmark | mcrA/pmoA R²=0.879 (Lee 2014, freshwater) | **as a literature target, not yet measured here** ✓ | Honest boundary: to be validated in saline systems |
-| Field validation site | Cispatá Bay | **Cispatá Bay, Colombian Caribbean mangrove** ✓ | Conservation International context; VM0033 methodology family |
+## Functional and comparison contract
 
-**The single most important update is the three-state functional contract.** `config.js` and the
-published report use 7,484 only as the data-complete tri-view total. The 625-unit POC core is the
-current mechanism-comparable set. MSM/Futian contribute 4,358 real annotation-complete tri-views
-whose report-level mechanism features must be rebuilt from one common accepted/present contract.
-MUCC contributes 2,501 data-complete source-scaffold tri-views plus processed expression detection;
-its DRAM/gene/expression evidence is not numerically equated with either other contract.
+- KOfam numerators use accepted calls, not every hit row.
+- MCycDB and SCycDB event counts use the best-ranked hit per gene.
+- METABOLIC workbook outputs are normalized into long presence/event tables.
+- Failed, partial, corrupt, and superseded attempts remain in run-status facts.
+- POC, MSM, and Futian are pipeline-normalized, but code/configuration/database
+  fingerprints and source-aware statistical gates are not yet closed.
+- MUCC expression supports detection/occupancy review only. It is not activity
+  magnitude or process rate, and the source scaffold is not pooled numerically
+  with the guarded functional pipeline.
 
-### ESM2 POC geometry (662-genome cohort, real statistics)
-- Cohort: **662 genomes** = 555 rumen (PRJEB31266) + 107 wetland/MUCC; embedding 662 × 1,280 (ESM2-650M, layer 33, mean-pooled).
-- **PERMANOVA R² = 0.202 (p = 0.001)** — ecosystem explains 20.2% of embedding variance.
-- **Silhouette = 0.398** [95% CI 0.364–0.439].
-- **CV classifier AUC = 1.000**, balanced accuracy 0.999 (5-fold, PCA-50).
-- **Cohen's d = 3.63** on the trajectory axis.
-- **14 bridge genomes** with ≥1 opposite-ecosystem k-NN neighbor (of 662). All top 11 alpha-transfer candidates are **rumen Archaea** (conserved methanogenesis machinery: mcrA, HdrABC). Top bridge `bin.8` (Archaea).
-- **P0 caveat (stated honestly on-page):** source and ecosystem are perfectly confounded (all rumen = PRJEB31266, all wetland = MUCC). Deconfounding is the top next step.
+## Metadata readiness
 
-### Molecular attestation graph (MMAG MVP, `results/attestation/mmag_mvp_20260617/`)
-- **662 MAG nodes · 3,968 evidence atoms · 2,644 feature nodes · 397 taxa · 13 artifacts · 8 validation-gap nodes · 5 claim nodes · 2 source domains.**
-- **9,930 `NEAR_IN_ESM2_SPACE` edges.**
-- Readiness: 437 `molecular_attestation_ready_not_mrv`, 188 `…_with_qc_caveat`, 37 `blocked_noncomparable_unit`.
+The normalized metadata package contains 280 samples, 293,245 sample/MAG or
+context links, 259,084 expression-or-abundance rows, 34,835 process-observation
+rows, and 133 sample/flux-window context links. It contains **zero**
+authoritative exact sample/environment/process joins.
 
----
+High-value contexts are:
 
-## 2. Ecosystem lanes (all four registered lanes represented)
+- MSM: 82 sediment samples and 71 exact BioSample environmental rows; MAGs map
+  to source-group ambiguity sets rather than one exact sample.
+- Futian: 65 sediment samples across 14 site-time keys; 47 contexts have the
+  strongest paired chemistry coverage, but MAGs remain depth-ambiguous.
+- MUCC v1: 133 expression columns and 89 best-recovered sample contexts;
+  processed expression, chamber, porewater, and tower records are staged but
+  lack an authoritative ecological join.
 
-| Lane | Role | Units (embedding-bearing) | Status |
-| --- | --- | --- | --- |
-| `rumen` (POC) | source reference (methane-system neighborhoods) | 518 MAG/bin in POC denominator (555 ESM2 in 662 backbone) | complete, source-confounded |
-| `wetland` / MUCC (POC) | target-domain wetland | 107 | complete (MAG-level) |
-| `mangrove_msm` (MSM China 2025) | blue-carbon target expansion | 1,428 | ESM2+gLM2 complete; functional 1,427/1,428 |
-| `mangrove_futian` (Futian 2026, Qi et al.) | larger time/depth/habitat mangrove target | 3,156 ready (+248 gap) | ESM2+gLM2 complete; annotation-complete 2,931/3,156; common feature aggregation pending |
-| `mucc_v1_owc_wetland` | Old Woman Creek wetland molecular-reference lane | 2,501 embedded (+7 non-embedded archive rows) | ESM2 2,501/2,508; gLM2 2,508/2,508; source-functional 2,508/2,508; explicitly not canonical mechanism-equivalent |
+These are metadata-rich validation opportunities, not scored samples.
 
----
+## Visual evidence contract
 
-## 3. Bridge-taxa result (what the hero encodes)
-
-- **POC scale:** 14 cross-ecosystem bridge genomes; top alpha-transfer candidates all rumen Archaea — methanogen machinery is the conserved corridor.
-- **Expanded public export:** **2,226 cross-domain k-NN/case-study links** among **930 linked nodes** and **36 case-study candidates** in the 7,710-point ESM-2 map.
-- These edges are **provisional bridge hypotheses**, not proof of rumen→wetland transfer (source confounding stands).
-
----
-
-## 4. Non-negotiable claim boundaries (must be visible, not buried)
-
-1. Current results = **molecular screening + monitoring prioritization**, at MAG/proteome grain.
-2. **A–E risk tiers are TARGET product vocabulary — explicitly "not yet calibrated."**
-3. From the molecular atlas alone, MethaNet does **not** claim: measured methane flux · final
-   sample/project MRV risk scores · final A–E tiers · source-independent rumen→wetland transfer
-   proof · carbon-credit approval.
-4. Maturity ladder: **Level 0 (molecular screening) = complete/lit; Level 1 (sample identity &
-   metadata) = in progress** (sample/site/season metadata recovered for the mangrove lanes — 147
-   sediment samples + 71 environmental rows — but full genome-to-sample mapping is not done).
-   Calibrated probabilistic MRV risk (Level 5) still requires abundance → environmental covariates
-   → flux/process validation → calibration. We do not claim anything beyond rung 1, and say so.
-
-Maturity ladder (roadmap Levels 0–6; page shows rungs 0–5 with Level 6 as the registry horizon):
-`0 MAG molecular screening (LIT NOW)` → `1 sample identity/metadata` → `2 abundance/community
-capacity` → `3 environmental permissiveness` → `4 flux/process validation` → `5 calibrated
-probabilistic MRV risk (TARGET)` → `(6 MRV product & audit / registry integration)`.
-
----
-
-## 5. Phase 1 data export — which option was used
-
-**Option (1): DIFFUSION MAP coordinates of the proteome embeddings — REAL.**
-The hero uses the **diffusion map** as its 2D backbone (the report's primary niche-space view),
-because the bridge structure reads most clearly there: the gold "nearest-reference" links fan from
-the mangrove line back to specific rumen reference genomes.
-
-**Evidence-reconciled recompute (2026-07-24):** the atlas and report were regenerated end-to-end from all
-four registered lanes. Pipeline: `build_methanet_3view_payload_freeze.py` →
-`methanet_3view_payload_freeze_20260724_scientific_reconciliation` →
-`build_mbag_nextgen_molecular_niche_atlas.py` →
-`mbag_nextgen_molecular_niche_atlas_20260724_scientific_reconciliation`. The payload audit preserves
-one partial MSM row as an explicit release exclusion and retains all other incomplete/source-gap rows.
-
-`tools/export_atlas.py` reads the recomputed niche projection
-`results/reports/mbag_nextgen_molecular_niche_atlas_20260724_scientific_reconciliation/assets/data/niche.json`
-and writes `data/atlas.json`:
-
-- **7,710 real embedding-bearing points** (625 POC + 1,428 MSM + 3,156 Futian + 2,501 MUCC v1).
-  The 255 non-embedded source-gap rows are acknowledged in `meta.excluded_gap_rows`.
-- Primary `x,y` = **diffusion map**, scaled per-axis by a **linear min-max** (0.3/99.7 clip) so the
-  full 7,710-point graph remains legible. UMAP (`hx,hy`) and PCA (`px,py`) are exported as real
-  projection-sensitivity views.
-- Per point: ecosystem, domain, `br` (documented bridge node), `cs` (case-study nearest-reference),
-  `fc` (functional-contract state), `ma` (POC-only internal attestation score), `mz` (POC-only
-  curated methane-marker density), and `nps` (mangrove nearest-POC similarity). `ma`/`mz` are null
-  outside the comparable POC contract; null is not interpreted as biological absence.
-- **2,226 bridge edges** as `{s, t, w=cosine similarity, cd=cross-domain, cs=nearest-reference, rk}`.
-  In the hero: `cs` links render **gold** ("bridge genome → nearest reference"), the rest render faint
-  **teal** ("cross-ecosystem neighbor") — matching the report's legend.
-- **Deterministic / seeded:** no RNG, no subsampling — re-running on the pinned source is byte-identical.
-
-The displayed coordinates are deterministic transforms of the report's real diffusion map.
-Centroids and edge counts are stored directly in `data/atlas.json`; visual geometry is navigation,
-not proof of ecological transfer or methane flux.
-
-**Plain-language note:** the *landing page copy* is deliberately jargon-light for investors — it says
-"proteome embeddings / genomic-context embeddings / genomes / molecular map" and foregrounds the
-business meaning: candidate triage, monitoring prioritization, and the next validation rung. The
-linked *report* remains the technical deep-dive.
-
----
-
-## 6. Real vs stylized data per scene (for scientific review before any investor sees it)
-
-Scene order re-sequenced 2026-07-01 (decision-first; see `ai_docs/prompts/landing_page_value_prop_tightening_prompt.md`).
-The old abstract "Insight" manifold scene was dropped; the Survey was promoted into a concrete
-"What You Get" output artifact and a new "Versus the Cheap Method" scene was added, both before the
-Atlas (now recast as "The Evidence"). External facts live in `config.js` `ext` with sources; see the
-grounding dossier. The hero backdrop (`scenes/hero.js`) still uses the real diffusion-map manifold.
-
-| Scene | Visual | Data basis |
+| Surface | Evidence mode | Interpretation limit |
 | --- | --- | --- |
-| Hero | diffusion-map manifold backdrop; decision-first copy | **REAL coords** (`atlas.json`); copy is a business statement |
-| 1 — The Stakes | net-climate-balance line crossing net-zero into warming | **Illustrative** concept; CH₄ ≈80× CO₂ over 20yr + ≈12yr lifetime real (IPCC AR6, labeled); blue-carbon record ≈$29/tCO2e (Platts DBC) |
-| 2 — The Blind Spot | grey unknown field; scan finds nothing; 0-of-80–100 coverage row | **Illustrative** scale; honest present state **≈ 0** sites paired; VM0033 no-default-below-18-ppt is real (source in `ext`) |
-| 3 — What You Get | ranked site-triage list (signal, confidence, evidence link, measure-here) + two-column what-it-is/is-not | **Illustrative product shape** (exact output object; per-site scores are a mock; ranking follows the real science: risk concentrates in brackish/freshened/restored) |
-| 4 — Versus the Cheap Method | salinity-vs-methane field; exceptions the community flags; method-resolution legend | **Illustrative teaching plot**; the molecular anchor is real: mcrA vs measured flux Spearman r > 0.7 (Baker et al. 2022, ISME J) |
-| 5 — The Evidence (atlas) | particles; counters show 7,484 data-complete tri-views under three evidence contracts | **Real counts and coordinates**; motion stylized |
-| 6 — One Engine, Many Maps | one atlas re-read by a clickable gas "lens"; methane lights only the 625-unit comparable POC core, while other lanes and N₂O/sulfur remain explicitly unweighted | **REAL coords** (diffusion view of `atlas.json`); POC methane density is within-contract screening only; no measured/validated flux |
-| 7 — Platform & Moat | attestation graph; one claim's evidence chain | **Real schema + counts** (MMAG graph); future slots = honest empty optionality |
-| 8 — Honest Ladder | 6-rung maturity gauge; rung 0 lit, reframed as the product sold today | **Real** (MRV roadmap Levels 0–5) |
-| 9 — Path & Ask | Cispatá Bay pin; buyer set; <4-day pipeline | **Real** geography + roadmap + speed; the ask is a business statement |
+| Landing manifold | Real report coordinates and source-audited counts | Navigation and hypothesis generation, not transfer or risk proof |
+| Projection controls | Diffusion plus available UMAP/PHATE and PCA sensitivity views | Two-dimensional layouts do not rank candidates |
+| Evidence cards | Derived evidence records with direct, missing, contradictory, and next-action fields | Review priority, not biological truth |
+| Sample/context cards | Real metadata coverage and explicit ambiguity tiers | Context value, not exact sample risk |
+| Climate, proxy, and product scenes | Clearly badged sourced anchor, roadmap, or illustrative product shape | No illustrative score is a released prediction |
 
-**One-paragraph honesty summary:** The atlas-backed scenes (Hero, 5 The Evidence, 6 One Engine) are
-driven by real coordinates in `data/atlas.json` and verified repository counts (7,484 data-complete tri-view
-units, 7,710 mapped in ESM-2 space, 2,508 MUCC wetland source-warehouse genomes); scenes 7–9 use the real molecular-attestation
-graph schema and the published MRV maturity ladder. Scenes 1, 2, 3, and 4 are deliberately illustrative
-and badged so: the climate concept, the measurement gap (honest present state **≈ 0** sites with paired
-methane-flux + molecular data), the exact *shape* of the product output (per-site scores mocked, the
-ranking following real biogeochemistry), and a teaching plot of the salinity-vs-community argument. Every
-external fact carries a source in `config.js` `ext`; every A–E risk claim is marked TARGET/not-yet-calibrated;
-a persistent claim-boundary bar and Scene 8 state the molecular-screening boundary with the 2026-07-24 snapshot.
+Interactive figures must expose keyboard-operable controls, labels, legends,
+reset actions, mobile-safe dimensions, and a legible static or no-JavaScript
+fallback. The generated report and landing page retain `noindex`.
+
+## Claim boundary and publication decision
+
+Allowed now: MAG/proteome molecular screening, evidence-card review, candidate
+triage, metadata-readiness assessment, monitoring prioritization, and
+next-measurement design.
+
+Blocked now: measured methane flux, expression-derived activity magnitude,
+sample/project methane risk, final A-E tiers, source-independent transfer,
+carbon-credit approval, registry acceptance, customers, contracts, or revenue.
+
+Public deployment of the August 10 source is blocked until source-aware and
+taxonomy-aware nulls, bootstrap neighbor/rank stability, view and QC
+ablations, dimensionality/graph sensitivity, multiple-testing control, and the
+final local browser/accessibility/public-tree gates are recorded as passing.
+The existing public URLs remain historical until then.
+
+## Provenance pointers
+
+- Lane registry: `configs/methanet_atlas_lanes.tsv`
+- Freeze: `results/reports/methanet_3view_payload_freeze_20260810_end_to_end/`
+- Metadata readiness: `results/reports/methanet_atlas_metadata_readiness_20260810/`
+- Report: `results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end/`
+- Claim contract: `docs/methanet_positioning_and_claims.md`
+- Release inventory: `docs/current_artifact_inventory.md`
+
+The July 24 and earlier report directories remain historical snapshots; they
+are not rewritten to imply the August 10 evidence contract.

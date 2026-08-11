@@ -13,10 +13,18 @@ import argparse
 import csv
 import json
 import re
+import sys
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from run_metabolic_guarded import OutputContractError, validate_workbook
 
 
 IDENTITY_COLUMNS = ["cohort_run_id", "run_id", "proteome_id", "mag_id", "source_tool"]
@@ -207,6 +215,17 @@ def discover_runs(per_mag_dir: Path, cohort_run_id: str, repo_root: Path) -> tup
             status = "failed"
         run_id = record.get("run_id") or run_dir.name
         mag_id = record.get("mag_id") or proteome_id.removeprefix("mucc__").removeprefix("rumen__")
+        integrity_status = "not_checked"
+        integrity_detail = ""
+        workbook = run_dir / "metabolic/METABOLIC_result.xlsx"
+        if status == "complete" and workbook.exists():
+            try:
+                validate_workbook(workbook, str(mag_id))
+                integrity_status = "pass"
+            except OutputContractError as exc:
+                status = "failed_integrity"
+                integrity_status = "fail"
+                integrity_detail = str(exc)
         attempt = {
             "cohort_run_id": cohort_run_id,
             "run_id": run_id,
@@ -220,12 +239,15 @@ def discover_runs(per_mag_dir: Path, cohort_run_id: str, repo_root: Path) -> tup
             "has_file_manifest": (run_dir / "curated/file_manifest.tsv").exists(),
             "has_parquet_manifest": parquet_manifest_path.exists(),
             "has_complete_sentinel": (run_dir / "COMPLETE").exists(),
+            "integrity_status": integrity_status,
+            "integrity_detail": integrity_detail,
             "mtime_epoch": run_dir.stat().st_mtime,
+            "selection_key": f"{run_id}|{run_dir.as_posix()}",
         }
         attempts.append(attempt)
         if status == "complete" and parquet_manifest_path.exists() and run_record_path.exists():
             current = selected.get(proteome_id)
-            if current is None or attempt["mtime_epoch"] > current["attempt"]["mtime_epoch"]:
+            if current is None or attempt["selection_key"] > current["attempt"]["selection_key"]:
                 selected[proteome_id] = {
                     "attempt": attempt,
                     "run_dir": run_dir,
@@ -244,7 +266,7 @@ def discover_runs_from_roots(per_mag_dirs: list[Path], cohort_run_id: str, repo_
         attempts.extend(root_attempts)
         for proteome_id, item in root_selected.items():
             current = selected.get(proteome_id)
-            if current is None or item["attempt"]["mtime_epoch"] > current["attempt"]["mtime_epoch"]:
+            if current is None or item["attempt"]["selection_key"] > current["attempt"]["selection_key"]:
                 selected[proteome_id] = item
     return attempts, selected
 
@@ -572,6 +594,7 @@ def build_coverage(pd: Any, dim_mag: Any, tables: dict[str, Any]) -> Any:
         ("METABOLIC-MEROPS", "fact_merops_hits", None),
     ]
     row_counts: dict[str, dict[str, int]] = {}
+    event_counts: dict[str, dict[str, int]] = {}
     annotated_counts: dict[str, dict[str, int]] = {}
     for _, table, gene_col in specs:
         df = tables.get(table)
@@ -580,8 +603,18 @@ def build_coverage(pd: Any, dim_mag: Any, tables: dict[str, Any]) -> Any:
             annotated_counts[table] = {}
             continue
         row_counts[table] = df.groupby("proteome_id", sort=False).size().astype(int).to_dict()
-        if gene_col and gene_col in df.columns:
-            annotated_df = df.dropna(subset=[gene_col]).copy()
+        event_df = df
+        if table == "fact_kofam_hits" and "accepted_hit" in df.columns:
+            event_df = df[present_mask(df["accepted_hit"])]
+        elif table in {"fact_mcycdb_hits", "fact_scycdb_hits"} and "hit_rank_bitscore" in df.columns:
+            event_df = df[pd.to_numeric(df["hit_rank_bitscore"], errors="coerce").eq(1)]
+        elif "presence" in df.columns:
+            event_df = df[present_mask(df["presence"])]
+        elif "hit_count" in df.columns:
+            event_df = df[pd.to_numeric(df["hit_count"], errors="coerce").fillna(0).gt(0)]
+        event_counts[table] = event_df.groupby("proteome_id", sort=False).size().astype(int).to_dict()
+        if gene_col and gene_col in event_df.columns:
+            annotated_df = event_df.dropna(subset=[gene_col]).copy()
             annotated_df[gene_col] = annotated_df[gene_col].astype(str)
             annotated_counts[table] = annotated_df.groupby("proteome_id", sort=False)[gene_col].nunique().astype(int).to_dict()
         else:
@@ -601,9 +634,23 @@ def build_coverage(pd: Any, dim_mag: Any, tables: dict[str, Any]) -> Any:
                 "annotation_tool": tool,
                 "source_table": table,
                 "row_count": int(row_counts.get(table, {}).get(proteome_id, 0)),
+                "accepted_or_present_event_count": int(event_counts.get(table, {}).get(proteome_id, 0)),
                 "annotated_gene_count": annotated,
                 "prodigal_proteins": total,
                 "annotated_gene_fraction": (annotated / total) if annotated is not None and total else None,
+                "event_semantics": (
+                    "accepted_hit_only" if table == "fact_kofam_hits" else
+                    "best_ranked_hit_per_gene" if table in {"fact_mcycdb_hits", "fact_scycdb_hits"} else
+                    "present_only" if table in {
+                        "fact_metabolic_hmm_hits",
+                        "fact_metabolic_function_presence",
+                        "fact_metabolic_module_presence",
+                        "fact_metabolic_module_step_presence",
+                    } else
+                    "positive_hit_count_only" if table in {"fact_cazy_hits", "fact_merops_hits"} else
+                    "all_rows"
+                ),
+                "denominator_semantics": "unique_prodigal_proteins" if gene_col else "tool_specific_catalog_rows_or_events",
             })
     return pd.DataFrame(rows)
 
@@ -626,6 +673,7 @@ def build_mechanism_features(pd: Any, dim_mag: Any, tables: dict[str, Any], cove
     sulfur_rows = []
     mrv_rows = []
     kofam = tables.get("fact_kofam_hits")
+    mcycdb = tables.get("fact_mcycdb_hits")
     scycdb = tables.get("fact_scycdb_hits")
     metabolic_hmm = tables.get("fact_metabolic_hmm_hits")
     metabolic_function = tables.get("fact_metabolic_function_presence")
@@ -651,7 +699,12 @@ def build_mechanism_features(pd: Any, dim_mag: Any, tables: dict[str, Any], cove
         mask = text_contains(df, columns, pattern)
         if mask is None:
             return {}
-        return count_by_proteome(df[mask])
+        matched = df[mask]
+        if "gene_id" in matched.columns:
+            matched = matched.dropna(subset=["gene_id"]).copy()
+            matched["gene_id"] = matched["gene_id"].astype(str)
+            return matched.groupby("proteome_id", sort=False)["gene_id"].nunique().astype(int).to_dict()
+        return count_by_proteome(matched)
 
     methane_kofam_counts = keyword_counts(
         accepted_kofam,
@@ -663,7 +716,15 @@ def build_mechanism_features(pd: Any, dim_mag: Any, tables: dict[str, Any], cove
         ["ko_definition", "gene_id", "ko_id"],
         r"sulfur|sulfate|sulfite|sulfide|thiosulfate|sulfonate|sulfurtransferase",
     )
-    scycdb_counts = count_by_proteome(scycdb)
+    def best_ranked_hits(df: Any | None) -> Any:
+        if df is None or df.empty:
+            return pd.DataFrame()
+        if "hit_rank_bitscore" not in df.columns:
+            return pd.DataFrame(columns=df.columns)
+        return df[pd.to_numeric(df["hit_rank_bitscore"], errors="coerce").eq(1)]
+
+    mcycdb_best_counts = count_by_proteome(best_ranked_hits(mcycdb))
+    scycdb_best_counts = count_by_proteome(best_ranked_hits(scycdb))
 
     methane_hmm_counts: dict[str, int] = {}
     if metabolic_hmm is not None and not metabolic_hmm.empty:
@@ -698,8 +759,14 @@ def build_mechanism_features(pd: Any, dim_mag: Any, tables: dict[str, Any], cove
         unique_df[column] = unique_df[column].astype(str)
         return unique_df.groupby("proteome_id", sort=False)[column].nunique().astype(int).to_dict()
 
-    cazy_family_counts = unique_counts(cazy, "cazy_family")
-    merops_family_counts = unique_counts(merops, "merops_peptidase_id")
+    cazy_present = cazy
+    if cazy is not None and not cazy.empty and "hit_count" in cazy.columns:
+        cazy_present = cazy[pd.to_numeric(cazy["hit_count"], errors="coerce").fillna(0).gt(0)]
+    merops_present = merops
+    if merops is not None and not merops.empty and "hit_count" in merops.columns:
+        merops_present = merops[pd.to_numeric(merops["hit_count"], errors="coerce").fillna(0).gt(0)]
+    cazy_family_counts = unique_counts(cazy_present, "cazy_family")
+    merops_family_counts = unique_counts(merops_present, "merops_peptidase_id")
     kofam_coverage = {}
     if coverage is not None and not coverage.empty:
         kcov = coverage[coverage["annotation_tool"] == "KOfam"]
@@ -718,24 +785,32 @@ def build_mechanism_features(pd: Any, dim_mag: Any, tables: dict[str, Any], cove
         }
         methane_kofam = int(methane_kofam_counts.get(proteome_id, 0))
         methane_hmm = int(methane_hmm_counts.get(proteome_id, 0))
+        methane_mcyc = int(mcycdb_best_counts.get(proteome_id, 0))
         methane_rows.append({
             **ident,
             "accepted_kofam_methane_hits": methane_kofam,
+            "mcycdb_best_hit_count": methane_mcyc,
             "metabolic_methane_hmm_present": methane_hmm,
+            "methane_associated_screening_breadth": int(methane_kofam + methane_hmm),
             "methane_evidence_score": int(methane_kofam + methane_hmm),
-            "evidence_basis": "keyword screen over accepted KOfam definitions and present METABOLIC HMM functions",
+            "score_validation_status": "unvalidated_screening_alias",
+            "evidence_basis": "accepted KOfam methane screen plus present METABOLIC HMM functions; MCycDB best hits are exposed separately pending accepted-family mapping",
         })
 
-        sulfur_scyc = int(scycdb_counts.get(proteome_id, 0))
+        sulfur_scyc = int(scycdb_best_counts.get(proteome_id, 0))
         sulfur_kofam = int(sulfur_kofam_counts.get(proteome_id, 0))
         sulfur_metabolic = int(sulfur_metabolic_counts.get(proteome_id, 0))
         sulfur_rows.append({
             **ident,
+            "scycdb_best_hit_count": sulfur_scyc,
             "scycdb_hit_count": sulfur_scyc,
+            "scycdb_hit_count_semantics": "deprecated_alias_of_best_ranked_hit_count",
             "accepted_kofam_sulfur_hits": sulfur_kofam,
             "metabolic_sulfur_function_present": sulfur_metabolic,
+            "sulfur_associated_screening_breadth": int(sulfur_scyc + sulfur_kofam + sulfur_metabolic),
             "sulfur_competition_score": int(sulfur_scyc + sulfur_kofam + sulfur_metabolic),
-            "evidence_basis": "SCycDB hits plus keyword screen over accepted KOfam and present METABOLIC functions",
+            "score_validation_status": "unvalidated_screening_alias",
+            "evidence_basis": "one best-ranked SCycDB hit per gene plus accepted KOfam and present METABOLIC sulfur functions",
         })
 
         mrv_rows.append({
@@ -813,7 +888,7 @@ def validate_tables(tables: dict[str, Any], attempts: list[dict[str, Any]], sele
     dim_mag = tables.get("dim_mag")
     completed_count = len(selected)
     if expected_count:
-        status = "pass" if completed_count == expected_count else "warn"
+        status = "pass" if completed_count == expected_count else "fail"
         add("selected_completed_mag_count", status, f"selected={completed_count}; expected={expected_count}")
     else:
         add("selected_completed_mag_count", "pass", f"selected={completed_count}")
@@ -835,7 +910,7 @@ def validate_tables(tables: dict[str, Any], attempts: list[dict[str, Any]], sele
         key = PRIMARY_KEYS.get(table)
         if key and all(col in df.columns for col in key):
             dup = int(df.duplicated(key).sum())
-            add(f"primary_key_duplicates:{table}", "pass" if dup == 0 else "warn", f"key={key}; duplicate_rows={dup}")
+            add(f"primary_key_duplicates:{table}", "pass" if dup == 0 else "fail", f"key={key}; duplicate_rows={dup}")
 
     for table in ["feature_methane_mechanism", "feature_sulfur_competition", "feature_mrv_mag_level"]:
         df = tables.get(table)
@@ -897,6 +972,14 @@ def validate_tables(tables: dict[str, Any], attempts: list[dict[str, Any]], sele
     run_status = tables.get("fact_run_status")
     preserved = run_status is not None and len(run_status) == len(attempts)
     add("failed_partial_attempts_preserved", "pass" if preserved else "fail", f"attempts={len(attempts)}; status_rows={0 if run_status is None else len(run_status)}; noncomplete={len(partial_or_failed)}")
+    integrity_failures = [row for row in attempts if row.get("integrity_status") == "fail"]
+    selected_run_ids = {item["attempt"]["run_id"] for item in selected.values()}
+    selected_integrity_failures = [row for row in integrity_failures if row["run_id"] in selected_run_ids]
+    add(
+        "cross_mag_workbook_integrity",
+        "pass" if not selected_integrity_failures else "fail",
+        f"quarantined_integrity_failures={len(integrity_failures)}; selected_integrity_failures={len(selected_integrity_failures)}",
+    )
     if run_status is not None and "analysis_unit_type" in run_status.columns:
         assembly_rows = int(run_status["analysis_unit_type"].astype(str).eq("assembly_context").sum())
         add("assembly_context_attempts_preserved_in_status", "pass" if assembly_rows >= 0 else "fail", f"assembly_context_status_rows={assembly_rows}")

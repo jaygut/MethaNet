@@ -125,7 +125,8 @@ def test_freeze_contract_does_not_promote_external_per_mag_annotations(
         },
     )
 
-    assert poc["mechanism_equivalence_status"] == "mechanism_equivalent"
+    assert poc["mechanism_equivalence_status"] == "not_yet_mechanism_equivalent"
+    assert poc["functional_harmonization_status"] == "semantic_feature_rebuild_required"
     assert (
         expansion["functional_evidence_class"]
         == "annotation_complete_feature_aggregation_pending"
@@ -134,6 +135,51 @@ def test_freeze_contract_does_not_promote_external_per_mag_annotations(
         expansion["mechanism_equivalence_status"]
         == "not_yet_mechanism_equivalent"
     )
+
+
+def test_freeze_backed_pipeline_normalization_does_not_imply_comparability() -> None:
+    atlas = pd.DataFrame(
+        {
+            "lane_id": ["poc_core", "msm_china_2025"],
+            "has_esm2": [True, True],
+            "has_glm2": [True, True],
+            "has_functional": [True, True],
+            "native_window_count": [1, 1],
+            "shuffled_control_count": [1, 1],
+            "protein_cap_applied": [False, False],
+            "prodigal_proteins": [2_000, 2_000],
+            "methane_evidence_score": [3, 3],
+            "freeze_functional_evidence_class": [
+                "normalized_screening_warehouse",
+                "canonical_pipeline_normalized_features",
+            ],
+            "freeze_functional_harmonization_status": [
+                "version_database_and_semantic_lock_audit_pending",
+                "version_database_and_semantic_lock_audit_pending",
+            ],
+            "freeze_mechanism_equivalence_status": [
+                "not_yet_mechanism_equivalent",
+                "not_yet_mechanism_equivalent",
+            ],
+            "freeze_formal_tri_view_status": [
+                "complete_pipeline_normalized_tri_view_comparability_pending",
+                "complete_pipeline_normalized_tri_view_comparability_pending",
+            ],
+            "freeze_mechanism_equivalent_tri_view": [False, False],
+        }
+    )
+
+    contracted = report.apply_scientific_evidence_contract(atlas)
+    out = report.add_molecular_metrics(contracted)
+
+    assert set(out["functional_comparability_tier"]) == {
+        "pipeline_normalized_comparability_pending"
+    }
+    assert not out["mechanism_equivalent_tri_view"].any()
+    assert out["methane_marker_density_per_1k"].isna().all()
+    assert set(out["rate_metric_status"]) == {
+        "pipeline_normalized_screening_not_cross_lane_mechanism_rate"
+    }
 
 
 def test_taxonomy_synonym_normalization_handles_gtdb_prefix() -> None:

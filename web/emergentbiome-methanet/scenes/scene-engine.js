@@ -1,9 +1,8 @@
 /* SCENE - ONE ENGINE, MANY MAPS  ·  REAL DATA + HONESTLY-EMPTY SLOTS
    The platform payoff. The SAME genome atlas, read through a swappable "gene lens."
-   LENS 01 = methane: only the 625-unit POC core lights up on its curated,
-   within-contract methane-marker density (the mz field). The other atlas lanes remain
-   visible but unweighted because their functional payloads are not yet quantitatively
-   harmonized. This is mechanism screening, never measured flux. LENS 02 = nitrous
+   LENS 01 = methane: the guarded pipeline-normalized atlas remains visible, while
+   per-genome methane weights stay empty until the cross-lane comparability gate passes.
+   This is mechanism screening readiness, never measured flux. LENS 02 = nitrous
    oxide: the lens advances and the SAME points dim to a uniform cool wash - no new
    coordinates, no clusters, no per-genome weights - an empty plate the lens is aimed
    at, honestly labelled "candidate, not built, 0 paired flux." LENS 03 = sulfur/DMS:
@@ -19,7 +18,7 @@
     const ECOC = {}; EB.ecosystems.forEach((e) => (ECOC[e.code] = e.color));
     const COOL_N2O = "#7C8CC4", COOL_S = "#A9B6CE", NEUTRAL = "#52606C";
     const LENSES = [
-      { name: "METHANE", sub: "comparable mechanism screen", col: EB.color.methaneA },
+      { name: "METHANE", sub: "screening events; comparability pending", col: EB.color.methaneA },
       { name: "NITROUS OXIDE", sub: "candidate, not built", col: COOL_N2O },
       { name: "SULFUR · DMS", sub: "not built", col: COOL_S },
     ];
@@ -71,7 +70,18 @@
       return -1;
     }
 
-    p.setup = function () { p.createCanvas(ctx.W, ctx.H); p.pixelDensity(Math.min(2, window.devicePixelRatio || 1)); project(); if (ctx.reduced) p.noLoop(); };
+    function setManualLens(index) {
+      if (!Number.isInteger(index) || index < 0 || index >= LENSES.length) return;
+      manualSel = index;
+      if (ctx.reduced && p.redraw) p.redraw();
+    }
+    p.setup = function () {
+      p.createCanvas(ctx.W, ctx.H);
+      p.pixelDensity(Math.min(2, window.devicePixelRatio || 1));
+      project();
+      document.addEventListener("methanet:engine-lens", (event) => setManualLens(event.detail && event.detail.index));
+      if (ctx.reduced) p.noLoop();
+    };
     p.windowResized = function () { p.resizeCanvas(ctx.W, ctx.H); project(); };
 
     // interactivity: click a gene lens to lock the map to that gas; hover to preview
@@ -218,7 +228,7 @@
         p.text((i === 0 ? "MAP 01 · " : i === 1 ? "LENS 02 · " : "SLOT 03 · ") + L.name, sx + sw + 10, y + ph / 2); p.textStyle(p.NORMAL);
         p.textAlign(p.LEFT, p.TOP); p.textFont("IBM Plex Mono"); p.textSize(8);
         p.fill(D.rgba(i === 0 ? EB.color.methaneA : EB.color.textMuted, 0.85 * a));
-        p.text(i === 0 ? "625-unit comparable screen · 0 flux" : i === 1 ? "candidate · 0 paired flux" : "not built", sx + sw + 10, y + ph / 2 + 2);
+        p.text(i === 0 ? "normalized screen · comparability pending" : i === 1 ? "candidate · 0 paired flux" : "not built", sx + sw + 10, y + ph / 2 + 2);
         p.pop();
       }
     }
@@ -227,9 +237,9 @@
       const x = Math.max(16, w * 0.04), y = h * 0.13;
       D.label(p, "ONE ENGINE · MANY MAPS", x, y, D.rgba(EB.color.emergence, 0.95 * settle), 11);
       D.label(p, "same atlas, swap the gene lens", x, y + 15, D.rgba(EB.color.textMuted, 0.9 * settle), 9.5);
-      // One mechanism-comparable core / two candidate lenses.
+      // One pipeline-normalized screening lane / two candidate lenses.
       p.push(); p.textAlign(p.LEFT, p.TOP); p.textFont("IBM Plex Mono");
-      p.fill(D.rgba(EB.color.methaneA, settle)); p.textSize(12); p.text("625-unit comparable screen live", x, y + 34);
+      p.fill(D.rgba(EB.color.methaneA, settle)); p.textSize(12); p.text("normalized screening events available", x, y + 34);
       p.fill(D.rgba(EB.color.textMuted, 0.9 * settle)); p.textSize(10); p.text("2 lenses ready, uncalibrated", x, y + 50);
       p.pop();
     }
@@ -250,7 +260,7 @@
     function drawHonestyBand(w, h, settle) {
       p.push(); p.textAlign(p.CENTER, p.BOTTOM); p.textFont("IBM Plex Mono"); p.textSize(9.5);
       p.fill(D.rgba(EB.color.textMuted, 0.85 * settle));
-      p.text("Mechanism-comparable core only; other lanes await harmonization. No flux rate is inferred.", w / 2, h - 16);
+      p.text("Cross-lane mechanism weights remain off until comparability gates pass. No flux rate is inferred.", w / 2, h - 16);
       p.pop();
     }
 

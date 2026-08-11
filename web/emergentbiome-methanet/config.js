@@ -1,16 +1,18 @@
 /* =====================================================================
-   EmergentBiome / MethaNet - SINGLE SOURCE OF TRUTH
-   All numbers, the snapshot date, brand tokens, and scene copy live here.
-   Every figure is verified in DIGEST.md against the live repo snapshot.
+   EmergentBiome / MethaNet - PUBLIC RENDERING CONFIGURATION
+   The dated release_ledger.json is the numerical source of truth. This file
+   projects those verified counts into scene copy and is checked by
+   tools/validate_release_parity.py before publication.
    External facts live in `ext` with a source; see the grounding dossier.
-   To update the page after a new run, edit THIS file only.
+   To update the page after a new run, regenerate the ledger and then update
+   this projection plus DIGEST.md; parity validation must pass.
 
    THE STANDING BAR (every scene must let a first-time viewer answer, in one
    sentence each, after a single scroll):
      1. What does it do?            (the decision it produces, not the method)
      2. Who is it for?              (the named buyer and their job-to-be-done)
      3. What exactly do I get?      (the concrete output object, shown)
-     4. Why beat the cheap method?  (vs metabarcoding, qPCR, the salinity proxy)
+     4. Why add it to proxy screening? (vs using metabarcoding, qPCR, or salinity alone)
      5. What does it NOT claim?     (the honesty that makes it credible)
    No em-dashes in any public copy. Decision-first headlines. Body <= 25 words.
    ===================================================================== */
@@ -47,13 +49,13 @@ window.EB = (function () {
 
   /* ---- verified headline numbers (see DIGEST.md §1) ---- */
   const num = {
-    snapshot: "2026-07-24",
-    snapshotLiveUTC: "2026-07-24 20:33 UTC",
-    snapshotFreezeUTC: "2026-07-24 20:31 UTC",
+    snapshot: "2026-08-10",
+    snapshotLiveUTC: "2026-08-10 controlled-diligence audit",
+    snapshotFreezeUTC: "2026-08-10 release-ledger freeze",
 
     calibrationCore: 625,            // rumen + wetland POC, consolidated warehouse
     msmCandidates: 1428,
-    msmFunctionalComplete: 1427,
+    msmFunctionalComplete: 1428,
     futianRMAGs: 3404,               // phase-1 dereplicated genomes
     futianReady: 3156,               // ready payload rows (embeddings complete)
     futianGapRows: 248,
@@ -61,16 +63,23 @@ window.EB = (function () {
     futianArchaeaComplete: 312,      // 312/312 archaea functional complete
     futianArchaeaCompleteLive: 312,
     futianBacteriaTotal: 2844,
-    futianBacteriaComplete: 2619,    // 2,619/2,844 complete in the reconciled release
-    futianBacteriaPending: 225,
+    futianBacteriaComplete: 2844,
+    futianBacteriaPending: 0,
 
-    triViewReady: 7484,              // data-complete; mechanism comparability is tracked separately
-    triViewReadyLive: 7484,
-    reportFreezeTriView: 7484,
-    mechanismComparableTriView: 625,
-    annotationCompletePendingTriView: 4358,
+    triViewReady: 7710,              // data-complete; mechanism comparability is tracked separately
+    triViewReadyLive: 7710,
+    reportFreezeTriView: 7710,
+    schemaNormalizedTriView: 7710,
+    pipelineNormalizedTriView: 5209,
+    mechanismComparableTriView: 0,
+    annotationCompletePendingTriView: 0,
     sourceScaffoldTriView: 2501,
     embeddingBearingUnits: 7710,     // registered ESM-2-bearing units
+    esm2Units: 7710,
+    glm2Units: 7717,
+    functionalPayloadUnits: 7710,
+    sampleLinkedUnits: 0,
+    fieldValidatedUnits: 0,
     plottedNodes: 7965,              // all registered rows, including explicit gaps
 
     muccWarehouseGenomes: 2508,
@@ -116,7 +125,7 @@ window.EB = (function () {
     nearEsm2Edges: 9930,
 
     // program
-    pairedFluxNow: 23,
+    pairedFluxNow: 0,                // authoritative exact sample + environment + process joins
     pairedFluxTargetLo: 80,
     pairedFluxTargetHi: 100,
     pipelineDays: 4,
@@ -159,7 +168,7 @@ window.EB = (function () {
   const hero = {
     eyebrow: "Molecular attestation for blue-carbon methane diligence",
     sub:
-      "Carbon credits price the carbon a wetland stores while methane can erase the climate value. " +
+      "Carbon credits price the carbon a wetland stores while methane can erode the net climate benefit. " +
       "MethaNet turns blue-carbon sequencing into an evidence graph that shows pathway evidence, provenance, and the next measurement to prioritize.",
   };
 
@@ -264,8 +273,8 @@ window.EB = (function () {
 
   /* ---- Scene 7 milestones ---- */
   const timeline = [
-    { phase: "Now",   label: "MBAG knowledge graph", detail: "7,710 genomes in protein-representation space; 7,484 data-complete tri-views across three explicit evidence contracts." },
-    { phase: "Field", label: "Cispatá Bay validation", detail: "Colombian Caribbean mangrove · paired methane-flux sampling." },
+    { phase: "Now",   label: "MBAG knowledge graph", detail: "7,710 genomes in protein-representation space; 7,710 data-complete tri-views across pipeline-normalized and source-scaffold contracts." },
+    { phase: "Field", label: "Partner validation cohort", detail: "Paired molecular, environmental, abundance, and methane-process measurements." },
     { phase: "Pair",  label: "Paired data", detail: "Target: pair molecular evidence with field methane flux across seasons and habitats." },
     { phase: "Model", label: "Calibrated methane risk", detail: "Holdout-validated risk distribution; A–E tiers earn their thresholds." },
     { phase: "Audit", label: "Methodology integration", detail: "Reproducible evidence packets aligned to relevant methodology and integrity review." },
@@ -276,16 +285,16 @@ window.EB = (function () {
     {
       id: "stakes", n: 1, label: "01 · The Stakes",
       kicker: "Blue carbon",
-      headline: "A carbon sink that can quietly run in reverse.",
+      headline: "Methane can erode a wetland's net climate benefit.",
       copy: "Methane traps roughly 80x CO₂ over 20 years. In brackish, freshened, or restored systems it can shift to net methane and erode the paid-for benefit.",
-      data: "illustrative",
+      data: "mixed-real-and-illustrative",
     },
     {
       id: "blindspot", n: 2, label: "02 · The Blind Spot",
       kicker: "The measurement gap",
-      headline: "Methane risk is unmeasurable at scale.",
+      headline: "Project-scale methane evidence is still sparse.",
       copy: "Direct methane monitoring is costly and patchy. Below 18 ppt salinity the rules give no default, so the sediment process stays uncounted.",
-      data: "illustrative",
+      data: "mixed-real-and-illustrative",
     },
     {
       id: "surveyor", n: 3, label: "03 · What You Get",
@@ -295,24 +304,24 @@ window.EB = (function () {
       data: "illustrative",
     },
     {
-      id: "cheap", n: 4, label: "04 · Versus the Cheap Method",
-      kicker: "Versus the cheap method",
-      headline: "One gene tells you little. The graph reads the pathway balance.",
-      copy: "Salinity sets the baseline. Methane-making, methane-eating, sulfur, substrate, and quality-control evidence show where that assumption needs testing.",
+      id: "cheap", n: 4, label: "04 · Beyond Proxy-Only Screening",
+      kicker: "Beyond proxy-only screening",
+      headline: "Proxy measures and pathway evidence answer different questions.",
+      copy: "Salinity and targeted markers remain useful. Multi-view pathway, substrate, sulfur, quality, and provenance evidence can show where more measurement adds value.",
       data: "illustrative",
     },
     {
       id: "atlas", n: 5, label: "05 · The Evidence",
       kicker: "The evidence behind the ranking",
       headline: "Every decision traces through a source-audited evidence graph.",
-      copy: "The warehouse maps 7,710 genomes and 7,484 data-complete tri-views. MBAG keeps the 625-unit mechanism-comparable proof-of-concept core as a distinct evidence state.",
+      copy: "The ledger records 7,710 data-complete tri-views. It keeps 5,209 pipeline-normalized and 2,501 source-scaffold units separate; cross-lane mechanism comparability is pending.",
       data: "real-coords",
     },
     {
       id: "engine", n: 6, label: "06 · One Engine, Many Maps",
       kicker: "One engine, many maps",
       headline: "One evidence engine, with every gas gated separately.",
-      copy: "Methane has a 625-unit comparable proof-of-concept screen. Mangrove and the Old Woman Creek reference (MUCC v1) follow dedicated harmonization and validation paths.",
+      copy: "Methane screening is available under partitioned evidence contracts. Cross-lane comparison waits for locked fingerprints, source-aware statistics, and paired field validation.",
       data: "real-coords",
     },
     {
@@ -325,7 +334,7 @@ window.EB = (function () {
     {
       id: "ladder", n: 8, label: "08 · The Honest Ladder",
       kicker: "Evidence maturity",
-      headline: "Molecular screening is the current product layer.",
+      headline: "Molecular evidence review is the available layer.",
       copy: "Rung 0 delivers screening, triage, and monitoring prioritization. Rungs 1 to 5 add the paired evidence required for calibrated monitoring, reporting, and verification.",
       data: "real-ladder",
     },
@@ -333,8 +342,8 @@ window.EB = (function () {
       id: "path", n: 9, label: "09 · The Path & the Ask",
       kicker: "Who it is for, and the ask",
       headline: "Field validation, then paired data, then calibrated risk.",
-      copy: "For blue-carbon developers, verifiers, raters, and buyers doing diligence. Cispatá Bay pairs the sediment community screen with measured flux, the step toward calibrated methane risk.",
-      data: "real-path",
+      copy: "For blue-carbon developers, verifiers, raters, and buyers doing diligence. A partner cohort can pair molecular evidence with abundance, environmental context, and methane-process measurements.",
+      data: "roadmap",
     },
   ];
 
@@ -342,7 +351,7 @@ window.EB = (function () {
   const links = {
     report: "report/",                 // stable alias on GitHub Pages → current freeze
     reportName: "MethaNet Bridge Attestation Graph (full scientific report)",
-    reportDate: "2026-07-24",
+    reportDate: "2026-08-10",
     siteUrl: "https://emergentbiome.earth/",
     contactEmail: "jg@graphoflife.com",
   };

@@ -1,7 +1,7 @@
 # MethaNet Final MRV Risk Scoring Roadmap
 
 Date: 2026-06-13
-Documentation refresh: 2026-07-24
+Documentation refresh: 2026-08-10
 
 Scope: strategic roadmap for moving MethaNet from the current MBAG/functional-atlas molecular screening layer toward defensible sample/project-level methane permanence risk scoring for blue carbon MRV.
 
@@ -30,8 +30,8 @@ MethaNet currently has a strong foundation for molecular methane-risk screening:
 - local MAG/proteome file matching;
 - an Apollo-3 functional-genomics production stack for QC, taxonomy, KOfam, MCycDB, SCycDB, dbCAN, Bakta, CheckM2, GUNC, METABOLIC, CAZy, MEROPS, timing, and status records;
 - a completed POC MAG-bin multi-view layer with 625/625 units carrying ESM2, functional annotation, and gLM2 contextual evidence;
-- a mangrove/MSM expansion lane with 1,428/1,428 ESM2 proteome embeddings and 1,428/1,428 gLM2 contextual units complete, plus a functional annotation tranche that was 1,427/1,428 complete at the 2026-06-25 snapshot;
-- a Futian 2026 mangrove/mudflat expansion lane with 3,156/3,156 ready MAG/proteome units complete in both ESM-2 and gLM2 and 2,931 annotation-complete functional payloads in the July 24 release;
+- a mangrove/MSM expansion lane with 1,428/1,428 ESM2, gLM2, and validated functional payloads complete;
+- a Futian 2026 mangrove/mudflat expansion lane with 3,156/3,156 ready MAG/proteome units complete in ESM-2, gLM2, and the validated functional warehouse, plus 248 explicit source gaps;
 - a MUCC v1 Old Woman Creek wetland lane with 2,508 registered MAGs, 2,501 ESM-2 embeddings, 2,508 gLM2 and source-functional payloads, 2,501 data-complete source-scaffold tri-views, and processed expression detection;
 - an MBAG design that integrates latent proteome geometry with functional evidence, QC, source leakage, graph structure, and uncertainty.
 
@@ -55,9 +55,9 @@ This is the current defensible state, based on local MethaNet docs, generated fu
 | --- | --- | --- | --- |
 | ESM-2 proteome geometry | 7,710 release units across POC, MSM, Futian, and MUCC v1 | hypothesis generation, molecular niche-space mapping, and bridge prioritization | source-independent transfer proof or activity |
 | Proteome/MAG crosswalk | authoritative 662-row POC mapping plus unit-scope manifests; MSM and Futian source-lane manifests under `data/external/` | stable joins within each lane across embeddings, MAGs, functional outputs, gLM2, attestation, and metadata | sample/project-level rollup by itself |
-| Functional atlas | 625 mechanism-comparable POC units; 4,358 annotation-complete mangrove units awaiting common feature aggregation; 2,508 MUCC v1 source-functional payloads with 2,501 data-complete source-scaffold tri-views | MAG-level mechanism evidence, QC/taxonomy, annotation coverage, expression detection, run-status audit, and MRV feature primitives | direct activity, abundance-weighted sample capacity, or methane flux |
+| Functional atlas | 5,209 pipeline-normalized POC/MSM/Futian units with cross-lane comparability pending; 2,508 MUCC v1 source-functional payloads with 2,501 data-complete source-scaffold tri-views; 0 mechanism-comparable units authorized | MAG-level mechanism evidence, QC/taxonomy, annotation coverage, expression detection, run-status audit, and MRV feature primitives | direct activity, abundance-weighted sample capacity, methane flux, or cross-lane pathway strength |
 | gLM2 context | 7,717 release payloads; 5,209 single-window units and 2,508 MUCC multiwindow units | independent genomic-context sidecar for molecular neighborhood interpretation | direct pathway evidence; cross-protocol numerical comparison |
-| MBAG / attestation | 7,965 registered units, 7,484 data-complete tri-views, explicit evidence contracts, candidate cards, provenance, claim wording, gaps, and next actions; foundational queryable MVP remains the 662-node POC graph | molecular diligence, bridge review, evidence provenance, missingness visibility, monitoring prioritization, and claim-safe querying | calibrated sample/project risk model |
+| MBAG / attestation | 7,965 registered units, 7,710 data-complete tri-views, explicit evidence contracts, candidate cards, provenance, claim wording, 255 source gaps, and next actions; foundational queryable MVP remains the 662-node POC graph | molecular diligence, bridge review, evidence provenance, missingness visibility, monitoring prioritization, and claim-safe querying | calibrated sample/project risk model |
 | Historical smoke reports | dated snapshots such as 121/662 complete, 625 POC complete, and expanded HTML atlas snapshots | demonstration of report logic and validation gaps at the time they were generated | current production denominator unless refreshed |
 | Sample metadata | incomplete/mixed resolution across rumen, wetland/MUCC, MSM, and Futian; MSM has BioSample-linked context, Futian has 65 exact sample metadata rows but MAGs resolve mainly to site/month rather than depth-resolved samples | provenance context where available | sample-level ecological inference |
 | Abundance/coverage | not yet integrated as final rollup layer | future weighting design | community-level capacity estimates |
@@ -75,12 +75,12 @@ Current generated evidence snapshots that define the implemented state:
 | Molecular attestation graph | `results/attestation/mmag_mvp_20260617/` | graph nodes/edges/evidence/artifacts/query/audit snapshot |
 | Mangrove/MSM ESM2 | `results/blue_catalyst_poc/runs/msm_china_2025_esm2_20260616_082112/artifacts/` | 1,428/1,428 local mangrove/MSM proteome embeddings |
 | Mangrove/MSM gLM2 | `results/contextual_genomics/glm2_msm_magbin_full_20260615_092737/` | 1,428/1,428 contextual genome units |
-| Mangrove/MSM functional tranche | `results/functional_metagenomics/msm_china_2025_20260615/` | near-complete target-domain expansion; 1,427/1,428 complete at the 2026-06-25 snapshot |
+| Mangrove/MSM functional warehouse | `results/functional_metagenomics/msm_china_2025_20260615/cohort_warehouse/` | 1,428/1,428 selected complete; failed, partial, and superseded attempts preserved |
 | Mangrove/Futian ESM2 | `results/blue_catalyst_poc/runs/futian_mangrove_2026_esm2_phase1_shard*_20260621/` | 3,156/3,156 ready Futian proteome embeddings |
 | Mangrove/Futian gLM2 | `results/contextual_genomics/glm2_futian_phase1_shard*_20260621/` | 3,156/3,156 contextual genome units |
-| Mangrove/Futian functional tranche | `results/functional_metagenomics/futian_mangrove_2026_phase1_archaea/` and `results/functional_metagenomics/futian_mangrove_2026_phase1_bacteria_00*/` | 2,931 annotation-complete functional payloads admitted to the July 24 release; common mechanism-feature aggregation remains pending |
+| Mangrove/Futian functional warehouse | `results/functional_metagenomics/futian_mangrove_2026_phase1/cohort_warehouse/` | 3,156/3,156 selected complete under normalized accepted/best/present event semantics; 248 source gaps remain explicit |
 | MUCC v1 wetland lane | `results/functional_metagenomics/mucc_v1_owc_wetland_20260626/` | 2,508 registered MAGs with source-functional, expression, network, and staged field-validation evidence |
-| Freeze-backed expanded atlas | `results/reports/mbag_nextgen_molecular_niche_atlas_20260724_scientific_reconciliation/report.html` | current molecular-attestation report over 7,965 registered units and 7,484 data-complete tri-views |
+| Freeze-backed expanded atlas | `results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end/report.html` | controlled-diligence molecular-attestation report over 7,965 registered units and 7,710 data-complete tri-views; publication gates remain pending |
 | Current payload inventory | `docs/current_artifact_inventory.md` | dated cross-lane status, live-count caveats, and report freshness notes |
 | Three-view freeze plan | `ai_docs/functional_metagenomics_expansion/three_view_freeze_and_nextgen_report_plan.md` | registry-driven rule for freezing POC + MSM + Futian report payloads without losing pending, partial, failed, duplicate, or gap rows |
 
@@ -166,9 +166,9 @@ MAG/bin-comparable POC functional-atlas denominator in
 `results/attestation/mmag_mvp_20260617`. The mangrove/MSM expansion is moving
 Level 0 from a two-source POC toward a broader blue-carbon molecular niche atlas:
 ESM-2 and gLM2 are complete for both MSM (1,428 units) and Futian (3,156 ready
-units). MSM contributes 1,427 and Futian contributes 2,931
-annotation-complete tri-views. Their common accepted/present mechanism-feature
-aggregation remains pending. MUCC v1 adds 2,501 data-complete source-scaffold
+units). MSM contributes 1,428 and Futian contributes 3,156
+pipeline-normalized tri-views. Their code/configuration/database fingerprints
+and source-aware statistical comparability gates remain pending. MUCC v1 adds 2,501 data-complete source-scaffold
 tri-views under a distinct functional contract. This still does not advance the
 system to Level 1 because sample
 identity, abundance, environmental covariates, and validation outcomes remain

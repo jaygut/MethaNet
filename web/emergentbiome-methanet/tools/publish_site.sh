@@ -19,7 +19,7 @@ set -euo pipefail
 CMD="${1:-build}"
 HERE="$(cd "$(dirname "$0")/.." && pwd)"          # web/emergentbiome-methanet
 REPO="$(cd "$HERE/../.." && pwd)"                  # repo root
-DEFAULT_REPORT="$REPO/results/reports/mbag_nextgen_molecular_niche_atlas_20260724_scientific_reconciliation"
+DEFAULT_REPORT="$REPO/results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end"
 REPORT="${2:-$DEFAULT_REPORT}"
 [[ "$REPORT" == --* ]] && REPORT="$DEFAULT_REPORT"   # allow `deploy --push`
 OUT="$HERE/_site"

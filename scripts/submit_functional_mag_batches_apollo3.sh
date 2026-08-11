@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-REPO_ROOT="${REPO_ROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="${REPO_ROOT:-$(cd -- "${SCRIPT_DIR}/.." && pwd)}"
 DB_ROOT="${DB_ROOT:-/home/rsg-jcorre38/scratch/methanet_db}"
 MANIFEST="${MANIFEST:-${REPO_ROOT}/results/functional_metagenomics/proteome_crosswalk_audit_20260612_0255/poc_662_functional_mag_manifest.mag_bin_remaining.tsv}"
 COHORT_RUN_ID="${COHORT_RUN_ID:-fgx_662_apollo3_$(date -u +%Y%m%d)}"
@@ -10,9 +11,10 @@ ARRAY_WORKER="${ARRAY_WORKER:-${REPO_ROOT}/scripts/slurm/run_functional_mag_arra
 THREADS="${THREADS:-16}"
 MEM="${MEM:-64G}"
 # MAG/bin relaunch inputs are intentionally filtered away from assembly-scale
-# no-bin rumen records. Keep enough walltime for idba_bin MAGs, while reserving
-# the 24-72h/128G+ profile for an explicit assembly-context tranche.
-TIME_LIMIT="${TIME_LIMIT:-08:00:00}"
+# no-bin rumen records. Keep a full-day walltime envelope for slower bacteria
+# MAGs and for clean tool/Slurm closeout; reserve 48-72h/128G+ profiles for an
+# explicit assembly-context tranche.
+TIME_LIMIT="${TIME_LIMIT:-24:00:00}"
 PARTITION="${PARTITION:-longjobs}"
 # 12-way concurrency fits two longjobs nodes at 16 CPUs/task without saturating
 # all 64 cores on each node, leaving headroom for tool-level I/O and memory.

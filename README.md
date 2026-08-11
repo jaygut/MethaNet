@@ -8,7 +8,8 @@ validation-ready methane-risk intelligence**
 
 [Landing page](https://emergentbiome.earth/) ·
 [Interactive MBAG report](https://emergentbiome.earth/report/) ·
-[Positioning and claim contract](docs/methanet_positioning_and_claims.md)
+[Positioning and claim contract](docs/methanet_positioning_and_claims.md) ·
+[Fresh-clone repository guide](docs/repository_guide.md)
 
 ---
 
@@ -41,7 +42,7 @@ and measured flux or process validation.
 
 ## What Works Today
 
-The July 24, 2026 scientific-reconciliation release is a governed molecular
+The August 10, 2026 end-to-end controlled-diligence release is a governed molecular
 warehouse and evidence graph:
 
 | Evidence layer | Current release | Decision use |
@@ -49,16 +50,18 @@ warehouse and evidence graph:
 | Registered MAG/proteome units | 7,965 | Auditable warehouse denominator |
 | ESM-2-bearing units | 7,710 | Proteome-neighborhood navigation |
 | gLM2 payloads | 7,717 | Protocol-aware genomic context |
-| Data-complete tri-views | 7,484 | Three-view evidence availability |
-| Mechanism-comparable tri-views | 625 | Current common-feature comparison ceiling |
-| Harmonization-pending mangrove tri-views | 4,358 | Candidate review and common-feature rebuild |
+| Data-complete tri-views | 7,710 | Three-view evidence availability |
+| Schema-normalized tri-views | 7,710 | Common long-form table and event semantics |
+| Pipeline-normalized tri-views | 5,209 | POC, MSM, and Futian; comparability audit pending |
+| Mechanism-comparable tri-views | 0 | No cross-lane mechanism comparison is authorized yet |
 | MUCC v1 source-scaffold tri-views | 2,501 | Wetland reference and expression-detection review |
 
 A data-complete tri-view contains ESM-2, gLM2, and a functional payload. Its
 evidence state records whether those payloads share a common quantitative
-contract. The 625-unit POC core is mechanism-comparable. The mangrove and MUCC
-v1 lanes remain valuable under their explicit annotation-complete and
-source-scaffold contracts.
+contract. POC, MSM, and Futian now share accepted/best/present event semantics,
+but code, configuration, and database fingerprints plus source-aware statistical
+gates remain pending. MUCC v1 stays useful under its distinct source-scaffold
+contract.
 
 Current outputs include candidate evidence cards, molecular diligence,
 monitoring prioritization, validation-gap routing, and study design. Final
@@ -197,17 +200,17 @@ Current implemented artifact arc:
 |-------|------------------------|--------|
 | POC ESM2/crosswalk backbone | `ai_docs/functional_metagenomics_expansion/proteome_crosswalk/embedded_662_proteome_id_crosswalk.tsv` | 662 proteome IDs: 555 rumen + 107 wetland/MUCC |
 | POC unit scope | `results/functional_metagenomics/proteome_crosswalk_audit_20260612_0255/poc_662_functional_mag_manifest.with_unit_scope.tsv` | 625 MAG/bin-comparable units + 37 assembly-context units |
-| POC functional atlas warehouse | `results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse_poc_magbin_union_20260616_075022/` | 625 selected MAG/bin runs, 24 Parquet tables, DuckDB catalog, 711 validation gates passing |
+| POC functional atlas warehouse | `results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse_semantic_rebuild_20260810/` | 625 selected MAG/bin runs under accepted KOfam and best-ranked MCycDB/SCycDB event semantics; 712 validation gates passing |
 | POC gLM2 context | `results/contextual_genomics/glm2_integration_20260616_poc_catchup_20260616_073441/` | 625/625 MAG-bin units complete after rumen catch-up |
 | Mangrove/MSM ESM2 expansion | `results/blue_catalyst_poc/runs/msm_china_2025_esm2_20260616_082112/artifacts/` | 1,428/1,428 local mangrove/MSM proteomes embedded |
 | Mangrove/MSM gLM2 expansion | `results/contextual_genomics/glm2_msm_magbin_full_20260615_092737/` | 1,428/1,428 contextual genome units complete |
-| Mangrove/MSM functional expansion | `results/functional_metagenomics/msm_china_2025_20260615/` | near-complete expansion lane; 1,427/1,428 functional MAGs complete, with one release-excluded partial unit preserved in the 2026-06-25 freeze |
+| Mangrove/MSM functional expansion | `results/functional_metagenomics/msm_china_2025_20260615/` | 1,428/1,428 functional MAGs complete in the rebuilt Parquet/DuckDB warehouse; failed, partial, and superseded attempts remain explicit |
 | Mangrove/Futian ESM2 + gLM2 expansion | `results/blue_catalyst_poc/runs/futian_mangrove_2026_esm2_phase1_shard*_20260621/` and `results/contextual_genomics/glm2_futian_phase1_shard*_20260621/` | 3,156/3,156 ready Futian MAG/proteome units complete in both ESM2 and gLM2 |
-| Mangrove/Futian functional expansion | `results/functional_metagenomics/futian_mangrove_2026_phase1_archaea/` and `results/functional_metagenomics/futian_mangrove_2026_phase1_bacteria_00*/` | 2,931/3,156 ready-payload rows carry annotation-complete functional output in the July 24 release; common accepted/present mechanism-feature aggregation remains pending |
+| Mangrove/Futian functional expansion | `results/functional_metagenomics/futian_mangrove_2026_phase1_archaea/` and `results/functional_metagenomics/futian_mangrove_2026_phase1_bacteria_00*/` | 3,156/3,156 ready-payload rows carry validated functional output in the rebuilt Parquet/DuckDB warehouse; 248 source gaps remain explicit |
 | MUCC v1 Old Woman Creek wetland lane | `results/functional_metagenomics/mucc_v1_owc_wetland_20260626/` | 2,508 registered wetland MAGs; 2,501 ESM-2-bearing and data-complete source-scaffold tri-views; processed expression detection and staged field evidence retain explicit linkage gaps |
 | Metadata provenance | `results/functional_metagenomics/environmental_metadata_recovery_20260612/`, `data/external/msm_china_2025/metadata/`, and `data/external/futian_mangrove_2026_qi/metadata/` | source/environmental metadata with resolution tiers across rumen, wetland/MUCC, MSM, and Futian lanes |
 | Molecular attestation graph | `results/attestation/mmag_mvp_20260617/` plus the release-level MBAG projection | POC graph MVP plus current warehouse-wide evidence-contract, candidate-card, and validation-readiness views |
-| Current interactive atlas | `results/reports/mbag_nextgen_molecular_niche_atlas_20260724_scientific_reconciliation/report.html` | 7,965 registered units, 7,710 ESM-2 embeddings, 7,717 gLM2 payloads, and 7,484 data-complete tri-views across three explicit functional evidence states |
+| Current controlled-diligence atlas | `results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end/report.html` | 7,965 registered units, 7,710 ESM-2 embeddings, 7,717 gLM2 payloads, and 7,710 data-complete tri-views; public deployment remains gated |
 
 These artifacts support MAG/proteome-level molecular attestation,
 bridge-candidate prioritization, evidence-card review, and monitoring-readiness
@@ -218,10 +221,9 @@ The current system should be read as five evidence lanes:
 
 - rumen POC: source reference lane for methane-system molecular neighborhoods;
 - wetland/MUCC POC: target-domain wetland lane with complete MAG-bin molecular evidence;
-- mangrove/MSM expansion: broader blue-carbon target lane with ESM2 and gLM2 complete, functional annotations at 1,427/1,428, and source metadata that links local MAG candidates to grouped sediment-sample metadata rather than final abundance-weighted sample scores.
+- mangrove/MSM expansion: broader blue-carbon target lane with ESM2, gLM2, and functional payloads complete at 1,428/1,428, and source metadata that links local MAG candidates to grouped sediment-sample metadata rather than final abundance-weighted sample scores.
 - mangrove/Futian expansion: larger time, depth, and habitat target lane with
-  ESM-2 and gLM2 complete for 3,156 ready rows and 2,931 annotation-complete
-  functional payloads in the current release;
+  ESM-2, gLM2, and functional payloads complete for all 3,156 ready rows;
 - MUCC v1 Old Woman Creek: wetland reference lane with 2,501 data-complete
   source-scaffold tri-views, processed expression detection, and staged
   field-validation evidence whose exact ecological joins remain unresolved.
@@ -317,6 +319,10 @@ MethaNet/
 │                             # Landing page and public report publisher
 └── data/                    # Local data directory, excluded from git
 ```
+
+For a fresh-clone walkthrough, verification commands, generated-output
+boundaries, and the scientific claim guardrails, see
+[`docs/repository_guide.md`](docs/repository_guide.md).
 
 ---
 
@@ -442,10 +448,10 @@ ML (optional): torch, transformers
 
 If you use MethaNet in your research, please cite:
 ```bibtex
-@software{methanet2025,
+@software{methanet2026,
   author       = {Philosof, Alon and Gutierrez, Jay},
   title        = {{MethaNet: Molecular Attestation for Blue-Carbon Methane Diligence}},
-  year         = {2025},
+  year         = {2026},
   publisher    = {GitHub},
   url          = {https://github.com/jaygut/MethaNet}
 }

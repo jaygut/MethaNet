@@ -52,14 +52,13 @@ with sync_playwright() as pw:
           mechanismComparable: count(1),
           harmonizationPending: count(2),
           sourceScaffold: count(3),
+          pipelineNormalized: count(4),
           incomplete: count(0),
           methaneIntensityNonNull: atlas.points.filter(p => p.mz != null).length,
           nonComparableMethaneIntensity: atlas.points.filter(
             p => p.fc !== 1 && p.mz != null
           ).length,
-          evidenceReconciledSource: atlas.meta.source.includes(
-            '20260724_scientific_reconciliation'
-          ),
+          evidenceReconciledSource: atlas.meta.source.includes('20260810_end_to_end'),
         };
     }""")
     print("PAGE INFO:", info)
@@ -67,17 +66,18 @@ with sync_playwright() as pw:
     if not (
         info["canvases"] >= 1
         and info["rail"] == 9
-        and info["fs"] == 15
+        and info["fs"] == 16
         and info["heroDefs"] == 2
         and info["terminologyItems"] == 8
         and not info["horizontalOverflow"]
         and landing_audit["points"] == 7710
         and landing_audit["bridges"] == 2226
-        and landing_audit["mechanismComparable"] == 625
-        and landing_audit["harmonizationPending"] == 4358
+        and landing_audit["mechanismComparable"] == 0
+        and landing_audit["harmonizationPending"] == 0
         and landing_audit["sourceScaffold"] == 2501
-        and landing_audit["incomplete"] == 226
-        and landing_audit["methaneIntensityNonNull"] == 625
+        and landing_audit["pipelineNormalized"] == 5209
+        and landing_audit["incomplete"] == 0
+        and landing_audit["methaneIntensityNonNull"] == 0
         and landing_audit["nonComparableMethaneIntensity"] == 0
         and landing_audit["evidenceReconciledSource"]
     ):
@@ -119,9 +119,9 @@ with sync_playwright() as pw:
         hasUmapButton: Array.from(document.querySelectorAll('#method-buttons button')).some(
           b => b.textContent.trim() === 'UMAP'
         ),
-        bodyHasTriViewTotal: document.body.textContent.includes('7,484'),
-        bodyHasMechanismComparableTotal: document.body.textContent.includes('625'),
-        bodyHasHarmonizationPendingTotal: document.body.textContent.includes('4,358'),
+        bodyHasTriViewTotal: document.body.textContent.includes('7,710'),
+        bodyHasMechanismComparableTotal: document.body.textContent.includes('0'),
+        bodyHasPipelineNormalizedTotal: document.body.textContent.includes('5,209'),
         bodyHasScaffoldTotal: document.body.textContent.includes('2,501'),
         bodyHasQuarantineBoundary: document.body.textContent.toLowerCase().includes('quarantin'),
         bodyHasTriViewContractBoundary: document.body.textContent.includes(
@@ -168,7 +168,7 @@ with sync_playwright() as pw:
         and report_info["hasUmapButton"]
         and report_info["bodyHasTriViewTotal"]
         and report_info["bodyHasMechanismComparableTotal"]
-        and report_info["bodyHasHarmonizationPendingTotal"]
+        and report_info["bodyHasPipelineNormalizedTotal"]
         and report_info["bodyHasScaffoldTotal"]
         and report_info["bodyHasQuarantineBoundary"]
         and report_info["bodyHasTriViewContractBoundary"]

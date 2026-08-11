@@ -5,11 +5,12 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=64G
-#SBATCH --time=08:00:00
+#SBATCH --time=24:00:00
 
 set -Eeuo pipefail
 
-REPO_ROOT="${REPO_ROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="${REPO_ROOT:-$(cd -- "${SCRIPT_DIR}/../.." && pwd)}"
 DB_ROOT="${DB_ROOT:-/home/rsg-jcorre38/scratch/methanet_db}"
 FASTA="${FASTA:-${REPO_ROOT}/data/assemblies/OWC_0041.fasta}"
 PROTEOME_ID="${PROTEOME_ID:-}"
@@ -50,13 +51,115 @@ PREPARE_DBCAN_CACHE="${PREPARE_DBCAN_CACHE:-1}"
 CURATE_RUN="${CURATE_RUN:-1}"
 PRUNE_SUCCESS="${PRUNE_SUCCESS:-0}"
 COMPRESS_LOGS="${COMPRESS_LOGS:-0}"
+CLEANUP_LINGERING_PROCESSES="${CLEANUP_LINGERING_PROCESSES:-0}"
+LINGERING_PROCESS_MAX_TARGETS="${LINGERING_PROCESS_MAX_TARGETS:-32}"
 WORK_FASTA="${INPUT_DIR}/${MAG_ID}.fasta"
 
 mkdir -p "$OUT" "$LOG_DIR" "$STAGED_FA" "$STAGED_FASTA" "$INPUT_DIR"
 mkdir -p "$OUT"/{genes,kofam,mcycdb,scycdb,dbcan,bakta,checkm2,gunc,gtdbtk,metabolic,tmp}
 mkdir -p "${OUT}/tmp/gunc" "${OUT}/tmp/gtdbtk"
 
-exec > >(tee -ai "$LOG_DIR/driver.out") 2> >(tee -ai "$LOG_DIR/driver.err" >&2)
+exec 3>&1 4>&2
+exec >>"$LOG_DIR/driver.out" 2>>"$LOG_DIR/driver.err"
+DRIVER_LOGGING_OPEN=1
+
+close_driver_logging() {
+  if [[ "${DRIVER_LOGGING_OPEN:-0}" == "1" ]]; then
+    exec 1>&3 2>&4
+    exec 3>&- 4>&-
+    DRIVER_LOGGING_OPEN=0
+  fi
+}
+
+finish_driver() {
+  local rc=$?
+  trap - EXIT
+  close_driver_logging
+  exit "$rc"
+}
+
+trap finish_driver EXIT
+
+collect_lingering_pids() {
+  local root_pid="${1:-$$}"
+  local self="$$"
+  local parent="${PPID:-}"
+  [[ "$root_pid" =~ ^[0-9]+$ ]] || return 0
+  [[ "$root_pid" -gt 1 ]] || return 0
+
+  ps -eo pid=,ppid= 2>/dev/null | awk -v root="$root_pid" -v self="$self" -v parent_pid="$parent" '
+      {
+        pid = $1
+        ppid = $2
+        parent[pid] = ppid
+        seen[pid] = 1
+      }
+      END {
+        desc[root] = 1
+        changed = 1
+        while (changed) {
+          changed = 0
+          for (pid in seen) {
+            if (!desc[pid] && desc[parent[pid]]) {
+              desc[pid] = 1
+              changed = 1
+            }
+          }
+        }
+        for (pid in desc) {
+          if (pid != root && pid != self && pid != parent_pid && pid > 1) print pid
+        }
+      }
+    ' | awk '
+    $1 ~ /^[0-9]+$/ && !seen[$1] {
+      seen[$1] = 1
+      print $1
+    }
+  '
+}
+
+describe_pids() {
+  [[ "$#" -gt 0 ]] || return 0
+  ps -o pid=,ppid=,pgid=,sid=,stat=,comm= -p "$(IFS=,; echo "$*")" 2>/dev/null || true
+}
+
+cleanup_lingering_processes() {
+  local label="${1:-successful closeout}"
+  local root_pid="${2:-$$}"
+  local pid
+  local targets=()
+
+  [[ "$CLEANUP_LINGERING_PROCESSES" == "1" ]] || return 0
+
+  while IFS= read -r pid; do
+    [[ -n "$pid" ]] || continue
+    targets+=("$pid")
+  done < <(collect_lingering_pids "$root_pid")
+
+  [[ "${#targets[@]}" -gt 0 ]] || return 0
+  if [[ "${#targets[@]}" -gt "$LINGERING_PROCESS_MAX_TARGETS" ]]; then
+    printf 'Refusing to clean %s lingering processes after %s; target count exceeds LINGERING_PROCESS_MAX_TARGETS=%s\n' \
+      "${#targets[@]}" "$label" "$LINGERING_PROCESS_MAX_TARGETS" >&2
+    describe_pids "${targets[@]}" >&2
+    return 0
+  fi
+  printf 'Cleaning lingering processes after %s: %s\n' "$label" "${targets[*]}" >&2
+  describe_pids "${targets[@]}" >&2
+  kill -TERM "${targets[@]}" 2>/dev/null || true
+  sleep "${LINGERING_PROCESS_TERM_GRACE_SECONDS:-2}"
+
+  local survivors=()
+  for pid in "${targets[@]}"; do
+    if kill -0 "$pid" 2>/dev/null; then
+      survivors+=("$pid")
+    fi
+  done
+  if [[ "${#survivors[@]}" -gt 0 ]]; then
+    printf 'Force-killing lingering processes after %s: %s\n' "$label" "${survivors[*]}" >&2
+    describe_pids "${survivors[@]}" >&2
+    kill -KILL "${survivors[@]}" 2>/dev/null || true
+  fi
+}
 
 die() {
   echo "ERROR: $*" >&2
@@ -216,6 +319,7 @@ require_file "${DB_ROOT}/dbcan/dbCAN.hmm"
 require_file "${DB_ROOT}/dbcan/dbCAN-sub.hmm"
 require_file "${REPO_ROOT}/scripts/prepare_dbcan_compat_cache_apollo3.sh"
 require_file "${REPO_ROOT}/scripts/curate_functional_mag_run.py"
+require_file "${REPO_ROOT}/scripts/run_metabolic_guarded.py"
 require_file "${DB_ROOT}/metabolic/METABOLIC/METABOLIC-G.pl"
 require_file "${DB_ROOT}/bakta/db-light/bakta.db"
 require_file "$CONDA_SH"
@@ -350,12 +454,14 @@ activate_env methanet-metabolic
 run_step metabolic_prodigal_check prodigal -v
 run_step metabolic_bioperl_check perl -MBio::SeqIO -e 1
 run_step metabolic_r_check Rscript -e 'stopifnot(requireNamespace("openxlsx", quietly = TRUE))'
-run_step metabolic perl "${DB_ROOT}/metabolic/METABOLIC/METABOLIC-G.pl" \
-  -in-gn "$STAGED_FASTA" \
-  -o "${OUT}/metabolic" \
-  -t "$THREADS" \
-  -p meta \
-  -kofam-db full
+run_step metabolic python "${REPO_ROOT}/scripts/run_metabolic_guarded.py" \
+  --metabolic-script "${DB_ROOT}/metabolic/METABOLIC/METABOLIC-G.pl" \
+  --input-genomes "$STAGED_FASTA" \
+  --output-dir "${OUT}/metabolic" \
+  --threads "$THREADS" \
+  --expected-mag-id "$MAG_ID" \
+  --prodigal-mode meta \
+  --kofam-db full
 if grep -Eiq '(^Error:|Execution halted|No such file|cannot access|readline\\(\\) on closed filehandle)' "${LOG_DIR}/metabolic.out" "${LOG_DIR}/metabolic.err" "${OUT}/metabolic/METABOLIC_log.log"; then
   append_status metabolic failed "METABOLIC logged internal errors despite exit code 0"
   die "METABOLIC logged internal errors; see ${LOG_DIR}/metabolic.err and ${OUT}/metabolic/METABOLIC_log.log"
@@ -409,6 +515,13 @@ if [[ "$CURATE_RUN" == "1" ]]; then
   if [[ "$PRUNE_SUCCESS" == "1" ]]; then
     curate_args+=(--prune-success)
   fi
+  if [[ "$COMPRESS_LOGS" == "1" ]]; then
+    close_driver_logging
+  fi
   "${REPO_ROOT}/scripts/curate_functional_mag_run.py" "${curate_args[@]}"
 fi
 echo "Complete: ${OUT}"
+close_driver_logging
+cleanup_lingering_processes "successful one-MAG closeout"
+trap - EXIT
+exit 0

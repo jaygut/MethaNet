@@ -23,7 +23,8 @@ Use the following sources for current interpretation:
 
 ## Current MBAG Method Stack
 
-The July 24, 2026 release links 7,965 registered MAG/proteome units through:
+The August 10, 2026 controlled-diligence release links 7,965 registered
+MAG/proteome units through:
 
 1. ESM-2 proteome embeddings for molecular-neighborhood navigation;
 2. gLM2 native and shuffled genomic context under protocol-stratified
@@ -34,10 +35,11 @@ The July 24, 2026 release links 7,965 registered MAG/proteome units through:
 5. evidence cards that carry authorized claim wording, blocking gaps, and the
    next validation action.
 
-The release contains 7,484 data-complete tri-views. The 625-unit POC core is
-mechanism-comparable. The 4,358 mangrove rows await common accepted/present
-feature aggregation. The 2,501 MUCC v1 rows retain their source-scaffold
-functional contract.
+The release contains 7,710 data-complete tri-views: 5,209 POC/MSM/Futian
+pipeline-normalized screening tri-views and 2,501 MUCC v1 source-scaffold
+tri-views. Cross-lane mechanism-comparable units remain zero until the common
+accepted/present feature, version/database, source-aware null, taxonomy, and
+stability gates pass.
 
 ## Table of Contents
 
