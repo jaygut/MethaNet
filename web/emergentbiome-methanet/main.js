@@ -21,14 +21,14 @@
 
   const READOUTS = {
     stakes: [["~" + EB.num.methaneGWP20 + "×", "CH₄ vs CO₂ over 20 years", true], ["$" + EB.ext.dbcRecordPrice + "/t", "blue-carbon record price, Aug 2025"]],
-    blindspot: [["≈ 0", "sites with paired flux + molecular data today", true], ["< " + EB.ext.vm0033SalinityPpt + " ppt", "salinity: no default methane factor"]],
-    surveyor: [["evidence profile", "per site with a next measurement", true], ["validation path", "paired field evidence calibrates flux inference", false]],
+    blindspot: [["0 exact joins", "sample + environment + process in the current atlas", true], ["< " + EB.ext.vm0033SalinityPpt + " ppt", "salinity: no default methane factor"]],
+    surveyor: [["evidence card", "per review context with a next measurement", true], ["validation path", "paired field evidence is required before flux inference", false]],
     cheap: [["r > " + EB.ext.mcraFluxSpearman, "methanogen marker vs measured flux", true], ["salinity", "contextual covariate for field design", false]],
-    atlas: [[D.fmt(EB.num.triViewReady), "data-complete tri-view units", true], [D.fmt(EB.num.mechanismComparableTriView), "mechanism-comparable proof-of-concept core"], [D.fmt(EB.num.annotationCompletePendingTriView), "annotation-complete, harmonization pending"], [D.fmt(EB.num.sourceScaffoldTriView), "Old Woman Creek source-scaffold tri-view"]],
-    engine: [["273×", "N₂O vs CO₂ over 100 years", true], [D.fmt(EB.num.mechanismComparableTriView), "units in the comparable methane screen", false], ["0", "field assays for new gases", false]],
+    atlas: [[D.fmt(EB.num.triViewReady), "data-complete tri-view units", true], [D.fmt(EB.num.pipelineNormalizedTriView), "pipeline-normalized; comparability pending"], [D.fmt(EB.num.sourceScaffoldTriView), "Old Woman Creek source-scaffold tri-view"], [D.fmt(EB.num.mechanismComparableTriView), "cross-lane mechanism-comparable units"]],
+    engine: [["273×", "N₂O vs CO₂ over 100 years", true], [D.fmt(EB.num.mechanismComparableTriView), "cross-lane comparable methane units", false], ["0", "field assays for new gases", false]],
     platform: [[D.fmt(EB.num.evidenceAtoms), "evidence atoms", true], [D.fmt(EB.num.nearEsm2Edges), "embedding-neighbor links"]],
-    ladder: [["rung 0", "product today · screening + triage", true], ["rungs 1-5", "path to calibrated MRV"]],
-    path: [["< " + EB.num.pipelineDays + " days", "raw sequences to report", true], ["Cispatá Bay", "field validation, next rung"]],
+    ladder: [["rung 0", "available now · evidence review + triage", true], ["rungs 1-5", "path to calibrated MRV"]],
+    path: [["< " + EB.num.pipelineDays + " days", "calibration-core pipeline benchmark", true], ["partner cohort", "field validation, next rung"]],
   };
 
   function injectCopy() {
@@ -39,7 +39,11 @@
       host.style.setProperty("--accent", "var(" + accent + ")");
       const badge = s.data === "illustrative"
         ? '<span class="badge illus">Illustrative</span>'
-        : '<span class="badge real">Real data</span>';
+        : s.data === "mixed-real-and-illustrative"
+          ? '<span class="badge illus">Real anchor + illustrative view</span>'
+          : s.data === "roadmap"
+            ? '<span class="badge illus">Roadmap</span>'
+            : '<span class="badge real">Real data</span>';
       let readoutHtml = "";
       const rs = READOUTS[s.id] || [];
       if (rs.length) {
@@ -82,9 +86,9 @@
     document.getElementById("askBody").innerHTML =
       "MethaNet gives blue-carbon developers, verifiers, raters, and buyers a traceable molecular attestation layer for methane-sensitive diligence. " +
       "The MethaNet Bridge Attestation Graph (MBAG) connects <b>" + D.fmt(EB.num.embeddingBearingUnits) + "</b> embedded genomes to functional evidence, provenance, claim boundaries, and the next validation action. " +
-      "Field validation at Cispatá Bay will add the paired evidence required for calibrated methane monitoring, reporting, and verification.";
+      "A partner validation cohort would add the paired evidence required for calibrated methane monitoring, reporting, and verification.";
     const points = [
-      "Field validation at Cispatá Bay (Colombian Caribbean mangrove, Verra VM0033 methodology context)",
+      "A partner field cohort with paired molecular, abundance, environmental, and methane-process measurements",
       "Pair molecular evidence with field methane flux (target " + EB.num.pairedFluxTargetLo + "–" + EB.num.pairedFluxTargetHi + " samples)",
       "Calibrate the probabilistic risk model to earn the A–E tiers under holdout validation",
       "Harden the knowledge graph into a partner-facing evidence product",
@@ -96,17 +100,19 @@
       ["Mangrove · MSM China 2025", D.fmt(EB.num.msmCandidates) + " genomes (" + D.fmt(EB.num.msmFunctionalComplete) + " annotated)"],
       ["Mangrove · Futian 2026 (Qi et al.)", D.fmt(EB.num.futianRMAGs) + " genomes <span class='in-progress'>(" + D.fmt(EB.num.futianBacteriaComplete) + "/" + D.fmt(EB.num.futianBacteriaTotal) + " bacteria annotated)</span>"],
       ["Data-complete tri-view units", D.fmt(EB.num.triViewReady) + " <span class='in-progress'>(payload completeness; common mechanism comparability is tracked separately)</span>"],
-      ["Mechanism-comparable proof-of-concept tri-view", D.fmt(EB.num.mechanismComparableTriView)],
-      ["Annotation-complete, harmonization pending", D.fmt(EB.num.annotationCompletePendingTriView)],
+      ["Schema-normalized tri-view", D.fmt(EB.num.schemaNormalizedTriView)],
+      ["Pipeline-normalized; comparability pending", D.fmt(EB.num.pipelineNormalizedTriView)],
+      ["Cross-lane mechanism-comparable tri-view", D.fmt(EB.num.mechanismComparableTriView)],
       ["Old Woman Creek source-scaffold tri-view", D.fmt(EB.num.sourceScaffoldTriView) + " <span class='in-progress'>(separate mechanism contract)</span>"],
       ["Genomes mapped (molecular space)", D.fmt(EB.num.embeddingBearingUnits)],
       ["Old Woman Creek wetland source warehouse", D.fmt(EB.num.muccWarehouseGenomes) + " genomes"],
       ["Total evidence reach", D.fmt(EB.num.warehouseReach) + " genomes"],
       ["Sample metadata recovered", (EB.num.msmSedimentSamples + EB.num.futianSedimentSamples) + " sediment samples · " + EB.num.msmBiosampleRows + " environmental rows"],
+      ["Authoritative sample + environment + process joins", "0 <span class='in-progress'>(metadata-rich contexts are not scored samples)</span>"],
       ["Evidence views per unit", "proteome geometry + genomic context + functional mechanism"],
       ["Cross-ecosystem bridge links", D.fmt(EB.num.bridgeEdges)],
       ["Pipeline speed", "&lt;" + EB.num.pipelineDays + " days, vs months of manual analysis"],
-      ["Field site", "Cispatá Bay, Colombia"],
+      ["Field-validation need", "Partner cohort with authoritative paired measurements"],
     ];
     document.getElementById("factsheet").innerHTML = F.map((r) =>
       '<div class="factsheet__row"><span class="factsheet__k">' + r[0] + '</span><span class="factsheet__v">' + r[1] + "</span></div>"
@@ -124,6 +130,16 @@
     setHref("headerReportCta", rep);
     setHref("reportCta", rep);
     setHref("contactCta", "mailto:" + EB.links.contactEmail);
+    document.querySelectorAll("[data-engine-lens]").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll("[data-engine-lens]").forEach((candidate) => {
+          candidate.setAttribute("aria-pressed", String(candidate === button));
+        });
+        document.dispatchEvent(new CustomEvent("methanet:engine-lens", {
+          detail: { index: Number(button.dataset.engineLens) },
+        }));
+      });
+    });
     const note = document.getElementById("reportNote");
     if (note) note.innerHTML =
       "The report presents the MethaNet Bridge Attestation Graph, bridge evidence, and sample-readiness ladder behind these numbers. Recomputed " +

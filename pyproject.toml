@@ -53,6 +53,7 @@ ml = [
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
+    "networkx>=3.0",
     "ruff>=0.1",
     "mypy>=1.0",
     "black>=23.0",
@@ -68,6 +69,7 @@ curation = [
     "biopython>=1.79",
     "pandas>=1.3",
     "pyarrow>=10.0",
+    "openpyxl>=3.1",
     "requests>=2.31",
     "tqdm>=4.66",
 ]

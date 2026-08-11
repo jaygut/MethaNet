@@ -13,11 +13,19 @@ import argparse
 import csv
 import json
 import shlex
+import sys
 from collections import Counter
 from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+
+SCRIPTS_DIR = Path(__file__).resolve().parents[1]
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
+
+from run_metabolic_guarded import OutputContractError, validate_workbook
 
 TRUE_VALUES = {"true", "1", "yes", "y"}
 
@@ -98,10 +106,19 @@ def status_tsv_run_state(path: Path) -> str | None:
     return None
 
 
+@lru_cache(maxsize=None)
 def run_dir_status(run_dir: Path) -> str:
     """Classify one run attempt across legacy sentinels and status.tsv runs."""
 
     if (run_dir / "COMPLETE").exists() or (run_dir / "_COMPLETE").exists():
+        record = read_json(run_dir / "curated/run_record.json")
+        workbook = run_dir / "metabolic/METABOLIC_result.xlsx"
+        expected_mag_id = str(record.get("mag_id") or "")
+        if expected_mag_id and workbook.exists():
+            try:
+                validate_workbook(workbook, expected_mag_id)
+            except OutputContractError:
+                return "failed"
         return "complete"
     if (run_dir / "FAILED").exists() or (run_dir / "_FAILED").exists():
         return "failed"
@@ -218,6 +235,7 @@ def count_esm2_units(paths: list[Path], expected_ids: set[str] | None = None) ->
 
 def count_glm2_units(paths: list[Path], expected_ids: set[str] | None = None) -> tuple[int, str]:
     ids: set[str] = set()
+    report_total = 0
     evidence: list[str] = []
     for path in paths:
         mag_level = read_tsv(path / "feature_glm_mag_level.tsv")
@@ -229,9 +247,18 @@ def count_glm2_units(paths: list[Path], expected_ids: set[str] | None = None) ->
         if windows:
             ids.update(row.get("proteome_id", "") for row in windows if row.get("proteome_id"))
             evidence.append("glm2_smoke_window_embedding_summary.tsv")
+            continue
+        multiwindow_report = read_json(path / "validation/glm2_multiwindow_reduce_report.json")
+        if multiwindow_report.get("status") == "pass":
+            try:
+                report_total += int(multiwindow_report.get("n_mags") or 0)
+                evidence.append("glm2_multiwindow_reduce_report.json")
+            except (TypeError, ValueError):
+                pass
     if expected_ids is not None:
         ids = ids & expected_ids
-    return len(ids), ";".join(sorted(set(evidence)))
+        report_total = min(report_total, len(expected_ids))
+    return max(len(ids), report_total), ";".join(sorted(set(evidence)))
 
 
 def count_warehouse_dim_mag(path: Path | None) -> int:

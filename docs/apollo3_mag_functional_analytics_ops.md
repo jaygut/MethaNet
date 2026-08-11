@@ -84,15 +84,17 @@ evidence packets. They are not final sample/project MRV risk scores and do not
 claim measured methane flux, final A-E tiers, source-independent transfer, or
 carbon-credit approval.
 
-## Current Mangrove Expansion Snapshot
+## Mangrove Expansion Snapshot
 
-The active mangrove lanes use the same curated per-MAG evidence-bundle contract
-as the POC production run, but they are not yet finalized cohort warehouses.
+The current August 10 release has validated cohort warehouses for both
+mangrove lanes: MSM contains 1,428/1,428 selected complete functional payloads
+and Futian contains 3,156/3,156 release-required complete payloads plus 248
+explicit source gaps. Both remain pipeline-normalized screening contracts;
+cross-lane mechanism comparability is not yet established.
 
 The table below preserves the July 8 operational shard snapshot for scheduler
-provenance. The July 24 scientific-reconciliation release carries 2,931 Futian
-annotation-complete functional payloads. Refresh the lane registry and Slurm
-state before operational decisions.
+provenance only. Refresh the lane registry and Slurm state before operational
+decisions; use `docs/current_artifact_inventory.md` for the current release.
 
 | Payload | Current state |
 | --- | ---: |
@@ -134,9 +136,11 @@ All split bacteria shards are dependency-free at the manifest level. The first
 controller cleanup misconfiguration; the controller has reportedly been fixed,
 so new completed jobs should release resources normally. Rows without a
 curated `COMPLETE` sentinel remain pending in an operational snapshot. The
-current report freeze is
+historical report freeze associated with this scheduler snapshot is
 `methanet_3view_payload_freeze_20260724_scientific_reconciliation`, with 7,484
-data-complete tri-views and explicit evidence-contract states.
+data-complete tri-views. The current controlled-diligence freeze is
+`methanet_3view_payload_freeze_20260810_end_to_end`, with 7,710 data-complete
+tri-views and explicit evidence-contract states.
 
 Current sidecar paths:
 

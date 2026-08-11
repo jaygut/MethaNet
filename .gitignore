@@ -111,6 +111,8 @@ Thumbs.db
 
 # Transient workspace
 /tmp/
+scratch_snap/
+v9out/
 
 # Web build output (generated site; multi-MB bundles)
 web/emergentbiome-methanet/_site/

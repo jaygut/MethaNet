@@ -1,7 +1,7 @@
 # Source Provenance And Environmental Metadata Reconciliation
 
 Date: 2026-06-18
-Documentation refresh: 2026-07-24
+Documentation refresh: 2026-08-10
 
 Scope: source-of-truth provenance and environmental metadata strategy for the
 current MethaNet rumen, wetland/MUCC, mangrove, and MUCC v1 Old Woman Creek
@@ -26,12 +26,14 @@ The practical metadata rule is:
 > Use exact accession metadata where present, use paper/site/project metadata as context, and label modeled environmental covariates as estimates. Do not let estimated covariates masquerade as measured sample metadata.
 
 Operational molecular-payload status is tracked in
-`docs/current_artifact_inventory.md`. The July 24 release contains 625
-mechanism-comparable POC tri-views, 4,358 annotation-complete mangrove
-tri-views awaiting common feature aggregation, and 2,501 MUCC v1
-source-scaffold tri-views. These molecular counts preserve the metadata claim
-boundary. Sample-level ecological interpretation requires MAG-to-sample
-mapping, abundance or read coverage, environmental covariates, and validation.
+`docs/current_artifact_inventory.md`. The August 10 ledger contains 5,209
+pipeline-normalized POC/MSM/Futian tri-views with cross-lane comparability
+pending and 2,501 MUCC v1 source-scaffold tri-views. The normalized metadata
+warehouse records 280 samples, 293,245 sample/MAG-context links, 259,084
+expression-or-abundance rows, 34,835 process-observation rows, and zero
+authoritative exact sample/environment/process joins. Sample-level ecological
+interpretation still requires exact MAG-to-sample mapping, abundance or read
+coverage, environmental covariates, and paired validation.
 
 ## Local Sources Checked
 
@@ -236,9 +238,9 @@ Interpretation boundary:
 - Futian source provenance is conclusive at the paper/data-package/source-register level.
 - Futian is strategically valuable because it introduces repeated time points, depth-resolved sediment samples, and paired mudflat/mangrove habitat context.
 - Current MAG rows resolve to site/month and source metadata, but depth-resolved MAG-to-sample assignment still requires additional evidence.
-- The July 24 release carries annotation-complete functional payloads for
-  2,931 of 3,156 Futian ready rows. Common accepted/present mechanism-feature
-  aggregation remains pending.
+- The August 10 release carries validated functional payloads for all 3,156
+  Futian ready rows. Cross-lane code/configuration/database fingerprints and
+  source-aware statistical comparability gates remain pending.
 - Futian molecular features are not sample-level MRV risk scores until abundance/read coverage, depth-resolved sample mapping, environmental covariates, uncertainty propagation, and flux/process validation are joined.
 
 ## Recommended Normalized Metadata Schema

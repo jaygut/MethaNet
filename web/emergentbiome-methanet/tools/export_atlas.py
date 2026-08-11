@@ -37,11 +37,11 @@ from collections import Counter, OrderedDict
 REPO_ROOT_FROM_HERE = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 SOURCE_NICHE = os.path.join(
     REPO_ROOT_FROM_HERE,
-    "results/reports/mbag_nextgen_molecular_niche_atlas_20260724_scientific_reconciliation",
+    "results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end",
     "assets/data/niche.json",
 )
 OUT_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data", "atlas.json"))
-SNAPSHOT = "2026-07-24"
+SNAPSHOT = "2026-08-10"
 
 ECO_FROM_PREFIX = {
     "rumen": "rumen",
@@ -107,6 +107,10 @@ def minmax_scale(values, lo_pct=0.3, hi_pct=99.7):
 
 def norm01_percentile(values):
     """Robust 0..1 via 2nd/98th percentile clamp (for visual encoding of densities)."""
+    if not values:
+        # A valid freeze may contain no mechanism-comparable unit. In that
+        # state every public methane-intensity value remains null.
+        return []
     s = sorted(values)
     n = len(s)
     lo = s[max(0, int(0.02 * n))]
@@ -130,6 +134,7 @@ def main():
     ap.add_argument("--check", action="store_true", help="summarize only; do not write")
     ap.add_argument("--niche", default=SOURCE_NICHE, help="path to a niche.json (defaults to the pinned current Atlas)")
     ap.add_argument("--snapshot", default=SNAPSHOT, help="snapshot date stamped into meta")
+    ap.add_argument("--release-ledger", default=None, help="release_ledger.json used to validate exported counts")
     args = ap.parse_args()
     src = args.niche
     snap = args.snapshot
@@ -189,10 +194,17 @@ def main():
         n["proteome_id"]: value
         for n, value in zip(eligible_mz_nodes, eligible_mz_scaled, strict=True)
     }
-    contract_code = {
+    legacy_contract_code = {
         "canonical_mechanism_comparable": 1,
         "annotation_complete_harmonization_pending": 2,
         "source_scaffold_non_equivalent": 3,
+        "pipeline_normalized_comparability_pending": 4,
+    }
+    formal_contract_code = {
+        "complete_canonical_mechanism_tri_view": 1,
+        "complete_annotation_tri_view_harmonization_pending": 2,
+        "complete_source_scaffold_tri_view": 3,
+        "complete_pipeline_normalized_tri_view_comparability_pending": 4,
     }
 
     # bridge-link endpoints (the documented cross-ecosystem kNN bridge genomes)
@@ -223,7 +235,13 @@ def main():
             ("cs", 1 if n.get("is_case_study") else 0),
             ("ma", r(n.get("molecular_attestation_index"), 3)),
             ("mz", r(mz_by_id.get(pid), 3)),
-            ("fc", contract_code.get(n.get("functional_comparability_tier"), 0)),
+            (
+                "fc",
+                formal_contract_code.get(
+                    n.get("formal_tri_view_status"),
+                    legacy_contract_code.get(n.get("functional_comparability_tier"), 0),
+                ),
+            ),
             ("nps", r(n.get("nearest_poc_similarity"), 3) if eco.startswith("mangrove") else None),
         ]))
 
@@ -252,6 +270,31 @@ def main():
             cent[eco] = [round(sum(p["x"] for p in pts) / len(pts), 4),
                          round(sum(p["y"] for p in pts) / len(pts), 4)]
 
+    release_ledger = None
+    if args.release_ledger:
+        with open(args.release_ledger) as fh:
+            release_ledger = json.load(fh)
+        observed_contracts = Counter(point["fc"] for point in points)
+        expected = {
+            "snapshot_date": snap,
+            "registered_units": len(points) + gap_rows,
+            "release_required_units": len(points),
+            "explicit_non_runnable_gaps": gap_rows,
+            "tri_view_ready_units": sum(observed_contracts[code] for code in (1, 2, 3, 4)),
+            "mechanism_comparable_units": observed_contracts[1],
+            "annotation_complete_tri_view_units": observed_contracts[2],
+            "source_scaffold_tri_view_units": observed_contracts[3],
+            "pipeline_normalized_tri_view_units": observed_contracts[4],
+            "blocking_units": observed_contracts[0],
+        }
+        drift = {
+            key: {"export": value, "ledger": release_ledger.get(key)}
+            for key, value in expected.items()
+            if release_ledger.get(key) != value
+        }
+        if drift:
+            sys.exit("ERROR: atlas/release-ledger drift: " + json.dumps(drift, sort_keys=True))
+
     out = OrderedDict([
         ("meta", OrderedDict([
             ("artifact", "EmergentBiome/MethaNet atlas — evidence-reconciled public export"),
@@ -267,17 +310,22 @@ def main():
             ("n_case_study", sum(p["cs"] for p in points)),
             ("n_bridge_nodes", sum(p["br"] for p in points)),
             ("excluded_gap_rows", gap_rows),
+            ("release_state", release_ledger.get("release_state") if release_ledger else "unvalidated"),
+            ("release_ledger_schema_version", release_ledger.get("schema_version") if release_ledger else None),
+            ("freeze_manifest_sha256", release_ledger.get("freeze_manifest_sha256") if release_ledger else None),
+            ("schema_normalized_tri_view_units", release_ledger.get("schema_normalized_tri_view_units") if release_ledger else None),
             (
                 "methane_intensity_scope",
-                "curated POC mechanism contract only; null for harmonization-pending and source-scaffold lanes",
+                "non-null only for rows passing the release mechanism-comparability gate; null otherwise",
             ),
             (
                 "functional_contract_codes",
                 {
                     "0": "incomplete or unclassified",
-                    "1": "canonical mechanism-comparable POC",
-                    "2": "annotation-complete, harmonization pending",
+                    "1": "mechanism-comparable under the release contract",
+                    "2": "annotation-complete, normalized aggregation pending",
                     "3": "source scaffold, non-equivalent",
+                    "4": "pipeline-normalized screening, cross-lane comparability pending",
                 },
             ),
             ("ecosystem_codes", ECO_CODE),

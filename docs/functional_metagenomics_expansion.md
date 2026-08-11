@@ -6,7 +6,7 @@ a governed molecular-attestation warehouse. This page defines the gates that
 connect representation context to functional mechanism evidence, monitoring
 readiness, and future calibrated methane-risk features.
 
-Documentation refresh: 2026-07-24.
+Documentation refresh: 2026-08-10.
 
 Use [`methanet_positioning_and_claims.md`](methanet_positioning_and_claims.md)
 for the shared narrative and claim contract used by the repository, landing
@@ -20,7 +20,7 @@ implementation arc now exists as generated local artifacts:
 - unit-scope split:
   625 MAG/bin-comparable units and 37 assembly-context rumen units;
 - functional-atlas warehouse:
-  `results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse_poc_magbin_union_20260616_075022/`
+  `results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse_semantic_rebuild_20260810/`
 - molecular attestation graph:
   `results/attestation/mmag_mvp_20260617/`
 
@@ -30,23 +30,24 @@ validation-study design. Sample and project MRV scoring becomes eligible after
 sample mapping, abundance or read coverage, environmental covariates,
 uncertainty propagation, and flux or process validation.
 
-The July 24 scientific-reconciliation release contains 7,965 registered units,
-7,710 ESM-2 embeddings, 7,717 gLM2 payloads, and 7,484 data-complete
+The August 10 controlled-diligence release contains 7,965 registered units,
+7,710 ESM-2 embeddings, 7,717 gLM2 payloads, and 7,710 data-complete
 tri-views. The molecular atlas has five evidence lanes:
 
 | Lane | Current state | Interpretation |
 | --- | --- | --- |
 | Rumen POC | 555 ESM2 proteomes; 518 MAG/bin-comparable multi-view units plus 37 assembly-context units | source reference lane for methane-system bridge hypotheses |
 | Wetland/MUCC POC | 107 ESM2/function/gLM2 MAG-bin units | target wetland POC lane |
-| Mangrove/MSM expansion | 1,428/1,428 ESM2 embeddings and 1,428/1,428 gLM2 units complete; 1,427/1,428 functional MAGs complete | broader blue-carbon target expansion, not yet a final sample-level MRV layer |
-| Mangrove/Futian expansion | 3,156/3,156 ESM-2 embeddings and 3,156/3,156 gLM2 units; 2,931 annotation-complete functional payloads | largest target-domain expansion; common mechanism-feature aggregation remains pending |
+| Mangrove/MSM expansion | 1,428/1,428 ESM2 embeddings, gLM2 units, and functional payloads complete | broader blue-carbon target expansion under a pipeline-normalized screening contract, not a sample-level MRV layer |
+| Mangrove/Futian expansion | 3,156/3,156 release-required ESM-2 embeddings, gLM2 units, and functional payloads complete; 248 source-manifest gaps retained | largest target-domain expansion under a pipeline-normalized screening contract |
 | MUCC v1 Old Woman Creek | 2,508 registered MAGs; 2,501 ESM-2; 2,508 gLM2 and source-functional payloads; 2,501 data-complete source-scaffold tri-views | wetland reference and expression-detection lane under a distinct non-equivalent functional contract |
 
-The evidence contract separates 625 mechanism-comparable POC tri-views, 4,358
-annotation-complete mangrove tri-views awaiting common feature aggregation, and
-2,501 MUCC v1 source-scaffold tri-views. Data completeness records payload
-availability. Quantitative mechanism comparability requires the common
-accepted/present feature contract.
+The evidence contract separates 5,209 POC/MSM/Futian pipeline-normalized
+screening tri-views from 2,501 MUCC v1 source-scaffold tri-views. The current
+cross-lane mechanism-comparable count is zero. Data completeness records
+payload availability; quantitative mechanism comparability still requires
+version/database equivalence, common accepted/present feature semantics, and
+the source-aware statistical gates.
 
 For dated counts, paths, and report freshness, use
 `docs/current_artifact_inventory.md`.

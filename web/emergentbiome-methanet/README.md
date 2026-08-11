@@ -27,16 +27,17 @@ story:
 | Landing page | Blue-carbon developers, verifiers, raters, buyers, partners, and funders | Explain the methane blind spot, present molecular attestation as the current product, and show the route to calibrated MRV |
 | MBAG report | Scientific, technical, and diligence reviewers | Expose the tri-view evidence contract, comparability boundaries, candidate cards, source provenance, and validation agenda |
 
-Both surfaces use the July 24, 2026 scientific-reconciliation release:
+The source and locally built surfaces use the August 10, 2026 controlled-diligence release. Public deployment remains blocked until the publication gates pass:
 
 | Measure | Current release |
 | --- | ---: |
 | Registered MAG/proteome units | 7,965 |
 | ESM-2-bearing units | 7,710 |
 | gLM2 payloads | 7,717 |
-| Data-complete tri-views | 7,484 |
-| Mechanism-comparable POC tri-views | 625 |
-| Harmonization-pending mangrove tri-views | 4,358 |
+| Data-complete tri-views | 7,710 |
+| Schema-normalized tri-views | 7,710 |
+| Pipeline-normalized tri-views, comparability pending | 5,209 |
+| Cross-lane mechanism-comparable tri-views | 0 |
 | MUCC v1 source-scaffold tri-views | 2,501 |
 
 Data-complete and mechanism-comparable describe different evidence states.
@@ -59,7 +60,7 @@ The page uses a title sequence, nine scroll-driven scenes, and a closing ask:
 | 2. The Blind Spot | Direct monitoring is costly and spatially sparse | Illustrative measurement gap |
 | 3. What You Get | Evidence cards identify a candidate, its confidence, and the next measurement | Illustrative product shape grounded in the real evidence contract |
 | 4. Versus the Cheap Method | Single environmental proxies miss microbial pathway structure | Illustrative teaching plot with sourced anchors |
-| 5. The Evidence | The warehouse carries 7,484 data-complete tri-views under three explicit functional contracts | Real counts and coordinates |
+| 5. The Evidence | The ledger carries 7,710 data-complete tri-views under pipeline-normalized and source-scaffold contracts | Real counts and coordinates |
 | 6. One Engine, Many Maps | Each gas or mechanism lens requires its own harmonization and validation gate | Real atlas geometry with bounded lens states |
 | 7. Platform And Moat | MBAG preserves evidence, provenance, claim scope, and validation actions | Real graph schema |
 | 8. The Honest Ladder | Molecular attestation is available now; calibrated MRV follows paired validation | Real MRV roadmap |
@@ -90,8 +91,9 @@ Open `http://localhost:8848/`.
 
 ## Refresh Workflow
 
-`config.js` is the landing-page source of truth for headline numbers, snapshot
-dates, public copy, the maturity ladder, claim boundaries, and milestones.
+The dated `release_ledger.json` is the numerical authority. `config.js` is its
+public rendering projection for headline numbers, snapshot dates, copy, the
+maturity ladder, claim boundaries, and milestones.
 
 1. Reconcile the new release against `DIGEST.md` and the dated report freeze.
 2. Update the relevant values and copy in `config.js`.
@@ -99,6 +101,11 @@ dates, public copy, the maturity ladder, claim boundaries, and milestones.
 4. Build the public tree with `tools/publish_site.sh build`.
 5. Verify the landing page, the stable `/report/` alias, claim-boundary text,
    and the absence of public raw report bundles.
+
+Run `tools/validate_release_parity.py` against the ledger, freeze, report,
+`DIGEST.md`, `config.js`, and `data/atlas.json`. Run
+`tools/verify_page_firefox.py` against the built tree for desktop, tablet,
+mobile, keyboard, overflow, noindex, and static-fallback checks.
 
 ## File Map
 
@@ -110,7 +117,8 @@ main.js                 page orchestration, copy injection, and accessibility
 scenes/                 seeded visual scenes
 data/atlas.json         local landing visualization feed
 tools/export_atlas.py   deterministic atlas exporter
-tools/verify_page.py    browser verification helper
+tools/verify_page_firefox.py Firefox browser and accessibility verifier
+tools/validate_release_parity.py cross-artifact release-ledger parity gate
 tools/publish_site.sh   public-tree builder and GitHub Pages publisher
 DIGEST.md               evidence reconciliation and visual honesty contract
 ```

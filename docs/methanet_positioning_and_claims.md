@@ -1,6 +1,6 @@
 # MethaNet Positioning And Claim Contract
 
-Documentation refresh: 2026-07-24
+Documentation refresh: 2026-08-10
 
 This document is the shared narrative and claim contract for the MethaNet
 repository, the [EmergentBiome landing page](https://emergentbiome.earth/), and
@@ -52,22 +52,28 @@ remain distinguishable in every review path.
 
 ## Current Release Snapshot
 
-The July 24, 2026 scientific-reconciliation release contains:
+The August 10, 2026 controlled-diligence release contains:
 
 | Measure | Current release | Interpretation |
 | --- | ---: | --- |
 | Registered MAG/proteome units | 7,965 | Full warehouse registry, including explicit gap and incomplete states |
 | ESM-2-bearing units | 7,710 | Proteome-neighborhood navigation |
 | gLM2 payloads | 7,717 | Genomic-context evidence, compared within protocol class |
-| Data-complete tri-views | 7,484 | ESM-2, gLM2, and a functional payload are all present |
-| Mechanism-comparable tri-views | 625 | Common curated accepted/present feature contract |
-| Annotation-complete tri-views awaiting harmonization | 4,358 | MSM and Futian outputs awaiting common feature aggregation |
+| Data-complete tri-views | 7,710 | ESM-2, gLM2, and a functional payload are all present |
+| Schema-normalized tri-views | 7,710 | Long-form tables and accepted/best/present event semantics are explicit |
+| Pipeline-normalized tri-views | 5,209 | POC, MSM, and Futian; cross-lane equivalence remains pending |
+| Mechanism-comparable tri-views | 0 | No cross-lane quantitative mechanism comparison is authorized |
 | MUCC v1 source-scaffold tri-views | 2,501 | DRAM, gene, and processed expression evidence under a distinct contract |
 
-The 7,484 tri-view total is an availability statement. The current
-cross-lane mechanism-comparison ceiling is 625 units. The remaining tri-view
-states are scientifically useful for navigation, diligence, candidate review,
-and harmonization planning while retaining their distinct evidence contracts.
+The 7,710 tri-view total is an availability statement. Pipeline normalization
+does not establish biological-mechanism equivalence. These states are useful
+for navigation, diligence, candidate review, and harmonization planning while
+retaining their distinct evidence contracts.
+
+The August 10 experience remains `noindex` and controlled-diligence only.
+Source-aware and taxonomy-aware nulls, bootstrap and graph sensitivity,
+view ablations, multiple-testing control, current Open Graph assets, and final
+browser/accessibility review are publication gates, not claims already earned.
 
 ## Tri-View Interpretation
 
