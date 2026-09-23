@@ -1,4 +1,4 @@
-# DIGEST: EmergentBiome / MethaNet controlled-diligence release
+# DIGEST: EmergentBiome Molecular Atlas controlled-diligence release
 
 Snapshot date: **2026-08-10**
 
@@ -50,6 +50,44 @@ The 255 non-runnable rows are explicit source gaps: 248 Futian rows and seven
 MUCC rows. They remain in the registered-unit ledger and are not plotted as
 embedding-bearing points.
 
+## Landing narrative and nearest-core contract
+
+The public landing uses **EmergentBiome Molecular Atlas** and
+**EmergentBiome evidence graph**. MethaNet/MBAG remain internal or historical
+artifact identifiers and do not appear as the landing brand. The current
+artifact guides molecular screening, evidence review, and field-validation
+design. It does not claim validated methane-flux biomarkers, a measured flux
+estimate, or a calibrated site-risk product.
+
+The 7,710 mapped units are MAG/proteome records with embeddings, not a claim
+of 7,710 globally dereplicated genomes. The landing's 2,226 links are
+displayed visual edges: 2,200 sampled cross-domain full-atlas kNN links and
+26 selected one-way nearest-core candidate links. They are not 2,226
+biologically verified transfer bridges.
+
+The frozen embedding-context and candidate-card tables independently support
+the nearest-core statement: 2,434 of 2,608 wetland and 4,475 of 4,584
+mangrove records have a rumen record as their **single raw-cosine nearest
+neighbor within the 625-record POC core** (518 rumen, 107 wetland). This
+includes 26 of the 27 selected wetland/mangrove candidate cards. The
+rumen-heavy reference composition is part of the interpretation.
+
+The report's zero is a different analysis: **reciprocal cross-domain top-35
+neighbors across the full atlas after per-dimension standardization**.
+One-way nearest-core assignments and reciprocal full-atlas neighbors are not
+interchangeable and neither establishes biological transfer. Source and
+method detail live in the frozen report's
+`tables/embedding_context_table.tsv`,
+`tables/candidate_cards.tsv`, and geometry audit.
+
+The proposal-facing candidate example is MUCC v1 `mucc_v1__OWC_1885`.
+Its frozen card records strong source QC (94.89% completeness, 1.14%
+contamination), processed expression-marker **detection**, and a one-way
+raw-cosine nearest POC rumen record (0.9842857). Expression is not an
+activity or flux magnitude; exact sample/date/depth, environmental,
+abundance, and methane-process joins remain unresolved. Its next action is
+to make those joins before ecological or risk interpretation.
+
 ## Functional and comparison contract
 
 - KOfam numerators use accepted calls, not every hit row.
@@ -86,7 +124,8 @@ These are metadata-rich validation opportunities, not scored samples.
 | Surface | Evidence mode | Interpretation limit |
 | --- | --- | --- |
 | Landing manifold | Real report coordinates and source-audited counts | Navigation and hypothesis generation, not transfer or risk proof |
-| Projection controls | Diffusion plus available UMAP/PHATE and PCA sensitivity views | Two-dimensional layouts do not rank candidates |
+| Landing candidate card | Frozen MUCC v1 OWC_1885 record with explicit evidence states | MAG/proteome review only; expression detection is not process rate |
+| Projection controls | UMAP opens as the navigable landing view; diffusion and PCA remain selectable. The report also retains PHATE where available | Two-dimensional layouts do not rank candidates or change high-dimensional link membership |
 | Evidence cards | Derived evidence records with direct, missing, contradictory, and next-action fields | Review priority, not biological truth |
 | Sample/context cards | Real metadata coverage and explicit ambiguity tiers | Context value, not exact sample risk |
 | Climate, proxy, and product scenes | Clearly badged sourced anchor, roadmap, or illustrative product shape | No illustrative score is a released prediction |
@@ -105,11 +144,19 @@ Blocked now: measured methane flux, expression-derived activity magnitude,
 sample/project methane risk, final A-E tiers, source-independent transfer,
 carbon-credit approval, registry acceptance, customers, contracts, or revenue.
 
-Public deployment of the August 10 source is blocked until source-aware and
+Routine scientific publication of the August 10 source is blocked until source-aware and
 taxonomy-aware nulls, bootstrap neighbor/rank stability, view and QC
 ablations, dimensionality/graph sensitivity, multiple-testing control, and the
 final local browser/accessibility/public-tree gates are recorded as passing.
-The existing public URLs remain historical until then.
+The August preflight audit still records `deployment_allowed=false` for that
+ungated release. On September 23, 2026, the user requested a scoped correction
+of the already-public domain: replace its stale landing/report pair with this
+reconciled, claim-bounded `noindex` bundle. That direction authorizes the
+correction deployment only; it does not clear the scientific gates, permit
+indexing, or expand the claims above. The local bundle passed 202/202 release
+parity checks, 19/19 report gates, browser checks, and no-JavaScript,
+reduced-motion, link, Open Graph, and public-tree checks. The QA record is in
+`results/reports/emergentbiome_public_browser_verification_20260923/`.
 
 ## Provenance pointers
 

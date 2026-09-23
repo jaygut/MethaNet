@@ -20,15 +20,15 @@
   function el(html) { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstChild; }
 
   const READOUTS = {
-    stakes: [["~" + EB.num.methaneGWP20 + "×", "CH₄ vs CO₂ over 20 years", true], ["$" + EB.ext.dbcRecordPrice + "/t", "blue-carbon record price, Aug 2025"]],
-    blindspot: [["0 exact joins", "sample + environment + process in the current atlas", true], ["< " + EB.ext.vm0033SalinityPpt + " ppt", "salinity: no default methane factor"]],
-    surveyor: [["evidence card", "per review context with a next measurement", true], ["validation path", "paired field evidence is required before flux inference", false]],
-    cheap: [["r > " + EB.ext.mcraFluxSpearman, "methanogen marker vs measured flux", true], ["salinity", "contextual covariate for field design", false]],
-    atlas: [[D.fmt(EB.num.triViewReady), "data-complete tri-view units", true], [D.fmt(EB.num.pipelineNormalizedTriView), "pipeline-normalized; comparability pending"], [D.fmt(EB.num.sourceScaffoldTriView), "Old Woman Creek source-scaffold tri-view"], [D.fmt(EB.num.mechanismComparableTriView), "cross-lane mechanism-comparable units"]],
-    engine: [["273×", "N₂O vs CO₂ over 100 years", true], [D.fmt(EB.num.mechanismComparableTriView), "cross-lane comparable methane units", false], ["0", "field assays for new gases", false]],
-    platform: [[D.fmt(EB.num.evidenceAtoms), "evidence atoms", true], [D.fmt(EB.num.nearEsm2Edges), "embedding-neighbor links"]],
+    stakes: [["~" + EB.num.methaneGWP20 + "×", "CH₄ vs CO₂ over 20 years", true], ["field flux", "needed for site-specific methane balance"]],
+    blindspot: [["0 accepted", "exact molecular + environment + process joins", true], ["next step", "pair samples with compatible field outcomes"]],
+    surveyor: [["1 real MAG", "source-audited review example", true], ["0 matched flux", "for this candidate record"]],
+    cheap: [["salinity", "field context, not a process rate", true], ["genome evidence", "molecular screening, not site risk"]],
+    atlas: [[D.fmt(EB.num.triViewReady), "data-complete MAG/proteome records", true], [D.fmt(EB.num.bridgeEdges), "displayed map links"], [D.fmt(EB.num.highlightedCandidateLinks), "highlighted nearest-core candidate links"], ["0", "standardized reciprocal rumen top-35 pairs"]],
+    engine: [["methane", "current pathway-screening focus", true], ["other lenses", "research options requiring separate validation"], [D.fmt(EB.num.mechanismComparableTriView), "cross-lane mechanism-comparable units"]],
+    platform: [[D.fmt(EB.num.magNodes), "queryable POC graph records", true], [D.fmt(EB.num.evidenceAtoms), "POC evidence atoms"]],
     ladder: [["rung 0", "available now · evidence review + triage", true], ["rungs 1-5", "path to calibrated MRV"]],
-    path: [["< " + EB.num.pipelineDays + " days", "calibration-core pipeline benchmark", true], ["partner cohort", "field validation, next rung"]],
+    path: [["partner cohort", "exact sample + field process pairing", true], ["held-out test", "required before calibrated risk"]],
   };
 
   function injectCopy() {
@@ -69,8 +69,8 @@
     ).join("");
     // header meta
     document.getElementById("headerMeta").innerHTML =
-      '<span class="dot">●</span> live snapshot ' + EB.num.snapshot +
-      ' · ' + D.fmt(EB.num.embeddingBearingUnits) + ' genomes mapped · ' + EB.num.bridgeEdges + ' bridges';
+      '<span class="dot">●</span> frozen ' + EB.num.snapshot +
+      ' · ' + D.fmt(EB.num.embeddingBearingUnits) + ' MAG/proteome records · ' + D.fmt(EB.num.bridgeEdges) + ' displayed links';
     // rail
     const rail = document.getElementById("rail");
     EB.scenes.forEach((s) => {
@@ -84,39 +84,59 @@
     // ask + factsheet
     document.getElementById("fsDate").textContent = EB.num.snapshot;
     document.getElementById("askBody").innerHTML =
-      "MethaNet gives blue-carbon developers, verifiers, raters, and buyers a traceable molecular attestation layer for methane-sensitive diligence. " +
-      "The MethaNet Bridge Attestation Graph (MBAG) connects <b>" + D.fmt(EB.num.embeddingBearingUnits) + "</b> embedded genomes to functional evidence, provenance, claim boundaries, and the next validation action. " +
-      "A partner validation cohort would add the paired evidence required for calibrated methane monitoring, reporting, and verification.";
+      "The EmergentBiome Molecular Atlas gives blue-carbon developers, verifiers, and research partners a source-audited way to review methane-pathway hypotheses and choose measurements. " +
+      "Its frozen release has <b>" + D.fmt(EB.num.triViewReady) + "</b> data-complete MAG/proteome records across separate evidence contracts. " +
+      "A <b>" + D.fmt(EB.num.magNodes) + "</b>-record queryable POC evidence graph demonstrates traceable claim review; the full-atlas graph and calibrated risk model require further work.";
     const points = [
-      "A partner field cohort with paired molecular, abundance, environmental, and methane-process measurements",
-      "Pair molecular evidence with field methane flux (target " + EB.num.pairedFluxTargetLo + "–" + EB.num.pairedFluxTargetHi + " samples)",
-      "Calibrate the probabilistic risk model to earn the A–E tiers under holdout validation",
-      "Harden the knowledge graph into a partner-facing evidence product",
+      "Resolve exact physical sample, date, depth, and MAG links while preserving unresolved records",
+      "Pair abundance, environmental context, and compatible methane-process measurements",
+      "Test whether molecular evidence improves an environment-only baseline at held-out sites and seasons",
+      "Publish uncertainty-calibrated risk only after those external validation gates pass",
     ];
     document.getElementById("askPoints").innerHTML = points.map((p) => "<li>" + p + "</li>").join("");
     // factsheet rows
     const F = [
-      ["Calibration core (rumen + wetland)", D.fmt(EB.num.calibrationCore) + " genomes"],
-      ["Mangrove · MSM China 2025", D.fmt(EB.num.msmCandidates) + " genomes (" + D.fmt(EB.num.msmFunctionalComplete) + " annotated)"],
-      ["Mangrove · Futian 2026 (Qi et al.)", D.fmt(EB.num.futianRMAGs) + " genomes <span class='in-progress'>(" + D.fmt(EB.num.futianBacteriaComplete) + "/" + D.fmt(EB.num.futianBacteriaTotal) + " bacteria annotated)</span>"],
-      ["Data-complete tri-view units", D.fmt(EB.num.triViewReady) + " <span class='in-progress'>(payload completeness; common mechanism comparability is tracked separately)</span>"],
-      ["Schema-normalized tri-view", D.fmt(EB.num.schemaNormalizedTriView)],
-      ["Pipeline-normalized; comparability pending", D.fmt(EB.num.pipelineNormalizedTriView)],
-      ["Cross-lane mechanism-comparable tri-view", D.fmt(EB.num.mechanismComparableTriView)],
-      ["Old Woman Creek source-scaffold tri-view", D.fmt(EB.num.sourceScaffoldTriView) + " <span class='in-progress'>(separate mechanism contract)</span>"],
-      ["Genomes mapped (molecular space)", D.fmt(EB.num.embeddingBearingUnits)],
-      ["Old Woman Creek wetland source warehouse", D.fmt(EB.num.muccWarehouseGenomes) + " genomes"],
-      ["Total evidence reach", D.fmt(EB.num.warehouseReach) + " genomes"],
-      ["Sample metadata recovered", (EB.num.msmSedimentSamples + EB.num.futianSedimentSamples) + " sediment samples · " + EB.num.msmBiosampleRows + " environmental rows"],
-      ["Authoritative sample + environment + process joins", "0 <span class='in-progress'>(metadata-rich contexts are not scored samples)</span>"],
-      ["Evidence views per unit", "proteome geometry + genomic context + functional mechanism"],
-      ["Cross-ecosystem bridge links", D.fmt(EB.num.bridgeEdges)],
-      ["Pipeline speed", "&lt;" + EB.num.pipelineDays + " days, vs months of manual analysis"],
-      ["Field-validation need", "Partner cohort with authoritative paired measurements"],
+      ["Registered release records", D.fmt(EB.num.warehouseReach) + " <span class='in-progress'>(including 255 explicit source gaps)</span>"],
+      ["Data-complete MAG/proteome tri-views", D.fmt(EB.num.triViewReady) + " <span class='in-progress'>(payload completeness, not mechanism equivalence)</span>"],
+      ["Pipeline-normalized tri-views", D.fmt(EB.num.pipelineNormalizedTriView) + " <span class='in-progress'>(cross-lane comparison pending)</span>"],
+      ["Old Woman Creek source-scaffold tri-views", D.fmt(EB.num.sourceScaffoldTriView) + " <span class='in-progress'>(distinct contract)</span>"],
+      ["Cross-lane mechanism-comparable units", D.fmt(EB.num.mechanismComparableTriView)],
+      ["Queryable POC evidence graph", D.fmt(EB.num.magNodes) + " records <span class='in-progress'>(atlas-wide extension planned)</span>"],
+      ["Displayed atlas map links", D.fmt(EB.num.bridgeEdges) + " <span class='in-progress'>(2,200 sampled neighbors + 26 candidate links)</span>"],
+      ["Exact molecular + environment + process joins", "0 accepted <span class='in-progress'>(metadata-rich contexts are not scored samples)</span>"],
+      ["Field-validation need", "Exact linked samples and matched process observations"],
     ];
     document.getElementById("factsheet").innerHTML = F.map((r) =>
       '<div class="factsheet__row"><span class="factsheet__k">' + r[0] + '</span><span class="factsheet__v">' + r[1] + "</span></div>"
     ).join("");
+    const mangroveRecords = EB.ecosystems[2].count + EB.ecosystems[3].count;
+    const evidenceCards = [
+      {
+        metric: D.fmt(EB.num.nearestCoreWetland) + " wetland · " + D.fmt(EB.num.nearestCoreMangrove) + " mangrove",
+        title: "One-way nearest-core matches",
+        detail: "Among " + D.fmt(EB.ecosystems[1].count) + " wetland and " + D.fmt(mangroveRecords) + " mangrove records, these have a rumen raw-cosine nearest neighbor within the 625-record POC core. They nominate review hypotheses, not transfer.",
+      },
+      {
+        metric: EB.num.nearestCoreCandidates + " of " + EB.num.candidateCards,
+        title: "Selected candidate records",
+        detail: "Selected wetland/mangrove cards with a rumen nearest-core match. The map draws 26 highlighted candidate links plus 2,200 sampled cross-domain neighbor links, not every nearest-core match.",
+      },
+      {
+        metric: String(EB.num.standardizedRumenReciprocalPairs),
+        title: "Standardized reciprocal rumen pairs",
+        detail: "Across the full atlas, no rumen–wetland or rumen–mangrove pair is reciprocal within each other's top 35 after per-dimension standardization. This is a different comparison from the one-way nearest-core matches.",
+      },
+    ];
+    const evidenceGrid = document.getElementById("evidenceSummaryGrid");
+    evidenceCards.forEach((card) => {
+      const item = document.createElement("article");
+      item.className = "evidence-summary__card";
+      const metric = document.createElement("p"); metric.className = "evidence-summary__metric"; metric.textContent = card.metric;
+      const title = document.createElement("h4"); title.textContent = card.title;
+      const detail = document.createElement("p"); detail.textContent = card.detail;
+      item.append(metric, title, detail);
+      evidenceGrid.appendChild(item);
+    });
     document.getElementById("terminologyList").innerHTML = EB.terminology.map((t) =>
       '<div class="terminology__item"><dt><span class="terminology__term">' + t.term + '</span><span class="terminology__full">' + t.full + '</span></dt><dd>' + t.detail + "</dd></div>"
     ).join("");
@@ -124,27 +144,41 @@
       EB.claims.boundaries[0] + " &nbsp;·&nbsp; A–E tiers remain a calibration target. &nbsp;·&nbsp; " +
       'Graph of Life &nbsp;·&nbsp; <a href="mailto:' + EB.links.contactEmail + '">' + EB.links.contactEmail + "</a>";
 
-    // report CTAs - single source of truth is EB.links.report
+    // Primary journey stays on-page; the bundled report expands the same freeze.
     const rep = EB.links.report;
     const setHref = (id, href) => { const el = document.getElementById(id); if (el) el.href = href; };
-    setHref("headerReportCta", rep);
-    setHref("reportCta", rep);
+    setHref("headerReportCta", "#scene-atlas");
+    setHref("reportCta", "#scene-atlas");
     setHref("contactCta", "mailto:" + EB.links.contactEmail);
     document.querySelectorAll("[data-engine-lens]").forEach((button) => {
       button.addEventListener("click", () => {
         document.querySelectorAll("[data-engine-lens]").forEach((candidate) => {
           candidate.setAttribute("aria-pressed", String(candidate === button));
         });
-        document.dispatchEvent(new CustomEvent("methanet:engine-lens", {
+        document.dispatchEvent(new CustomEvent("emergentbiome:engine-lens", {
           detail: { index: Number(button.dataset.engineLens) },
         }));
       });
     });
     const note = document.getElementById("reportNote");
     if (note) note.innerHTML =
-      "The report presents the MethaNet Bridge Attestation Graph, bridge evidence, and sample-readiness ladder behind these numbers. Recomputed " +
-      EB.links.reportDate + ", in sync with the live atlas at " + D.fmt(EB.num.triViewReady) + " data-complete tri-view units." +
-      ' <a href="' + rep + '" target="_blank" rel="noopener">Open the interactive report ↗</a>';
+      'The <a href="' + rep + '" target="_blank" rel="noopener">reconciled technical report ↗</a> expands the same frozen ' + EB.num.snapshot +
+      " release with methods, tables, and evidence limits.";
+
+    const cardPanel = document.getElementById("candidateEvidencePanel");
+    const cardButtons = Array.from(document.querySelectorAll("[data-card-view]"));
+    function showCandidateView(key) {
+      const view = EB.candidateExample.views[key];
+      if (!view || !cardPanel) return;
+      cardButtons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.cardView === key)));
+      const heading = document.createElement("h4"); heading.textContent = view.title;
+      const list = document.createElement("ul");
+      view.points.forEach((point) => { const li = document.createElement("li"); li.textContent = point; list.appendChild(li); });
+      cardPanel.setAttribute("aria-label", view.title);
+      cardPanel.replaceChildren(heading, list);
+    }
+    cardButtons.forEach((button) => button.addEventListener("click", () => showCandidateView(button.dataset.cardView)));
+    showCandidateView("recorded");
   }
 
   // ---------- scene lifecycle ----------

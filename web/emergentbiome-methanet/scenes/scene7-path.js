@@ -26,7 +26,7 @@
       stages = names.map((nm, i) => ({ nm, x: D.lerp(px0 + 90, px1 - 90, i / (names.length - 1)), y: py }));
       tokens = [];
       // milestones (right band - clears the bottom-left copy card)
-      const mx0 = w * 0.42, mx1 = w * 0.95, my = h * 0.76;
+      const mx0 = w * 0.54, mx1 = w * 0.95, my = h * 0.76;
       miles = TL.map((m, i) => ({ ...m, x: D.lerp(mx0, mx1, i / (TL.length - 1)), y: my, lit: i === 0 }));
     }
 
@@ -39,11 +39,44 @@
       D.instrumentGrid(p, w, h, EB.color.hairline, 0.18, 110);
       const tm = ctx.reduced ? 0 : p.frameCount * 0.02;
 
+      if (w < 720) {
+        drawMobilePath(w, h);
+        D.vignette(p, w, h, EB.color.bgBase, 0.5);
+        return;
+      }
+
       drawCoast(w, h, tm);
       drawPipeline(w, h, t, tm);
       drawMilestones(w, h, t, tm);
       D.vignette(p, w, h, EB.color.bgBase, 0.5);
     };
+
+    function drawMobilePath(w, h) {
+      const margin = 20, gap = 8, cardW = (w - margin * 2 - gap * 2) / 3;
+      const steps = [
+        { n: "01 / NOW", title: "ATLAS", detail: "molecular\nscreening", color: EB.color.emergence },
+        { n: "02 / NEXT", title: "FIELD", detail: "paired sample\n+ flux data", color: EB.color.attested },
+        { n: "03 / TEST", title: "RISK", detail: "held-out\nvalidation", color: EB.color.methaneA },
+      ];
+      p.push();
+      p.noStroke(); p.textAlign(p.LEFT, p.TOP);
+      p.fill(EB.color.textMuted); p.textFont("IBM Plex Mono"); p.textSize(10);
+      p.text("FROM MOLECULAR MAP TO FIELD TEST", margin, 91);
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i], x = margin + i * (cardW + gap), y = 122;
+        p.fill(D.rgba(step.color, 0.075)); p.stroke(D.rgba(step.color, i === 0 ? 0.72 : 0.4)); p.strokeWeight(1);
+        p.rect(x, y, cardW, 112, 4);
+        p.noStroke(); p.fill(step.color); p.textFont("IBM Plex Mono"); p.textSize(8);
+        p.text(step.n, x + 10, y + 11);
+        p.fill(EB.color.textPrimary); p.textFont("Bricolage Grotesque"); p.textStyle(p.BOLD); p.textSize(14);
+        p.text(step.title, x + 10, y + 33); p.textStyle(p.NORMAL);
+        p.fill(EB.color.textMuted); p.textFont("IBM Plex Mono"); p.textSize(8.3);
+        p.text(step.detail, x + 10, y + 61);
+      }
+      p.noStroke(); p.fill(EB.color.textMuted); p.textFont("IBM Plex Mono"); p.textSize(8.5);
+      p.text("PARTNER COHORT  →  EXACT PAIRING  →  VALIDATED MODEL", margin, 267);
+      p.pop();
+    }
 
     function drawCoast(w, h, tm) {
       // land fill below coast

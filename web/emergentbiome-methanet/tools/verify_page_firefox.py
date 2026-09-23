@@ -13,7 +13,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import Select, WebDriverWait
 
 
 LEDGER_KEYS = (
@@ -60,6 +60,8 @@ def audit_viewport(driver, url: str, width: int, height: int, screenshot: Path) 
           claimText: document.getElementById('claimText').textContent.trim(),
           claimHeight: document.querySelector('.claimbar').getBoundingClientRect().height,
           claimTextHeight: document.querySelector('.claimbar__text').getBoundingClientRect().height,
+          claimTextClipped: (() => { const e = document.querySelector('.claimbar__text'); return e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 1; })(),
+          headerBrandClipped: (() => { const e = document.querySelector('.lockup__brand'); return e.scrollWidth > e.clientWidth + 1; })(),
           reportHref: document.getElementById('reportCta').getAttribute('href'),
         };
         """
@@ -67,6 +69,84 @@ def audit_viewport(driver, url: str, width: int, height: int, screenshot: Path) 
     driver.save_screenshot(str(screenshot))
     result["horizontalOverflow"] = result["scrollWidth"] > result["innerWidth"] + 1
     return result
+
+
+def audit_landing_controls(driver, url: str, width: int, height: int) -> dict:
+    """Exercise the proposal-facing evidence controls through the rendered UI."""
+    driver.set_window_size(width, height)
+    driver.get(url)
+    WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.ID, "claimText")))
+
+    def scroll_to_scene(scene_id: str) -> None:
+        driver.execute_script(
+            """
+            const el = document.getElementById(arguments[0]);
+            const top = window.scrollY + el.getBoundingClientRect().top;
+            const travel = Math.max(0, el.offsetHeight - window.innerHeight);
+            window.scrollTo(0, top + travel * 0.6);
+            """,
+            scene_id,
+        )
+        time.sleep(0.9)
+
+    scroll_to_scene("scene-surveyor")
+    WebDriverWait(driver, 60).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, "[data-card-view='pending']"))
+    )
+    driver.find_element(By.CSS_SELECTOR, "[data-card-view='pending']").click()
+    pending = driver.find_element(By.ID, "candidateEvidencePanel").text
+    driver.find_element(By.CSS_SELECTOR, "[data-card-view='next']").click()
+    next_action = driver.find_element(By.ID, "candidateEvidencePanel").text
+
+    scroll_to_scene("scene-atlas")
+    WebDriverWait(driver, 60).until(
+        EC.presence_of_element_located((By.ID, "atlasPanelBody"))
+    )
+    view_buttons = driver.find_elements(By.CSS_SELECTOR, "[data-atlas-view]")
+    projection_buttons = driver.find_elements(By.CSS_SELECTOR, "[data-atlas-projection]")
+    initial_umap = driver.find_element(
+        By.CSS_SELECTOR, "[data-atlas-projection='umap']"
+    ).get_attribute("aria-pressed")
+    driver.find_element(By.CSS_SELECTOR, "[data-atlas-view='candidates']").click()
+    select = Select(driver.find_element(By.ID, "atlasCandidateSelect"))
+    candidate_options = len(select.options)
+    select.select_by_value("0")
+    candidate_readout = driver.find_element(By.ID, "atlasCandidateReadout").text
+    driver.find_element(By.CSS_SELECTOR, "[data-atlas-view='sensitivity']").click()
+    sensitivity = driver.find_element(By.ID, "atlasPanelBody").text
+    driver.find_element(By.CSS_SELECTOR, "[data-atlas-projection='diffusion']").click()
+    diffusion_pressed = driver.find_element(
+        By.CSS_SELECTOR, "[data-atlas-projection='diffusion']"
+    ).get_attribute("aria-pressed")
+
+    scroll_to_scene("scene-engine")
+    driver.find_element(By.CSS_SELECTOR, "[data-engine-lens='1']").click()
+    engine_pressed = driver.find_element(
+        By.CSS_SELECTOR, "[data-engine-lens='1']"
+    ).get_attribute("aria-pressed")
+    return {
+        "viewButtons": len(view_buttons),
+        "projectionButtons": len(projection_buttons),
+        "candidateOptions": candidate_options,
+        "initialUmapPressed": initial_umap == "true",
+        "diffusionPressed": diffusion_pressed == "true",
+        "enginePressed": engine_pressed == "true",
+        "pendingShowsExactJoinGap": "exact sample" in pending.lower(),
+        "nextShowsFieldPairing": "methane-process measurement" in next_action.lower(),
+        "candidateShowsOneWaySimilarity": (
+            "Raw cosine similarity" in candidate_readout
+            and "not validated transfer" in candidate_readout
+        ),
+        "sensitivityShowsBothMethods": (
+            "15,728" in sensitivity
+            and "15,064" in sensitivity
+            and "Rumen ↔ wetland" in sensitivity
+            and "Standardized" in sensitivity
+        ),
+        "horizontalOverflow": driver.execute_script(
+            "return document.documentElement.scrollWidth > window.innerWidth + 1"
+        ),
+    }
 
 
 def audit_report(driver, url: str, ledger: dict, width: int, height: int, screenshot: Path) -> dict:
@@ -137,6 +217,28 @@ def main() -> int:
             844,
             args.output_dir / "landing_mobile.png",
         )
+        compact_tablet = audit_viewport(
+            driver,
+            f"{args.base.rstrip('/')}/index.html",
+            900,
+            600,
+            args.output_dir / "landing_compact_tablet.png",
+        )
+        landscape_phone = audit_viewport(
+            driver,
+            f"{args.base.rstrip('/')}/index.html",
+            650,
+            450,
+            args.output_dir / "landing_landscape_phone.png",
+        )
+        landing_controls = {
+            "desktop": audit_landing_controls(
+                driver, f"{args.base.rstrip('/')}/index.html", 1440, 900
+            ),
+            "mobile": audit_landing_controls(
+                driver, f"{args.base.rstrip('/')}/index.html", 450, 844
+            ),
+        }
         report = audit_report(
             driver,
             f"{args.base.rstrip('/')}/report/",
@@ -164,15 +266,39 @@ def main() -> int:
     finally:
         driver.quit()
 
-    for label, view in (("landing.desktop", desktop), ("landing.mobile", mobile)):
+    for label, view in (
+        ("landing.desktop", desktop),
+        ("landing.mobile", mobile),
+        ("landing.compact_tablet", compact_tablet),
+        ("landing.landscape_phone", landscape_phone),
+    ):
         if view["horizontalOverflow"]:
             failures.append(f"{label}: horizontal overflow")
         if not view["noindex"]:
             failures.append(f"{label}: noindex missing")
         if view["lensButtons"] != 3 or view["pressedLensButtons"] != 1:
             failures.append(f"{label}: accessible lens controls invalid")
-        if not view["claimText"] or view["claimTextHeight"] > view["claimHeight"] + 1:
+        if not view["claimText"] or view["claimTextHeight"] > view["claimHeight"] + 1 or view["claimTextClipped"]:
             failures.append(f"{label}: claim boundary clipped or empty")
+        if view["headerBrandClipped"]:
+            failures.append(f"{label}: header brand clipped")
+    for label, controls in landing_controls.items():
+        required = {
+            "viewButtons": 4,
+            "projectionButtons": 3,
+            "candidateOptions": 27,
+            "initialUmapPressed": True,
+            "diffusionPressed": True,
+            "enginePressed": True,
+            "pendingShowsExactJoinGap": True,
+            "nextShowsFieldPairing": True,
+            "candidateShowsOneWaySimilarity": True,
+            "sensitivityShowsBothMethods": True,
+            "horizontalOverflow": False,
+        }
+        for key, expected in required.items():
+            if controls[key] != expected:
+                failures.append(f"landing.{label}: {key} = {controls[key]!r}, expected {expected!r}")
 
     for label, view in (
         ("report.desktop", report),
@@ -203,6 +329,9 @@ def main() -> int:
         "release_snapshot": ledger["snapshot_date"],
         "landing_desktop": desktop,
         "landing_mobile": mobile,
+        "landing_compact_tablet": compact_tablet,
+        "landing_landscape_phone": landscape_phone,
+        "landing_controls": landing_controls,
         "report_desktop": report,
         "report_tablet": report_tablet,
         "report_mobile": report_mobile,
