@@ -1,9 +1,7 @@
-/* SCENE 5 - THE PLATFORM & THE MOAT  ·  REAL SCHEMA
-   Reveals EmergentBiome as the substrate (embeddings + attestation graph + agentic
-   pipeline) with MethaNet lit as the first application and honestly-empty future
-   slots. Then a real molecular-attestation graph lights ONE claim and traces its
-   evidence chain: Genome -> Markers -> embedding neighbors -> quality gate -> Claim boundary,
-   ending in the real allowed-vs-forbidden wording. Counts are the live MMAG snapshot. */
+/* SCENE — THE EVIDENCE GRAPH.
+   The current 662-record POC graph links molecular evidence and bounded claims.
+   Field pairing and calibration are future steps, shown as unfilled slots.
+   The background particles are decorative; the chain follows the graph schema. */
 (function () {
   window.EBScenes = window.EBScenes || {};
   window.EBScenes.platform = function (p, ctx) {
@@ -46,6 +44,11 @@
       const tm = ctx.reduced ? 0 : p.frameCount * 0.02;
 
       drawPlatform(w, h, subA, appA);
+      if (w < 720) {
+        drawMobileBoundary(w, h, D.window01(t, 0.30, 0.65));
+        D.vignette(p, w, h, EB.color.bgBase, 0.45);
+        return;
+      }
       drawReadouts(w, h, appA);
 
       // background evidence graph (fades in with chain)
@@ -121,11 +124,13 @@
     }
 
     function drawPlatform(w, h, subA, appA) {
-      // application slots (top): MethaNet lit + honest empty future slots
-      const slotW = Math.min(w * 0.16, 168), gap = 16, n = 3;
+      // current atlas and two uncompleted validation steps
+      const narrow = w < 720;
+      const slotW = narrow ? Math.min(w * 0.28, 112) : Math.min(w * 0.16, 168);
+      const gap = narrow ? 7 : 16, n = 3;
       const totalW = n * slotW + (n - 1) * gap;
-      const sx = (w - totalW) / 2, sy = h * 0.13, sh = 40;
-      D.label(p, "APPLICATIONS", w / 2, sy - 10, D.rgba(EB.color.textMuted, appA), 10, [p.CENTER, p.BOTTOM]);
+      const sx = (w - totalW) / 2, sy = h * (narrow ? 0.12 : 0.13), sh = narrow ? 36 : 40;
+      D.label(p, "EVIDENCE WORKFLOW", w / 2, sy - 10, D.rgba(EB.color.textMuted, appA), 10, [p.CENTER, p.BOTTOM]);
       for (let i = 0; i < n; i++) {
         const x = sx + i * (slotW + gap);
         p.push(); p.rectMode(p.CORNER);
@@ -134,30 +139,30 @@
           g.addColorStop(0, EB.color.methaneA); g.addColorStop(1, EB.color.methaneB);
           p.drawingContext.fillStyle = g; p.drawingContext.globalAlpha = appA;
           p.noStroke(); p.rect(x, sy, slotW, sh, 4); p.drawingContext.globalAlpha = 1;
-          p.fill(D.rgba("#0A0F12", appA)); p.textAlign(p.CENTER, p.CENTER); p.textFont("Bricolage Grotesque"); p.textStyle(p.BOLD); p.textSize(13);
-          p.text("MethaNet", x + slotW / 2, sy + sh / 2); p.textStyle(p.NORMAL);
-          D.label(p, "methane · live", x + slotW / 2, sy + sh + 12, D.rgba(EB.color.methaneA, appA), 8.5, [p.CENTER, p.CENTER]);
+          p.fill(D.rgba("#0A0F12", appA)); p.textAlign(p.CENTER, p.CENTER); p.textFont("Bricolage Grotesque"); p.textStyle(p.BOLD); p.textSize(narrow ? 10 : 13);
+          p.text("Molecular atlas", x + slotW / 2, sy + sh / 2); p.textStyle(p.NORMAL);
+          D.label(p, "screening · current", x + slotW / 2, sy + sh + 12, D.rgba(EB.color.methaneA, appA), narrow ? 7 : 8.5, [p.CENTER, p.CENTER]);
         } else if (i === 1) {
-          // N2O: the second lens from the prior scene, an honest candidate slot (not a live product)
+          // exact field linkage is a validation task, not a current product
           p.noFill(); p.drawingContext.setLineDash([4, 3]);
           p.stroke(D.rgba("#7C8CC4", 0.6 * appA)); p.strokeWeight(1.1); p.rect(x, sy, slotW, sh, 4);
           p.drawingContext.setLineDash([]);
-          p.noStroke(); p.fill(D.rgba("#A9B6D8", 0.9 * appA)); p.textAlign(p.CENTER, p.CENTER); p.textFont("Bricolage Grotesque"); p.textStyle(p.BOLD); p.textSize(12);
-          p.text("N₂O", x + slotW / 2, sy + sh / 2); p.textStyle(p.NORMAL);
-          D.label(p, "candidate · uncalibrated", x + slotW / 2, sy + sh + 12, D.rgba("#7C8CC4", 0.7 * appA), 8.5, [p.CENTER, p.CENTER]);
+          p.noStroke(); p.fill(D.rgba("#A9B6D8", 0.9 * appA)); p.textAlign(p.CENTER, p.CENTER); p.textFont("Bricolage Grotesque"); p.textStyle(p.BOLD); p.textSize(narrow ? 10 : 12);
+          p.text("Field pairing", x + slotW / 2, sy + sh / 2); p.textStyle(p.NORMAL);
+          D.label(p, "joins · pending", x + slotW / 2, sy + sh + 12, D.rgba("#7C8CC4", 0.7 * appA), narrow ? 7 : 8.5, [p.CENTER, p.CENTER]);
         } else {
           p.noFill(); p.drawingContext.setLineDash([4, 4]);
           p.stroke(D.rgba(EB.color.textMuted, 0.4 * appA)); p.strokeWeight(1); p.rect(x, sy, slotW, sh, 4);
           p.drawingContext.setLineDash([]);
-          p.noStroke(); p.fill(D.rgba(EB.color.textMuted, 0.5 * appA)); p.textAlign(p.CENTER, p.CENTER); p.textFont("IBM Plex Mono"); p.textSize(16);
-          p.text("+", x + slotW / 2, sy + sh / 2);
-          D.label(p, "future", x + slotW / 2, sy + sh + 12, D.rgba(EB.color.textMuted, 0.5 * appA), 8.5, [p.CENTER, p.CENTER]);
+          p.noStroke(); p.fill(D.rgba(EB.color.textMuted, 0.5 * appA)); p.textAlign(p.CENTER, p.CENTER); p.textFont("IBM Plex Mono"); p.textSize(narrow ? 10 : 16);
+          p.text("Calibration", x + slotW / 2, sy + sh / 2);
+          D.label(p, "field · pending", x + slotW / 2, sy + sh + 12, D.rgba(EB.color.textMuted, 0.5 * appA), narrow ? 7 : 8.5, [p.CENTER, p.CENTER]);
         }
         p.pop();
       }
       // substrate: three pillars under the apps
       const subY = sy + sh + 30, subH = 26;
-      const cells = ["EMBEDDINGS", "ATTESTATION GRAPH", "AGENTIC PIPELINE"];
+      const cells = ["PROTEOMES", "FUNCTION", "PROVENANCE"];
       const subX = (w - totalW) / 2, subW = totalW;
       p.push();
       p.fill(D.rgba(EB.color.bgElevated, 0.8 * subA)); p.stroke(D.rgba(EB.color.emergence, 0.5 * subA)); p.strokeWeight(1);
@@ -169,19 +174,34 @@
         p.fill(D.rgba(EB.color.emergence, 0.95 * subA)); p.textAlign(p.CENTER, p.CENTER); p.textFont("IBM Plex Mono"); p.textSize(8.6);
         p.text(cells[i], cx, subY + subH / 2);
       }
-      D.label(p, "EmergentBiome substrate · every gas inherits the same evidence trail", w / 2, subY + subH + 14, D.rgba(EB.color.emergence, 0.8 * subA), 9.5, [p.CENTER, p.CENTER]);
-      // connector from MethaNet down to substrate
+      D.label(p, narrow ? "evidence graph · bounded claims" : "EmergentBiome evidence graph · bounded molecular claims", w / 2, subY + subH + 14, D.rgba(EB.color.emergence, 0.8 * subA), narrow ? 8 : 9.5, [p.CENTER, p.CENTER]);
+      // connector from current screening to its evidence substrate
       p.stroke(D.rgba(EB.color.methaneA, 0.4 * subA)); p.strokeWeight(1);
       p.line(sx + slotW / 2, sy + sh + 18, sx + slotW / 2, subY);
       p.pop();
     }
 
+    function drawMobileBoundary(w, h, a) {
+      if (a <= 0) return;
+      const x = 18, y = h * 0.29, width = w - 36;
+      p.push();
+      p.fill(D.rgba(EB.color.bgPanel, 0.9 * a));
+      p.stroke(D.rgba(EB.color.attested, 0.45 * a));
+      p.strokeWeight(1);
+      p.rect(x, y, width, 73, 4);
+      p.noStroke();
+      D.label(p, "CURRENT EVIDENCE", x + 14, y + 20, D.rgba(EB.color.attested, a), 9);
+      D.label(p, "662 queryable POC records", x + 14, y + 38, D.rgba(EB.color.textPrimary, a), 10);
+      D.label(p, "Exact field joins remain pending", x + 14, y + 56, D.rgba(EB.color.textMuted, a), 9);
+      p.pop();
+    }
+
     function drawReadouts(w, h, a) {
       const items = [
+        [D.fmt(N.magNodes), "POC graph records"],
         [D.fmt(N.evidenceAtoms), "evidence atoms"],
         [D.fmt(N.nearEsm2Edges), "embedding-neighbor links"],
-        [N.claimNodes, "claims"],
-        [N.validationGapNodes, "validation gaps"],
+        [N.validationGapNodes, "recorded validation gaps"],
       ];
       const x = w - 18; let y = h * 0.40;
       p.push(); p.textAlign(p.RIGHT, p.CENTER);

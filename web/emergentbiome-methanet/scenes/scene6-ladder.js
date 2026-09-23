@@ -24,6 +24,12 @@
       D.instrumentGrid(p, w, h, EB.color.hairline, 0.2, 110);
       const tm = ctx.reduced ? 0 : p.frameCount * 0.02;
 
+      if (w < 720) {
+        drawMobileLadder(w, h, tm);
+        D.vignette(p, w, h, EB.color.bgBase, 0.5);
+        return;
+      }
+
       // heading
       D.label(p, "METHANE EVIDENCE MATURITY", w * 0.08, h * 0.12, EB.color.textMuted, 11);
       p.push(); p.fill(D.rgba(EB.color.textPrimary, 0.9)); p.textFont("IBM Plex Mono"); p.textSize(10);
@@ -31,7 +37,6 @@
       p.pop();
 
       const reveal = D.easeInOut(t);
-      const nShown = ctx.reduced ? rungs.length : D.clamp(reveal * (rungs.length + 0.4)) * rungs.length / rungs.length;
       const shown = ctx.reduced ? rungs.length : Math.ceil(reveal * rungs.length + 0.001);
 
       // connecting climb path (dashed ahead of rung 0)
@@ -85,7 +90,7 @@
       p.noStroke(); p.fill(lit ? D.rgba("#06090D", a) : D.rgba(col, a)); p.textAlign(p.CENTER, p.CENTER); p.textFont("IBM Plex Mono"); p.textSize(8.5);
       p.text(r.rung, r.x, r.y + 0.5);
 
-      // label block (alternate above/below to avoid overlap)
+      // Keep the graphic scannable; the narrative and roadmap carry the details.
       const above = i % 2 === 1;
       const ly = above ? r.y - 26 : r.y + 22;
       p.textAlign(p.LEFT, above ? p.BOTTOM : p.TOP);
@@ -93,18 +98,47 @@
       // state chip
       const chip = lit ? "LIT · NOW" : prog ? "IN PROGRESS" : target ? "TARGET" : "ROADMAP";
       p.fill(D.rgba(col, a)); p.textFont("IBM Plex Mono"); p.textSize(8);
-      p.text(chip, lx, above ? ly - 30 : ly);
-      p.fill(D.rgba(EB.color.textPrimary, a)); p.textFont("Bricolage Grotesque"); p.textStyle(p.BOLD); p.textSize(13);
-      p.text(r.title, lx, above ? ly - 16 : ly + 12); p.textStyle(p.NORMAL);
-      p.fill(D.rgba(EB.color.textMuted, 0.9 * a)); p.textFont("IBM Plex Mono"); p.textSize(8.6); p.textAlign(p.LEFT, p.TOP);
-      wrapTextLeft(r.unlock, lx, above ? ly - 2 : ly + 28, Math.min(ctx.W * 0.27, 280), 11);
+      p.text(chip, lx, above ? ly - 13 : ly);
+      const shortTitles = ["Molecular attestation", "Sample identity", "Abundance", "Environment", "Flux validation", "Calibrated risk"];
+      p.fill(D.rgba(EB.color.textPrimary, a)); p.textFont("Bricolage Grotesque"); p.textStyle(p.BOLD); p.textSize(12);
+      p.text(shortTitles[i], lx, above ? ly : ly + 14); p.textStyle(p.NORMAL);
       p.pop();
     }
 
-    function wrapTextLeft(txt, x, y, maxw, lh) {
-      const words = txt.split(" "); let line = "", yy = y;
-      for (const wd of words) { const test = line + wd + " "; if (p.textWidth(test) > maxw && line) { p.text(line.trim(), x, yy); line = wd + " "; yy += lh; } else line = test; }
-      if (line) p.text(line.trim(), x, yy);
+    function drawMobileLadder(w, h, tm) {
+      const left = 20, right = w - 20;
+      p.push();
+      p.noStroke(); p.textAlign(p.LEFT, p.TOP);
+      p.fill(EB.color.textMuted); p.textFont("IBM Plex Mono"); p.textSize(10);
+      p.text("VALIDATION PATH  /  0–5", left, 91);
+
+      p.fill(D.rgba(EB.color.emergence, 0.08));
+      p.stroke(D.rgba(EB.color.emergence, 0.55)); p.strokeWeight(1);
+      p.rect(left, 119, right - left, 67, 5);
+      p.noStroke(); p.fill(EB.color.emergence); p.textSize(9);
+      p.text("00  AVAILABLE NOW", left + 14, 132);
+      p.fill(EB.color.textPrimary); p.textFont("Bricolage Grotesque"); p.textStyle(p.BOLD); p.textSize(17);
+      p.text("Molecular screening", left + 14, 149);
+      p.textStyle(p.NORMAL);
+
+      const labels = ["SAMPLE", "ABUND.", "SITE", "FLUX", "RISK"];
+      const x0 = left + 21, x1 = right - 21, y = 224;
+      p.stroke(D.rgba(EB.color.textMuted, 0.42)); p.strokeWeight(1);
+      p.drawingContext.setLineDash([4, 5]); p.line(x0, y, x1, y); p.drawingContext.setLineDash([]);
+      for (let i = 0; i < 5; i++) {
+        const x = D.lerp(x0, x1, i / 4);
+        const col = i === 0 ? EB.color.emergence : i === 4 ? EB.color.methaneA : EB.color.textMuted;
+        p.fill(EB.color.bgBase); p.stroke(D.rgba(col, i === 0 ? 0.95 : 0.66)); p.strokeWeight(1.2);
+        p.circle(x, y, i === 4 ? 19 : 16);
+        p.noStroke(); p.fill(col); p.textFont("IBM Plex Mono"); p.textSize(8); p.textAlign(p.CENTER, p.CENTER);
+        p.text(String(i + 1), x, y + 0.5);
+        p.fill(D.rgba(col, 0.9)); p.textSize(7.4); p.textAlign(p.CENTER, p.TOP);
+        p.text(labels[i], x, y + 15);
+      }
+      p.fill(EB.color.textMuted); p.textFont("IBM Plex Mono"); p.textSize(8.5); p.textAlign(p.LEFT, p.TOP);
+      p.text("PAIRED EVIDENCE NEEDED", left, 276);
+      p.textAlign(p.RIGHT, p.TOP); p.text("TARGET · NOT CALIBRATED", right, 276);
+      p.pop();
     }
   };
 })();

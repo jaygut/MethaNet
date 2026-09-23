@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =====================================================================
 # publish_site.sh assembles the public GitHub Pages site for
-# EmergentBiome / MethaNet, and (optionally) deploy it to the gh-pages branch.
+# EmergentBiome Molecular Atlas, and (optionally) deploy it to gh-pages.
 #
 #   site root  = the scrollytelling landing (this folder)
 #   /report/   = the full molecular-attestation report, self-contained for
@@ -19,7 +19,7 @@ set -euo pipefail
 CMD="${1:-build}"
 HERE="$(cd "$(dirname "$0")/.." && pwd)"          # web/emergentbiome-methanet
 REPO="$(cd "$HERE/../.." && pwd)"                  # repo root
-DEFAULT_REPORT="$REPO/results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end"
+DEFAULT_REPORT="$REPO/results/reports/emergentbiome_molecular_atlas_20260923_reconciled"
 REPORT="${2:-$DEFAULT_REPORT}"
 [[ "$REPORT" == --* ]] && REPORT="$DEFAULT_REPORT"   # allow `deploy --push`
 OUT="$HERE/_site"
@@ -28,7 +28,11 @@ build() {
   echo "→ assembling site from:"
   echo "    landing : $HERE"
   echo "    report  : $REPORT"
-  [[ -f "$REPORT/report.html" ]] || { echo "ERROR: report.html not found in $REPORT"; exit 1; }
+  [[ -f "$REPORT/report.html" ]] || {
+    echo "ERROR: report.html not found in $REPORT"
+    echo "Regenerate the reconciled report with scripts/reports/build_mbag_nextgen_molecular_niche_atlas.py before building the site."
+    exit 1
+  }
   rm -rf "$OUT"; mkdir -p "$OUT"
 
   # --- landing → site root (only the runtime files; not dev docs/tools) ---
@@ -67,7 +71,15 @@ deploy() {
   if [[ -n "$(git -C "$WT" status --porcelain)" ]]; then
     echo "ERROR: gh-pages worktree $WT has uncommitted changes; aborting (commit/stash first)."; exit 1
   fi
-  git -C "$WT" fetch origin gh-pages --quiet || true
+  # A stale tracking ref can silently replace newer published work. Require a
+  # successful fetch and refuse unfamiliar root entries before the sweep.
+  git -C "$WT" fetch origin gh-pages --quiet
+  while IFS= read -r entry; do
+    case "$entry" in
+      .nojekyll|CNAME|assets|config.js|data|index.html|lib|main.js|report|scenes|styles.css|vendor|mbag_nextgen_molecular_niche_atlas_*) ;;
+      *) echo "ERROR: unexpected published root entry '$entry'; aborting before replacement."; exit 1 ;;
+    esac
+  done < <(git -C "$WT" ls-tree --name-only origin/gh-pages)
   git -C "$WT" reset --hard origin/gh-pages --quiet   # base on the live site
   # replace landing/report at root but PRESERVE dated report dirs, .git, and any
   # existing CNAME (so a custom domain set via the GitHub UI is never wiped)
@@ -78,7 +90,7 @@ deploy() {
   if git -C "$WT" diff --cached --quiet; then
     echo "✓ gh-pages already up to date (no changes)"
   else
-    git -C "$WT" commit --quiet -m "Publish EmergentBiome/MethaNet landing + render-complete /report/ ($(basename "$REPORT"))"
+    git -C "$WT" commit --quiet -m "Publish EmergentBiome Molecular Atlas landing + report ($(basename "$REPORT"))"
     echo "✓ committed to gh-pages worktree at $WT"
     if [[ "${1:-}" == "--push" || "${2:-}" == "--push" || "${3:-}" == "--push" ]]; then
       git -C "$WT" push origin gh-pages && echo "✓ pushed origin gh-pages"

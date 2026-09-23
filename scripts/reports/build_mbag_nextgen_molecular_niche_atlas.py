@@ -58,9 +58,9 @@ DEFAULT_SAMPLE_RISK_ABSTRACT = Path(
     "methanet_mag_to_sample_risk_readiness_graphical_abstract.png"
 )
 CLAIM_BOUNDARY = (
-    "Current authorization covers MAG/proteome molecular screening, bridge-candidate review, "
-    "and monitoring-readiness design. Calibrated sample-risk and crediting applications follow "
-    "paired abundance, environmental, and field-validation evidence."
+    "Current evidence supports MAG/proteome molecular screening, bridge-candidate review, "
+    "and monitoring-readiness design. Calibrated sample risk and crediting applications require "
+    "sample linkage, abundance, environmental context, uncertainty, and field validation."
 )
 
 COLORS = {
@@ -1869,7 +1869,7 @@ def build_external_source_readiness(atlas: pd.DataFrame) -> list[dict[str, Any]]
                         "candidate review under its source-scaffold mechanism contract"
                     ),
                     "blocking_gap": (
-                        "Canonical MethaNet curated mechanism annotations and "
+                        "A harmonized, curated mechanism feature contract and "
                         "an authoritative sample/date/depth/environment/flux "
                         "crosswalk. Exact ecological validation joins are 0/133, "
                         "and expression normalization units remain unresolved"
@@ -2555,6 +2555,51 @@ def category_pair_counts(
         )
         counts["↔".join(categories)] += 1
     return dict(counts)
+
+
+def build_nearest_core_context_audit(
+    atlas: pd.DataFrame,
+    emb_meta: pd.DataFrame,
+    cards: pd.DataFrame,
+) -> dict[str, Any]:
+    """Count one-way raw-cosine nearest-core links at MAG/proteome grain.
+
+    These links answer a different question from reciprocal top-k neighbors in
+    the full atlas. The POC core is the reference set, not an independent
+    validation cohort, and a nearest match is not functional transfer.
+    """
+    core = atlas.loc[
+        atlas["atlas_inclusion_status"].eq("poc_core_complete"),
+        ["proteome_id", "source_category"],
+    ].copy()
+    if core["proteome_id"].duplicated().any():
+        raise ValueError("POC reference core contains duplicate proteome_id values")
+    core_category = core.set_index("proteome_id")["source_category"].to_dict()
+
+    neighbors = emb_meta["nearest_poc_id"].map(core_category)
+    if neighbors.isna().any():
+        raise ValueError("Nearest POC reference is missing from the POC core")
+    targets = cards[cards["source_category"].isin(["wetland", "mangrove"])]
+    candidate_neighbors = targets["nearest_poc_id"].map(core_category)
+    if candidate_neighbors.isna().any():
+        raise ValueError("A target candidate lacks a POC core reference")
+
+    return {
+        "unit_grain": "MAG/proteome embedding record",
+        "metric": "raw ESM-2 cosine similarity",
+        "comparison": "single nearest member of the POC reference core",
+        "reference_core_units": int(len(core)),
+        "reference_core_rumen_units": int(core["source_category"].eq("rumen").sum()),
+        "reference_core_wetland_units": int(core["source_category"].eq("wetland").sum()),
+        "wetland_embedding_units": int(emb_meta["source_category"].eq("wetland").sum()),
+        "wetland_nearest_rumen_units": int((emb_meta["source_category"].eq("wetland") & neighbors.eq("rumen")).sum()),
+        "mangrove_embedding_units": int(emb_meta["source_category"].eq("mangrove").sum()),
+        "mangrove_nearest_rumen_units": int((emb_meta["source_category"].eq("mangrove") & neighbors.eq("rumen")).sum()),
+        "target_candidate_cards": int(len(targets)),
+        "target_candidate_nearest_rumen_cards": int(candidate_neighbors.eq("rumen").sum()),
+        "source_tables": ["tables/embedding_context_table.tsv", "tables/candidate_cards.tsv"],
+        "interpretation": "One-way nearest-reference links nominate records for review; they do not establish reciprocal neighborhoods, source-independent transfer, pathway activity, or methane flux.",
+    }
 
 
 def build_embedding_geometry_audit(
@@ -3828,7 +3873,7 @@ def plot_matrix(payload: dict[str, Any], path: Path) -> Path:
     im = ax.imshow(mat.values, aspect="auto", vmin=0, vmax=1, cmap="YlGnBu")
     ax.set_xticks(np.arange(len(mat.columns)), metric_labels, fontsize=9)
     ax.set_yticks(np.arange(len(mat.index)), mat.index, fontsize=7.5)
-    ax.set_title("MBAG candidate evidence matrix", loc="left", fontsize=13, weight="bold")
+    ax.set_title("EmergentBiome candidate evidence matrix", loc="left", fontsize=13, weight="bold")
     ax.tick_params(axis="x", length=0)
     ax.tick_params(axis="y", length=0)
     ax.set_xticks(np.arange(-0.5, len(mat.columns), 1), minor=True)
@@ -3915,6 +3960,7 @@ def render_html(
     audit = payload.get("scientific_audit", {})
     evidence_contract = audit.get("evidence_contract", [])
     geometry = audit.get("embedding_geometry", {})
+    nearest_core = audit.get("nearest_core_context", {})
     taxonomy_audit = audit.get("taxonomy", {})
     functional_audit = audit.get("functional_metric_provenance", {})
     mucc_audit = audit.get("mucc_validation_readiness", {})
@@ -4095,7 +4141,7 @@ def render_html(
     }
     function requireAtlas(){
       if(!window.d3){ throw new Error('D3 runtime is unavailable.'); }
-      if(!ATLAS || !ATLAS.niche || !ATLAS.summary){ throw new Error('MethaNet atlas payload is unavailable.'); }
+      if(!ATLAS || !ATLAS.niche || !ATLAS.summary){ throw new Error('EmergentBiome atlas payload is unavailable.'); }
     }
     function panelWidth(el, minWidth=760){ return Math.max(minWidth, (el.node() && el.node().clientWidth) || minWidth); }
     function tooltip(){ return d3.select('body').append('div').attr('class','tooltip'); }
@@ -4175,7 +4221,7 @@ def render_html(
     function renderKnowledgeGraph(){
       const el=d3.select('#mbag-knowledge-graph'); el.selectAll('*').remove();
       const summary=ATLAS.summary || {}, audit=ATLAS.scientific_audit || {}, mucc=audit.mucc_validation_readiness || {};
-      const w=panelWidth(el,1120), h=650, margin=44, svg=el.append('svg').attr('width','100%').attr('height',h).attr('viewBox',[0,0,w,h]).attr('preserveAspectRatio','xMidYMid meet').attr('role','img').attr('aria-label','MBAG evidence architecture from molecular units through validation gates');
+      const w=panelWidth(el,1120), h=650, margin=44, svg=el.append('svg').attr('width','100%').attr('height',h).attr('viewBox',[0,0,w,h]).attr('preserveAspectRatio','xMidYMid meet').attr('role','img').attr('aria-label','EmergentBiome evidence architecture from molecular units through validation gates');
       const leftW=270, rightW=310, coreW=310, gateW=Math.max(250, Math.min(300, (w-margin*2-64)/3));
       const gateGap=Math.max(32, Math.min(220, (w-margin*2-gateW*3)/2));
       const gateX=(w-gateW*3-gateGap*2)/2;
@@ -4370,7 +4416,7 @@ def render_html(
         .attr('text-anchor',d=>{const a=angle(d.id)+angle.bandwidth()/2-Math.PI/2; const c=Math.cos(a); return Math.abs(c)<.18?'middle':c>0?'start':'end';})
         .text(d=>d.short);
       g.append('circle').attr('r',inner-22).attr('fill','#f8fafc').attr('stroke','#dbe5ee');
-      g.append('text').attr('text-anchor','middle').attr('y',-8).attr('font-weight',800).attr('font-size',16).text('MBAG');
+      g.append('text').attr('text-anchor','middle').attr('y',-8).attr('font-weight',800).attr('font-size',13).text('Evidence graph');
       g.append('text').attr('text-anchor','middle').attr('y',14).attr('font-size',11).attr('fill','#64748b').text('evidence coverage');
     }
     function startReport(){
@@ -4392,16 +4438,16 @@ def render_html(
         infographic_block = f"""
         <section class="section">
           <h2>The Operating Model Behind The Atlas</h2>
-          <img class="infographic" src="{infographic_uri}" alt="MethaNet agent-assisted molecular intelligence workflow infographic">
-          <p class="legend-note">The infographic summarizes the operating flywheel from concept framing through compute-agnostic environment setup, reference database assembly, MAG and proteome processing, multiview feature generation, report-ready interpretation, and future API or MCP delivery. This repeatable operating system supports the biological evidence recorded in MBAG.</p>
+          <img class="infographic" src="{infographic_uri}" alt="Molecular intelligence research workflow infographic">
+          <p class="legend-note">The infographic summarizes the research workflow from environment setup and reference database assembly through MAG and proteome processing, multiview feature generation, and report-ready interpretation. It illustrates how evidence enters the EmergentBiome atlas.</p>
         </section>
         """
 
     sample_risk_abstract_block = ""
     if sample_risk_abstract_uri:
         sample_risk_abstract_block = f"""
-        <img class="sample-risk-abstract" src="{sample_risk_abstract_uri}" alt="Graphical abstract showing MethaNet MAG and proteome molecular fingerprints flowing through sample linkage, abundance weighting, environmental covariates, uncertainty, and validation gates into sample-risk readiness labels.">
-        <p class="figure-caption">Graphical abstract. MethaNet's current evidence layer operates at MAG and proteome grain. ESM-2 and gLM2 context, methane, sulfur, and substrate annotations, QC, taxonomy, and provenance define molecular fingerprints for bridge-candidate review. The next product layer links those fingerprints to physical samples or metagenomes, weights them by MAG or read abundance and unbinned marker evidence, adds environmental permissiveness covariates, uncertainty, and flux or process validation status, then emits readiness labels such as blocked, needs metadata, needs abundance, needs environment, needs flux validation, monitor more, or scoreable provisional. Calibrated MRV outputs enter after the relevant validation gates pass.</p>
+        <img class="sample-risk-abstract" src="{sample_risk_abstract_uri}" alt="Graphical abstract showing MAG and proteome molecular fingerprints flowing through sample linkage, abundance weighting, environmental covariates, uncertainty, and validation gates into sample-risk readiness labels.">
+        <p class="figure-caption">Graphical abstract. The current evidence layer operates at MAG and proteome grain. ESM-2 and gLM2 context, methane, sulfur, and substrate annotations, QC, taxonomy, and provenance define molecular fingerprints for candidate review. A future sample layer would link those fingerprints to physical samples or metagenomes, weight them by MAG or read abundance and unbinned marker evidence, and add environmental covariates, uncertainty, and flux or process validation status. Calibrated MRV outputs require the relevant validation gates to pass.</p>
         """
 
     return f"""<!doctype html>
@@ -4410,22 +4456,23 @@ def render_html(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <title>MethaNet Molecular Attestation Graph</title>
+  <title>EmergentBiome Molecular Atlas | Technical evidence report</title>
   <style>{css}</style>
 </head>
 <body>
 <header>
-  <div class="eyebrow">MethaNet Molecular Attestation Graph · Evidence-led Climate Intelligence</div>
-  <h1>A molecular evidence graph for methane-smart blue-carbon monitoring</h1>
-  <p class="subtitle">MethaNet links ESM-2 geometry, gLM2 genomic context, functional machinery, expression, QC, taxonomy, provenance, and validation readiness into an auditable decision system.</p>
+  <div class="eyebrow">EmergentBiome · Molecular evidence for blue-carbon research</div>
+  <h1>EmergentBiome Molecular Atlas</h1>
+  <p class="subtitle">Molecular evidence for methane-pathway screening and field measurement priorities in blue-carbon systems.</p>
   <div class="claim">{html.escape(CLAIM_BOUNDARY)}</div>
 </header>
 <main>
   <section class="section">
     <h2>Executive Summary</h2>
-    <p><b>MethaNet is building the molecular-attestation knowledge graph for climate-sensitive blue-carbon monitoring.</b> The current warehouse contains {summary['atlas_registered_units']:,} registered MAG/proteome units, {summary['embedding_context_total']:,} ESM-2 embeddings, {summary['external_glm2'] + summary['poc_core_total']:,} gLM2 payloads, and {release_multiview:,} data-complete tri-views. MBAG makes each relationship reviewable by carrying its evidence type, provenance, comparability state, and next validation action alongside the molecular unit.</p>
+    <p><b>EmergentBiome organizes molecular evidence to guide blue-carbon methane research.</b> The current warehouse contains {summary['atlas_registered_units']:,} registered MAG/proteome units, {summary['embedding_context_total']:,} ESM-2 embeddings, {summary['external_glm2'] + summary['poc_core_total']:,} gLM2 payloads, and {release_multiview:,} data-complete tri-views. The atlas records evidence type, provenance, comparability state, and next validation action alongside each molecular unit.</p>
+    <p>The queryable persistent evidence graph remains the earlier 662-proteome proof of concept. This expanded atlas is a release-specific evidence view; its {summary['embedding_context_total']:,} embedding-bearing records are not a persistent graph of that size.</p>
     <p>The tri-view contract gives the release a durable scientific structure. {summary['pipeline_normalized_tri_view_units']:,} tri-views use the guarded functional pipeline with accepted KOfam and best-ranked MCycDB/SCycDB event semantics. {summary['source_scaffold_tri_view']:,} MUCC v1 wetland tri-views use a distinct source-annotation scaffold with processed expression detection. Cross-lane mechanism-comparable units remain {summary['mechanism_comparable_tri_view']:,} until version, database, source-aware null, taxonomy, and stability gates pass.</p>
-    <p>That structure creates a compelling climate-tech product. A partner can inspect a candidate or a monitoring context, see direct molecular evidence separately from representation context, identify the claim currently supported, and receive the next highest-value measurement. The result is an evidence card and validation plan that supports molecular diligence, sampling design, and study prioritization today while building the paired evidence required for future calibrated methane-risk intelligence.</p>
+    <p>That structure supports a practical research workflow. A collaborator can inspect a candidate or a monitoring context, see direct molecular evidence separately from representation context, identify the claim currently supported, and choose the next measurement. The result is an evidence card and validation plan for molecular diligence, sampling design, and study prioritization while paired evidence accumulates for future calibrated methane-risk intelligence.</p>
     <div class="metric-grid">{metric_cards}</div>
   </section>
   <section class="section">
@@ -4435,11 +4482,11 @@ def render_html(
     <p class="note">Release state: <b>{html.escape(str(summary['release_state']))}</b>. Indexing decision: <b>{html.escape(str(summary['indexing_decision']))}</b>. The controlled-diligence report remains noindex.</p>
   </section>
   <section class="section">
-    <h2>MBAG As A Molecular Attestation Knowledge Graph</h2>
-    <p>MBAG is the connective tissue of MethaNet. It links each MAG or proteome to molecular representations, direct functional observations, genomic-context evidence, QC and provenance guardrails, sample-linkage readiness, and field-validation requirements. Relationships preserve their evidence class. The graph therefore supports transparent synthesis without converting proximity or annotation availability into a biological conclusion.</p>
-    <p>The graph produces five operational outputs. It supports candidate review, measurement design, project-data diligence, validation-portfolio selection, and the evidence ledger required for future MRV deployment. The first four are available as molecular intelligence capabilities. Calibrated sample-level methane-risk estimates follow after abundance, environmental covariates, uncertainty, and field or process validation enter the same graph.</p>
+    <h2>The EmergentBiome Evidence Graph</h2>
+    <p>The EmergentBiome evidence graph is the organizing model for MAG and proteome representations, direct functional observations, genomic-context evidence, QC and provenance guardrails, sample-linkage readiness, and field-validation requirements. Relationships preserve their evidence class. The diagram below expresses that model; the persistent queryable implementation currently covers the 662-proteome proof of concept.</p>
+    <p>The evidence model supports candidate review, measurement design, project-data diligence, and validation-study selection. The 662-proteome proof of concept demonstrates queryable evidence paths, while the expanded atlas provides broader release-specific views. A calibrated sample-level methane-risk model requires sample linkage, abundance, environmental covariates, uncertainty, and field or process validation.</p>
     <div id="mbag-knowledge-graph" class="viz graph"></div>
-    <p class="figure-caption">MBAG evidence architecture. Solid relationships join present molecular evidence and reliability guardrails to a MAG or proteome record. Dashed amber relationships identify the validation pathway from exact sample linkage to abundance and environmental context, then to field or process evidence. The visual expresses an evidence model and a decision workflow. Causal assertions require direct mechanism and field-validation evidence.</p>
+    <p class="figure-caption">EmergentBiome evidence architecture. Solid relationships join present molecular evidence and reliability guardrails to a MAG or proteome record. Dashed amber relationships identify the validation pathway from exact sample linkage to abundance and environmental context, then to field or process evidence. The visual expresses an evidence model and a decision workflow. Causal assertions require direct mechanism and field-validation evidence.</p>
     <div class="decision-grid">
       <div class="decision-card"><b>Molecular diligence</b><span>Review candidate evidence with its source, QC state, functional contract, and claim boundary.</span></div>
       <div class="decision-card"><b>Monitoring design</b><span>Identify whether sample identity, abundance, environmental metadata, or field evidence will most improve a decision.</span></div>
@@ -4449,7 +4496,7 @@ def render_html(
   </section>
   <section class="section">
     <h2>Evidence Integrity And Current Scope</h2>
-    <p>The table records the consequential findings from reconciling the current warehouse against the prior V9 ledger, per-MAG outputs, embedding protocols, taxonomy fields, MUCC expression tables, and staged ecological evidence. This reconciliation establishes the evidence states that MBAG carries forward. It protects partner decisions from numerical comparisons across unlike feature contracts.</p>
+    <p>The table records the consequential findings from reconciling the current warehouse against the prior V9 ledger, per-MAG outputs, embedding protocols, taxonomy fields, MUCC expression tables, and staged ecological evidence. This reconciliation establishes the evidence states that the atlas carries forward. It protects partner decisions from numerical comparisons across unlike feature contracts.</p>
     <table class="readiness-table">
       <thead><tr><th>Audit class</th><th>Finding</th><th>Observed result</th><th>Report action</th></tr></thead>
       <tbody>{findings_rows_html}</tbody>
@@ -4460,7 +4507,7 @@ def render_html(
   {infographic_block}
   <section class="section">
     <h2>The Tri-View Evidence Contract</h2>
-    <p>A formal tri-view row carries ESM-2, gLM2, and a functional payload. Its evidence state records whether those payloads support a common quantitative interpretation. MBAG carries this distinction at row level, in the freeze manifest, in candidate cards, and in release validation gates.</p>
+    <p>A formal tri-view row carries ESM-2, gLM2, and a functional payload. Its evidence state records whether those payloads support a common quantitative interpretation. The atlas carries this distinction at row level, in the freeze manifest, in candidate cards, and in release validation gates.</p>
     <table class="readiness-table">
       <thead><tr><th>Lane</th><th>Registered</th><th>ESM-2</th><th>gLM2</th><th>Functional payload</th><th>Data-complete tri-view</th><th>Mechanism-comparable tri-view</th><th>Functional contract</th></tr></thead>
       <tbody>{evidence_rows_html}</tbody>
@@ -4471,7 +4518,7 @@ def render_html(
   </section>
   <section class="section">
     <h2>Source Provenance And Environmental Readiness</h2>
-    <p>Environmental metadata gives MBAG a provenance-aware route into sample and site rollups. The report shows where each evidence lane originates, its current resolution, and the next required link. This turns metadata gaps into a practical partner agenda for abundance mapping, environmental context, and field validation.</p>
+    <p>Environmental metadata gives the evidence graph a provenance-aware route into future sample and site rollups. The report shows where each evidence lane originates, its current resolution, and the next required link. This turns metadata gaps into a practical partner agenda for abundance mapping, environmental context, and field validation.</p>
     <table class="readiness-table">
       <thead><tr><th>Evidence lane</th><th>Report units</th><th>Metadata universe</th><th>Primary source</th><th>Resolution now</th><th>Use now</th><th>Blocking gap</th></tr></thead>
       <tbody>{provenance_rows_html}</tbody>
@@ -4480,19 +4527,20 @@ def render_html(
   </section>
   <section class="section">
     <h2>Three Molecular Views In One Evidence Graph</h2>
-    <p>The MethaNet Bridge Attestation Graph organizes molecular similarity into a reviewable evidence trail. A 2D embedding bridge provides discovery context. Functional mechanism claims require convergent evidence from the appropriate view and protocol. Each view therefore carries its own eligible comparison set and validation gaps.</p>
+    <p>The EmergentBiome evidence graph organizes molecular similarity into a reviewable evidence trail. A 2D embedding map provides discovery context. Functional mechanism claims require convergent evidence from the appropriate view and protocol. Each view therefore carries its own eligible comparison set and validation gaps.</p>
     <div class="approach-grid">
-      <div class="approach-card"><b>ESM-2 proteome geometry</b><span>Protein-language embeddings provide a high-dimensional hypothesis engine for MAG and proteome similarity. MBAG uses neighborhoods and graph links as representation context.</span></div>
+      <div class="approach-card"><b>ESM-2 proteome geometry</b><span>Protein-language embeddings provide a high-dimensional hypothesis engine for MAG and proteome similarity. The atlas uses neighborhoods and graph links as representation context.</span></div>
       <div class="approach-card"><b>Functional annotations</b><span>POC, MSM, and Futian expose normalized accepted, present, and best-hit screening events. MUCC contributes a separate source DRAM, gene, and expression scaffold. Cross-contract mechanism ranks remain disabled.</span></div>
-      <div class="approach-card"><b>gLM2 genomic context</b><span>Native and shuffled context is available for 7,717 units. Single-window and 10-window protocols remain separate numerical regimes, so MBAG compares metrics within protocol class.</span></div>
+      <div class="approach-card"><b>gLM2 genomic context</b><span>Native and shuffled context is available for {summary.get('release_glm2_units', summary['external_glm2'] + summary['poc_core_total']):,} units. Single-window and 10-window protocols remain separate numerical regimes, so metrics are compared within protocol class.</span></div>
       <div class="approach-card"><b>QC and provenance guardrails</b><span>CheckM2, GUNC, GTDB-Tk, annotation coverage, source labels, and missingness protect against attractive artifacts. Weak evidence remains visible instead of being silently dropped.</span></div>
     </div>
     <p class="note">The public report exposes evidence availability, protocol class, numerator provenance, and authorized claim wording. A common cross-lane mechanism score becomes eligible after the shared feature contract is rebuilt and validated.</p>
   </section>
   <section class="section">
     <h2>ESM-2 Geometry With Measured Limitations</h2>
-    <p>ESM-2 defines a high-dimensional proteome-neighborhood surface for {safe_int(geometry.get('embedding_units')):,} units. The current raw cosine space is strongly anisotropic. Random-pair cosine has mean {safe_float(geometry.get('random_pair_similarity_mean')):.4f} and median {safe_float(geometry.get('random_pair_similarity_median')):.4f}. Median similarity to the global centroid is {safe_float(geometry.get('similarity_to_global_centroid_median')):.4f}. Raw cross-domain kNN edges therefore occupy a saturated range with median {safe_float(geometry.get('raw_cross_edge_similarity_median')):.6f}. MBAG uses this geometry for neighborhood navigation and carries functional and validation evidence separately.</p>
-    <p>The graph contains a reproducible target-domain pattern. Raw space contains {safe_int(geometry.get('raw_reciprocal_pair_counts', {}).get('mangrove↔wetland')):,} unique reciprocal mangrove↔wetland pairs, {safe_int(geometry.get('raw_reciprocal_pair_counts', {}).get('rumen↔wetland')):,} rumen↔wetland pair, and {safe_int(geometry.get('raw_reciprocal_pair_counts', {}).get('mangrove↔rumen')):,} rumen↔mangrove pairs. Per-dimension z-scoring retains {safe_int(geometry.get('dimension_zscore_reciprocal_pair_counts', {}).get('mangrove↔wetland')):,} mangrove↔wetland reciprocal pairs, while both rumen transfer categories fall to zero. The release therefore supports target-domain neighborhood continuity and routes source-independent transfer questions into the validation agenda.</p>
+    <p>ESM-2 defines a high-dimensional proteome-neighborhood surface for {safe_int(geometry.get('embedding_units')):,} units. The current raw cosine space is strongly anisotropic. Random-pair cosine has mean {safe_float(geometry.get('random_pair_similarity_mean')):.4f} and median {safe_float(geometry.get('random_pair_similarity_median')):.4f}. Median similarity to the global centroid is {safe_float(geometry.get('similarity_to_global_centroid_median')):.4f}. Raw cross-domain kNN edges therefore occupy a saturated range with median {safe_float(geometry.get('raw_cross_edge_similarity_median')):.6f}. The atlas uses this geometry for neighborhood navigation and carries functional and validation evidence separately.</p>
+    <p>The full-atlas top-{safe_int(geometry.get('knn_k'))} neighbor analysis contains a reproducible target-domain pattern. Raw space contains {safe_int(geometry.get('raw_reciprocal_pair_counts', {}).get('mangrove↔wetland')):,} unique reciprocal mangrove↔wetland pairs, {safe_int(geometry.get('raw_reciprocal_pair_counts', {}).get('rumen↔wetland')):,} rumen↔wetland pair, and {safe_int(geometry.get('raw_reciprocal_pair_counts', {}).get('mangrove↔rumen')):,} rumen↔mangrove pairs. After per-dimension standardization, {safe_int(geometry.get('dimension_zscore_reciprocal_pair_counts', {}).get('mangrove↔wetland')):,} mangrove↔wetland reciprocal pairs remain, while both rumen cross-domain categories fall to zero. A reciprocal pair requires each record to appear among the other's top-{safe_int(geometry.get('knn_k'))} neighbors across the full atlas.</p>
+    <p>That zero does not mean nearest-core links are absent. In a separate raw-cosine comparison against the {safe_int(nearest_core.get('reference_core_units')):,}-record POC reference core ({safe_int(nearest_core.get('reference_core_rumen_units')):,} rumen; {safe_int(nearest_core.get('reference_core_wetland_units')):,} wetland), {safe_int(nearest_core.get('wetland_nearest_rumen_units')):,} of {safe_int(nearest_core.get('wetland_embedding_units')):,} wetland and {safe_int(nearest_core.get('mangrove_nearest_rumen_units')):,} of {safe_int(nearest_core.get('mangrove_embedding_units')):,} mangrove MAG/proteome records have a rumen record as their single nearest core neighbor. This includes {safe_int(nearest_core.get('target_candidate_nearest_rumen_cards')):,} of {safe_int(nearest_core.get('target_candidate_cards')):,} selected wetland/mangrove candidate cards. These one-way representation-space links nominate records for review; they do not establish source-independent biological transfer or methane flux. Counts were derived from the release's frozen embedding-context and candidate-card tables, which remain in the internal report bundle.</p>
     <p>Taxonomy explains an important fraction of that continuity. Among reciprocal mangrove↔wetland pairs with usable phylum labels, {100 * safe_float(taxonomy_audit.get('raw_exact_name_share_usable')):.1f}% are exact raw-name matches and {100 * safe_float(taxonomy_audit.get('synonym_normalized_share_usable')):.1f}% match after conservative synonym normalization. Because GTDB release metadata is recorded only for the POC lane, source and taxonomy-release effects are confounded. Harmonized taxonomy and phylogeny-aware source nulls are required before interpreting neighborhood enrichment as functional convergence.</p>
     <p>Diffusion coordinates are the primary navigation view because they are built from the same neighborhood graph used for inspection. UMAP, t-SNE, and PCA remain sensitivity views; no projection is treated as proof.</p>
     <p class="note">Scientific anchors include {citation_html}. Recent dimensionality-reduction benchmarks reinforce this design. Visual methods differ in local and global preservation, so the report exposes the high-dimensional kNN substrate and candidate evidence cards alongside each projection.</p>
@@ -4558,15 +4606,15 @@ def render_html(
       <div class="sample-score-card"><h3>3. Add environmental permissiveness</h3><p>Use measured metadata first, modeled covariates second, and mark every salinity, sulfate, redox, substrate, depth, and vegetation field by evidence tier.</p></div>
       <div class="sample-score-card"><h3>4. Calibrate with field evidence</h3><p>Use flux, porewater, geochemistry, and temporal resampling to learn which molecular signatures predict methane risk under real blue-carbon conditions.</p></div>
     </div>
-    <p>Field work is the learning engine that turns MBAG from a molecular atlas into a progressively stronger risk system. Dense sampling across mangroves, salt marshes, freshwater wetlands, restored sites, degraded sites, salinity gradients, depth profiles, seasons, and management regimes will expand the molecular niche map, reveal source-specific blind spots, and calibrate bridge signatures in blue-carbon settings. Every new sample strengthens the atlas when it arrives with clean provenance, abundance, environmental measurements, and a validation target.</p>
-    <p>The immediate product output is a sample-risk readiness layer. A sample can be labeled scoreable, monitor more, needs metadata, needs abundance, needs environmental covariates, or needs flux validation. This gives partners a concrete sampling and diligence plan while building the evidence base for calibrated methane-risk scoring.</p>
+    <p>Field work is the learning engine that can turn the molecular atlas into a progressively stronger risk system. Dense sampling across mangroves, salt marshes, freshwater wetlands, restored sites, degraded sites, salinity gradients, depth profiles, seasons, and management regimes can expand the molecular niche map, reveal source-specific blind spots, and test candidate signatures in blue-carbon settings. Every new sample strengthens the atlas when it arrives with clean provenance, abundance, environmental measurements, and a validation target.</p>
+    <p>The next operational output is a sample-risk readiness layer. Once samples are mapped, their evidence can be labeled scoreable, monitor more, needs metadata, needs abundance, needs environmental covariates, or needs flux validation. Current atlas records do not yet support calibrated sample-risk scores. Readiness labels would guide sampling and validation plans while the evidence base grows.</p>
   </section>
   <section class="section">
     <h2>Strategic Readout</h2>
-    <p class="closing">The durable achievement is a queryable, provenance-rich warehouse spanning {summary['atlas_registered_units']:,} registered units and multiple evidence lanes. It already supports payload auditing, latent-neighborhood exploration, protocol-aware candidate review, expression-detection queries, metadata-gap prioritization, and validation-study design. MBAG consolidates those capabilities into a coherent climate-tech decision system.</p>
+    <p class="closing">The durable achievement is a queryable, provenance-rich warehouse spanning {summary['atlas_registered_units']:,} registered units and multiple evidence lanes. It already supports payload auditing, latent-neighborhood exploration, protocol-aware candidate review, expression-detection queries, metadata-gap prioritization, and validation-study design. The EmergentBiome Molecular Atlas consolidates those capabilities into a scientific decision aid.</p>
     <p class="closing">The current release carries explicit evidence states. {summary['pipeline_normalized_tri_view_units']:,} tri-views have guarded pipeline-normalized screening events; {summary['source_scaffold_tri_view']:,} use the distinct MUCC source scaffold; {summary['mechanism_comparable_tri_view']:,} currently pass the full cross-lane mechanism-comparability gate. Keeping those rungs separate protects downstream partner decisions from pipeline artifacts.</p>
     <p class="closing">The highest-value next build produces one lane-independent mechanism-feature table, harmonized taxonomy with phylogeny-aware nulls, calibrated gLM2 protocols, exact sample and abundance mappings, and field or process validation with uncertainty. Those gates will enable cross-lane mechanism ranking and calibrated sample-risk modeling on a sound scientific foundation.</p>
-    <div class="warn">Current authorization covers molecular screening, evidence-card review, and monitoring-readiness design. Final A to E risk tiers, measured methane-flux claims, carbon-credit determinations, and source-independent transfer conclusions remain future validation outcomes.</div>
+    <div class="warn">Current evidence supports molecular screening, evidence-card review, and monitoring-readiness design. Final A to E risk tiers, measured methane-flux claims, carbon-credit determinations, and source-independent transfer conclusions require further validation.</div>
   </section>
 </main>
 <script src="{d3_href}"></script>
@@ -4656,7 +4704,7 @@ def write_outputs(
             {
                 "claim": "Expanded atlas supports MAG/proteome molecular screening",
                 "status": "allowed",
-                "allowed_wording": "MethaNet can inspect multiview molecular evidence for completed MAG/proteome units.",
+                "allowed_wording": "EmergentBiome can inspect multiview molecular evidence for completed MAG/proteome units.",
                 "blocking_gap": "none for MAG/proteome screening",
             },
             {
@@ -4763,7 +4811,7 @@ def write_outputs(
     (output_dir / "README.md").write_text(
         textwrap.dedent(
             f"""\
-            # MethaNet Next-Generation Molecular Niche Atlas
+            # EmergentBiome Molecular Atlas
 
             Generated: {summary['generated_at_utc']}
 
@@ -5200,6 +5248,7 @@ def main() -> None:
     geometry_audit = build_embedding_geometry_audit(
         emb_meta, edge_df, embeddings, args.knn
     )
+    nearest_core_audit = build_nearest_core_context_audit(atlas, emb_meta, cards)
     taxonomy_audit = build_taxonomy_bridge_audit(atlas, edge_df)
     functional_metric_audit = build_functional_metric_audit(atlas)
     mucc_validation = build_mucc_validation_readiness(atlas, repo_root)
@@ -5214,6 +5263,7 @@ def main() -> None:
     scientific_audit = {
         "evidence_contract": evidence_contract,
         "embedding_geometry": geometry_audit,
+        "nearest_core_context": nearest_core_audit,
         "taxonomy": taxonomy_audit,
         "functional_metric_provenance": functional_metric_audit,
         "mucc_validation_readiness": mucc_validation,

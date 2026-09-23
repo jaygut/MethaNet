@@ -1,12 +1,7 @@
-/* SCENE - VERSUS THE CHEAP METHOD  ·  why molecular beats the cheap baselines.
-   The thesis, made literal: salinity sets the baseline (methane falls as salinity rises,
-   the first-order control the registries encode), but the microbial community sets the
-   exception. A few sites run high on methane even at high salinity, because methylotrophic
-   methanogens use substrates sulfate-reducers ignore. A salinity number alone misclassifies
-   those; a community readout catches them. Left: what each cheap method can see. Right: the
-   salinity-vs-methane field, with the exceptions the community flags. The molecular signal
-   is real (methanogen marker mcrA tracks measured flux at r > 0.7 in field sediments); the
-   scatter here is an illustrative teaching plot, and the product ranks, it does not report flux. */
+/* SCENE — COMPLEMENTARY EVIDENCE.
+   This schematic makes a field-design point: a salinity proxy and a molecular
+   screen answer different questions. Its scatter and highlighted cases are
+   illustrative, not observations or released methane-risk predictions. */
 (function () {
   window.EBScenes = window.EBScenes || {};
   window.EBScenes.cheap = function (p, ctx) {
@@ -14,10 +9,10 @@
     const M_A = EB.color.methaneA, M_B = EB.color.methaneB, EMG = EB.color.emergence, MUT = EB.color.textMuted;
     let rng, pts = [], exc = [], R = {};
     const METHODS = [
-      { name: "single marker test", sees: "one gene", kind: "dot" },
-      { name: "metabarcoding", sees: "who is present", kind: "names" },
-      { name: "the salinity rule", sees: "a site average", kind: "flat" },
-      { name: "MethaNet", sees: "the whole community, resolved", kind: "guilds", hi: true },
+      { name: "single marker test", sees: "one selected marker", kind: "dot" },
+      { name: "metabarcoding", sees: "taxonomic composition", kind: "names" },
+      { name: "salinity context", sees: "one environmental covariate", kind: "flat" },
+      { name: "EmergentBiome atlas", sees: "pathway hypotheses + provenance", kind: "guilds", hi: true },
     ];
 
     function layout() {
@@ -36,7 +31,7 @@
         const meth = D.clamp(base + rng.gauss(0, 0.08), 0.02, 1);
         pts.push({ sal, meth });
       }
-      // the exceptions: high methane at high salinity (community catches what salinity misses)
+      // synthetic cases used solely to show where paired measurement would help
       exc = [
         { sal: 0.82, meth: 0.72 }, { sal: 0.90, meth: 0.63 }, { sal: 0.74, meth: 0.80 },
       ];
@@ -61,10 +56,10 @@
       drawMethods(w, h, t);
       drawScatter(w, h, axesA, baseA, excA, tm);
 
-      // thesis + the real molecular anchor (desktop; on mobile the copy card + readout carry it)
+      // teaching takeaway; the visible plot is explicitly illustrative
       if (!R.narrow) {
-        D.label(p, "salinity sets the baseline. the community sets the exception.", R.px0, R.py1 + h * 0.075, D.rgba(EB.color.textPrimary, 0.9 * axesA), 10.5);
-        D.label(p, "methanogen marker vs measured flux: r > " + EB.ext.mcraFluxSpearman + " in field sediments", R.px0, R.py1 + h * 0.105, D.rgba(MUT, 0.85 * axesA), 9);
+        D.label(p, "proxy context + molecular evidence guide paired measurements", R.px0, R.py1 + h * 0.075, D.rgba(EB.color.textPrimary, 0.9 * axesA), 10.5);
+        D.label(p, "schematic only · no site flux or risk is inferred", R.px0, R.py1 + h * 0.105, D.rgba(MUT, 0.85 * axesA), 9);
       }
       D.vignette(p, w, h, EB.color.bgBase, 0.5);
     };
@@ -75,9 +70,9 @@
       p.stroke(D.rgba(MUT, 0.5 * axesA)); p.strokeWeight(1);
       p.line(R.px0, R.py0, R.px0, R.py1); p.line(R.px0, R.py1, R.px1, R.py1);
       p.pop();
-      D.label(p, "METHANE RISK", R.px0 - 4, R.py0 - 12, D.rgba(MUT, 0.8 * axesA), 8.5);
+      D.label(p, "ILLUSTRATIVE METHANE RESPONSE", R.px0 - 4, R.py0 - 12, D.rgba(MUT, 0.8 * axesA), 8.5);
       D.label(p, "SALINITY →", R.px1, R.py1 + 14, D.rgba(MUT, 0.8 * axesA), 8.5, [p.RIGHT, p.TOP]);
-      // baseline trend (salinity -> methane), the cheap proxy's whole worldview
+      // stylized baseline trend for the teaching plot
       if (baseA > 0.01) {
         p.push(); p.drawingContext.setLineDash([5, 5]);
         p.stroke(D.rgba(MUT, 0.55 * baseA)); p.strokeWeight(1.4);
@@ -92,7 +87,7 @@
         p.fill(D.rgba(MUT, 0.5 * a)); p.circle(X(q.sal), Y(q.meth), 4.5);
       }
       p.pop();
-      // the exceptions: high methane at high salinity, flagged by the community
+      // stylized cases to nominate for field measurements
       if (excA > 0.01) {
         for (const e of exc) {
           const x = X(e.sal), y = Y(e.meth);
@@ -103,8 +98,8 @@
         }
         // annotations desktop-only (the small mobile plot cannot hold them without overlap)
         if (!R.narrow) {
-          D.label(p, "high methane at high salinity", X(exc[2].sal) - 12, Y(exc[2].meth) - 14, D.rgba(M_A, excA), 9, [p.RIGHT, p.BOTTOM]);
-          D.label(p, "the community flags what salinity misses", X(exc[2].sal) - 12, Y(exc[1].meth) + 20, D.rgba(M_A, 0.9 * excA), 8.5, [p.RIGHT, p.TOP]);
+          D.label(p, "hypothetical high response", X(exc[2].sal) - 12, Y(exc[2].meth) - 14, D.rgba(M_A, excA), 9, [p.RIGHT, p.BOTTOM]);
+          D.label(p, "measure to test the hypothesis", X(exc[2].sal) - 12, Y(exc[1].meth) + 20, D.rgba(M_A, 0.9 * excA), 8.5, [p.RIGHT, p.TOP]);
         }
       }
     }
