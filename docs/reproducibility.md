@@ -2,20 +2,29 @@
 
 This guide contains reproducibility instructions for the implemented
 molecular-atlas workflow and earlier model-development templates. The current
-validated release supports MAG/proteome molecular attestation, evidence-card
+controlled-diligence release supports MAG/proteome molecular attestation, evidence-card
 review, and monitoring-readiness design. Final sample or project methane-risk
 models remain gated by abundance, environmental, uncertainty, and field
 validation evidence.
 
-For the current release contract, read
+For the current release contract and dataset authority chain, read
 [`methanet_positioning_and_claims.md`](methanet_positioning_and_claims.md) and
-[`current_artifact_inventory.md`](current_artifact_inventory.md). The
-scientific-reconciliation report is generated from:
+[`atlas_data_foundation.md`](atlas_data_foundation.md). The August 10 frozen
+release and its September reconciled public report use:
 
 ```text
-results/reports/methanet_3view_payload_freeze_20260724_scientific_reconciliation/
-results/reports/mbag_nextgen_molecular_niche_atlas_20260724_scientific_reconciliation/
+results/reports/methanet_3view_payload_freeze_20260810_end_to_end/
+results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end/
+results/reports/emergentbiome_molecular_atlas_20260923_reconciled/
 ```
+
+The July 24 scientific-reconciliation paths are historical snapshots. The
+reconciled report retains the August molecular denominator; its public
+deployment is a scoped `noindex` correction, not a scientific-publication
+gate pass. Large source and warehouse outputs are ignored by Git, so a clean
+clone requires the registered inputs and hashes before reproducing them. See
+[`current_artifact_inventory.md`](current_artifact_inventory.md) for dated paths
+and [`releases/README.md`](releases/README.md) for release records.
 
 Sections below that describe supervised training, validation, and final model
 export are template workflows until paired target-domain outcomes and the
@@ -48,7 +57,7 @@ roadmap validation gates are available.
 
 | Software | Version | Purpose |
 |----------|---------|---------|
-| Python | 3.9+ | Core runtime |
+| Python | 3.11+ for the committed `uv.lock` | Reproducible local environment |
 | uv | 0.4+ | Package management |
 | Snakemake | 8.0+ | Workflow orchestration |
 | Conda/Mamba | 24.0+ | Environment isolation |

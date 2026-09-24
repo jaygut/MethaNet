@@ -2,11 +2,12 @@
 
 Snapshot date: **2026-08-10**
 
-This digest is the public rendering contract for the August 10 source and
-locally built experience. The dated `release_ledger.json` in
+This digest is the public rendering contract for the August 10 source and the
+live, claim-bounded September correction of the landing/report pair. The dated `release_ledger.json` in
 `results/reports/methanet_3view_payload_freeze_20260810_end_to_end/` is the
 numerical authority. A payload-freeze state of `ready` does not mean the public
-deployment is authorized; publication remains separately gated.
+deployment is authorized; routine scientific publication and indexing remain
+separately gated. The corrected public surfaces retain `noindex`.
 
 <!-- METHANET_RELEASE_LEDGER_BEGIN -->
 ```json
@@ -153,17 +154,19 @@ ungated release. On September 23, 2026, the user requested a scoped correction
 of the already-public domain: replace its stale landing/report pair with this
 reconciled, claim-bounded `noindex` bundle. That direction authorizes the
 correction deployment only; it does not clear the scientific gates, permit
-indexing, or expand the claims above. The local bundle passed 202/202 release
+indexing, or expand the claims above. The current local bundle passes 201/201 release
 parity checks, 19/19 report gates, browser checks, and no-JavaScript,
 reduced-motion, link, Open Graph, and public-tree checks. The QA record is in
-`results/reports/emergentbiome_public_browser_verification_20260923/`.
+`results/reports/emergentbiome_public_browser_verification_20260923_tsne/`.
 
 ## Provenance pointers
 
 - Lane registry: `configs/methanet_atlas_lanes.tsv`
 - Freeze: `results/reports/methanet_3view_payload_freeze_20260810_end_to_end/`
 - Metadata readiness: `results/reports/methanet_atlas_metadata_readiness_20260810/`
-- Report: `results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end/`
+- August source report: `results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end/`
+- Reconciled public report: `results/reports/emergentbiome_molecular_atlas_20260923_reconciled/` and [stable `/report/` alias](https://emergentbiome.earth/report/)
+- Correction deployment receipt: `results/reports/emergentbiome_public_browser_verification_20260923_tsne/deployment_receipt.json`
 - Claim contract: `docs/methanet_positioning_and_claims.md`
 - Release inventory: `docs/current_artifact_inventory.md`
 

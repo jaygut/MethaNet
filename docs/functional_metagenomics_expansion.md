@@ -8,6 +8,13 @@ readiness, and future calibrated methane-risk features.
 
 Documentation refresh: 2026-08-10.
 
+Foundation update, 2026-09-24: Resolve the active release through
+[`../configs/atlas_current_release.json`](../configs/atlas_current_release.json)
+and use the [atlas data foundation](atlas_data_foundation.md) for authority,
+grain, missingness, and source-scaffold distinctions. The [knowledge graph
+foundation](knowledge_graph_foundation.md) separates the historical POC graph
+from a future full-atlas biogeochemical projection.
+
 Use [`methanet_positioning_and_claims.md`](methanet_positioning_and_claims.md)
 for the shared narrative and claim contract used by the repository, landing
 page, and public report.

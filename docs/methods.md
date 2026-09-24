@@ -1,5 +1,13 @@
 # MethaNet Methods
 
+Documentation note, 2026-09-24: The [atlas data foundation](atlas_data_foundation.md)
+and [current release pointer](../configs/atlas_current_release.json) govern
+which molecular and environmental tables are active. This page includes older
+POC results and proposed prediction methods; dated POC metrics are not
+cross-lane validation or field methane performance. The current graph design
+and its distinction from the 662-unit POC MVP are described in the
+[knowledge graph foundation](knowledge_graph_foundation.md).
+
 This document records implemented molecular-atlas methods alongside earlier
 prediction-model specifications. The current validated product layer is MBAG
 molecular attestation at MAG/proteome grain. It supports molecular
@@ -55,40 +63,47 @@ stability gates pass.
 
 ### 1.1 Functional Gene Quantification
 
-The marker-screening workflow quantifies 12 selected genes as
-mechanism-relevant molecular evidence. Their presence records functional
-potential. Activity and sample-level pathway balance require expression,
-abundance, environmental, and process evidence.
+This 12-marker panel is an earlier method specification for
+mechanism-relevant molecular screening. Marker presence can support a
+method-specific functional-potential hypothesis; a single marker cannot
+establish pathway completeness, activity, competition, process direction, or
+flux. Consult the release's long-form functional events, tool coverage, and
+accepted-hit semantics before interpreting an observed hit or no-hit.
 
 | Marker | Function | Rationale | HMM Source |
 |--------|----------|-----------|------------|
-| **mcrA** | Methyl-coenzyme M reductase α | Core methanogenesis | TIGR03256 |
+| **mcrA** | Methyl-coenzyme M reductase α | MCR-family methane-metabolism context; direction requires more evidence | TIGR03256 |
 | **mcrB** | MCR beta subunit | Complex validation | TIGR03258 |
 | **mcrG** | MCR gamma subunit | Complex validation | TIGR03259 |
-| **pmoA** | pMMO alpha subunit | Aerobic oxidation (Copper-rich) | TIGR03080 |
-| **mmoX** | sMMO alpha subunit | **Copper-switch** oxidation (stress) | TIGR01691 |
-| **dsrA** | Sulfite reductase α | **Competitor** (Sulfate reduction) | TIGR02064 |
-| **dsrB** | Sulfite reductase β | Competitor validation | TIGR02066 |
-| **mtaB** | Methanol methyltransferase | **Sulfate Bypass** (Methylotrophic) | TIGR02626 |
-| **mttB** | Methylamine methyltransferase | **Sulfate Bypass** (Methylotrophic) | TIGR02512 |
-| **mtbA** | Methylcobalamin:CoM MT | **Sulfate Bypass** (Methylotrophic) | TIGR02506 |
-| **nifH** | Nitrogenase iron protein | Normalization/Control | TIGR01287 |
-| **cbbL** | RuBisCO large subunit | Normalization/Control | TIGR01168 |
+| **pmoA** | pMMO alpha subunit | Aerobic methane-oxidation potential under assay context | TIGR03080 |
+| **mmoX** | sMMO alpha subunit | Soluble methane monooxygenase potential; copper response needs separate evidence | TIGR01691 |
+| **dsrA** | Sulfite reductase α | Sulfur-metabolism potential; in-situ competition is untested | TIGR02064 |
+| **dsrB** | Sulfite reductase β | Supporting sulfur-pathway context | TIGR02066 |
+| **mtaB** | Methanol methyltransferase | Methanol-use pathway potential; no sulfate-bypass inference | TIGR02626 |
+| **mttB** | Methylamine methyltransferase | Methylamine-use pathway potential | TIGR02512 |
+| **mtbA** | Methylcobalamin:CoM MT | Supporting methylotrophic pathway context | TIGR02506 |
+| **nifH** | Nitrogenase iron protein | Nitrogen-cycling context; not a normalizer by itself | TIGR01287 |
+| **cbbL** | RuBisCO large subunit | Carbon-fixation context; not a normalizer by itself | TIGR01168 |
 
-**HMM Source:** All profiles are extracted from **TIGRFAMs v15.0** (JCVI/NCBI) to ensure consistent score thresholds and full-length equivalog specificity.
+**Historical panel source:** The profiles listed in this specification are
+TIGRFAMs v15.0 identifiers. The August release's actual annotation evidence
+comes from its registered warehouse tool/database outputs; this list alone
+does not certify current profile versions or thresholds.
 
 **Quantification pipeline:**
 
 1. Open reading frame (ORF) prediction using Prodigal (`-p meta`) or FragGeneScanRs.
 2. HMM search against the 12 marker profiles using HMMER 3.
 3. Normalization per 1k proteins (counts / (total proteins / 1000)).
-4. Computation of derived features:
-   - log2(mcrA/pmoA) ratio with pseudocount.
-   - Pathway completeness (inferred from subunit presence).
+4. Proposed exploratory derived features:
+   - log2(mcrA/pmoA) ratio with pseudocount, interpreted only with assay coverage and source controls.
+   - Candidate pathway completeness from multiple subunits, with explicit missingness and threshold rules.
 
-**Feature vector:**
-- Normalized abundances for all 12 markers.
-- log2(mcrA/pmoA) ratio.
+**Proposed feature vector:**
+
+- Normalized marker hit counts for the 12-panel design, if the corresponding
+  tool and denominator have been validated.
+- Exploratory log2(mcrA/pmoA) ratio; not a methane-flux or MRV-risk score.
 
 ### 1.2 Foundation Model Embeddings
 

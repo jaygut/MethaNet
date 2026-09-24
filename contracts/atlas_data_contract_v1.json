@@ -1,0 +1,176 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "emergentbiome-atlas-data-foundation-v1",
+  "scope": "Registered molecular atlas lanes and a minimum graph-ready schema; this is not a complete schema for every source-specific table.",
+  "authorities": {
+    "current_release_pointer": "configs/atlas_current_release.json",
+    "lane_registry": "configs/methanet_atlas_lanes.tsv",
+    "tracked_release_ledger": "docs/releases/atlas_20260810_release_ledger.json",
+    "warehouse_table_manifest": "cohort_table_manifest.tsv",
+    "warehouse_validation_gates": "validation_gates.tsv"
+  },
+  "identity": {
+    "canonical_molecular_key": ["lane_id", "proteome_id"],
+    "pipeline_warehouse_key": ["cohort_run_id", "proteome_id"],
+    "source_identifiers": ["mag_id", "source_accession", "source_sample_id"],
+    "rule": "Source identifiers are scoped to their authority; never join on a bare mag_id or label across lanes. Preserve crosswalk status and source row provenance."
+  },
+  "evidence_contracts": {
+    "pipeline_normalized": {
+      "lanes": ["poc_core", "msm_china_2025", "futian_mangrove_2026_qi"],
+      "meaning": "Selected curated MAG/bin attempts and long-form tool events under a shared warehouse shape; cross-lane mechanism equivalence remains unproven."
+    },
+    "source_scaffold": {
+      "lanes": ["mucc_v1_owc_wetland"],
+      "meaning": "Source DRAM, RNA expression, sample metadata, environmental observations and exploratory network evidence. Scores are not numerically interchangeable with pipeline-normalized mechanism features."
+    }
+  },
+  "status_semantics": {
+    "registered_gap": "Retain the registered identity, reason, status and next action; never convert a missing payload to a biological zero.",
+    "failed_or_partial_attempt": "Keep the run or source row and its failure state even when a completed attempt is selected for a feature table.",
+    "observed_no_hit": "Only a completed, covered tool run can support a method-specific no-hit; it is not proof of biological absence.",
+    "sample_linked_units_zero": "No release-authorized ecological sample linkage for MRV scoring; sequencing-sample expression and staged field metadata may still exist.",
+    "field_validated_units_zero": "No field-validated molecular-to-flux inference in the release; it does not mean no field observations are staged."
+  },
+  "tables": [
+    {
+      "logical_table": "freeze_manifest",
+      "evidence_contract": "release",
+      "grain": "one registered molecular unit per atlas lane",
+      "primary_key": ["lane_id", "proteome_id"],
+      "key_status": "validated_by_release_freeze",
+      "foreign_keys": [{"columns": ["lane_id"], "target": "lane_registry.lane_id"}],
+      "required_columns": ["lane_id", "proteome_id", "functional_status", "functional_harmonization_status", "mechanism_equivalence_status", "sample_linkage_readiness", "release_required", "release_excluded", "claim_scope"],
+      "status_columns": ["functional_status", "functional_harmonization_status", "mechanism_equivalence_status", "sample_linkage_readiness"],
+      "null_semantics": "Explicit excluded and gap rows remain in the frozen denominator; blank ecological links are unresolved, not zero.",
+      "claim_scope": "Molecular payload availability and review priority only."
+    },
+    {
+      "logical_table": "dim_mag",
+      "evidence_contract": "pipeline_normalized",
+      "grain": "selected MAG/bin per cohort run",
+      "primary_key": ["cohort_run_id", "proteome_id"],
+      "key_status": "enforced_by_consolidator",
+      "foreign_keys": [{"columns": ["proteome_id"], "target": "lane_source_manifest.proteome_id"}],
+      "required_columns": ["cohort_run_id", "proteome_id", "mag_id", "analysis_unit_type", "claim_scope", "comparability_status"],
+      "status_columns": ["comparability_status"],
+      "null_semantics": "Missing from the selected dimension may mean failed, partial, excluded, or assembly-context; resolve through source manifest and run-status rows.",
+      "claim_scope": "MAG/proteome molecular screening."
+    },
+    {
+      "logical_table": "fact_run_status",
+      "evidence_contract": "pipeline_normalized",
+      "grain": "one inspected curation attempt per MAG and run",
+      "primary_key": ["cohort_run_id", "proteome_id", "run_id"],
+      "key_status": "enforced_by_consolidator",
+      "foreign_keys": [{"columns": ["proteome_id"], "target": "lane_source_manifest.proteome_id"}],
+      "required_columns": ["cohort_run_id", "proteome_id", "run_id", "run_status", "integrity_status"],
+      "status_columns": ["run_status", "integrity_status"],
+      "null_semantics": "Retain failed, partial, superseded and non-comparable attempts; do not project missing runs into a zero-hit fact.",
+      "claim_scope": "Operational provenance and selection audit."
+    },
+    {
+      "logical_table": "feature_annotation_coverage",
+      "evidence_contract": "pipeline_normalized",
+      "grain": "one annotation tool per selected MAG",
+      "primary_key": ["cohort_run_id", "proteome_id", "annotation_tool"],
+      "key_status": "enforced_by_consolidator",
+      "foreign_keys": [{"columns": ["cohort_run_id", "proteome_id"], "target": "dim_mag.(cohort_run_id,proteome_id)"}],
+      "required_columns": ["cohort_run_id", "proteome_id", "annotation_tool"],
+      "status_columns": [],
+      "null_semantics": "Inspect tool coverage before interpreting absence of sparse annotation hits.",
+      "claim_scope": "Tool-specific molecular coverage."
+    },
+    {
+      "logical_table": "feature_mrv_mag_level",
+      "evidence_contract": "pipeline_normalized",
+      "grain": "one molecular screening feature row per selected MAG",
+      "primary_key": ["cohort_run_id", "proteome_id"],
+      "key_status": "enforced_by_consolidator",
+      "foreign_keys": [{"columns": ["cohort_run_id", "proteome_id"], "target": "dim_mag.(cohort_run_id,proteome_id)"}],
+      "required_columns": ["cohort_run_id", "proteome_id"],
+      "status_columns": [],
+      "null_semantics": "An unobserved feature is not measured zero methane activity.",
+      "claim_scope": "MAG-level screening; no sample or project risk tier."
+    },
+    {
+      "logical_table": "dim_mag",
+      "evidence_contract": "source_scaffold",
+      "grain": "one checksum-validated MUCC archive MAG",
+      "primary_key": ["cohort_run_id", "proteome_id"],
+      "key_status": "observed_not_common_builder_enforced",
+      "foreign_keys": [{"columns": ["proteome_id"], "target": "source_lane_manifest.proteome_id"}],
+      "required_columns": ["cohort_run_id", "proteome_id", "mag_id", "payload_status", "comparability_status", "denominator_status", "metadata_mapping_status", "claim_boundary"],
+      "status_columns": ["payload_status", "comparability_status", "denominator_status", "metadata_mapping_status"],
+      "null_semantics": "The 2,508-record source roster includes seven release ESM-2 exclusions; source scope and payload scope differ.",
+      "claim_scope": "Source-scaffold molecular reference and explicit gaps."
+    },
+    {
+      "logical_table": "fact_mag_expression_sample",
+      "evidence_contract": "source_scaffold",
+      "grain": "MAG by processed sequencing sample expression observation",
+      "primary_key": ["cohort_run_id", "proteome_id", "sample_id"],
+      "key_status": "candidate_requires_duplicate_audit",
+      "foreign_keys": [{"columns": ["proteome_id"], "target": "dim_mag.proteome_id"}],
+      "required_columns": ["cohort_run_id", "proteome_id", "sample_id", "expression_value", "expression_units", "expression_detected", "claim_boundary"],
+      "status_columns": ["expression_detected"],
+      "measurement_type": "RNA expression detection or magnitude under source processing",
+      "null_semantics": "No expression row is not DNA absence or a field sample–flux pair.",
+      "claim_scope": "Processed sequencing-sample expression only."
+    },
+    {
+      "logical_table": "fact_mucc_v1_essdive_chamber_flux",
+      "evidence_contract": "source_scaffold",
+      "grain": "source chamber observation",
+      "primary_key": ["cohort_run_id", "flux_observation_id"],
+      "key_status": "candidate_requires_duplicate_audit",
+      "foreign_keys": [{"columns": ["source_id"], "target": "source_artifact.source_id"}],
+      "required_columns": ["cohort_run_id", "flux_observation_id", "source_id", "methane_flux_nmol_m2_s", "source_value_status", "sample_join_status"],
+      "status_columns": ["source_value_status", "sample_join_status"],
+      "measurement_type": "chamber methane flux",
+      "unit": "nmol m-2 s-1",
+      "null_semantics": "Missing flux value or non-exact molecular join remains unresolved; do not infer a zero or attach to a MAG.",
+      "claim_scope": "Source environmental observation, not validated molecular-to-flux attribution."
+    },
+    {
+      "logical_table": "fact_mucc_v1_essdive_gapfilled_tower_ch4_flux",
+      "evidence_contract": "source_scaffold",
+      "grain": "source tower time point",
+      "primary_key": [],
+      "key_status": "undeclared_requires_source_record_audit",
+      "foreign_keys": [],
+      "required_columns": ["source_id", "source_value_status", "sample_join_status"],
+      "status_columns": ["source_value_status", "sample_join_status"],
+      "measurement_type": "gap-filled tower methane flux",
+      "null_semantics": "Use the typed tower source with its time/value fields; the August generic process table has a known blank-value/date mapping defect.",
+      "claim_scope": "Source environmental time series; no direct molecular attribution."
+    },
+    {
+      "logical_table": "fact_mucc_v1_essdive_porewater_ch4",
+      "evidence_contract": "source_scaffold",
+      "grain": "source porewater concentration observation",
+      "primary_key": [],
+      "key_status": "undeclared_requires_source_record_audit",
+      "foreign_keys": [],
+      "required_columns": ["source_id", "source_value_status", "sample_join_status"],
+      "status_columns": ["source_value_status", "sample_join_status"],
+      "measurement_type": "porewater methane concentration",
+      "null_semantics": "Porewater concentration is not chamber or tower methane flux; absent exact sample links remain explicit.",
+      "claim_scope": "Source environmental context only."
+    }
+  ],
+  "graph_projection": {
+    "state": "design_only_not_materialized_full_atlas",
+    "entity_id_rule": "Namespaced authority plus source ID; molecular entities use lane_id:proteome_id and attempts additionally use cohort_run_id:run_id.",
+    "node_classes": ["source_artifact", "dataset_release", "site", "sampling_event", "physical_sample", "sequencing_sample", "sequencing_run", "mag_proteome", "gene", "annotation_event", "typed_measurement", "evidence_assertion", "claim", "validation_gap"],
+    "relation_classes": ["derived_from", "observed_in", "collected_at", "has_annotation_hit", "has_measurement", "has_exact_crosswalk", "has_candidate_crosswalk", "nearest_core_neighbor", "supported_by", "blocked_by"],
+    "required_assertion_fields": ["assertion_id", "subject_id", "predicate", "object_id", "source_record_id", "source_release_id", "evidence_type", "method_id", "status", "claim_scope"],
+    "rule": "Store edge evidence, provenance, status and uncertainty; similarity and ambiguous crosswalks do not assert causal transfer, ecological process, or exact sample identity."
+  },
+  "unresolved_schema_gates": [
+    "Declare and duplicate-audit stable keys for pipeline fact_input_stats, fact_dbcan_hits, fact_bakta_features and run_summary_metrics.",
+    "Audit primary keys and exact entity relationships across all 61 MUCC source-scaffold tables before a physical schema migration.",
+    "Add versioned source-accession, license/access, tool/database fingerprint, units and transformation provenance fields to a future portable catalog.",
+    "Rebuild the generic August process table in a new dated output after the tower mapping repair and validate modality-specific value/date completeness."
+  ]
+}

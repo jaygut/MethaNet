@@ -15,7 +15,9 @@ validation-ready methane-risk intelligence**
 
 ## Overview
 
-MethaNet is a molecular-attestation system for blue-carbon methane diligence.
+MethaNet is the internal molecular-attestation platform and repository behind
+the public **EmergentBiome Molecular Atlas**. It supports blue-carbon methane
+diligence.
 It links protein-language geometry, genomic context, functional machinery,
 expression evidence, genome quality, taxonomy, provenance, and validation
 readiness through the MethaNet Bridge Attestation Graph, or MBAG. The current
@@ -43,7 +45,12 @@ and measured flux or process validation.
 ## What Works Today
 
 The August 10, 2026 end-to-end controlled-diligence release is a governed molecular
-warehouse and evidence graph:
+warehouse with evidence-graph projections:
+
+The same frozen evidence powers the [live, `noindex` landing page](https://emergentbiome.earth/)
+and its [reconciled technical report](https://emergentbiome.earth/report/).
+Their September 2026 correction deployment does not clear the scientific
+publication or sample-risk validation gates.
 
 | Evidence layer | Current release | Decision use |
 | --- | ---: | --- |
@@ -210,7 +217,8 @@ Current implemented artifact arc:
 | MUCC v1 Old Woman Creek wetland lane | `results/functional_metagenomics/mucc_v1_owc_wetland_20260626/` | 2,508 registered wetland MAGs; 2,501 ESM-2-bearing and data-complete source-scaffold tri-views; processed expression detection and staged field evidence retain explicit linkage gaps |
 | Metadata provenance | `results/functional_metagenomics/environmental_metadata_recovery_20260612/`, `data/external/msm_china_2025/metadata/`, and `data/external/futian_mangrove_2026_qi/metadata/` | source/environmental metadata with resolution tiers across rumen, wetland/MUCC, MSM, and Futian lanes |
 | Molecular attestation graph | `results/attestation/mmag_mvp_20260617/` plus the release-level MBAG projection | POC graph MVP plus current warehouse-wide evidence-contract, candidate-card, and validation-readiness views |
-| Current controlled-diligence atlas | `results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end/report.html` | 7,965 registered units, 7,710 ESM-2 embeddings, 7,717 gLM2 payloads, and 7,710 data-complete tri-views; public deployment remains gated |
+| August 10 controlled-diligence source report | `results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end/report.html` | Frozen 7,965-unit evidence contract and 7,710 data-complete tri-views; routine scientific publication remains gated |
+| Reconciled public report | `results/reports/emergentbiome_molecular_atlas_20260923_reconciled/report.html` and [stable public alias](https://emergentbiome.earth/report/) | September correction of the already-public, `noindex` report against the same August freeze |
 
 These artifacts support MAG/proteome-level molecular attestation,
 bridge-candidate prioritization, evidence-card review, and monitoring-readiness
@@ -229,6 +237,9 @@ The current system should be read as five evidence lanes:
   field-validation evidence whose exact ecological joins remain unresolved.
 
 For the freshest dated payload inventory, see `docs/current_artifact_inventory.md`.
+For the dataset authority chain and future graph boundaries, see
+[`docs/atlas_data_foundation.md`](docs/atlas_data_foundation.md) and
+[`docs/knowledge_graph_foundation.md`](docs/knowledge_graph_foundation.md).
 For live multi-lane payload state, regenerate the registry summary with
 `scripts/reports/refresh_atlas_lane_registry_status.sh`; for report freezes,
 use `scripts/reports/build_methanet_3view_payload_freeze.py` and preserve
@@ -273,28 +284,33 @@ comparability:
 
 ### Key Molecular Markers
 
-MethaNet uses a strategic set of **12 HMM markers** (TIGRFAMs v15.0) to capture methanogenesis, oxidation, and competition dynamics.
+An earlier marker-screening design specified **12 HMM markers** (TIGRFAMs v15.0).
+The current warehouse also retains broader tool-specific annotation evidence;
+marker presence alone does not establish activity, pathway direction, or flux.
 
-| Marker | Gene | Role | Strategic Value |
+| Marker | Gene | Role | Interpretation boundary |
 |--------|------|------|-----------------|
-| **mcrA** | Methyl-coenzyme M reductase α | Methanogenesis | Universal production proxy |
-| **pmoA** | pMMO α | Aerobic Oxidation | Primary sink proxy (Copper-rich) |
-| **mmoX** | sMMO α | Soluble Oxidation | **"Copper-Switch"** for stressed environments |
-| **mtaB** | Methanol MT | Methylotrophic | **"Sulfate Bypass"** in saline/mangrove systems |
-| **dsrA** | Dissimilatory sulfite reductase | Sulfate Reduction | Competitive exclusion signal |
+| **mcrA** | Methyl-coenzyme M reductase α | MCR-family marker | Pathway direction and production rate require further evidence |
+| **pmoA** | pMMO-like α | Candidate oxidation marker | pMMO/AMO specificity and in situ sink rate require further evidence |
+| **mmoX** | sMMO α | Candidate soluble methane-oxidation marker | Copper-response interpretation requires separate evidence |
+| **mtaB** | Methanol MT | Methylotrophic pathway marker | A hit does not establish in situ substrate use or methane rate |
+| **dsrA** | Dissimilatory sulfite reductase | Sulfur-metabolism marker | A hit does not establish competitive exclusion in the field |
 
-The marker panel provides mechanism-relevant molecular potential. Marker ratios
-and pathway balances become sample-level predictors only after abundance,
-environmental context, uncertainty, and field validation are joined.
+Assay-covered marker hits can support mechanism-relevant molecular hypotheses.
+Marker ratios and pathway balances may be evaluated as sample-level predictors
+only after abundance, environmental context, uncertainty, and field validation
+are joined.
 
 ### Methanogenesis Pathways
 
-Three primary pathways are conserved across environments:
+Methanogenesis can use several substrate routes, including:
 - **Hydrogenotrophic**: CO₂ + H₂ → CH₄
 - **Methylotrophic**: Methylated compounds → CH₄  
 - **Aceticlastic**: Acetate → CH₄ + CO₂
 
-Key archaeal families (e.g., *Methanomethylophilaceae*) are globally distributed despite divergent community compositions, enabling cross-ecosystem feature transfer.
+Related methane-associated machinery occurs in distinct communities. Whether a
+feature remains informative across ecosystems is a source-aware, taxonomy-aware
+validation question, not an established transfer result from the atlas.
 
 ---
 

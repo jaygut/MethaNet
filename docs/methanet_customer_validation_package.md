@@ -1,5 +1,17 @@
 # MethaNet Customer Validation and Traction Package
 
+> **Currentness correction, 2026-09-24:** This is a historical pilot-design
+> document, not the active dataset inventory. The MUCC source-scaffold
+> warehouse now stages 275 chamber-flux rows, 5,280 porewater-CH4 rows, and
+> 29,280 gap-filled tower rows as **different measurement types**. They do not
+> provide an authorized exact MAG/sample/environment/flux calibration join.
+> The August generic process table has a known tower value/date mapping
+> defect; use the typed source tables or a separately validated repair view.
+> Any sentence below saying that no flux data exists in the repository refers
+> to an earlier state and must not be used as a current claim. Use the
+> [atlas data foundation](atlas_data_foundation.md) and [release
+> pointer](../configs/atlas_current_release.json) for current interpretation.
+
 > **Status: 2026-08-10 controlled-diligence validation design; not customer-validated.**
 >
 > This package preserves customer-discovery questions and proposed pilot
@@ -60,7 +72,7 @@ This is fingerprint discovery and monitoring design (tier C), not a site-risk or
 
 The literal "predicted methane flux vs observed methane flux, with precision and AUC" demonstration cannot be produced today with real flux numbers. This is a hard, verified boundary:
 
-- There is **no paired molecular / environmental / flux calibration layer** anywhere in the current MethaNet artifacts. A repository-wide search for measured flux units (nmol CH4, mg CH4, mmol CH4 m-2, umol CH4, g CH4) returns zero data hits.
+- There is **no release-authorized exact molecular / environmental / flux calibration layer** in the August release. Typed MUCC chamber, tower, and porewater records are staged, but they do not constitute paired MAG/sample/flux training labels. The earlier zero-flux-data search is obsolete.
 - Functional annotation in MethaNet is **mechanism-relevant potential**, not expression, activity, or flux. A MAG carrying methanogenesis genes represents molecular capacity, not a measured emission.
 - The source and ecosystem are currently **confounded** (rumen from a single project, wetland from a single source), so even a strong molecular signal cannot yet be claimed as source-independent.
 
@@ -78,7 +90,7 @@ This section defines, precisely, what a prediction is, what an observation is, w
 - **Observation:** the outcome variable the prediction is scored against. This is the honesty pivot. Three tiers of observation exist, in ascending order of what they license:
   1. **Held-out label** (available now): the true ecosystem or domain label of a sample, hidden from the unsupervised embedding and recovered from geometry.
   2. **Expression detection** (available now, one lane): processed metatranscriptomic detection/occupancy support, not validated activity magnitude or measured flux.
-  3. **Measured methane flux** (not in repo): annual or chamber flux in physical units. Exists in source publications and flux networks, not yet joined into MethaNet.
+  3. **Measured methane flux** (staged in typed source tables, not paired for MRV): chamber and gap-filled tower records in physical units exist in the MUCC source scaffold; exact molecular/sample linkage and calibration are pending.
 
 ### Candidate target variables and units
 
@@ -105,7 +117,7 @@ This section defines, precisely, what a prediction is, what an observation is, w
 
 ### What predicted-vs-observed CAN be shown right now
 
-Two real, reproducible predicted-vs-observed demonstrations exist today, neither of which involves measured flux:
+Two molecular evidence demonstrations exist in dated artifacts; only the first is a label-recovery comparison, and neither predicts measured flux:
 
 1. **Held-out ecosystem/domain structure recovery.** Unsupervised ESM2 proteome-embedding geometry recovers held-out ecosystem and domain labels at about 99 percent purity: `cluster_purity_ecosystem = 0.990`, `cluster_purity_domain = 0.990`, `silhouette_non_noise = 0.433`, 5 clusters, `noise_fraction = 0.10`, over 40 samples (`results/blue_catalyst_poc/poc_metrics.json`). This is a legitimate predicted-label-vs-observed-label result. It demonstrates that the latent space carries biologically meaningful structure. **It is structure recovery, not methane accuracy, and the 99 percent number must never be presented as a methane metric.**
 
@@ -115,12 +127,12 @@ The 1,948-MAG by 133-sample OWC expression matrix can support a detection/occupa
 
 ### What requires the dataset join to show real flux
 
-True methane predicted-vs-observed, with measured flux, requires joining a paired flux dataset that is not currently in the repository:
+True methane predicted-vs-observed, with measured flux, requires a validated paired molecular/sample/environment/flux dataset, which the current release does not have:
 
-- The most credible route is the **OWC / MUCC wetland lane**, the only MethaNet lane with a built-in activity proxy. Its published source study (Bechtold et al. 2025, Nature Communications 16:944, DOI 10.1038/s41467-025-56133-0; data MUCC v2.0.0, Zenodo 10.5281/zenodo.14532347) reports annual methane flux for these wetlands and integrates 16S, metagenomes, metatranscriptomes, and flux. That measured flux is **not yet joined into MethaNet**.
+- The most credible route is the **OWC / MUCC wetland lane**, which stages processed expression and separate typed field observations. Its published source study (Bechtold et al. 2025, Nature Communications 16:944, DOI 10.1038/s41467-025-56133-0; data MUCC v2.0.0, Zenodo 10.5281/zenodo.14532347) provides additional context. An exact molecular-to-field flux pairing is **not yet authorized in MethaNet**.
 - The coastal/mangrove lanes (MSM China 2025; Futian 2026) are molecularly rich but **flux-blocked** and lack per-MAG-to-sample abundance mapping.
 
-**True flux predicted-vs-observed is a planned milestone, not a current result.** The canonical unlock protocol is: (1) fetch published wetland flux (Bechtold et al. 2025) for OWC and the other MUCC wetlands; (2) build a `dim_environmental_context` table with a measured `methane_flux_context` column joined to OWC site/core/depth samples; (3) convert site-level flux into a net-emitter classification label; (4) run leave-one-site-out and leave-one-month-out validation, evaluating calibration, not rank alone. Only after a paired molecular-plus-environmental-plus-measured-flux table is assembled and holdout-validated does the literal continuous-flux predicted-vs-observed demo (tier A) become licensed. This is the single canonical protocol referenced by later sections.
+**True flux predicted-vs-observed is a planned milestone, not a current result.** The unlock protocol is: (1) audit the already staged typed observations and acquire any missing published/source records; (2) prove exact site/event/physical-sample/sequencing-sample identities, measurement units, time windows, and MAG abundance/read coverage; (3) build a versioned paired environmental context table without replacing missing or ambiguous joins; and (4) run site- and time-held-out evaluation with calibration and uncertainty. Only a validated paired molecular-plus-environmental-plus-measured-flux dataset can support the literal continuous-flux demo (tier A).
 
 ---
 
@@ -137,7 +149,7 @@ Metrics are specified per prediction mode, then split by audience. The audience 
 - Calibration curve (reliability diagram) plus a calibration error summary. A stated 70 percent risk should be right about 70 percent of the time.
 - Confidence intervals on every headline metric, via bootstrap over held-out sites/samples.
 
-**Ranking (tier B, and the activity-proxy result today)**
+**Ranking (proposed tier B validation; no completed methane outcome result)**
 
 - Spearman rank correlation between predicted risk and the observed label/proxy.
 - Site-ranking agreement (concordance of the predicted site order vs observed order).
@@ -168,7 +180,7 @@ Customers should be led with precision, recall, calibration, and top-k ranking a
 **Computable today (no new data):**
 
 - For the **label-recovery** result: cluster purity, silhouette, and noise fraction are already reported (`cluster_purity_ecosystem = 0.990`, `cluster_purity_domain = 0.990`, `silhouette_non_noise = 0.433`). These are **clustering-quality and structure-recovery** metrics. They are not methane precision/recall/AUC and must be labeled as such.
-- For the **activity-proxy ranking** on OWC: Spearman, site/sample-ranking agreement, and top-k precision of predicted methanogen-activity vs observed metatranscriptomic activity, on a held-out month/depth split, using only repo data. Reported against an **activity proxy**, not flux.
+- For an **exploratory expression-detection analysis** on OWC: MAG-by-sequencing-sample transcript detection can be summarized after normalization, identity, and independent split rules are checked. A held-out activity-ranking result has not been established by this package; expression alone is not validated process activity or flux.
 
 **Requires the flux/label join:**
 
@@ -180,7 +192,7 @@ Customers should be led with precision, recall, calibration, and top-k ranking a
 
 ## 4. Minimum viable demo
 
-This is a minimum credible demonstration: small, honest, and explicit about which cells are real today versus which need the paired dataset. It is a tier-B risk-classification demo built on the OWC/MUCC wetland lane, the only lane with an activity proxy and a flux-characterized source study.
+This is a historical proposed demonstration that separates available molecular evidence from required paired data. A tier-B risk-classification demo on OWC/MUCC remains gated by an eligible label, exact ecological joins, and held-out validation.
 
 ### Structure of the demo
 
@@ -195,33 +207,33 @@ A small table of sites/samples (a handful to a dozen, drawn from the 1,948 expre
 
 ### Illustrative rows
 
-The values below are **illustrative of the demo format**, not published results. The mechanism classes and the activity-proxy construction are real; the risk tiers, probabilities, and any specific methanogen identities are placeholders. Specific methanogen MAG identities and taxonomy are to be pulled from the OWC warehouse and are not asserted here beyond the verified expression-supported counts.
+The values below are **synthetic schema examples**, not observed results or supported risk assignments. Marker and expression fields illustrate possible evidence slots; their sample identity, signal direction, uncertainty, and biological interpretation would need separate validation. Specific MAG identities and taxonomy are not asserted here.
 
 | Site / sample | Predicted risk (tier + prob.) | Observed / proxy | Confidence | Key drivers (mechanism class) | Plain-language read | Recommended action |
 |---|---|---|---|---|---|---|
-| OWC, high-water-table core, mid-season | Elevated risk (illustrative p ~ 0.8) | Activity proxy: high methanogenesis-marker expression; measured flux pending join | Moderate; wide band (single lane, no flux calibration) | Methanogenesis (mcrA/mcrB/mcrG) expression; low methanotrophy (pmoA/mmoX); weak sulfate reduction (dsrAB/aprAB) | Active methanogenesis markers with little oxidative or competitive brake. Flux not yet joined; would be tested against measured flux after the paired-flux join. | Prioritize for field flux measurement; treat as candidate hidden emitter in MRV design. |
-| OWC, oxic surface / shallow depth | Lower risk (illustrative p ~ 0.3) | Activity proxy: methanotroph markers present relative to methanogens | Moderate; wide band | Methanotrophy (pmoA/mmoX) present; methanogenesis markers lower | Oxidative capacity present near the surface; a share of methane may be consumed before escape. | Lower field-visit priority; monitor. |
-| MUCC low-methane reference wetland | Low risk (illustrative) | Site-level low-methane contrast (label pending flux join) | Low confidence until join | Sulfate reduction (dsrAB/aprAB) competing with methanogenesis; low mcrA activity | Sulfate competition suppresses methanogenesis. | Use as negative reference; low priority. |
+| Hypothetical OWC sequencing context | not_scoreable | Transcript detection under source processing; no exact field sample/flux pair | Not estimated | Method-covered methane-pathway marker events, if present | Molecular screening evidence only; process direction and flux unresolved. | Resolve exact sample identity, assay coverage, and paired field measurements. |
+| Hypothetical shallow sample | not_scoreable | Oxidation-related marker candidate; no measured sink rate | Not estimated | pmoA/mmoX annotation subject to specificity checks | Functional potential cannot establish methane consumption. | Validate marker specificity and collect paired process evidence. |
+| Hypothetical wetland comparison | not_scoreable | Site contrast and molecular evidence require independent controls | Not estimated | Sulfur and methane-pathway candidates | No competition or suppression claim follows from marker co-occurrence. | Predeclare a paired, source-aware validation design. |
 
 ### What is real today vs what needs the paired dataset
 
 **Real today (repo-only):**
 
 - The mechanism-class drivers: methanogenesis (mcrA/mcrB/mcrG), methanotrophy (pmoA/mmoX), and sulfate-reduction competition (dsrAB/aprAB), computable from existing extracts (37,297 accepted KOfam hits, 11,094 MCycDB best hits, 13,272 SCycDB best hits), reported as molecular potential.
-- The OWC activity proxy: 1,948 expression-supported MAGs across 133 depth/month-resolved samples, shown as an activity signal on the wetland lane.
+- The OWC processed expression coverage: 1,948 MAGs across 133 sequencing-sample contexts, shown as transcript detection under source processing, not validated activity magnitude.
 - The candidate-driver cards with explicit blockers (100 MRV-readiness cards on OWC/MUCC; 26 in the frozen atlas).
-- A held-out split by month or depth for the activity-proxy ranking.
+- A month/depth held-out split is a proposed analysis and requires verified sample metadata and leakage controls.
 
 **Needs the paired dataset (planned, not present):**
 
-- The **observed measured-flux** column: requires fetching published wetland flux (Bechtold et al. 2025) and joining it as `dim_environmental_context.methane_flux_context`.
+- The **paired observed-flux label**: requires auditing the staged typed chamber/tower observations, acquiring any missing source records, and proving exact sample/site/time identity before building a versioned context table.
 - **Calibrated risk tiers and probabilities:** the demo shows provisional prioritization only. There are **no final A-E methane-risk tiers today**; A-E is target product vocabulary, allowed only after a calibrated sample/project model with holdout validation exists. Where evidence is insufficient, the correct output is `not_scoreable`, never a forced tier.
 - **Sample-level** rollups for MSM and Futian: require MAG-to-sample abundance/read-coverage mapping, which no lane yet has.
 - The **Sample Risk Readiness** primitive (schema fully specified in `final_mrv_risk_scoring_roadmap.md`; readiness labels include `scoreable_provisional`, `needs_flux_validation`, `not_scoreable`) is the next primitive to build before any calibrated risk score.
 
-### Honest bottom line for the demo
+### Current evidence for a demo
 
-MethaNet can show today, with real numbers, that its latent space recovers held-out ecosystem/domain structure (about 99 percent purity, structure recovery, not methane) and that it discovers reviewable microbial methane-fingerprints with explicit blockers. On the OWC wetland lane it can show predicted methanogen-activity vs observed transcriptomic activity on a held-out split, as an activity proxy. The step from that proxy to a true predicted-methane-vs-observed-methane result, and from provisional prioritization to a calibrated risk tier, is a defined next milestone that requires joining the named paired flux datasets (OWC/MUCC, plus the mangrove lanes for breadth) and running the holdout protocol from Section 2. It is not claimed as done.
+MethaNet can show a dated POC structure-recovery diagnostic and reviewable MAG-level molecular evidence with explicit blockers. The OWC lane adds processed expression detection, while a held-out expression predictor and a molecular-to-field-flux predictor remain unvalidated. A real predicted-methane-vs-observed-methane result requires the exact pairing and holdout protocol in Section 2; no calibrated risk tier follows from the current evidence.
 
 ---
 
@@ -268,11 +280,11 @@ The minimum to earn a serious first meeting.
 
 Enough for a partner to commit budget to a scoped co-development.
 
-- A held-out methane-risk classification result on a proxy: a per-sample methanogen-activity target built from the OWC expression scaffold (2,508 wetland MAG rows, 2,501 source-protein supported, of which 1,948 are expression-supported across 133 depth- and month-resolved samples) using the already-extracted mcrABG-vs-pmoA marker balance, evaluated on a real held-out split (leave-one-month-out or leave-one-depth-out) with reported precision and ROC-AUC.
+- A future held-out expression-detection analysis may use the OWC scaffold (2,508 archive MAGs; 2,501 source-protein supported; 1,948 expression-supported across 133 processed sequencing-sample contexts) after normalization and source-aware split checks. It must not be reported as methane-risk classification without an eligible outcome label.
 - Sample size stated honestly: 133 OWC samples give a genuine within-site split; multi-site classification labels wait on the flux join.
 - The source-confounding caveat carried explicitly, with leave-one-source-out named as the next control.
 
-This bar is a classification-against-a-proxy result, not observed flux. It proves the method can rank, on held-out data, before anyone claims it predicts.
+This bar is a proposed analysis gate, not a completed classification result or observed-flux validation.
 
 ### Bar 3: Enough to sell
 
@@ -350,7 +362,7 @@ calibrated methane-risk intelligence.
 
 **The predicted-vs-observed milestone.** The literal predicted-flux-vs-observed-flux demo requires a paired molecular-plus-flux calibration layer that MethaNet does not yet contain. The honest route has three distinct targets: (A) continuous methane-flux prediction, aspirational and gated on that layer; (B) methane-risk classification (net-emitter likely or not, risk ranking), the credible near-term validation target against held-out labels and proxies; (C) microbial fingerprint discovery, supported today. Our next milestone is target B: join the OWC expression scaffold to published multi-wetland flux (Bechtold et al. 2025) and run leave-one-site-out and leave-one-month-out validation reporting precision and ROC-AUC; the full protocol is in the validation framework (Section 2).
 
-**Timeline (indicative).** Near term: wetland activity-proxy predicted-vs-observed on data in hand. Following that: fetch and join measured wetland flux for the first genuine observed-methane point, then site-level classification with holdout validation. Continuous flux calibration (target A) follows the paired-flux join and is the longest-lead item.
+**Timeline (indicative).** First audit expression detection, exact identity, and the typed field-observation sources. Then construct and validate eligible paired molecular/environment/flux labels before attempting site classification with holdout validation. Continuous flux calibration (target A) follows a validated paired dataset.
 
 **The ask.** A scoped pilot to (1) fund the paired-flux join and holdout validation for the wetland lane, and (2) identify partner sites with paired sequencing and flux or chamber measurements so risk classification can be validated on partner ground truth.
 
@@ -362,15 +374,15 @@ calibrated methane-risk intelligence.
 
 | site_id | predicted_risk_tier | predicted_score | uncertainty_band | observed_measurement_or_proxy | agreement_flag | top_microbial_drivers | recommended_action |
 |---|---|---|---|---|---|---|---|
-| ILLUSTRATIVE-OWC-01 | higher-risk (provisional) | 0.71 | 0.58 to 0.83 | metatranscriptomic methanogen-activity proxy (expression), flux not yet joined | n/a (proxy only, no agreement claim) | methanogenesis markers (mcrABG) expressed | prioritize for field flux measurement |
-| ILLUSTRATIVE-OWC-02 | lower-risk (provisional) | 0.24 | 0.12 to 0.39 | low methanogen expression, elevated sulfur-competition markers | n/a (proxy only, no agreement claim) | dsrAB/aprAB sulfur reducers | monitor, defer flux measurement |
+| ILLUSTRATIVE-OWC-01 | not_scoreable | n/a | n/a | processed transcript detection; no accepted flux pair | n/a | method-covered methane-pathway candidates | validate exact sample and field-measurement linkage |
+| ILLUSTRATIVE-OWC-02 | not_scoreable | n/a | n/a | separate sulfur and methane marker annotations | n/a | mechanism-relevant molecular potential | test assay specificity and paired process context |
 | ILLUSTRATIVE-SITE-03 | not_scoreable | n/a | n/a | no MAG-to-sample abundance mapping | n/a | insufficient sample linkage | resolve sample metadata and abundance first |
 | ILLUSTRATIVE-SITE-04 | needs_flux_validation | 0.55 | 0.40 to 0.69 | measured annual CH4 flux (external, to be joined from source publication/AmeriFlux) | pending join | mixed methanogen/methanotroph, pmoA present | join flux, then holdout-validate |
 
 Column notes:
 - **predicted_risk_tier**: uses readiness/provisional vocabulary only (higher-risk provisional, lower-risk provisional, not_scoreable, needs_flux_validation, needs_metadata, needs_abundance, needs_environment). No A-E tiers exist today.
 - **predicted_score**: provisional internal prioritization, not a calibrated probability, until holdout validation exists.
-- **observed_measurement_or_proxy**: distinguishes expression/activity proxy (available now for OWC) from measured flux (external, not yet joined).
+- **observed_measurement_or_proxy**: distinguishes processed expression from typed field measurements; neither is currently an exact release-authorized molecular/flux pair.
 - **agreement_flag**: only meaningful once observed values are joined; proxy-only rows carry no agreement claim.
 - **top_microbial_drivers**: drawn from the attestation graph evidence atoms with mechanism class.
 
@@ -395,13 +407,13 @@ Column notes:
 **Slide 3: Evidence we have today**
 - 40-sample POC: proteome embeddings recover held-out ecosystem/domain labels at about 99 percent purity (0.990/0.990; silhouette 0.433). Real predicted-vs-observed for labels, not for flux.
 - 662 POC proteomes, 625 gate-passed MAG/bin units, 711 validation gates passing, DuckDB-queryable functional atlas.
-- MUCC v1 Old Woman Creek: 2,508 wetland MAGs (2,501 source-protein supported), 1,948 expression-supported across 133 samples; methanogenesis markers are transcriptionally active on the wetland lane.
+- MUCC v1 Old Woman Creek: 2,508 wetland MAGs (2,501 source-protein supported), with processed expression coverage for 1,948 MAGs across 133 sequencing-sample contexts; marker detections do not establish activity magnitude.
 - Reviewable candidate cards with mechanism class and explicit blockers; an attestation graph (7,699 nodes) that makes both the evidence and the validation gaps auditable.
 - *Visual:* the frozen molecular niche-space atlas with a labeled candidate card and its blockers.
 
 **Slide 4: The predicted-vs-observed validation plan**
-- Today there is no paired flux dataset inside MethaNet; we do not claim a flux demo we cannot run.
-- Step 1 (data in hand): per-sample methanogen-vs-methanotroph activity proxy on the OWC expression scaffold, with a held-out month/depth split.
+- Today there is no authorized paired molecular/sample/flux calibration dataset inside MethaNet; staged field observations do not license a flux demo.
+- Step 1 (data in hand): audit OWC transcript-detection and sample-context metadata, then predeclare a source-aware held-out analysis if its labels and grouping keys are valid.
 - Step 2: join measured methane flux (Bechtold et al. 2025 multi-wetland study; AmeriFlux/FLUXNET-CH4) for the first genuine observed-methane point.
 - Step 3: define net-emitter classification labels, run leave-one-site-out and leave-one-month-out validation, report precision, ROC-AUC, and calibration for target (B). Full protocol in the validation framework (Section 2).
 - *Visual:* the predicted-vs-observed table template (schema-only) plus the maturity ladder showing MethaNet at Level 0 with the path to Level 4/5.
@@ -427,7 +439,7 @@ Here is where we are. The genuine predicted-vs-observed result we can show today
 
 The precision-focused demo we are preparing targets methane-risk classification. We are joining our Old Woman Creek wetland expression scaffold to a methanogen-versus-methanotroph marker balance, holding out sites and months, and reporting precision and ROC-AUC against held-out labels. The step that turns this into observed methane is joining measured flux from the published multi-wetland dataset, which we have identified and scoped.
 
-We would rather show you a validated classification result with its uncertainty than an overstated flux number. We expect the first activity-proxy version on data in hand shortly, with the observed-flux join following. Happy to walk through the plan whenever suits you.
+We can show current molecular evidence and an explicit validation plan. A classified methane outcome requires exact sample and field-observation linkage, a predeclared held-out study, and uncertainty assessment before any risk claim.
 
 Best regards,
 The MethaNet team
@@ -441,8 +453,8 @@ Minimum analyses before approaching customers, grouped by how far each carries t
 **(i) Can show today**
 - [x] Structure-recovery predicted-vs-observed: ESM2 embeddings recover held-out ecosystem/domain labels at about 99 percent purity on the 40-sample POC (label recovery, not flux).
 - [x] Gate-passed functional atlas over 625 MAG/bin units (711 gates passing), queryable, with methane-mechanism and sulfur-competition feature tables.
-- [x] Methane-proxy per MAG/sample from existing extracts: mcrABG methanogenesis vs pmoA/mmoX oxidation and dsrAB/aprAB sulfur-competition markers (molecular potential, not flux).
-- [x] OWC expression activity view: 1,948 expression-supported MAGs across 133 samples, methanogenesis markers transcriptionally active on the wetland lane.
+- [x] Molecular marker and annotation extracts exist at MAG grain; a sample-level methane proxy requires validated abundance, assay coverage, and sample joins.
+- [x] OWC processed expression view: 1,948 expression-supported MAGs across 133 sequencing-sample contexts; it is transcript detection, not validated activity magnitude.
 - [x] Candidate-card fingerprint discovery with mechanism class and explicit blockers; attestation graph exposing evidence and validation gaps.
 
 **(ii) Required for pilot (target B: methane-risk classification)**
@@ -470,7 +482,7 @@ Every quantitative figure above traces to a verified MethaNet artifact. The (A) 
 
 ## Source datasets (provenance verified in-repo)
 
-These are the underlying cohorts. MethaNet holds their molecular data; measured methane flux from the wetland study is not yet joined in (see Section 2).
+These are underlying cohorts. The MUCC scaffold stages typed field observations, but no exact release-authorized molecular/sample/flux calibration join exists (see Section 2).
 
 - **Rumen POC reference:** Stewart et al. 2019, Nature Biotechnology, DOI 10.1038/s41587-019-0202-3 (ENA PRJEB31266).
 - **Wetland / MUCC (OWC and eight other freshwater wetlands, with annual methane flux):** Bechtold et al. 2025, Nature Communications 16:944, DOI 10.1038/s41467-025-56133-0; data MUCC v2.0.0, Zenodo 10.5281/zenodo.14532347.

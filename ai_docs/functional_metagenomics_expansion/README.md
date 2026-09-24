@@ -1,7 +1,7 @@
 # MethaNet Functional-Metagenomics Expansion Package
 
 Date: 2026-06-13
-Documentation refresh: 2026-07-24
+Documentation refresh: 2026-09-24
 Scope: Blue Catalyst/MethaNet functional expansion from the 662-genome rumen +
 wetland/MUCC POC into a broader molecular-attestation warehouse spanning rumen,
 wetland/MUCC, mangrove/MSM, mangrove/Futian, and MUCC v1 Old Woman Creek
@@ -25,10 +25,29 @@ The current platform claim is:
 > through MBAG so partners can review candidates and prioritize the next
 > measurement.
 
-## Current Implemented Arc And Artifact State
+## Current Frozen Release And Data Authority
+
+The August 10, 2026 controlled-diligence freeze is the current molecular
+release: 7,965 registered `(lane_id, proteome_id)` rows, 7,710 ESM-2-bearing
+and data-complete tri-view rows, 5,209 pipeline-normalized POC/MSM/Futian
+tri-views with cross-lane comparability pending, and 2,501 MUCC v1
+source-scaffold tri-views. Zero rows are authorized as cross-lane
+mechanism-comparable, sample-linked for risk scoring, field-validated, or
+calibrated. These values come from the dated release ledger, not from the
+historical operational snapshots below. The September public landing/report
+correction uses the same August freeze under `noindex`.
+
+Read [`../../docs/atlas_data_foundation.md`](../../docs/atlas_data_foundation.md)
+for the source-to-release authority chain and
+[`../../docs/knowledge_graph_foundation.md`](../../docs/knowledge_graph_foundation.md)
+for the distinction between the 662-record persistent graph MVP and the
+7,965-row release union. The current release pointer and dated record live in
+`configs/atlas_current_release.json` and `docs/releases/`.
+
+## Historical June Implementation Arc
 
 By the 2026-06-20 documentation refresh, this folder had become an implemented
-evidence architecture. The July 24 release extends that architecture across
+evidence architecture. The July 24 snapshot extended that architecture across
 MSM, Futian, and MUCC v1:
 
 1. `embedded_662_proteome_id_crosswalk.tsv` remains the 662-proteome ESM2 backbone.
@@ -38,15 +57,15 @@ MSM, Futian, and MUCC v1:
 5. `scripts/consolidate_functional_mag_cohort.py` builds the Parquet-first cohort warehouse and optional DuckDB catalog.
 6. `scripts/attestation/build_molecular_attestation_mvp.py` builds a local queryable molecular attestation graph over the 662-row denominator.
 
-Latest generated launch-ready warehouse observed locally:
+June 16 launch-ready warehouse observed at that historical snapshot:
 
 ```text
 results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse_poc_magbin_union_20260616_075022/
 ```
 
-This warehouse reports:
+That June warehouse reports:
 
-| Item | Current generated state |
+| Item | June generated state |
 | --- | ---: |
 | Run attempts inspected | 683 |
 | Selected completed MAG/bin runs | 625 |
@@ -58,7 +77,7 @@ This warehouse reports:
 | DuckDB catalog | `functional_atlas.duckdb` present |
 | Launch decision | `LAUNCH-READY` for inspected data-format gates |
 
-The current molecular attestation graph snapshot is:
+The foundational POC graph MVP is:
 
 ```text
 results/attestation/mmag_mvp_20260617/
@@ -66,10 +85,11 @@ results/attestation/mmag_mvp_20260617/
 
 It preserves 662 MAG/proteome nodes, separates 625 MAG-bin units from 37 assembly-context units, links every evidence atom to an artifact, and explicitly blocks sample-level methane risk, final A-E MRV tiers, measured flux, and carbon-credit claims.
 
-## Current Multi-Lane Status
+## Historical July Multi-Lane Snapshot
 
-The functional expansion is no longer a single POC denominator. Current local
-work should be interpreted as related but distinct evidence lanes:
+The functional expansion grew beyond the single POC denominator. The July 24
+status below is retained for lineage and must not be used as the August release
+denominator:
 
 | Lane | Status in the 2026-07-24 release | Operational meaning |
 | --- | --- | --- |
@@ -79,7 +99,7 @@ work should be interpreted as related but distinct evidence lanes:
 | Mangrove/Futian 2026 expansion | 3,404 registered rMAGs; 3,156 ESM-2; 3,156 gLM2; 2,931 annotation-complete functional payloads | blue-carbon target lane awaiting common accepted/present mechanism-feature aggregation |
 | MUCC v1 Old Woman Creek | 2,508 registered MAGs; 2,501 ESM-2; 2,508 gLM2 and source-functional payloads; 2,501 data-complete source-scaffold tri-views | wetland reference and expression-detection lane under a distinct functional contract |
 
-The latest expanded HTML atlas is:
+The July 24 expanded HTML atlas was:
 
 ```text
 results/reports/mbag_nextgen_molecular_niche_atlas_20260724_scientific_reconciliation/report.html
@@ -91,7 +111,7 @@ It is backed by:
 results/reports/methanet_3view_payload_freeze_20260724_scientific_reconciliation/
 ```
 
-This freeze registers 7,965 units and contains 7,484 data-complete tri-views.
+That historical freeze registered 7,965 units and contained 7,484 data-complete tri-views.
 The evidence contract keeps 625 mechanism-comparable POC rows, 4,358
 annotation-complete mangrove rows awaiting common feature aggregation, and
 2,501 MUCC v1 source-scaffold rows separate. One incomplete MSM row remains a
@@ -188,7 +208,9 @@ The pipeline must not let missingness masquerade as biology. Every bridge candid
 4. source-aware validation status
 5. platform feature status
 
-Only candidates that pass the relevant gates should be shown as high-confidence methane MRV leads.
+Candidates that pass relevant molecular gates may be shown as better-supported
+review hypotheses. They remain distinct from validated methane flux, sample
+risk, or carbon-credit decisions.
 
 ## Freshness Note
 

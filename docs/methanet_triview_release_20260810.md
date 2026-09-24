@@ -1,12 +1,31 @@
 # MethaNet Tri-View Controlled-Diligence Release: 2026-08-10
 
-## Decision
+## Decision recorded on 2026-08-10
 
-The four-lane molecular payload is release-freeze ready after bounded repair
+The four registered source-lane molecular payloads are release-freeze ready after bounded repair
 and integrity-aware warehouse consolidation. The August 10 public source and
 local build remain `noindex` and are **not authorized for deployment** until
 the source/taxonomy statistical, stability, browser, accessibility, and final
 publication gates pass.
+
+The POC source lane contains two interpretation groups, rumen and
+wetland/MUCC; this is why public material describes five evidence lanes while
+the release registry has four source lanes.
+
+## Subsequent scoped correction, 2026-09-23/24
+
+The already-public [landing page](https://emergentbiome.earth/) and
+[technical report](https://emergentbiome.earth/report/) were corrected and
+redeployed against this August freeze under `noindex`. The user-directed
+correction addressed stale public presentation and aligned the landing and
+report; it did not change the frozen counts, authorize indexing, or close the
+scientific publication gates below. The reconciled local report is
+`results/reports/emergentbiome_molecular_atlas_20260923_reconciled/`; the latest
+deployment receipt is under
+`results/reports/emergentbiome_public_browser_verification_20260923_tsne/`.
+For future release history and the current pointer, see
+[`releases/README.md`](releases/README.md) and
+`configs/atlas_current_release.json`.
 
 ## Reconciled ledger
 
@@ -26,6 +45,11 @@ publication gates pass.
 | Sample-linked | 0 |
 | Field-validated | 0 |
 | Calibrated | 0 |
+
+The zeros for sample linkage and field validation are release-authorization
+states for molecular-to-sample/process scoring. They do not erase the staged
+sample contexts, processed expression, or field observations; accepted exact
+sample–flux joins remain zero in the August metadata-readiness summary.
 
 ## Tail-unit disposition
 
@@ -56,6 +80,8 @@ writing `COMPLETE`.
   `results/reports/methanet_atlas_metadata_readiness_20260810/`
 - Technical report:
   `results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end/`
+- Reconciled public report from the same freeze:
+  `results/reports/emergentbiome_molecular_atlas_20260923_reconciled/`
 - Locally built public tree:
   `web/emergentbiome-methanet/_site/`
 
@@ -83,9 +109,9 @@ evidence cards for molecular review, provenance, readiness, and the next
 measurement. It no longer presents current atlas rows as calibrated methane
 risk, activity, measured flux, final tiers, or crediting evidence.
 
-## Publication blockers
+## Publication blockers retained from the August decision
 
-Before deployment, record passing source-aware permutation nulls,
+Before routine scientific publication or indexing, record passing source-aware permutation nulls,
 taxonomy-matched controls, leave-source checks where possible, bootstrap
 neighbor and candidate stability, view/QC/missingness ablations,
 dimensionality and graph sensitivity, repeated-test correction, and explicit
