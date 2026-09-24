@@ -62,8 +62,10 @@ rumen-heavy (518 rumen, 107 wetland), and these assignments do not prove
 transfer. The report's zero concerns reciprocal cross-domain top-35 pairs
 after per-dimension standardization, a separate statistic.
 The map opens in UMAP for visual navigation because the diffusion projection
-compresses most target records into a narrow band. Diffusion and PCA remain
-selectable. All link membership is computed in the high-dimensional ESM-2
+compresses most target records into a narrow band. Diffusion, t-SNE, and PCA remain
+selectable. t-SNE is computed for the same 7,710 embedding-bearing records as the
+other views; the 255 registered gap rows have no projection coordinates. All link
+membership is computed in the high-dimensional ESM-2
 space, independently of the displayed 2D projection.
 
 ## Landing Page Story

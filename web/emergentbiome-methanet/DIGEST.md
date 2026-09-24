@@ -125,7 +125,7 @@ These are metadata-rich validation opportunities, not scored samples.
 | --- | --- | --- |
 | Landing manifold | Real report coordinates and source-audited counts | Navigation and hypothesis generation, not transfer or risk proof |
 | Landing candidate card | Frozen MUCC v1 OWC_1885 record with explicit evidence states | MAG/proteome review only; expression detection is not process rate |
-| Projection controls | UMAP opens as the navigable landing view; diffusion and PCA remain selectable. The report also retains PHATE where available | Two-dimensional layouts do not rank candidates or change high-dimensional link membership |
+| Projection controls | UMAP opens as the navigable landing view; diffusion, t-SNE, and PCA remain selectable for the same 7,710 embedding-bearing records. PHATE is unavailable in the frozen report | Two-dimensional layouts do not rank candidates or change high-dimensional link membership; 255 registered gap rows have no projection coordinates |
 | Evidence cards | Derived evidence records with direct, missing, contradictory, and next-action fields | Review priority, not biological truth |
 | Sample/context cards | Real metadata coverage and explicit ambiguity tiers | Context value, not exact sample risk |
 | Climate, proxy, and product scenes | Clearly badged sourced anchor, roadmap, or illustrative product shape | No illustrative score is a released prediction |

@@ -118,18 +118,34 @@ def audit_landing_controls(driver, url: str, width: int, height: int) -> dict:
     diffusion_pressed = driver.find_element(
         By.CSS_SELECTOR, "[data-atlas-projection='diffusion']"
     ).get_attribute("aria-pressed")
+    driver.find_element(By.CSS_SELECTOR, "[data-atlas-projection='tsne']").click()
+    tsne_pressed = driver.find_element(
+        By.CSS_SELECTOR, "[data-atlas-projection='tsne']"
+    ).get_attribute("aria-pressed")
+    tsne_announcement = driver.find_element(By.ID, "atlasPanelAnnounce").get_attribute("textContent")
 
     scroll_to_scene("scene-engine")
     driver.find_element(By.CSS_SELECTOR, "[data-engine-lens='1']").click()
     engine_pressed = driver.find_element(
         By.CSS_SELECTOR, "[data-engine-lens='1']"
     ).get_attribute("aria-pressed")
+    original_window = driver.current_window_handle
+    driver.find_element(By.ID, "headerReportCta").click()
+    WebDriverWait(driver, 30).until(lambda d: len(d.window_handles) == 2)
+    driver.switch_to.window(next(handle for handle in driver.window_handles if handle != original_window))
+    WebDriverWait(driver, 120).until(EC.presence_of_element_located((By.CSS_SELECTOR, "#niche-map svg")))
+    report_link_opens = driver.current_url.rstrip("/").endswith("/report")
+    driver.close()
+    driver.switch_to.window(original_window)
     return {
         "viewButtons": len(view_buttons),
         "projectionButtons": len(projection_buttons),
         "candidateOptions": candidate_options,
         "initialUmapPressed": initial_umap == "true",
         "diffusionPressed": diffusion_pressed == "true",
+        "tsnePressed": tsne_pressed == "true",
+        "tsneAnnounced": "TSNE projection" in tsne_announcement,
+        "reportLinkOpens": report_link_opens,
         "enginePressed": engine_pressed == "true",
         "pendingShowsExactJoinGap": "exact sample" in pending.lower(),
         "nextShowsFieldPairing": "methane-process measurement" in next_action.lower(),
@@ -285,10 +301,13 @@ def main() -> int:
     for label, controls in landing_controls.items():
         required = {
             "viewButtons": 4,
-            "projectionButtons": 3,
+            "projectionButtons": 4,
             "candidateOptions": 27,
             "initialUmapPressed": True,
             "diffusionPressed": True,
+            "tsnePressed": True,
+            "tsneAnnounced": True,
+            "reportLinkOpens": True,
             "enginePressed": True,
             "pendingShowsExactJoinGap": True,
             "nextShowsFieldPairing": True,

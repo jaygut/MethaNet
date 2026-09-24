@@ -6,17 +6,18 @@ Reads the freeze-backed molecular niche-space projection produced by the MethaNe
 report builder and emits a lean, page-ready `data/atlas.json` that drives the
 hero scene (Scene 3) and the atlas scene (Scene 4).
 
-PREFERENCE ORDER (per build spec) — option used: **(1) DIFFUSION MAP / PHATE**.
-The source `niche.json` carries REAL low-dimensional coordinates of the ESM2 (650M)
-proteome embeddings under five methods, all from the same cosine kNN affinity graph.
+Primary view: diffusion map. The source `niche.json` carries computed
+low-dimensional coordinates of the ESM-2 (650M) proteome embeddings. The
+methods have distinct algorithms; t-SNE is a visual comparison, not a graph
+or candidate-ranking substrate.
 The hero's 2D backbone (x,y) is the report's primary diffusion map. The exporter
-also preserves PCA and the best available nonlinear sensitivity projection
-(PHATE when present, otherwise UMAP) for the full registered embedding context.
+also preserves PCA, t-SNE, and the best available nonlinear sensitivity projection
+(PHATE when present, otherwise UMAP) for the same embedding-bearing records.
 
-Coordinates are REAL. The only transform is a per-axis standardize + symmetric
-scale + soft clip so the anisotropic eigenvector components render legibly; this is
-a monotonic, structure-preserving rescale (point neighborhoods and bridge topology
-are preserved). It is NOT a procedural stylization.
+Coordinates come from the report. Display transforms make them render legibly.
+Some per-axis transforms change visual distances. Bridge and neighbor membership
+comes from the original high-dimensional ESM-2 cosine analysis. It is NOT a procedural
+stylization.
 
 Deterministic: no RNG is used (no subsampling, no jitter). Re-running on the same
 source yields byte-identical output. SOURCE_NICHE pins the exact freeze.
@@ -73,17 +74,22 @@ def domain_code(dom):
 
 
 def standardize_scale(values, gain=0.62):
-    """Z-score then tanh squash into (-1, 1).
-
-    tanh is monotonic and structure-preserving: it keeps point ordering and local
-    neighborhoods of the real diffusion components while gently compressing the few
-    far outliers, so the dense core spreads legibly with no hard clip wall.
-    """
+    """Z-score then tanh squash into (-1, 1) for display only."""
     n = len(values)
     mean = sum(values) / n
     var = sum((v - mean) ** 2 for v in values) / n
     sd = math.sqrt(var) or 1.0
     return [math.tanh((v - mean) / sd * gain) for v in values]
+
+
+def uniform_scale_pair(xs, ys, pad=0.92):
+    """Center two axes with one scale factor, preserving their 2D distances."""
+    x_mid = (min(xs) + max(xs)) / 2
+    y_mid = (min(ys) + max(ys)) / 2
+    half_span = max(max(xs) - min(xs), max(ys) - min(ys)) / 2 or 1.0
+    scale = pad / half_span
+    return ([(x - x_mid) * scale for x in xs],
+            [(y - y_mid) * scale for y in ys])
 
 
 def minmax_scale(values, lo_pct=0.3, hi_pct=99.7):
@@ -151,10 +157,12 @@ def main():
     # keep only embedding-bearing nodes (have a primary diffusion coordinate)
     nodes = [n for n in raw_nodes if n.get("diffusion_1") is not None and n.get("diffusion_2") is not None]
     gap_rows = len(raw_nodes) - len(nodes)
+    if len({n["proteome_id"] for n in nodes}) != len(nodes):
+        sys.exit("ERROR: duplicate proteome_id among embedding-bearing records")
 
-    # --- per-projection display coords (REAL, structure-preserving) ---
+    # --- per-projection display coords (real; visual distances may change) ---
     # Primary = diffusion map via linear min-max (faithful to the report's fan view).
-    # Best nonlinear projection / PCA kept as sensitivity toggles.
+    # Other computed projections are display-only sensitivity toggles.
     proj = {}
     proj["d"] = (minmax_scale([n["diffusion_1"] for n in nodes]),
                  minmax_scale([n["diffusion_2"] for n in nodes]))
@@ -170,12 +178,23 @@ def main():
         ),
         "pca",
     )
+    if any(
+        not all(
+            n.get(axis) is not None and math.isfinite(float(n[axis]))
+            for axis in ("tsne_1", "tsne_2")
+        )
+        for n in nodes
+    ):
+        sys.exit("ERROR: t-SNE coordinates are missing or non-finite for an embedding-bearing record")
     for key, (a, b) in {
         "p": ("pca_1", "pca_2"),
         "h": (f"{nonlinear_name}_1", f"{nonlinear_name}_2"),
     }.items():
         proj[key] = (standardize_scale([n[a] for n in nodes]),
                      standardize_scale([n[b] for n in nodes]))
+    proj["t"] = uniform_scale_pair(
+        [n["tsne_1"] for n in nodes], [n["tsne_2"] for n in nodes]
+    )
 
     # Public methane intensity is restricted to the curated POC mechanism
     # contract. MSM/Futian raw hit-row aggregates and MUCC source terms are
@@ -224,11 +243,13 @@ def main():
         dx, dy = proj["d"][0][i], proj["d"][1][i]
         px, py = proj["p"][0][i], proj["p"][1][i]
         hx, hy = proj["h"][0][i], proj["h"][1][i]
+        tx, ty = proj["t"][0][i], proj["t"][1][i]
         points.append(OrderedDict([
             ("id", pid),
             ("e", ECO_CODE[eco]),
             ("x", r(dx)), ("y", r(dy)),          # primary display = DIFFUSION MAP (min-max)
-            ("hx", r(hx)), ("hy", r(hy)),         # PHATE (secondary toggle)
+            ("hx", r(hx)), ("hy", r(hy)),         # PHATE or UMAP
+            ("tx", r(tx)), ("ty", r(ty)),         # t-SNE
             ("px", r(px)), ("py", r(py)),         # PCA (linear sanity-check)
             ("d", domain_code(n.get("domain"))),
             ("br", 1 if pid in bridge_ids else 0),
@@ -297,13 +318,13 @@ def main():
 
     out = OrderedDict([
         ("meta", OrderedDict([
-            ("artifact", "EmergentBiome/MethaNet atlas — evidence-reconciled public export"),
+            ("artifact", "EmergentBiome Molecular Atlas — evidence-reconciled public export"),
             ("source", os.path.relpath(src, REPO_ROOT_FROM_HERE)),
-            ("option_used", f"1 — DIFFUSION MAP 2D coordinates of the proteome embeddings (REAL); {nonlinear_name.upper()} + PCA also exported as sensitivity views"),
+            ("option_used", f"1 — DIFFUSION MAP 2D coordinates of the proteome embeddings (REAL); {nonlinear_name.upper()}, t-SNE and PCA also exported as sensitivity views"),
             ("primary_projection", "diffusion"),
-            ("secondary_projections", [nonlinear_name, "pca"]),
-            ("coord_transform", f"diffusion: per-axis linear min-max (0.3/99.7 clip); {nonlinear_name}/pca: standardize + tanh"),
-            ("projection_note", f"The primary hero map is the diffusion map built from the proteome-embedding cosine kNN affinity graph. {nonlinear_name.upper()} and PCA are retained as projection-sensitivity views."),
+            ("secondary_projections", [nonlinear_name, "tsne", "pca"]),
+            ("coord_transform", f"diffusion: per-axis linear min-max (0.3/99.7 clip); {nonlinear_name}/pca: standardize + tanh for display only; tsne: shared affine scale preserving 2D distances"),
+            ("projection_note", f"The primary hero map is the diffusion map built from the proteome-embedding cosine kNN affinity graph. {nonlinear_name.upper()}, t-SNE and PCA are retained as projection-sensitivity views. None determines high-dimensional link membership."),
             ("snapshot", snap),
             ("n_points", len(points)),
             ("n_bridges", len(bridges)),
