@@ -190,6 +190,23 @@ def audit_report(driver, url: str, ledger: dict, width: int, height: int, screen
         };
         """
     )
+    result["methodButtons"] = [
+        button.text for button in driver.find_elements(By.CSS_SELECTOR, "#method-buttons button")
+    ]
+    result["initialNichePoints"] = len(
+        driver.find_elements(By.CSS_SELECTOR, "#niche-map svg circle:not(.case-halo)")
+    )
+    if width >= 1400:
+        tsne = next(
+            button
+            for button in driver.find_elements(By.CSS_SELECTOR, "#method-buttons button")
+            if button.text == "TSNE"
+        )
+        tsne.click()
+        WebDriverWait(driver, 30).until(lambda _: tsne.get_attribute("aria-pressed") == "true")
+        result["tsneNichePoints"] = len(
+            driver.find_elements(By.CSS_SELECTOR, "#niche-map svg circle:not(.case-halo)")
+        )
     visible = driver.execute_script(
         """
         const keys = arguments[0];
@@ -332,6 +349,17 @@ def main() -> int:
             failures.append(f"{label}: runtime error panel present")
     if report["svgCount"] < 5 or report["labelledSvgs"] != report["svgCount"]:
         failures.append("report.desktop: interactive SVGs missing accessible labels")
+    if report["methodButtons"] != ["Diffusion map", "UMAP", "TSNE", "PCA"]:
+        failures.append("report.desktop: projection methods do not match the frozen report")
+    for label, view in (
+        ("report.desktop", report),
+        ("report.tablet", report_tablet),
+        ("report.mobile", report_mobile),
+    ):
+        if view["initialNichePoints"] != ledger["release_required_units"]:
+            failures.append(f"{label}: plotted point count includes gaps or drops embeddings")
+    if report["tsneNichePoints"] != ledger["release_required_units"]:
+        failures.append("report.desktop: t-SNE plotted point count differs from release units")
     if report["fallbacks"] < 3 or report["fallbacks"] != report["loadedFallbacks"]:
         failures.append("report.desktop: static fallbacks missing or unloaded")
     if not report["keyboardCells"] or not report["keyboardCandidates"]:
