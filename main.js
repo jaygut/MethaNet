@@ -147,8 +147,11 @@
     // Primary journey stays on-page; the bundled report expands the same freeze.
     const rep = EB.links.report;
     const setHref = (id, href) => { const el = document.getElementById(id); if (el) el.href = href; };
-    setHref("headerReportCta", "#scene-atlas");
-    setHref("reportCta", "#scene-atlas");
+    setHref("headerAtlasCta", "#scene-atlas");
+    setHref("heroAtlasCta", "#scene-atlas");
+    setHref("atlasCta", "#scene-atlas");
+    setHref("headerReportCta", rep);
+    setHref("reportCta", rep);
     setHref("contactCta", "mailto:" + EB.links.contactEmail);
     document.querySelectorAll("[data-engine-lens]").forEach((button) => {
       button.addEventListener("click", () => {

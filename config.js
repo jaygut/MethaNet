@@ -392,9 +392,9 @@ window.EB = (function () {
 
   /* ---- outbound links (single place to update the published report path) ---- */
   const links = {
-    report: "report/",                 // deployed alias is an older build; label as historical until resynchronized
-    reportName: "Dated technical archive",
-    reportDate: "2026-08-10",
+    report: "report/",                 // stable alias published with the landing bundle
+    reportName: "EmergentBiome Molecular Atlas technical report",
+    reportDate: "2026-09-23",
     siteUrl: "https://emergentbiome.earth/",
     contactEmail: "jg@graphoflife.com",
   };

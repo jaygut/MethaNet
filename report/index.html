@@ -259,7 +259,11 @@
     function panelWidth(el, minWidth=760){ return Math.max(minWidth, (el.node() && el.node().clientWidth) || minWidth); }
     function tooltip(){ return d3.select('body').append('div').attr('class','tooltip'); }
     function clean(v, fallback='unavailable'){ return (v === null || v === undefined || String(v).trim()==='' || String(v)==='NaN') ? fallback : String(v); }
-    function finiteNum(v){ const x=Number(v); return Number.isFinite(x); }
+    // JSON null marks a source-lane gap, not a coordinate at the origin.
+    function finiteNum(v){
+      return v !== null && v !== undefined && typeof v !== 'boolean' &&
+        (typeof v !== 'string' || v.trim() !== '') && Number.isFinite(Number(v));
+    }
     function fixed(v, digits=2, fallback='not available'){ return finiteNum(v) ? Number(v).toFixed(digits) : fallback; }
     function densityText(d, key){ return finiteNum(d[key]) ? `${Number(d[key]).toFixed(2)} /1k proteins` : 'unavailable'; }
     function percentText(v, digits=1){ return finiteNum(v) ? `${Number(v).toFixed(digits)}%` : 'unavailable'; }
@@ -328,8 +332,9 @@
         <p class='muted'>Blocks final MRV scoring: ${d.blocking_gap || 'sample mapping, abundance, environment, uncertainty, and validation.'}<br>Next metadata action: ${clean(d.next_metadata_action,'Resolve sample and validation context.')}</p>`);
     }
     function availableMethods(){
-      const node = (ATLAS.niche.nodes || [])[0] || {};
-      return ['diffusion','umap','phate','tsne','pca'].filter(m => Number.isFinite(+node[`${m}_1`]) && Number.isFinite(+node[`${m}_2`]));
+      const nodes = ATLAS.niche.nodes || [];
+      return ['diffusion','umap','phate','tsne','pca'].filter(m =>
+        nodes.some(node => finiteNum(node[`${m}_1`]) && finiteNum(node[`${m}_2`])));
     }
     function renderKnowledgeGraph(){
       const el=d3.select('#mbag-knowledge-graph'); el.selectAll('*').remove();
@@ -393,7 +398,8 @@ ${d.meta.join(' ')}`);
       const byId=new Map(data.map(d=>[d.proteome_id,d]));
       const linkData=links
         .filter(d=>byId.has(d.source)&&byId.has(d.target))
-        .filter(d=>finiteNum(byId.get(d.source)[`${method}_1`]) && finiteNum(byId.get(d.target)[`${method}_1`]))
+        .filter(d=>[byId.get(d.source),byId.get(d.target)].every(node=>
+          finiteNum(node[`${method}_1`]) && finiteNum(node[`${method}_2`])))
         .sort((a,b)=>(a.evidence_type==='case_study_nearest_poc'?-1:0)-(b.evidence_type==='case_study_nearest_poc'?-1:0) || Number(b.similarity||0)-Number(a.similarity||0))
         .slice(0,1200);
       svg.append('g').selectAll('line').data(linkData).join('line')

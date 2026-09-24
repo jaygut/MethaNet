@@ -7,7 +7,7 @@
     const EB = window.EB, D = window.EBDraw, GOLD = "#FFC75A";
     const ECOC = {}; EB.ecosystems.forEach((e) => { ECOC[e.code] = e.color; });
     const VIEWS = ["overview", "candidates", "neighbors", "sensitivity"];
-    const PROJECTIONS = ["diffusion", "umap", "pca"];
+    const PROJECTIONS = ["diffusion", "umap", "tsne", "pca"];
     // Frozen raw-cosine nearest-core results from
     // results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end/
     // tables/embedding_context_table.tsv and tables/candidate_cards.tsv.
@@ -63,7 +63,7 @@
         const a = rng.range(0, 6.2831), r = rng.range(0, Math.min(w, h) * 0.5);
         return {
           id: pt.id, e: pt.e, mz: pt.mz || 0,
-          coords: { diffusion: [pt.x, pt.y], umap: [pt.hx, pt.hy], pca: [pt.px, pt.py] },
+          coords: { diffusion: [pt.x, pt.y], umap: [pt.hx, pt.hy], tsne: [pt.tx, pt.ty], pca: [pt.px, pt.py] },
           nsx: region.cx + Math.cos(a) * r, nsy: region.cy + Math.sin(a) * r,
         };
       });
@@ -114,8 +114,9 @@
         '<div class="atlas__projection-buttons" role="group" aria-label="Atlas projection">' +
         '<button type="button" data-atlas-projection="diffusion" aria-pressed="false">Diffusion</button>' +
         '<button type="button" data-atlas-projection="umap" aria-pressed="true">UMAP</button>' +
+        '<button type="button" data-atlas-projection="tsne" aria-pressed="false">t-SNE</button>' +
         '<button type="button" data-atlas-projection="pca" aria-pressed="false">PCA</button></div>' +
-        '<p>UMAP opens for visual navigation; switch to diffusion or PCA for sensitivity. Link membership stays in high-dimensional ESM-2 cosine space.</p></div>' +
+        '<p>UMAP opens for visual navigation; compare diffusion, t-SNE, and PCA. These 2D layouts are display views; link membership stays in high-dimensional ESM-2 cosine space.</p></div>' +
         '<span id="atlasPanelAnnounce" class="vh" aria-live="polite"></span>';
       panelBody = panel.querySelector("#atlasPanelBody");
       panelAnnounce = panel.querySelector("#atlasPanelAnnounce");
