@@ -2538,7 +2538,7 @@ def test_expanded_atlas_builder_requires_lane_registry_by_default(tmp_path: Path
     repo_root = Path(__file__).resolve().parents[2]
     result = subprocess.run(
         [
-            str(repo_root / ".venv/bin/python"),
+            sys.executable,
             str(repo_root / "scripts/reports/build_mbag_expanded_multiview_atlas.py"),
             "--repo-root",
             str(tmp_path),
@@ -3102,7 +3102,7 @@ def test_split_manifest_shards_filters_sorts_and_records_empty_shards(tmp_path: 
 
     result = subprocess.run(
         [
-            str(repo_root / ".venv/bin/python"),
+            sys.executable,
             str(repo_root / "scripts/external/split_manifest_shards.py"),
             "--input",
             str(manifest),
@@ -3146,7 +3146,7 @@ def test_split_manifest_shards_rejects_duplicate_selected_ids(tmp_path: Path) ->
 
     result = subprocess.run(
         [
-            str(repo_root / ".venv/bin/python"),
+            sys.executable,
             str(repo_root / "scripts/external/split_manifest_shards.py"),
             "--input",
             str(manifest),
@@ -3184,7 +3184,7 @@ def test_split_manifest_shards_allows_duplicates_excluded_by_filter(tmp_path: Pa
 
     subprocess.run(
         [
-            str(repo_root / ".venv/bin/python"),
+            sys.executable,
             str(repo_root / "scripts/external/split_manifest_shards.py"),
             "--input",
             str(manifest),
@@ -3250,7 +3250,7 @@ def test_predict_external_mag_proteomes_filters_and_reuses_existing_outputs(tmp_
 
     result = subprocess.run(
         [
-            str(repo_root / ".venv/bin/python"),
+            sys.executable,
             str(repo_root / "scripts/external/predict_external_mag_proteomes.py"),
             "--repo-root",
             str(repo_root),
@@ -3307,7 +3307,7 @@ def test_predict_external_mag_proteomes_rejects_duplicate_selected_proteome_ids(
 
     result = subprocess.run(
         [
-            str(repo_root / ".venv/bin/python"),
+            sys.executable,
             str(repo_root / "scripts/external/predict_external_mag_proteomes.py"),
             "--repo-root",
             str(repo_root),
@@ -3380,7 +3380,7 @@ def test_predict_external_mag_proteomes_allows_duplicates_excluded_by_include_fi
 
     subprocess.run(
         [
-            str(repo_root / ".venv/bin/python"),
+            sys.executable,
             str(repo_root / "scripts/external/predict_external_mag_proteomes.py"),
             "--repo-root",
             str(repo_root),
@@ -3570,7 +3570,7 @@ def test_lane_registry_refresh_wrapper_renders_timestamped_outputs(tmp_path: Pat
             "OUTPUT_DIR": str(output_dir),
             "STAMP": "20990102_0304",
             "DRY_RUN": "1",
-            "PYTHON": str(repo_root / ".venv/bin/python"),
+            "PYTHON": sys.executable,
         },
         text=True,
         capture_output=True,
