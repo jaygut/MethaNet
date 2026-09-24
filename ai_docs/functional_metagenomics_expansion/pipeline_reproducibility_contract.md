@@ -1,11 +1,11 @@
 # Pipeline Reproducibility Contract
 
 Date: 2026-06-13
-Documentation refresh: 2026-07-24
+Documentation refresh: 2026-09-24
 
 Scope: MethaNet functional-metagenomics code, documentation, generated outputs,
-and downstream analytics for the 662-proteome POC cohort plus the
-mangrove/MSM and mangrove/Futian expansion lanes.
+and downstream analytics for the 662-proteome POC cohort, the mangrove/MSM and
+mangrove/Futian expansion lanes, and the distinct MUCC v1 source scaffold.
 
 ## Purpose
 
@@ -15,7 +15,8 @@ analysis scripts evolve.
 
 ## Non-Negotiable Invariants
 
-1. `proteome_id` is the canonical cohort key.
+1. `proteome_id` is the canonical cohort key within a registered lane; the
+   multi-lane release key is `(lane_id, proteome_id)`.
 2. The manifest for the active lane defines the denominator; downstream tools
    never define a cohort by successful output alone.
 3. The 662-row cohort backbone defines the POC identity denominator. The
@@ -82,13 +83,27 @@ Every mixed-lane MBAG report should additionally record:
 If any of these are absent, the run can still be useful, but it is not fully
 reproducible until the gap is documented.
 
-Current reproducibility note, 2026-07-24: the scientific-reconciliation release
-is backed by
+Current release note, 2026-09-24: the August 10 controlled-diligence freeze is
+backed by
+`results/reports/methanet_3view_payload_freeze_20260810_end_to_end/` and
+its release ledger. It registers 7,965 units and 7,710 data-complete
+tri-views: 5,209 pipeline-normalized rows with cross-lane comparability
+pending and 2,501 MUCC source-scaffold rows. The September landing/report
+correction uses this same freeze under `noindex`. The corresponding source and
+reconciled reports are cataloged in
+[`../../docs/current_artifact_inventory.md`](../../docs/current_artifact_inventory.md).
+The live release pointer and reproducible handoff rules are in
+`configs/atlas_current_release.json` and
+[`../../docs/atlas_data_foundation.md`](../../docs/atlas_data_foundation.md).
+
+Historical reproducibility note, 2026-07-24: the earlier
+scientific-reconciliation freeze was backed by
 `results/reports/methanet_3view_payload_freeze_20260724_scientific_reconciliation/`
-and the matching MBAG report bundle. It registers 7,965 units and carries 7,484
-data-complete tri-views across three explicit functional contracts. Every new
-denominator requires a fresh lane-registry snapshot, freeze manifest, report
-bundle, and validation-gate pass.
+and its matching MBAG report bundle. It registered 7,965 units and carried
+7,484 data-complete tri-views across three functional contracts. Those counts
+are a dated predecessor, not the current release. Every new denominator
+requires a fresh lane-registry snapshot, freeze manifest, report bundle, and
+validation-gate pass.
 
 ## Metadata Contract
 

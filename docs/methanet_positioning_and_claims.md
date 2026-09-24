@@ -1,6 +1,6 @@
 # MethaNet Positioning And Claim Contract
 
-Documentation refresh: 2026-08-10
+Documentation refresh: 2026-09-24
 
 This document is the shared narrative and claim contract for the MethaNet
 repository, the [EmergentBiome landing page](https://emergentbiome.earth/), and
@@ -10,7 +10,13 @@ status and artifact paths remain in
 
 ## Canonical Position
 
-MethaNet is a molecular-attestation system for blue-carbon methane diligence.
+MethaNet is the internal molecular-attestation platform and repository behind
+the public **EmergentBiome Molecular Atlas**. The public page calls its
+reviewable evidence layer the **EmergentBiome evidence graph**; MBAG remains
+the internal architecture and historical artifact identifier. Both names use
+the same bounded August 10 molecular evidence contract.
+
+MethaNet supports blue-carbon methane diligence.
 It turns microbiome sequencing into an evidence graph that links each MAG or
 proteome to three molecular views, reliability guardrails, source provenance,
 claim eligibility, and the next measurement that would improve a decision.
@@ -31,8 +37,14 @@ available.
 
 ## MBAG Knowledge Graph
 
-The MethaNet Bridge Attestation Graph, or MBAG, is the connective tissue of the
-system. It links:
+The MethaNet Bridge Attestation Graph, or MBAG, is the internal evidence-graph
+architecture. Its existing persistent, queryable MVP covers the 662-record
+rumen/wetland POC. The August release adds 7,965 registered
+`(lane_id, proteome_id)` rows with evidence-contract, candidate-card, and
+validation-gap projections; those rows are not yet a materialized
+sample-resolved knowledge graph. See
+[`knowledge_graph_foundation.md`](knowledge_graph_foundation.md) for the
+current/future boundary. The review path links:
 
 ```text
 MAG or proteome record
@@ -70,10 +82,13 @@ does not establish biological-mechanism equivalence. These states are useful
 for navigation, diligence, candidate review, and harmonization planning while
 retaining their distinct evidence contracts.
 
-The August 10 experience remains `noindex` and controlled-diligence only.
+The August 10 evidence now powers a live `noindex` controlled-diligence page
+and reconciled report following a scoped September correction. That deployment
+did not authorize routine scientific publication or indexing.
 Source-aware and taxonomy-aware nulls, bootstrap and graph sensitivity,
-view ablations, multiple-testing control, current Open Graph assets, and final
-browser/accessibility review are publication gates, not claims already earned.
+view ablations, multiple-testing control, and remaining scientific review are
+publication gates, not claims already earned. Browser/accessibility checks for
+the scoped correction are recorded separately from those scientific gates.
 
 ## Tri-View Interpretation
 
@@ -116,7 +131,9 @@ Use these terms consistently:
 
 - **Molecular attestation** for the current product category.
 - **MBAG evidence graph** or **molecular-attestation knowledge graph** for the
-  governed evidence system.
+  internal architecture; **EmergentBiome evidence graph** for the public
+  proposal page. Name the 662-record persistent MVP and 7,965-row release
+  projection separately when describing implemented graph scope.
 - **Data-complete tri-view** when all three payloads exist.
 - **Mechanism-comparable tri-view** only for rows that share the validated
   accepted/present feature contract.
@@ -129,6 +146,10 @@ Use these terms consistently:
 Avoid language that presents current molecular outputs as measured methane
 flux, final sample or project risk, calibrated A to E tiers, source-independent
 rumen-to-wetland transfer, registry approval, or carbon-credit determination.
+The release ledger's zero `sample_linked_units` and `field_validated_units`
+refer to release-authorized molecular-to-sample/process joins for scoring;
+sample contexts, processed expression, and staged field observations exist
+under separate typed evidence contracts.
 
 ## Narrative Sequence
 
@@ -136,8 +157,9 @@ Repository and external materials should follow one coherent sequence:
 
 1. Methane can erode blue-carbon climate value.
 2. Direct monitoring is expensive and spatially sparse.
-3. MethaNet converts sequencing into a traceable molecular evidence graph.
-4. MBAG separates representation context, mechanism evidence, and reliability
+3. The EmergentBiome Molecular Atlas presents sequencing-derived evidence and
+   explicit gaps through a traceable review surface.
+4. The internal MBAG architecture separates representation context, mechanism evidence, and reliability
    guardrails.
 5. Evidence cards guide molecular diligence and the next measurement.
 6. Paired abundance, environmental, uncertainty, and field evidence unlock

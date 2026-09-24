@@ -1,7 +1,7 @@
 # Functional MAG Cohort Data Architecture Hardening
 
 Date: 2026-06-13
-Documentation refresh: 2026-07-24
+Documentation refresh: 2026-09-24
 
 ## Purpose
 
@@ -101,19 +101,26 @@ folders happen to be complete on disk.
 | --- | --- | --- |
 | POC MAG-bin rumen + wetland/MUCC | completed reference warehouse for current MBAG reporting | 625 MAG/bin-comparable units from the 662-row ESM2 backbone |
 | POC assembly-context units | preserved evidence/status lane, not MAG-bin feature denominator | 37 rumen no-bin or assembly-context records, explicitly quarantined |
-| Mangrove/MSM expansion | target-domain expansion warehouse after active functional tranche completion or dated interim snapshot | 1,428 local candidates as the local processing denominator, with a separate reconciled view for the paper-reported 966 final medium/high-quality MAG denominator |
-| Mangrove/Futian 2026 expansion | target-domain expansion warehouse; the July 24 release carries 2,931 annotation-complete functional payloads and awaits common mechanism-feature aggregation | 3,156 ready payload rows plus a preserved 248-row missing-payload gap register from the 3,404 phase-1 rMAG denominator |
+| Mangrove/MSM expansion | completed August 10 pipeline-normalized warehouse; cross-lane mechanism comparability pending | 1,428 local candidates as the processing denominator, distinct from the paper-reported 966 final medium/high-quality MAGs |
+| Mangrove/Futian 2026 expansion | completed August 10 pipeline-normalized warehouse for ready payloads; cross-lane mechanism comparability pending | 3,156 ready payload rows plus a preserved 248-row missing-payload gap register from the 3,404 phase-1 rMAG denominator |
 | MUCC v1 Old Woman Creek | wetland source-scaffold warehouse with source DRAM, gene, expression, network, and staged field evidence | 2,508 registered archive MAGs, 2,501 data-complete source-scaffold tri-views, and explicit ecological-linkage blocks |
 | Multi-view atlas/report layer | report/query union across ESM2, functional warehouse, gLM2, provenance, and QC | manifest-driven left joins with explicit missingness and lane labels |
 
 For every warehouse, the manifest is authoritative. Completed folders indicate
 available evidence, not the cohort denominator. Failed, partial, superseded,
 duplicate, and not-yet-started records must remain visible in status tables.
+At the August 10 freeze, the POC, MSM, and Futian warehouse manifests each list
+24 Parquet tables with 625, 1,428, and 3,156 selected `dim_mag` rows and 712,
+1,515, and 3,243 passing structure/selection gates respectively. MUCC v1 has
+a separate 61-table source-scaffold warehouse with partial and blocked
+ecological-linkage gates. See
+[`../../docs/atlas_data_foundation.md`](../../docs/atlas_data_foundation.md)
+for the current authority chain and typed table-grain plan.
 
-## Current Generated Warehouse Snapshot
+## Historical June 16 POC Warehouse Snapshot
 
-The latest launch-ready generated warehouse observed during the documentation
-refresh is:
+The launch-ready POC warehouse observed in the June 16 operational snapshot
+was:
 
 ```text
 results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse_poc_magbin_union_20260616_075022/
@@ -153,10 +160,11 @@ The optional DuckDB catalog is present at:
 results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse_poc_magbin_union_20260616_075022/functional_atlas.duckdb
 ```
 
-## Mangrove Expansion Readiness
+## Historical July Mangrove Readiness Snapshot
 
-The mangrove lanes are active expansions, not yet final consolidated warehouses.
-Snapshot at the 2026-07-04 documentation refresh:
+The mangrove lanes were not yet final consolidated warehouses at this earlier
+snapshot. The values below preserve July operational history and are not the
+August release state:
 
 | Item | Value |
 | --- | ---: |
@@ -177,9 +185,9 @@ Snapshot at the 2026-07-04 documentation refresh:
 | MUCC v1 registered MAGs | 2,508 |
 | MUCC v1 data-complete source-scaffold tri-views | 2,501 |
 
-When these tranches are consolidated, use the same per-run curated Parquet
-contract and validation gates as the POC warehouse. Add denominator fields to
-every mangrove cohort summary:
+The August warehouses now contain selected completed payloads for their ready
+denominators. Future cohort summaries must keep the following denominator
+fields separate:
 
 - `local_archive_denominator = 1428`
 - `published_quality_denominator = 966` when reconciling to the source paper's
@@ -191,9 +199,9 @@ every mangrove cohort summary:
 This prevents three different concepts from being collapsed: local processable
 MAG candidates, source-publication quality-filtered MAGs, and the subset that
 has completed functional evidence at a dated point in time.
-Refresh `configs/methanet_atlas_lanes.tsv` through
-`scripts/reports/refresh_atlas_lane_registry_status.sh` before any consolidation
-or report rebuild decision.
+Refresh the status derived from `configs/methanet_atlas_lanes.tsv` with
+`scripts/reports/refresh_atlas_lane_registry_status.sh` before any
+consolidation or report rebuild decision.
 
 ## Required Identity Columns
 

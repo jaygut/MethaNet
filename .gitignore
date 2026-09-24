@@ -45,6 +45,17 @@ htmlcov/
 data/*
 !data/.gitkeep
 
+# Rebuildable marker database outputs (docs/marker_db_mmseqs.md).
+# Keep future curated inputs such as db/marker_db_methanet.faa visible.
+/db/marker_db_core.faa
+/db/marker_db_core.manifest.tsv
+/db/marker_db.faa
+/db/marker_db.mmsdb*
+/db/tmp/
+
+# Downloaded seed alignments and temporary FASTA files from that build.
+/.cache/
+
 # Pipeline outputs
 features/
 

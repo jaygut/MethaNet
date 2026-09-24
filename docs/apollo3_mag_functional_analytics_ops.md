@@ -3,6 +3,14 @@
 Date: 2026-06-13
 Documentation refresh: 2026-07-24
 
+Currentness note, 2026-09-24: The commands and paths below are a dated
+Apollo-3 operational snapshot. Resolve the active warehouse paths from
+[`../configs/methanet_atlas_lanes.tsv`](../configs/methanet_atlas_lanes.tsv)
+and the promoted molecular freeze from
+[`../configs/atlas_current_release.json`](../configs/atlas_current_release.json)
+before reporting current counts. See the [atlas data
+foundation](atlas_data_foundation.md) for table grains and claim limits.
+
 This page is the operational path for running MethaNet MAG functional analytics
 on Apolo-3 with the databases that are actually installed and validated under:
 
@@ -36,13 +44,14 @@ As of `fgx_bakta_light_20260611_231310`, the production-ready stack is:
 | eggNOG v2 | ready, optional | staged and integrity-validated under `$DB_ROOT/eggnog_v2`; keep out of the active Slurm run unless explicitly launching the sidecar |
 | DRAM/DRAM2 | gated | use only after fresh official provisioning; not a production blocker |
 
-## Current Created Data And Database Artifacts
+## July operational data and database artifacts
 
 The operational path has produced a launch-ready local functional-atlas
 warehouse plus a molecular attestation graph. Treat these as generated evidence
 snapshots, not live scheduler state.
 
-Functional atlas warehouse:
+Historical POC functional atlas warehouse (the registered August 10 POC
+warehouse is a later semantic rebuild):
 
 ```text
 results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse_poc_magbin_union_20260616_075022/
