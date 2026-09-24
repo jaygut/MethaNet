@@ -19,8 +19,8 @@ jobs:
       - name: Install workflow dependencies
         run: uv sync --frozen --extra dev --extra pipeline
       - name: Lint workflow
-        run: uv run snakemake --lint -s workflow/Snakefile
+        run: uv run --no-sync snakemake --lint -s workflow/Snakefile
       - name: Dry run production template
-        run: uv run snakemake -n -s workflow/Snakefile --configfile configs/pipeline.yaml
+        run: uv run --no-sync snakemake -n -s workflow/Snakefile --configfile configs/pipeline.yaml
       - name: Dry run smoke config
-        run: uv run snakemake -n -s workflow/Snakefile --configfile configs/pipeline.smoke.yaml
+        run: uv run --no-sync snakemake -n -s workflow/Snakefile --configfile configs/pipeline.smoke.yaml
