@@ -5,11 +5,20 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_molecular_attestation_mvp_snapshot_builds(tmp_path: Path) -> None:
+    warehouse = (
+        REPO_ROOT
+        / "results/functional_metagenomics/fgx_662_apollo3_20260612"
+        / "cohort_warehouse_poc_magbin_union_20260616_075022/parquet/dim_mag"
+    )
+    if not warehouse.is_dir():
+        pytest.skip("requires the ignored POC functional warehouse")
+
     output_dir = tmp_path / "attestation_snapshot"
     cmd = [
         sys.executable,
