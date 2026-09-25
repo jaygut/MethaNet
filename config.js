@@ -336,7 +336,7 @@ window.EB = (function () {
       id: "blindspot", n: 2, label: "02 · The Measurement Gap",
       kicker: "The measurement gap",
       headline: "Project-scale methane evidence is still sparse.",
-      copy: "Field methane measurements are uneven. Molecular screening can help select what to measure next while site-specific flux remains a field question.",
+      copy: "This frozen public-source atlas has no verified wetland or mangrove MAG-to-flux pairings. That linkage gap motivates paired field measurements; it does not imply zero methane emissions.",
       data: "mixed-real-and-illustrative",
     },
     {
@@ -396,7 +396,8 @@ window.EB = (function () {
     reportName: "EmergentBiome Molecular Atlas technical report",
     reportDate: "2026-09-23",
     siteUrl: "https://emergentbiome.earth/",
-    contactEmail: "jg@graphoflife.com",
+    contactEmails: ["jg@ecosphereblue.earth", "aphilosof@ecosphereblue.earth"],
+    organizationUrl: "https://www.ecosphereblue.earth/",
   };
 
   /* ---- brand lockup strings ---- */

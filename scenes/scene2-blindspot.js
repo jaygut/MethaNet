@@ -1,8 +1,6 @@
-/* SCENE 2 - THE BLIND SPOT (illustrative scale; the honest current state is ~0).
-   A vast field of grey "unknown genome" nodes: the sediment microbiome as climate
-   dark matter. A measurement scan sweeps the field and finds essentially nothing -
-   today, almost no site carries paired methane-flux and molecular data. The field
-   size is illustrative and labeled; the "~0 measured" is the real present state. */
+/* SCENE 2 - THE MEASUREMENT GAP. The field is illustrative. The zero refers only
+   to verified wetland/mangrove MAG-to-flux pairings in the frozen release, not
+   methane emissions or the entire public literature. */
 (function () {
   window.EBScenes = window.EBScenes || {};
   window.EBScenes.blindspot = function (p, ctx) {
@@ -56,8 +54,7 @@
         D.label(p, "scanning for paired flux data…", sx - 8, h * 0.92 + 14, D.rgba(LIT, 0.55), 9, [p.RIGHT, p.TOP]);
       }
 
-      // validation-coverage row: the 80-100 target band, 0 of them lit (measured) today.
-      // The scan rakes across it and lights nothing - the same fact as "≈ 0", made spatial.
+      // Illustrative validation target; no sites are presented as measured here.
       {
         const rowY = h * 0.46, x0 = w * 0.18, x1 = w * 0.82;
         const dc2 = p.drawingContext; dc2.save();
@@ -75,17 +72,18 @@
         p.line(x80, rowY + 6, x80, rowY + 12); p.line(x1, rowY + 6, x1, rowY + 12);
         p.pop();
         D.label(p, "validation target  " + TGT_LO + " to " + TGT_HI + " sites", (x0 + x1) / 2, rowY + 22, EB.color.textMuted, 9.5, [p.CENTER, p.TOP]);
-        D.label(p, "0 lit", x0 - 12, rowY, D.rgba(LIT, 0.7), 11, [p.RIGHT, p.CENTER]);
+        D.label(p, "unpaired", x0 - 12, rowY, D.rgba(LIT, 0.7), 11, [p.RIGHT, p.CENTER]);
       }
 
-      // counter readout - exact current-atlas join state, not a global site count
+      // Current-release linkage gap, explicitly scoped to this atlas.
       p.push();
-      D.label(p, "PAIRED METHANE-FLUX MEASUREMENTS", w * 0.5, h * 0.15, EB.color.textMuted, 11, [p.CENTER, p.CENTER]);
+      D.label(p, "FROZEN PUBLIC-SOURCE ATLAS · LINKAGE GAP", w * 0.5, h * 0.15, EB.color.textMuted, 11, [p.CENTER, p.CENTER]);
       p.fill(LIT); p.noStroke(); p.textFont("IBM Plex Mono"); p.textAlign(p.CENTER, p.CENTER);
       p.textSize(Math.min(72, w * 0.1));
-      p.text("0 exact", w * 0.5, h * 0.15 + 48);
-      D.label(p, "authoritative sample + environment + process joins in this atlas", w * 0.5, h * 0.15 + 88, D.rgba(EB.color.textPrimary, 0.7), 11, [p.CENTER, p.CENTER]);
-      D.label(p, "grey: ~" + D.fmt(field.length) + " unknown genomes in this view (illustrative scale)", w * 0.5, h * 0.15 + 106, D.rgba(EB.color.textMuted, 0.7), 9.5, [p.CENTER, p.CENTER]);
+      p.text("0 paired", w * 0.5, h * 0.15 + 48);
+      D.label(p, "wetland/mangrove MAGs with verified, sample-matched", w * 0.5, h * 0.15 + 88, D.rgba(EB.color.textPrimary, 0.7), 11, [p.CENTER, p.CENTER]);
+      D.label(p, "methane-flux measurements in this release", w * 0.5, h * 0.15 + 105, D.rgba(EB.color.textPrimary, 0.7), 11, [p.CENTER, p.CENTER]);
+      D.label(p, "grey: ~" + D.fmt(field.length) + " illustrative genome positions", w * 0.5, h * 0.15 + 126, D.rgba(EB.color.textMuted, 0.7), 9.5, [p.CENTER, p.CENTER]);
       p.pop();
 
       D.vignette(p, w, h, EB.color.bgBase, 0.6);
