@@ -89,6 +89,14 @@ def audit_landing_controls(driver, url: str, width: int, height: int) -> dict:
         )
         time.sleep(0.9)
 
+    scroll_to_scene("scene-blindspot")
+    measurement_gap = driver.find_element(By.CSS_SELECTOR, "#scene-blindspot .copy").text.lower()
+    contact = driver.find_element(By.ID, "contact")
+    contact_links = {
+        link.get_attribute("href") for link in contact.find_elements(By.TAG_NAME, "a")
+    }
+    contact_cta = driver.find_element(By.ID, "contactCta").get_attribute("href")
+
     scroll_to_scene("scene-surveyor")
     WebDriverWait(driver, 60).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, "[data-card-view='pending']"))
@@ -138,6 +146,19 @@ def audit_landing_controls(driver, url: str, width: int, height: int) -> dict:
     driver.close()
     driver.switch_to.window(original_window)
     return {
+        "measurementGapScoped": (
+            "0 verified pairs" in measurement_gap
+            and "wetland/mangrove mag-to-flux joins in this release" in measurement_gap
+            and "does not imply zero methane emissions" in measurement_gap
+        ),
+        "contactLinks": contact_links
+        == {
+            "https://www.ecosphereblue.earth/",
+            "mailto:jg@ecosphereblue.earth",
+            "mailto:aphilosof@ecosphereblue.earth",
+        },
+        "contactCta": contact_cta
+        == "mailto:jg@ecosphereblue.earth,aphilosof@ecosphereblue.earth",
         "viewButtons": len(view_buttons),
         "projectionButtons": len(projection_buttons),
         "candidateOptions": candidate_options,
@@ -317,6 +338,9 @@ def main() -> int:
             failures.append(f"{label}: header brand clipped")
     for label, controls in landing_controls.items():
         required = {
+            "measurementGapScoped": True,
+            "contactLinks": True,
+            "contactCta": True,
             "viewButtons": 4,
             "projectionButtons": 4,
             "candidateOptions": 27,

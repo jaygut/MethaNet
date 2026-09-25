@@ -21,7 +21,7 @@
 
   const READOUTS = {
     stakes: [["~" + EB.num.methaneGWP20 + "×", "CH₄ vs CO₂ over 20 years", true], ["field flux", "needed for site-specific methane balance"]],
-    blindspot: [["0 accepted", "exact molecular + environment + process joins", true], ["next step", "pair samples with compatible field outcomes"]],
+    blindspot: [["0 verified pairs", "wetland/mangrove MAG-to-flux joins in this release", true], ["next step", "pair samples with compatible field outcomes"]],
     surveyor: [["1 real MAG", "source-audited review example", true], ["0 matched flux", "for this candidate record"]],
     cheap: [["salinity", "field context, not a process rate", true], ["genome evidence", "molecular screening, not site risk"]],
     atlas: [[D.fmt(EB.num.triViewReady), "data-complete MAG/proteome records", true], [D.fmt(EB.num.bridgeEdges), "displayed map links"], [D.fmt(EB.num.highlightedCandidateLinks), "highlighted nearest-core candidate links"], ["0", "standardized reciprocal rumen top-35 pairs"]],
@@ -142,7 +142,8 @@
     ).join("");
     document.getElementById("contact").innerHTML =
       EB.claims.boundaries[0] + " &nbsp;·&nbsp; A–E tiers remain a calibration target. &nbsp;·&nbsp; " +
-      'Graph of Life &nbsp;·&nbsp; <a href="mailto:' + EB.links.contactEmail + '">' + EB.links.contactEmail + "</a>";
+      '<a href="' + EB.links.organizationUrl + '">Ecosphere Blue</a> &nbsp;·&nbsp; ' +
+      EB.links.contactEmails.map((email) => '<a href="mailto:' + email + '">' + email + "</a>").join(" &nbsp;·&nbsp; ");
 
     // Primary journey stays on-page; the bundled report expands the same freeze.
     const rep = EB.links.report;
@@ -152,7 +153,7 @@
     setHref("atlasCta", "#scene-atlas");
     setHref("headerReportCta", rep);
     setHref("reportCta", rep);
-    setHref("contactCta", "mailto:" + EB.links.contactEmail);
+    setHref("contactCta", "mailto:" + EB.links.contactEmails.join(","));
     document.querySelectorAll("[data-engine-lens]").forEach((button) => {
       button.addEventListener("click", () => {
         document.querySelectorAll("[data-engine-lens]").forEach((candidate) => {
