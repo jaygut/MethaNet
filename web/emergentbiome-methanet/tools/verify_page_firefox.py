@@ -154,11 +154,11 @@ def audit_landing_controls(driver, url: str, width: int, height: int) -> dict:
         "contactLinks": contact_links
         == {
             "https://www.ecosphereblue.earth/",
-            "mailto:jg@ecosphereblue.earth",
+            "mailto:jay@ecosphereblue.earth",
             "mailto:aphilosof@ecosphereblue.earth",
         },
         "contactCta": contact_cta
-        == "mailto:jg@ecosphereblue.earth,aphilosof@ecosphereblue.earth",
+        == "mailto:jay@ecosphereblue.earth,aphilosof@ecosphereblue.earth",
         "viewButtons": len(view_buttons),
         "projectionButtons": len(projection_buttons),
         "candidateOptions": candidate_options,

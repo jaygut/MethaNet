@@ -396,7 +396,7 @@ window.EB = (function () {
     reportName: "EmergentBiome Molecular Atlas technical report",
     reportDate: "2026-09-23",
     siteUrl: "https://emergentbiome.earth/",
-    contactEmails: ["jg@ecosphereblue.earth", "aphilosof@ecosphereblue.earth"],
+    contactEmails: ["jay@ecosphereblue.earth", "aphilosof@ecosphereblue.earth"],
     organizationUrl: "https://www.ecosphereblue.earth/",
   };
 
