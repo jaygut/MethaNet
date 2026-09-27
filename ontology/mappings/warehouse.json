@@ -1,0 +1,21 @@
+{
+  "mapping_version": "0.1.0",
+  "authority": "configs/atlas_current_release.json",
+  "identity": ["lane_id", "proteome_id"],
+  "freeze_boolean_fields": {
+    "has_esm2": "hasESM2", "has_glm2": "hasGLM2", "has_functional": "hasFunctional",
+    "tri_view_ready": "triViewReady", "release_excluded": "releaseExcluded",
+    "mechanism_comparable": "mechanismComparable"
+  },
+  "freeze_literal_fields": {
+    "functional_evidence_class": "functionalContract", "glm2_protocol_class": "glmProtocol",
+    "sample_linkage_readiness": "sampleLinkageStatus", "functional_status": "status",
+    "allowed_claim_wording": "allowedWording", "next_validation_action": "nextAction"
+  },
+  "materialized_tables": ["freeze_manifest", "fact_run_status", "dim_sample", "dim_site", "link_sample_flux_window"],
+  "catalog_only": "Every physical warehouse table and metadata-readiness table; individual genes, raw hits, matrices and unresolved measurements stay in source files.",
+  "unresolved_join_policy": "Preserve status and evidence pointer; never mint exact sample-to-flux or physical-sample identity.",
+  "embedding_policy": "Catalog availability and protocol only; no cross-run nearest-neighbor edges without validated extraction compatibility.",
+  "source_coverage_policy": "All registered release rows; out-of-release attempts quarantined with provenance and explicit reason.",
+  "external_reuse_policy": "Unknown source licensing denies external export. Local owner-driven internal review only."
+}

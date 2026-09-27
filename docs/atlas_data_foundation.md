@@ -2,6 +2,14 @@
 
 Reviewed 2026-09-24. This is the entry point for building on the EmergentBiome Molecular Atlas. The current promoted molecular release is the **2026-08-10 freeze**, selected by [`../configs/atlas_current_release.json`](../configs/atlas_current_release.json). Later manuscripts, status snapshots, repaired builders, and public report renderings do not silently replace that data release. Promote a successor only after a new freeze, parity checks, and an explicit pointer change.
 
+Implementation note, 2026-09-27: MVO 0.2.0 now provides an additive local
+RDF/Neo4j evidence projection over selected molecular records. This does not
+change the August 10 release pointer, source warehouse authority, 7,965-row
+denominator, or release readiness classifications. The selected 145-MAG
+molecular slice is not complete graph materialization of all registered facts
+and does not create sample-resolved methane-flux links. See the [MVO handoff](../ontology/docs/MOLECULAR_HANDOFF_20260926.md)
+and the [store comparison](../ontology/docs/STORE_COMPARISON_20260926.md).
+
 ## Authority and physical layout
 
 | Layer | Authority | Unit and rule |

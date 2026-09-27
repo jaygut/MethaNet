@@ -1,0 +1,23 @@
+# mapping_set_id: https://emergentbiome.earth/ontology/mvo/mappings/0.1.0
+# mapping_set_description: Agent-authored local alignments; domain review pending. No mapping asserts class equivalence or validates source metadata compliance.
+# curie_map:
+#   mvo: https://emergentbiome.earth/ontology/mvo/
+#   rdfs: http://www.w3.org/2000/01/rdf-schema#
+#   prov: http://www.w3.org/ns/prov#
+#   sosa: http://www.w3.org/ns/sosa/
+#   dcat: http://www.w3.org/ns/dcat#
+#   geo: http://www.opengis.net/ont/geosparql#
+#   qudt: http://qudt.org/schema/qudt/
+#   semapv: https://w3id.org/semapv/vocab/
+subject_id	predicate_id	object_id	mapping_justification	mapping_date	subject_source_version	object_source_version	comment
+mvo:Entity	rdfs:subClassOf	prov:Entity	semapv:UnspecifiedMatching	2026-09-26	0.1.0	2013-04-30	Local design alignment; independent domain review pending
+mvo:Activity	rdfs:subClassOf	prov:Activity	semapv:UnspecifiedMatching	2026-09-26	0.1.0	2013-04-30	Local design alignment; independent domain review pending
+mvo:Agent	rdfs:subClassOf	prov:Agent	semapv:UnspecifiedMatching	2026-09-26	0.1.0	2013-04-30	Responsibility is not verification authority
+mvo:DatasetRelease	rdfs:subClassOf	dcat:Dataset	semapv:UnspecifiedMatching	2026-09-26	0.1.0	DCAT3	Only release metadata; no full DCAT application-profile claim
+mvo:Observation	rdfs:subClassOf	sosa:Observation	semapv:UnspecifiedMatching	2026-09-26	0.1.0	2017-10-19	Measured quantities distinct from assertions
+mvo:PhysicalSample	rdfs:subClassOf	sosa:Sample	semapv:UnspecifiedMatching	2026-09-26	0.1.0	2017-10-19	Does not classify sequencing accession as physical specimen
+mvo:Site	rdfs:subClassOf	geo:Feature	semapv:UnspecifiedMatching	2026-09-26	0.1.0	1.1	No automatic geocoding or spatial entailment
+mvo:Quantity	rdfs:subClassOf	qudt:QuantityValue	semapv:UnspecifiedMatching	2026-09-26	0.1.0	3.5.1	Only declared reviewed units admitted for gas-flux examples
+mvo:hasResult	rdfs:subPropertyOf	sosa:hasResult	semapv:UnspecifiedMatching	2026-09-26	0.1.0	2017-10-19	Local quantity-result specialization
+mvo:featureOfInterest	rdfs:subPropertyOf	sosa:hasFeatureOfInterest	semapv:UnspecifiedMatching	2026-09-26	0.1.0	2017-10-19	Feature scope must remain explicit
+mvo:observedProperty	rdfs:subPropertyOf	sosa:observedProperty	semapv:UnspecifiedMatching	2026-09-26	0.1.0	2017-10-19	Property alignment; not causal implication

@@ -1,0 +1,13 @@
+{
+  "robot": {
+    "version": "1.9.8", "url": "https://github.com/ontodev/robot/releases/download/v1.9.8/robot.jar",
+    "sha256": "6f518b0293d8146d8a5a168c53607a952effb66bcaf3c6539996d7ec5c5f05f8",
+    "purpose": "OWLAPI OWL 2 RL profile validation and HermiT consistency/unsatisfiability checks"
+  },
+  "neo4j": {
+    "version": "5.26.31", "edition": "community", "java": "17 or 21",
+    "url": "https://dist.neo4j.org/neo4j-community-5.26.31-unix.tar.gz",
+    "sha256": "f8fc23340561405f1ff10ca6ac2d317d095d3c74509a616883c45d7a61f5cfec",
+    "purpose": "Isolated localhost-only development graph; not production multi-tenant access control"
+  }
+}

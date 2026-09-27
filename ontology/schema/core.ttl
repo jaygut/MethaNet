@@ -1,0 +1,95 @@
+@prefix mvo: <https://emergentbiome.earth/ontology/mvo/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<https://emergentbiome.earth/ontology/mvo> a owl:Ontology ;
+  owl:versionIRI <https://emergentbiome.earth/ontology/mvo/0.2.0> ;
+  owl:versionInfo "0.2.0" ;
+  dct:title "EmergentBiome Molecular Verification Ontology" ;
+  dct:description "Local evidence semantics; not credit certification. Core plus molecular, environment and verification modules form one offline OWL 2 RL ontology." .
+dct:title a owl:AnnotationProperty .
+dct:description a owl:AnnotationProperty .
+dct:source a owl:AnnotationProperty .
+skos:definition a owl:AnnotationProperty .
+skos:Concept a owl:Class .
+prov:Entity a owl:Class .
+prov:Activity a owl:Class .
+prov:Agent a owl:Class .
+prov:SoftwareAgent a owl:Class ; rdfs:subClassOf prov:Agent .
+prov:wasDerivedFrom a owl:ObjectProperty .
+prov:wasGeneratedBy a owl:ObjectProperty .
+prov:wasAttributedTo a owl:ObjectProperty .
+prov:used a owl:ObjectProperty .
+prov:wasAssociatedWith a owl:ObjectProperty .
+prov:generatedAtTime a owl:DatatypeProperty .
+dcat:Dataset a owl:Class .
+
+mvo:Entity a owl:Class ; rdfs:subClassOf prov:Entity ; rdfs:label "Entity" ; skos:definition "Identifiable physical, digital or conceptual object with fixed scoped identity." .
+mvo:Artifact a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Artifact" ; skos:definition "Versioned source or derived digital artifact; provenance does not imply reuse rights." .
+mvo:DatasetRelease a owl:Class ; rdfs:subClassOf mvo:Artifact, dcat:Dataset ; rdfs:label "Dataset release" ; skos:definition "Immutable dataset version with explicit denominator and scope." .
+mvo:GraphRelease a owl:Class ; rdfs:subClassOf mvo:DatasetRelease ; rdfs:label "Graph release" ; skos:definition "Rebuildable named graph snapshot with independently versioned mappings and shapes." .
+mvo:Evidence a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Evidence" ; skos:definition "Source-addressable evidence item; supporting evidence is not automatic truth." .
+mvo:Assertion a owl:Class ; rdfs:subClassOf mvo:Evidence ; rdfs:label "Qualified assertion" ; skos:definition "Reified subject-predicate-object statement with epistemic state, scope, provenance, review, rights and uncertainty. Does not entail the unqualified triple." .
+mvo:Claim a owl:Class ; rdfs:subClassOf mvo:Assertion ; rdfs:label "Claim" ; skos:definition "Reviewable communication of a scoped proposition with permitted wording and blocking gaps." .
+mvo:Uncertainty a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Uncertainty" ; skos:definition "Method-specific uncertainty or explicit lack of quantification, never a universal confidence score." .
+mvo:Scope a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Applicability scope" ; skos:definition "Geographic, temporal, population, assay and resolution bounds for evidence use." .
+mvo:ValidationGap a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Validation gap" ; skos:definition "Explicit missing, failed, ambiguous or pending prerequisite with next action." .
+mvo:Method a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Method" ; skos:definition "Versioned measurement, computation, curation or decision procedure." .
+mvo:Activity a owl:Class ; rdfs:subClassOf prov:Activity ; rdfs:label "Activity" ; skos:definition "Execution or event that uses or generates evidence." .
+mvo:Agent a owl:Class ; rdfs:subClassOf prov:Agent ; rdfs:label "Agent" ; skos:definition "Human, organization or software with identified responsibility, not implicit authority." .
+mvo:Review a owl:Class ; rdfs:subClassOf mvo:Activity ; rdfs:label "Review" ; skos:definition "Explicit assessment by an identified reviewer under a method and scope." .
+mvo:Policy a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Policy" ; skos:definition "Versioned access and purpose constraint; unknown rights are not public permission." .
+mvo:Decision a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Decision" ; skos:definition "Authorized action or disposition distinct from observations, assertions and hypotheses." .
+mvo:Assertion owl:disjointWith mvo:Decision .
+mvo:Activity owl:disjointWith mvo:Entity .
+
+mvo:subject a owl:ObjectProperty ; rdfs:label "assertion subject" .
+mvo:predicate a owl:ObjectProperty ; rdfs:label "assertion predicate" .
+mvo:object a owl:ObjectProperty ; rdfs:label "assertion object" .
+mvo:literalValue a owl:DatatypeProperty ; rdfs:label "assertion literal" .
+mvo:epistemicState a owl:ObjectProperty ; rdfs:range skos:Concept ; rdfs:label "epistemic state" .
+mvo:reviewState a owl:ObjectProperty ; rdfs:range skos:Concept ; rdfs:label "review state" .
+mvo:evidenceState a owl:ObjectProperty ; rdfs:range skos:Concept ; rdfs:label "evidence state" .
+mvo:supports a owl:ObjectProperty ; rdfs:label "supports" .
+mvo:contradicts a owl:ObjectProperty ; rdfs:label "contradicts" .
+mvo:supersedes a owl:ObjectProperty ; rdfs:label "supersedes without deletion" .
+mvo:hasScope a owl:ObjectProperty ; rdfs:range mvo:Scope ; rdfs:label "has applicability scope" .
+mvo:hasUncertainty a owl:ObjectProperty ; rdfs:range mvo:Uncertainty ; rdfs:label "has uncertainty" .
+mvo:hasPolicy a owl:ObjectProperty ; rdfs:range mvo:Policy ; rdfs:label "has policy" .
+mvo:blockedBy a owl:ObjectProperty ; rdfs:range mvo:ValidationGap ; rdfs:label "blocked by" .
+mvo:usesMethod a owl:ObjectProperty ; rdfs:range mvo:Method ; rdfs:label "uses method" .
+mvo:reviewedBy a owl:ObjectProperty ; rdfs:range mvo:Agent ; rdfs:label "reviewed by" .
+mvo:inRelease a owl:ObjectProperty ; rdfs:range mvo:DatasetRelease ; rdfs:label "in release" .
+mvo:validFrom a owl:DatatypeProperty ; rdfs:range xsd:dateTime ; rdfs:label "valid from" .
+mvo:validUntil a owl:DatatypeProperty ; rdfs:range xsd:dateTime ; rdfs:label "valid until" .
+mvo:recordedAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime ; rdfs:label "recorded at" .
+mvo:transactionEnd a owl:DatatypeProperty ; rdfs:range xsd:dateTime ; rdfs:label "transaction end" .
+mvo:timeStatus a owl:DatatypeProperty ; rdfs:label "valid-time resolution" .
+mvo:scopeDescription a owl:DatatypeProperty ; rdfs:label "scope description" .
+mvo:uncertaintyKind a owl:DatatypeProperty ; rdfs:label "uncertainty kind" .
+mvo:uncertaintyDescription a owl:DatatypeProperty ; rdfs:label "uncertainty description" .
+mvo:lowerBound a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "lower bound" .
+mvo:upperBound a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "upper bound" .
+mvo:coverageProbability a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "coverage probability" .
+mvo:status a owl:DatatypeProperty ; rdfs:label "source status" .
+mvo:reason a owl:DatatypeProperty ; rdfs:label "reason" .
+mvo:nextAction a owl:DatatypeProperty ; rdfs:label "next validation action" .
+mvo:allowedWording a owl:DatatypeProperty ; rdfs:label "allowed wording" .
+mvo:sha256 a owl:DatatypeProperty ; rdfs:label "SHA-256 digest" .
+mvo:sourceLocator a owl:DatatypeProperty ; rdfs:label "source locator" .
+mvo:sourceRow a owl:DatatypeProperty ; rdfs:label "source row or key locator" .
+mvo:rowCount a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "row count" .
+mvo:version a owl:DatatypeProperty ; rdfs:label "version" .
+mvo:tenant a owl:DatatypeProperty ; rdfs:label "tenant" .
+mvo:purpose a owl:DatatypeProperty ; rdfs:label "permitted purpose" .
+mvo:rightsStatus a owl:DatatypeProperty ; rdfs:label "rights status" .
+mvo:licenseURI a owl:ObjectProperty ; rdfs:label "license URI" .
+mvo:expiresAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime ; rdfs:label "policy expiry" .
+mvo:externalExportAllowed a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "external export permitted" .
+mvo:projectKey a owl:DatatypeProperty ; rdfs:label "authorization project key" .

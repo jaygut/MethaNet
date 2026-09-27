@@ -1,6 +1,12 @@
 # Biogeochemical knowledge graph foundation
 
-Reviewed 2026-09-24. This is a design contract for a future marine and wetland biogeochemistry knowledge graph built from the [atlas data foundation](atlas_data_foundation.md). The existing Kuzu/TSV/Parquet POC graph contains **662** MAG/bin and assembly-context molecular units; it is a historical molecular evidence MVP. The August molecular release registers **7,965** units but is **not yet a materialized graph of 7,965 biological entities with validated ecological relations**.
+Reviewed 2026-09-27. This document now describes both the current implementation and the next design horizon. The historical Kuzu/TSV/Parquet POC graph contains **662** MAG/bin and assembly-context molecular units. The August molecular release registers **7,965** lane-scoped records; that denominator is not a count of unique biological entities or validated ecological links.
+
+Implementation update, 2026-09-27: [MVO 0.2.0](../ontology/README.md) now adds a local, immutable RDF/Neo4j molecular-evidence slice to the original 0.1.0 release-record graph. The current snapshot contains 735,060 statements and 37,071 resources, preserves all 233,190 original statements, and adds selected evidence for 145 MAGs, including loci, method-specific annotations, processed RNA, typed context measurements, alternatives, and explicit gaps. The full registered denominator remains 7,965 records; the selected slice does not claim complete molecular materialization of every record. No exact molecular-to-flux pairs or mechanism-comparable atlas units were admitted. See the [molecular handoff](../ontology/docs/MOLECULAR_HANDOFF_20260926.md), [verification history](../ontology/docs/VERIFICATION.md), and [SQL/Neo4j comparison](../ontology/docs/STORE_COMPARISON_20260926.md). The August release, warehouse source authority, and scientific claim boundaries remain unchanged.
+
+## Current store roles
+
+The ontology and explicit source mappings determine identity, evidence meaning, admission, provenance, and the semantics of fixed questions. The storage engine determines how admitted facts are stored and queried. In the three preregistered matched controls, DuckDB SQL and the graph returned identical complete rows, while SQL had the lower warm median in each local run. This is evidence for keeping SQL as the primary tabular/aggregation interface and Neo4j as a relationship/provenance traversal projection, not a universal performance ranking. See the [bounded comparison and limitations](../ontology/docs/STORE_COMPARISON_20260926.md).
 
 ## Scope and identity
 

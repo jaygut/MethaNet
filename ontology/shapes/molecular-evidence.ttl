@@ -1,0 +1,76 @@
+@prefix mvo: <https://emergentbiome.earth/ontology/mvo/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+
+mvo:CalledLocusShape a sh:NodeShape ; sh:targetClass mvo:CalledLocus ;
+ sh:property [ sh:path mvo:sourceNamespace ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ sh:property [ sh:path mvo:callerNamespace ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ sh:property [ sh:path mvo:callerVersion ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ sh:property [ sh:path mvo:coordinateStart ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ; sh:lessThanOrEquals mvo:coordinateEnd ] ;
+ sh:property [ sh:path mvo:coordinateEnd ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ] ;
+ sh:property [ sh:path mvo:strand ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( 1 -1 ) ] ;
+ sh:property [ sh:path mvo:onContig ; sh:minCount 1 ; sh:maxCount 1 ; sh:class mvo:ContigRepresentation ] ;
+ sh:property [ sh:path mvo:inAssembly ; sh:minCount 1 ; sh:maxCount 1 ; sh:class mvo:AssemblyRepresentation ] ;
+ sh:property [ sh:path mvo:translationStatus ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "exact_translation" "exact_with_allowed_initiator_methionine" ) ] ;
+ sh:property [ sh:path mvo:encodes ; sh:minCount 1 ; sh:maxCount 1 ; sh:class mvo:SequenceProtein ] .
+
+mvo:SequenceProteinShape a sh:NodeShape ; sh:targetClass mvo:SequenceProtein ;
+ sh:property [ sh:path mvo:sequenceAvailable ; sh:hasValue true ] ;
+ sh:property [ sh:path mvo:sequenceDigest ; sh:minCount 1 ; sh:maxCount 1 ; sh:pattern "^[a-f0-9]{64}$" ] ;
+ sh:property [ sh:path mvo:sequenceNormalization ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ sh:property [ sh:path mvo:sequenceLength ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ] ;
+ sh:property [ sh:path prov:wasDerivedFrom ; sh:minCount 1 ] .
+
+mvo:PanelEvaluationShape a sh:NodeShape ; sh:targetClass mvo:PanelEvaluation ;
+ sh:property [ sh:path mvo:forRecord ; sh:minCount 1 ; sh:maxCount 1 ; sh:class mvo:MolecularRecord ] ;
+ sh:property [ sh:path mvo:forPanel ; sh:minCount 1 ; sh:maxCount 1 ; sh:class mvo:MolecularPanel ] ;
+ sh:property [ sh:path mvo:forFamily ; sh:minCount 1 ; sh:maxCount 1 ; sh:class mvo:PanelFamilyConcept ] ;
+ sh:property [ sh:path mvo:panelStatus ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "present" "covered_no_accepted_hit" "ambiguous" "not_assayed" "missing_input" "failed" "excluded" ) ] ;
+ sh:property [ sh:path mvo:assayContract ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ sh:property [ sh:path mvo:pathwayComplete ; sh:hasValue false ; sh:maxCount 1 ] ;
+ sh:property [ sh:path mvo:independentlyReviewed ; sh:hasValue false ; sh:maxCount 1 ] ;
+ sh:property [ sh:path prov:wasDerivedFrom ; sh:minCount 1 ] ;
+ sh:sparql [ sh:message "A panel no-hit needs completed assay coverage and zero accepted events; no-hit is not biological absence." ; sh:select """
+ PREFIX mvo: <https://emergentbiome.earth/ontology/mvo/>
+ SELECT $this WHERE { $this mvo:panelStatus "covered_no_accepted_hit" .
+ FILTER NOT EXISTS { $this mvo:coverageState "completed_covered" ; mvo:candidateEventCount 0 }
+ }""" ] .
+
+mvo:PanelCoverageSummaryShape a sh:NodeShape ; sh:targetClass mvo:PanelCoverageSummary ;
+ sh:property [ sh:path mvo:coverageLedger ; sh:minCount 1 ; sh:maxCount 1 ; sh:class mvo:Artifact ] ;
+ sh:property [ sh:path mvo:registeredDenominator ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 0 ] ;
+ sh:property [ sh:path mvo:rowCount ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 0 ] .
+
+mvo:MolecularSampleObservationShape a sh:NodeShape ; sh:targetClass mvo:MolecularSampleObservation ;
+ sh:property [ sh:path mvo:assayModality ; sh:hasValue "source_processed_RNA" ; sh:maxCount 1 ] ;
+ sh:property [ sh:path mvo:forLocus ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ sh:property [ sh:path mvo:forSample ; sh:minCount 1 ; sh:maxCount 1 ; sh:class mvo:SequencingSample ] ;
+ sh:property [ sh:path mvo:processedValue ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:decimal ] ;
+ sh:property [ sh:path mvo:normalization ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ sh:property [ sh:path mvo:sourceRow ; sh:minCount 1 ] ;
+ sh:property [ sh:path prov:wasDerivedFrom ; sh:minCount 1 ] .
+
+mvo:SourceMeasurementShape a sh:NodeShape ; sh:targetClass mvo:SourceMeasurement ;
+ sh:property [ sh:path mvo:quantityKind ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "gas_flux" "gas_concentration" "environmental_covariate" ) ] ;
+ sh:property [ sh:path mvo:originalUnit ; sh:minCount 1 ; sh:maxCount 1 ; sh:minLength 1 ] ;
+ sh:property [ sh:path mvo:processedValue ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:decimal ] ;
+ sh:property [ sh:path mvo:sourceDateLabel ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ sh:property [ sh:path mvo:measurementMethod ; sh:minCount 1 ] ;
+ sh:property [ sh:path mvo:spatialSupport ; sh:minCount 1 ] ;
+ sh:property [ sh:path mvo:sampleLinkageStatus ; sh:minCount 1 ] ;
+ sh:property [ sh:path prov:wasDerivedFrom ; sh:minCount 1 ] .
+
+mvo:SourceContextShape a sh:NodeShape ; sh:targetClass mvo:SourceContextRecord ;
+ sh:property [ sh:path mvo:forSample ; sh:minCount 1 ; sh:maxCount 1 ; sh:class mvo:SequencingSample ] ;
+ sh:property [ sh:path mvo:sourceDateLabel ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ sh:property [ sh:path mvo:sampleLinkageStatus ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ sh:property [ sh:path prov:wasDerivedFrom ; sh:minCount 1 ] .
+
+mvo:SourceMeasurementGapShape a sh:NodeShape ; sh:targetClass mvo:SourceMeasurementGap ;
+ sh:property [ sh:path mvo:processedValue ; sh:maxCount 0 ] ;
+ sh:property [ sh:path mvo:quantityKind ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "gas_flux" "gas_concentration" "environmental_covariate" ) ] ;
+ sh:property [ sh:path mvo:originalUnit ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ sh:property [ sh:path mvo:sourceRow ; sh:minCount 1 ] ;
+ sh:property [ sh:path mvo:sourceDateLabel ; sh:minCount 1 ] ;
+ sh:property [ sh:path prov:wasDerivedFrom ; sh:minCount 1 ] .

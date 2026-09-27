@@ -1,7 +1,8 @@
 # MethaNet Current Artifact Inventory
 
-Documentation refresh: 2026-09-24. Molecular counts remain the 2026-08-10
-release freeze; the public landing and report were corrected on 2026-09-23/24.
+Documentation refresh: 2026-09-27. Molecular release counts remain the 2026-08-10
+freeze. The landing page received a separately reviewed three-case network release
+on 2026-09-27; the existing report alias and freeze remain unchanged.
 
 This page summarizes the datasets, databases, generated warehouses, and graph
 artifacts that currently define the MethaNet operational arc. The shared
@@ -104,10 +105,10 @@ or new release decisions.
 
 ## External Tool And Database Layer
 
-Default database root on Apolo-3:
+Set the database root to the site-specific approved storage location:
 
 ```bash
-DB_ROOT=/home/rsg-jcorre38/scratch/methanet_db
+DB_ROOT="<approved-storage-root>/methanet_db"
 ```
 
 | Tool/database | Local role | Production status |
@@ -478,6 +479,16 @@ bundle, which uses the same August freeze. The
 correction deployment. Routine scientific publication and indexing remain
 gated. Treat the July 24 and earlier reports as historical snapshots.
 
+Landing-page update, 2026-09-27: a landing-only interactive evidence-network
+release is live at `gh-pages` revision
+`ec963456aa6b8cd63d016c7b889a39e4a0f1729e`. It preserves the `/report/` alias,
+report archive and August release. The reviewed public projection contains
+three case profiles, 492 presentation nodes, 459 source objects and 4,725
+allowlisted source facts. Three internal science/funding/experience review
+lanes and browser/live checks passed. This is a scoped presentation release,
+not independent biological or legal certification; detailed MVO evidence and
+unpublished manuscript materials remain under separate review.
+
 ## Molecular Attestation Graph
 
 Foundational graph MVP:
@@ -524,12 +535,15 @@ Readiness distribution:
 The August 10 release projects the same evidence-governance principle across
 7,965 registered `(lane_id, proteome_id)` rows. It adds release-level evidence
 contracts, candidate cards, source provenance, protocol classes, authorized claim wording,
-validation gaps, and next actions. The 662-node MVP remains the foundational
-queryable graph artifact. The 7,965-row union and its visualization are
-release-derived tables and report views, not a materialized 7,965-node
-sample-resolved knowledge graph. See
-[`knowledge_graph_foundation.md`](knowledge_graph_foundation.md) for the planned
-typed, provenance-preserving expansion.
+validation gaps, and next actions. The historical 662-node Kuzu MVP remains a
+separate queryable graph artifact. MVO 0.2.0 is a distinct, additive RDF/Neo4j
+graph with 735,060 statements and 37,071 resources, preserving the original
+233,190 statements and adding selected molecular evidence for 145 MAGs. The
+full 7,965-row union and visualization remain release-derived tables and report
+views; MVO does not materialize every record's molecular facts or create a
+sample-resolved methane-flux graph. The August 10 release remains unchanged. See
+the [current graph foundation](knowledge_graph_foundation.md), [MVO handoff](../ontology/docs/MOLECULAR_HANDOFF_20260926.md),
+and [SQL/Neo4j comparison](../ontology/docs/STORE_COMPARISON_20260926.md).
 
 ## Core Docs To Keep In Sync
 

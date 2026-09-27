@@ -1,6 +1,6 @@
 # MethaNet Repository Guide
 
-Documentation refresh: 2026-09-24
+Documentation refresh: 2026-09-27
 
 This guide is the shortest path from a fresh clone to a useful local
 exploration. MethaNet is a code-and-contract repository; the large sequencing,
@@ -20,7 +20,10 @@ embedding, warehouse, and report outputs are intentionally kept outside Git.
 5. Use [`atlas_data_foundation.md`](atlas_data_foundation.md) for dataset
    authority, table grains, and reproducible-release handoffs; use
    [`knowledge_graph_foundation.md`](knowledge_graph_foundation.md) for current
-   graph scope and the next typed biogeochemical graph contract. The
+   graph scope and the next typed biogeochemical graph contract. Use the
+   [MVO package guide](../ontology/README.md), [verification history](../ontology/docs/VERIFICATION.md),
+   and [SQL/Neo4j comparison](../ontology/docs/STORE_COMPARISON_20260926.md)
+   for the implemented ontology-backed projection. The
    [release index](releases/README.md) explains the tracked pointer and receipts.
 
 The functional-metagenomics contracts and MRV maturity ladder live under
@@ -107,8 +110,10 @@ fresh clone reproduces the live site.
 - Preserve failed, partial, pending, and missing evidence as status rows.
 - Treat Neo4j/Kuzu or other graph projections as serving layers; canonical
   release tables and provenance remain the source of truth.
-- The existing queryable graph MVP covers the 662-record POC; the 7,965-row
-  release union is not a materialized sample-resolved knowledge graph.
+- The historical Kuzu graph covers 662 POC records. MVO 0.2.0 is a distinct
+  additive RDF/Neo4j projection with selected molecular evidence for 145 MAGs;
+  neither graph is a sample-resolved methane-flux graph or a replacement for
+  the complete 7,965-record release denominator.
 - A data-complete tri-view is not automatically mechanism-comparable.
 - Current molecular outputs support candidate review and monitoring design;
   calibrated sample/project methane risk, final A-E tiers, measured flux, and

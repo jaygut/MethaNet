@@ -1,0 +1,46 @@
+@prefix mvo: <https://emergentbiome.earth/ontology/mvo/> .
+@prefix c: <https://emergentbiome.earth/ontology/mvo/concept/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+c:epistemic a skos:ConceptScheme ; skos:prefLabel "Epistemic states"@en .
+c:observed a skos:Concept ; skos:inScheme c:epistemic ; skos:prefLabel "Observed"@en .
+c:imported a skos:Concept ; skos:inScheme c:epistemic ; skos:prefLabel "Imported source assertion"@en .
+c:computed a skos:Concept ; skos:inScheme c:epistemic ; skos:prefLabel "Computed"@en .
+c:inferred a skos:Concept ; skos:inScheme c:epistemic ; skos:prefLabel "Inferred"@en .
+c:hypothetical a skos:Concept ; skos:inScheme c:epistemic ; skos:prefLabel "Hypothetical"@en .
+c:normative a skos:Concept ; skos:inScheme c:epistemic ; skos:prefLabel "Normative"@en .
+c:review a skos:ConceptScheme ; skos:prefLabel "Review states"@en .
+c:pending a skos:Concept ; skos:inScheme c:review ; skos:prefLabel "Pending review"@en .
+c:accepted a skos:Concept ; skos:inScheme c:review ; skos:prefLabel "Accepted within scope"@en .
+c:rejected a skos:Concept ; skos:inScheme c:review ; skos:prefLabel "Rejected"@en .
+c:disputed a skos:Concept ; skos:inScheme c:review ; skos:prefLabel "Disputed"@en .
+c:superseded a skos:Concept ; skos:inScheme c:review ; skos:prefLabel "Superseded"@en .
+c:withdrawn a skos:Concept ; skos:inScheme c:review ; skos:prefLabel "Withdrawn"@en .
+c:evidence a skos:ConceptScheme ; skos:prefLabel "Evidence availability states"@en .
+c:present a skos:Concept ; skos:inScheme c:evidence ; skos:prefLabel "Evidence present"@en .
+c:observedNoHit a skos:Concept ; skos:inScheme c:evidence ; skos:prefLabel "Covered assay reported no hit"@en .
+c:notAssayed a skos:Concept ; skos:inScheme c:evidence ; skos:prefLabel "Not assayed"@en .
+c:missing a skos:Concept ; skos:inScheme c:evidence ; skos:prefLabel "Missing"@en .
+c:failed a skos:Concept ; skos:inScheme c:evidence ; skos:prefLabel "Failed"@en .
+c:partial a skos:Concept ; skos:inScheme c:evidence ; skos:prefLabel "Partial"@en .
+c:ambiguous a skos:Concept ; skos:inScheme c:evidence ; skos:prefLabel "Ambiguous"@en .
+c:ghg a skos:ConceptScheme ; skos:prefLabel "Greenhouse gases"@en .
+c:CH4 a skos:Concept ; skos:inScheme c:ghg ; skos:prefLabel "Methane"@en ; skos:notation "CH4" .
+c:CO2 a skos:Concept ; skos:inScheme c:ghg ; skos:prefLabel "Carbon dioxide"@en ; skos:notation "CO2" .
+c:N2O a skos:Concept ; skos:inScheme c:ghg ; skos:prefLabel "Nitrous oxide"@en ; skos:notation "N2O" .
+c:habitat a skos:ConceptScheme ; skos:prefLabel "Local habitat concepts; ENVO mappings require review"@en .
+c:mangrove a skos:Concept, mvo:HabitatConcept ; skos:inScheme c:habitat ; skos:prefLabel "Mangrove"@en .
+c:wetland a skos:Concept, mvo:HabitatConcept ; skos:inScheme c:habitat ; skos:prefLabel "Wetland"@en .
+c:peatland a skos:Concept, mvo:HabitatConcept ; skos:inScheme c:habitat ; skos:prefLabel "Peatland"@en ; skos:broader c:wetland .
+c:seagrass a skos:Concept, mvo:HabitatConcept ; skos:inScheme c:habitat ; skos:prefLabel "Seagrass habitat"@en .
+c:saltmarsh a skos:Concept, mvo:HabitatConcept ; skos:inScheme c:habitat ; skos:prefLabel "Salt marsh"@en ; skos:broader c:wetland .
+c:process a skos:ConceptScheme ; skos:prefLabel "Biogeochemical process concepts"@en .
+c:methanogenesis a skos:Concept, mvo:PathwayConcept ; skos:inScheme c:process ; skos:prefLabel "Methanogenesis"@en .
+c:methaneOxidation a skos:Concept, mvo:PathwayConcept ; skos:inScheme c:process ; skos:prefLabel "Methane oxidation"@en .
+c:nitrification a skos:Concept, mvo:PathwayConcept ; skos:inScheme c:process ; skos:prefLabel "Nitrification"@en .
+c:denitrification a skos:Concept, mvo:PathwayConcept ; skos:inScheme c:process ; skos:prefLabel "Denitrification"@en .
+c:nitrousOxideReduction a skos:Concept, mvo:PathwayConcept ; skos:inScheme c:process ; skos:prefLabel "Nitrous oxide reduction"@en .
+c:carbonFixation a skos:Concept, mvo:PathwayConcept ; skos:inScheme c:process ; skos:prefLabel "Carbon fixation"@en .
+c:respiration a skos:Concept, mvo:PathwayConcept ; skos:inScheme c:process ; skos:prefLabel "Respiration"@en .
+c:organicMatterDecomposition a skos:Concept, mvo:PathwayConcept ; skos:inScheme c:process ; skos:prefLabel "Organic matter decomposition"@en .
+c:sulfateReduction a skos:Concept, mvo:PathwayConcept ; skos:inScheme c:process ; skos:prefLabel "Sulfate reduction"@en .

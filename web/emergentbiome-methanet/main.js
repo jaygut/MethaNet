@@ -14,7 +14,7 @@
   window.EBScenes = window.EBScenes || {};
 
   // scene order incl. hero intro
-  const ORDER = ["hero", "stakes", "blindspot", "surveyor", "cheap", "atlas", "engine", "platform", "ladder", "path"];
+  const ORDER = ["hero", "stakes", "blindspot", "surveyor", "cheap", "atlas", "engine", "platform", "network", "ladder", "path"];
 
   // ---------- copy + chrome injection ----------
   function el(html) { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstChild; }
@@ -74,7 +74,7 @@
     // rail
     const rail = document.getElementById("rail");
     EB.scenes.forEach((s) => {
-      const item = el('<button class="rail__item" data-target="scene-' + s.id + '" aria-label="' + s.label + '"><span class="rail__num mono">0' + s.n + '</span><span class="rail__dot"></span></button>');
+      const item = el('<button class="rail__item" data-target="scene-' + s.id + '" aria-label="' + s.label + '"><span class="rail__num mono">' + String(s.n).padStart(2, "0") + '</span><span class="rail__dot"></span></button>');
       item.addEventListener("click", () => document.getElementById("scene-" + s.id).scrollIntoView({ behavior: REDUCED ? "auto" : "smooth" }));
       rail.appendChild(item);
     });
@@ -85,13 +85,12 @@
     document.getElementById("fsDate").textContent = EB.num.snapshot;
     document.getElementById("askBody").innerHTML =
       "The EmergentBiome Molecular Atlas gives blue-carbon developers, verifiers, and research partners a source-audited way to review methane-pathway hypotheses and choose measurements. " +
-      "Its frozen release has <b>" + D.fmt(EB.num.triViewReady) + "</b> data-complete MAG/proteome records across separate evidence contracts. " +
-      "A <b>" + D.fmt(EB.num.magNodes) + "</b>-record queryable POC evidence graph demonstrates traceable claim review; the full-atlas graph and calibrated risk model require further work.";
+      "We seek research funding and field partners for a proposed two-season mangrove study. Fieldwork depends on funding, site access and permits.";
     const points = [
-      "Resolve exact physical sample, date, depth, and MAG links while preserving unresolved records",
-      "Pair abundance, environmental context, and compatible methane-process measurements",
-      "Test whether molecular evidence improves an environment-only baseline at held-out sites and seasons",
-      "Publish uncertainty-calibrated risk only after those external validation gates pass",
+      "Pair 144 planned sediment metagenomes with chamber methane flux, chemistry and hydrology across three restoration stages and two seasons",
+      "Test genomic prediction against environmental covariates and a reviewed methane-marker baseline",
+      "Freeze models before held-out flux results are unblinded, then test transfer to a second season",
+      "Release paired data and reproducible modeling workflows under the agreed access and sharing terms",
     ];
     document.getElementById("askPoints").innerHTML = points.map((p) => "<li>" + p + "</li>").join("");
     // factsheet rows
@@ -200,6 +199,7 @@
   function initScene(rec) {
     if (rec.inited) return;
     rec.inited = true;
+    if (rec.section.dataset.nativeScene) return;
     const factory = window.EBScenes[rec.ctx.id];
     if (!factory) { console.warn("no scene factory for", rec.ctx.id); return; }
     rec.instance = new window.p5((p) => factory(p, rec.ctx), rec.holder);
@@ -250,7 +250,12 @@
     let activeId = null;
     for (const id of ORDER) {
       const rec = scenes[id];
-      if (rec && rec.ctx.active && id !== "hero") activeId = id;
+      if (!rec) continue;
+      const bounds = rec.section.getBoundingClientRect();
+      if (bounds.top <= innerHeight * 0.5 && bounds.bottom > innerHeight * 0.5) {
+        activeId = id === "hero" ? null : id;
+        break;
+      }
     }
     document.querySelectorAll(".rail__item").forEach((it) => {
       it.setAttribute("aria-current", it.dataset.target === "scene-" + activeId ? "true" : "false");
@@ -260,7 +265,7 @@
   function boot(data) {
     ORDER.forEach((id) => {
       const section = document.getElementById("scene-" + id);
-      const holder = document.getElementById("canvas-" + id);
+      const holder = document.getElementById("canvas-" + id) || (section && section.dataset.nativeScene ? section : null);
       if (!section || !holder) return;
       const ctx = makeCtx(id, holder, section, data);
       scenes[id] = { ctx, holder, section, instance: null, inited: false };
@@ -275,6 +280,7 @@
         if (e.isIntersecting) { initScene(rec); setActive(rec, true); }
         else setActive(rec, false);
       });
+      updateRail();
     }, { rootMargin: "10% 0px 10% 0px", threshold: 0.01 });
 
     ORDER.forEach((id) => {

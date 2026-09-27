@@ -1,0 +1,120 @@
+@prefix mvo: <https://emergentbiome.earth/ontology/mvo/> .
+@prefix c: <https://emergentbiome.earth/ontology/mvo/concept/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix qudt: <http://qudt.org/schema/qudt/> .
+
+mvo:MolecularRecordShape a sh:NodeShape ; sh:targetClass mvo:MolecularRecord ; sh:nodeKind sh:IRI ;
+ sh:property [ sh:path mvo:laneId ; sh:minCount 1 ; sh:maxCount 1 ; sh:minLength 1 ] ;
+ sh:property [ sh:path mvo:proteomeId ; sh:minCount 1 ; sh:maxCount 1 ; sh:minLength 1 ] ;
+ sh:property [ sh:path mvo:inLane ; sh:minCount 1 ; sh:maxCount 1 ; sh:class mvo:AtlasLane ] ;
+ sh:property [ sh:path mvo:inRelease ; sh:minCount 1 ; sh:maxCount 1 ; sh:class mvo:DatasetRelease ] ;
+ sh:property [ sh:path prov:wasDerivedFrom ; sh:minCount 1 ] ;
+ sh:property [ sh:path mvo:releaseExcluded ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+ sh:property [ sh:path mvo:triViewReady ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+ sh:property [ sh:path mvo:hasESM2 ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+ sh:property [ sh:path mvo:hasGLM2 ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+ sh:property [ sh:path mvo:hasFunctional ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+ sh:property [ sh:path mvo:mechanismComparable ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+ sh:sparql [ sh:message "Excluded units require a gap; complete tri-views require all payloads and cannot be excluded." ; sh:select """
+ PREFIX mvo: <https://emergentbiome.earth/ontology/mvo/>
+ SELECT $this WHERE {
+ { $this mvo:releaseExcluded true . FILTER NOT EXISTS { $this mvo:blockedBy ?gap } }
+ UNION { $this mvo:triViewReady true . FILTER NOT EXISTS { $this mvo:hasESM2 true ; mvo:hasGLM2 true ; mvo:hasFunctional true ; mvo:releaseExcluded false } }
+ }""" ] .
+mvo:AttemptShape a sh:NodeShape ; sh:targetClass mvo:CurationAttempt ;
+ sh:property [ sh:path mvo:cohortRunId ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ sh:property [ sh:path mvo:runId ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ sh:property [ sh:path mvo:forRecord ; sh:minCount 1 ; sh:maxCount 1 ; sh:class mvo:MolecularRecord ] ;
+ sh:property [ sh:path mvo:status ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ sh:property [ sh:path prov:used ; sh:minCount 1 ] .
+mvo:IdentityShape a sh:NodeShape ; sh:targetClass mvo:IdentityAssertion ;
+ sh:property [ sh:path mvo:linkResolution ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ sh:sparql [ sh:message "Exact physical-sample identity requires exact resolution, accepted review and a physical-sample endpoint." ; sh:select """
+ PREFIX mvo: <https://emergentbiome.earth/ontology/mvo/>
+ PREFIX c: <https://emergentbiome.earth/ontology/mvo/concept/>
+ SELECT $this WHERE { $this mvo:predicate mvo:exactPhysicalSample . FILTER NOT EXISTS { $this mvo:linkResolution "exact_physical_sample" ; mvo:reviewState c:accepted ; mvo:object ?o . ?o a mvo:PhysicalSample } }
+ """ ] .
+mvo:SimilarityShape a sh:NodeShape ; sh:targetClass mvo:SimilarityAssertion ;
+ sh:property [ sh:path mvo:compatibilityStatus ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "validated_same_configuration" "unresolved" "incompatible" ) ] ;
+ sh:property [ sh:path mvo:configuration ; sh:minCount 1 ; sh:maxCount 1 ; sh:class mvo:EmbeddingConfiguration ] ;
+ sh:property [ sh:path mvo:comparisonConfiguration ; sh:minCount 1 ; sh:maxCount 1 ; sh:class mvo:EmbeddingConfiguration ] ;
+ sh:sparql [ sh:message "Accepted similarity needs compatible configurations with the same non-placeholder SHA256 fingerprint." ; sh:select """
+ PREFIX mvo: <https://emergentbiome.earth/ontology/mvo/>
+ PREFIX c: <https://emergentbiome.earth/ontology/mvo/concept/>
+ SELECT $this WHERE { $this mvo:reviewState c:accepted . FILTER NOT EXISTS {
+ $this mvo:compatibilityStatus "validated_same_configuration" ; mvo:configuration ?a ; mvo:comparisonConfiguration ?b .
+ ?a mvo:configurationFingerprint ?f . ?b mvo:configurationFingerprint ?f . FILTER(REGEX(STR(?f), "^[a-f0-9]{64}$"))
+ } }""" ] .
+mvo:AnnotationShape a sh:NodeShape ; sh:targetClass mvo:AnnotationAssertion ;
+ sh:property [ sh:path mvo:evidenceState ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( c:present c:observedNoHit c:notAssayed c:missing c:failed c:partial c:ambiguous ) ] ;
+ sh:property [ sh:path mvo:toolVersion ; sh:minCount 1 ] ;
+ sh:property [ sh:path mvo:databaseName ; sh:minCount 1 ] ;
+ sh:property [ sh:path mvo:databaseVersion ; sh:minCount 1 ] ;
+ sh:property [ sh:path mvo:thresholdDescription ; sh:minCount 1 ] ;
+ sh:property [ sh:path mvo:coverageState ; sh:minCount 1 ] ;
+ sh:sparql [ sh:message "No-hit requires completed covered assay; missing evidence is not absence." ; sh:select """
+ PREFIX mvo: <https://emergentbiome.earth/ontology/mvo/>
+ PREFIX c: <https://emergentbiome.earth/ontology/mvo/concept/>
+ SELECT $this WHERE { $this mvo:evidenceState c:observedNoHit . FILTER NOT EXISTS { $this mvo:coverageState "completed_covered" } }
+ """ ] .
+mvo:GeneShape a sh:NodeShape ; sh:targetClass mvo:Gene ;
+ sh:property [ sh:path mvo:geneId ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ sh:property [ sh:path mvo:forRecord ; sh:minCount 1 ; sh:maxCount 1 ; sh:class mvo:MolecularRecord ] ;
+ sh:property [ sh:path prov:wasDerivedFrom ; sh:minCount 1 ] ;
+ sh:property [ sh:path mvo:coordinateSystem ; sh:minCount 1 ] ;
+ sh:property [ sh:path mvo:sequenceDigest ; sh:pattern "^[a-f0-9]{64}$" ] ;
+ sh:property [ sh:path mvo:assemblyDigest ; sh:pattern "^[a-f0-9]{64}$" ] .
+mvo:QuantityShape a sh:NodeShape ; sh:targetClass mvo:Quantity ;
+ sh:property [ sh:path qudt:numericValue ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:decimal ] ;
+ sh:property [ sh:path qudt:unit ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+ sh:property [ sh:path mvo:quantityKind ; sh:minCount 1 ; sh:maxCount 1 ] .
+mvo:ObservationShape a sh:NodeShape ; sh:targetClass mvo:Observation ;
+ sh:property [ sh:path mvo:observedAt ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:dateTime ] ;
+ sh:property [ sh:path mvo:featureOfInterest ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+ sh:property [ sh:path mvo:hasResult ; sh:minCount 1 ; sh:maxCount 1 ; sh:class mvo:Quantity ] ;
+ sh:property [ sh:path mvo:usesMethod ; sh:minCount 1 ; sh:class mvo:Method ] ;
+ sh:property [ sh:path prov:wasDerivedFrom ; sh:minCount 1 ] ;
+ sh:property [ sh:path mvo:hasUncertainty ; sh:minCount 1 ; sh:class mvo:Uncertainty ] ;
+ sh:property [ sh:path mvo:qcStatus ; sh:minCount 1 ] .
+mvo:FluxShape a sh:NodeShape ; sh:targetClass mvo:FluxObservation ;
+ sh:property [ sh:path mvo:gas ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( c:CH4 c:CO2 c:N2O ) ] ;
+ sh:property [ sh:path mvo:measurementMethod ; sh:minCount 1 ; sh:in ( "chamber" "eddy_covariance" "validated_flux_method" ) ] ;
+ sh:property [ sh:path mvo:spatialSupport ; sh:minCount 1 ] ;
+ sh:property [ sh:path mvo:hasResult ; sh:node [
+   sh:property [ sh:path mvo:quantityKind ; sh:hasValue "gas_flux" ] ;
+   sh:property [ sh:path qudt:unit ; sh:in ( <http://qudt.org/vocab/unit/MOL-PER-M2-SEC> <http://qudt.org/vocab/unit/MicroMOL-PER-M2-SEC> ) ]
+ ] ] .
+mvo:PhysicalSampleShape a sh:NodeShape ; sh:targetClass mvo:PhysicalSample ;
+ sh:property [ sh:path mvo:hasSamplingEvent ; sh:minCount 1 ; sh:maxCount 1 ; sh:class mvo:SamplingEvent ] .
+mvo:SamplingEventShape a sh:NodeShape ; sh:targetClass mvo:SamplingEvent ;
+ sh:property [ sh:path mvo:timeStatus ; sh:minCount 1 ; sh:in ( "known" "unresolved" ) ] ;
+ sh:property [ sh:path mvo:usesMethod ; sh:minCount 1 ; sh:class mvo:Method ] ;
+ sh:property [ sh:path prov:wasDerivedFrom ; sh:minCount 1 ] ;
+ sh:sparql [ sh:message "A known sampling time requires a typed timestamp." ; sh:select """
+ PREFIX mvo: <https://emergentbiome.earth/ontology/mvo/>
+ SELECT $this WHERE { $this mvo:timeStatus "known" . FILTER NOT EXISTS { $this mvo:sampledAt ?t } }
+ """ ] ;
+ sh:property [ sh:path mvo:sampledAt ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] .
+mvo:CustodyShape a sh:NodeShape ; sh:targetClass mvo:CustodyTransfer ;
+ sh:property [ sh:path mvo:hasPhysicalSample ; sh:minCount 1 ; sh:class mvo:PhysicalSample ] ;
+ sh:property [ sh:path mvo:fromCustodian ; sh:minCount 1 ; sh:class mvo:Agent ] ;
+ sh:property [ sh:path mvo:toCustodian ; sh:minCount 1 ; sh:class mvo:Agent ] ;
+ sh:property [ sh:path mvo:recordedAt ; sh:minCount 1 ; sh:datatype xsd:dateTime ] .
+mvo:BridgeShape a sh:NodeShape ; sh:targetClass mvo:BridgeAxiom ;
+ # Independent validation is intentionally unavailable in this admission profile.
+ # A future reviewed profile can admit it with exact sample/process evidence gates.
+ sh:property [ sh:path mvo:validationState ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "hypothesis" "internally_tested" ) ] ;
+ sh:sparql [ sh:message "A hypothesis bridge cannot be accepted as a validated implication." ; sh:select """
+ PREFIX mvo: <https://emergentbiome.earth/ontology/mvo/>
+ PREFIX c: <https://emergentbiome.earth/ontology/mvo/concept/>
+ SELECT $this WHERE { $this mvo:validationState "hypothesis" ; mvo:reviewState c:accepted }
+ """ ] .
+# Deliberately fail closed: this release has no certification-producing path.
+mvo:DecisionShape a sh:NodeShape ; sh:targetClass mvo:VerificationDecision ;
+ sh:property [ sh:path mvo:decisionDisposition ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "requires_external_review" "not_assessed" ) ] .
+mvo:GHGStatementShape a sh:NodeShape ; sh:targetClass mvo:GHGStatement ;
+ sh:property [ sh:path mvo:hasProject ; sh:minCount 1 ; sh:class mvo:CarbonProject ] ;
+ sh:property [ sh:path mvo:hasReportingPeriod ; sh:minCount 1 ; sh:class mvo:ReportingPeriod ] ;
+ sh:property [ sh:path mvo:reviewState ; sh:in ( c:pending c:rejected c:disputed c:withdrawn ) ] .

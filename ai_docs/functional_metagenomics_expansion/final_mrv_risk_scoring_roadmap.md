@@ -1,12 +1,22 @@
 # MethaNet Final MRV Risk Scoring Roadmap
 
 Date: 2026-06-13
-Documentation refresh: 2026-08-10
+Documentation refresh: 2026-09-27
 
 Scope: strategic roadmap for moving MethaNet from the current MBAG/functional-atlas molecular screening layer toward defensible sample/project-level methane permanence risk scoring for blue carbon MRV.
 
 The canonical product language and release claim matrix live in
 `docs/methanet_positioning_and_claims.md`.
+
+Implementation update, 2026-09-27: MVO 0.2.0 now adds a formally described,
+locally validated RDF/Neo4j projection over a selected molecular evidence slice.
+It preserves the 2026-08-10 atlas freeze and its 7,965 registered-record
+denominator; the selected graph slice covers 145 MAGs and does not establish
+sample-level methane flux, cross-lane mechanism comparability, calibrated risk,
+or credit eligibility. The earlier roadmap row describing the 662-unit POC
+graph is retained as a historical layer. See the [MVO handoff](../../ontology/docs/MOLECULAR_HANDOFF_20260926.md),
+[verification history](../../ontology/docs/VERIFICATION.md), and [SQL/Neo4j
+comparison](../../ontology/docs/STORE_COMPARISON_20260926.md).
 
 ## Agent Loading Contract
 
@@ -57,7 +67,7 @@ This is the current defensible state, based on local MethaNet docs, generated fu
 | Proteome/MAG crosswalk | authoritative 662-row POC mapping plus unit-scope manifests; MSM and Futian source-lane manifests under `data/external/` | stable joins within each lane across embeddings, MAGs, functional outputs, gLM2, attestation, and metadata | sample/project-level rollup by itself |
 | Functional atlas | 5,209 pipeline-normalized POC/MSM/Futian units with cross-lane comparability pending; 2,508 MUCC v1 source-functional payloads with 2,501 data-complete source-scaffold tri-views; 0 mechanism-comparable units authorized | MAG-level mechanism evidence, QC/taxonomy, annotation coverage, expression detection, run-status audit, and MRV feature primitives | direct activity, abundance-weighted sample capacity, methane flux, or cross-lane pathway strength |
 | gLM2 context | 7,717 release payloads; 5,209 single-window units and 2,508 MUCC multiwindow units | independent genomic-context sidecar for molecular neighborhood interpretation | direct pathway evidence; cross-protocol numerical comparison |
-| MBAG / attestation | 7,965 registered units, 7,710 data-complete tri-views, explicit evidence contracts, candidate cards, provenance, claim wording, 255 source gaps, and next actions; foundational queryable MVP remains the 662-node POC graph | molecular diligence, bridge review, evidence provenance, missingness visibility, monitoring prioritization, and claim-safe querying | calibrated sample/project risk model |
+| MBAG / attestation | 7,965 registered units, 7,710 data-complete tri-views, explicit evidence contracts, candidate cards, provenance, claim wording, 255 source gaps, and next actions; historical 662-node POC graph plus selected MVO 0.2.0 RDF/Neo4j slice covering 145 MAGs | molecular diligence, bridge review, evidence provenance, missingness visibility, monitoring prioritization, and claim-safe querying | full 7,965-record molecular graph; calibrated sample/project risk model |
 | Historical smoke reports | dated snapshots such as 121/662 complete, 625 POC complete, and expanded HTML atlas snapshots | demonstration of report logic and validation gaps at the time they were generated | current production denominator unless refreshed |
 | Sample metadata | incomplete/mixed resolution across rumen, wetland/MUCC, MSM, and Futian; MSM has BioSample-linked context, Futian has 65 exact sample metadata rows but MAGs resolve mainly to site/month rather than depth-resolved samples | provenance context where available | sample-level ecological inference |
 | Abundance/coverage | not yet integrated as final rollup layer | future weighting design | community-level capacity estimates |

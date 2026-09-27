@@ -1,0 +1,4 @@
+proteome_id	mag_id	source	ecosystem	domain	analysis_unit_type	mbag_mag_level_include	functional_run_include	match_status	claim_scope	comparability_status
+p1	m1	rumen	rumen	Bacteria	mag_bin	true	true	matched	MAG functional potential	comparable_mag_bin
+p2	m2	mucc	wetland	Archaea	mag_bin	true	true	matched	MAG functional potential	comparable_mag_bin
+p3	a3	rumen	rumen	Bacteria	assembly_context	false	false	matched	assembly context	not_mag_bin_comparable

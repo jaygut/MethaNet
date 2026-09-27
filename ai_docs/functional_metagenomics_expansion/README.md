@@ -1,7 +1,7 @@
 # MethaNet Functional-Metagenomics Expansion Package
 
 Date: 2026-06-13
-Documentation refresh: 2026-09-24
+Documentation refresh: 2026-09-27
 Scope: Blue Catalyst/MethaNet functional expansion from the 662-genome rumen +
 wetland/MUCC POC into a broader molecular-attestation warehouse spanning rumen,
 wetland/MUCC, mangrove/MSM, mangrove/Futian, and MUCC v1 Old Woman Creek
@@ -40,8 +40,11 @@ correction uses the same August freeze under `noindex`.
 Read [`../../docs/atlas_data_foundation.md`](../../docs/atlas_data_foundation.md)
 for the source-to-release authority chain and
 [`../../docs/knowledge_graph_foundation.md`](../../docs/knowledge_graph_foundation.md)
-for the distinction between the 662-record persistent graph MVP and the
-7,965-row release union. The current release pointer and dated record live in
+for the distinction between the historical 662-record Kuzu MVP, the selected
+MVO 0.2.0 RDF/Neo4j slice, and the 7,965-row release union. Read the [MVO
+handoff](../../ontology/docs/MOLECULAR_HANDOFF_20260926.md) and [store
+comparison](../../ontology/docs/STORE_COMPARISON_20260926.md) for implementation
+scope and measured query parity. The current release pointer and dated record live in
 `configs/atlas_current_release.json` and `docs/releases/`.
 
 ## Historical June Implementation Arc
@@ -56,6 +59,12 @@ MSM, Futian, and MUCC v1:
 4. `scripts/curate_functional_mag_run.py` converts raw tool output into per-run curated Parquet and `run_record.json` provenance.
 5. `scripts/consolidate_functional_mag_cohort.py` builds the Parquet-first cohort warehouse and optional DuckDB catalog.
 6. `scripts/attestation/build_molecular_attestation_mvp.py` builds a local queryable molecular attestation graph over the 662-row denominator.
+
+The later MVO 0.2.0 package is a separate, additive ontology-backed graph
+implementation; it does not replace the historical POC graph or the August
+release denominator. The dedicated [package guide](../../ontology/README.md)
+and [project-state recap](../../docs/project_state_20260927.md) describe the
+current architecture and open scientific gates.
 
 June 16 launch-ready warehouse observed at that historical snapshot:
 

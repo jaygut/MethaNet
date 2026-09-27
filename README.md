@@ -9,6 +9,7 @@ validation-ready methane-risk intelligence**
 [Landing page](https://emergentbiome.earth/) ·
 [Interactive MBAG report](https://emergentbiome.earth/report/) ·
 [Positioning and claim contract](docs/methanet_positioning_and_claims.md) ·
+[Documentation map](docs/README.md) ·
 [Fresh-clone repository guide](docs/repository_guide.md)
 
 ---
@@ -75,6 +76,15 @@ monitoring prioritization, validation-gap routing, and study design. Final
 sample/project methane-risk scores, calibrated A to E tiers, measured methane
 flux, source-independent transfer conclusions, and carbon-credit decisions
 remain validation outcomes.
+
+The [Molecular Verification Ontology (MVO)](ontology/README.md) now provides a
+local OWL/SHACL-governed RDF evidence snapshot and a rebuildable Neo4j query
+projection. Its 0.2.0 slice preserves the earlier 0.1.0 release graph and adds
+selected loci, annotations, RNA, context measurements, review alternatives, and
+gaps for a bounded set of MAGs. It leaves the August atlas release and full
+7,965-record denominator unchanged. The [SQL/Neo4j comparison](ontology/docs/STORE_COMPARISON_20260926.md)
+records exact result parity and the limits of the local benchmark; SQL remains
+the measured faster option in the three fixed controls.
 
 ---
 

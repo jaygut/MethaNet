@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://emergentbiome.earth/ontology/mvo/contracts/query-request/0.1.0",
+  "type": "object", "additionalProperties": false,
+  "required": ["query", "purpose"],
+  "properties": {
+    "query": {"enum": ["release_summary", "record_evidence", "validation_gaps", "source_inventory", "sample_readiness"]},
+    "purpose": {"enum": ["internal_review", "external_export"]},
+    "subject": {"type": "string", "format": "uri", "maxLength": 1024},
+    "limit": {"type": "integer", "minimum": 1, "maximum": 100}
+  },
+  "allOf": [{"if": {"properties": {"query": {"const": "record_evidence"}}}, "then": {"required": ["subject"]}}]
+}

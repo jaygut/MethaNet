@@ -1,0 +1,38 @@
+@prefix mvo: <https://emergentbiome.earth/ontology/mvo/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+mvo:CarbonProject a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Carbon project" ; skos:definition "Rights- and boundary-defined intervention under a named methodology; not an automatically eligible project." .
+mvo:Intervention a owl:Class ; rdfs:subClassOf mvo:Activity ; rdfs:label "Intervention" ; skos:definition "Restoration, rewetting or management action with spatial and temporal boundaries." .
+mvo:ReportingPeriod a owl:Class ; rdfs:subClassOf mvo:ObservationWindow ; rdfs:label "Reporting period" ; skos:definition "Bounded period for a project accounting statement." .
+mvo:BaselineScenario a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Baseline scenario" ; skos:definition "Versioned counterfactual assumptions distinct from observations and project outcomes." .
+mvo:CarbonPool a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Carbon pool" ; skos:definition "Declared accounting stock, such as soil organic carbon or biomass." .
+mvo:GHGStatement a owl:Class ; rdfs:subClassOf mvo:Claim ; rdfs:label "GHG statement" ; skos:definition "Scoped gas-specific or net CO2e accounting proposition, requiring validated measurements and accounting methodology." .
+mvo:ProtocolRequirement a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Protocol requirement" ; skos:definition "Version- and section-specific external requirement; local mappings do not imply protocol endorsement." .
+mvo:Protocol a owl:Class ; rdfs:subClassOf mvo:Method ; rdfs:label "Verification protocol" ; skos:definition "Versioned external accounting or verification specification." .
+mvo:EvidenceBundle a owl:Class ; rdfs:subClassOf mvo:Artifact ; rdfs:label "Evidence bundle" ; skos:definition "Reconstructable package of supporting and conflicting evidence for review." .
+mvo:BridgeAxiom a owl:Class ; rdfs:subClassOf mvo:Assertion ; rdfs:label "Bridge axiom" ; skos:definition "Explicit, bounded proposition connecting molecular evidence to a decision-relevant process; unvalidated bridges remain hypotheses, not OWL inference rules." .
+mvo:VerificationDecision a owl:Class ; rdfs:subClassOf mvo:Decision ; rdfs:label "Verification decision" ; skos:definition "External authorized review disposition; this package does not issue or approve credits." .
+mvo:TenureRight a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Tenure right" ; skos:definition "Documented legal or customary right with holder, area, period and jurisdiction." .
+mvo:ConsentRecord a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Consent record" ; skos:definition "Purpose-bound consent or community governance evidence; lack of a record is not consent." .
+mvo:MonitoringPlan a owl:Class ; rdfs:subClassOf mvo:Method ; rdfs:label "Monitoring plan" ; skos:definition "Versioned measurement and sampling plan with uncertainty, QA and validation requirements." .
+mvo:AccountingActivity a owl:Class ; rdfs:subClassOf mvo:Activity ; rdfs:label "GHG accounting activity" ; skos:definition "Versioned calculation with declared gas conversion factors, baseline, leakage and uncertainty; never inferred from a marker count." .
+mvo:hasProject a owl:ObjectProperty ; rdfs:range mvo:CarbonProject ; rdfs:label "has carbon project" .
+mvo:hasBaseline a owl:ObjectProperty ; rdfs:range mvo:BaselineScenario ; rdfs:label "has baseline scenario" .
+mvo:hasReportingPeriod a owl:ObjectProperty ; rdfs:range mvo:ReportingPeriod ; rdfs:label "has reporting period" .
+mvo:hasRequirement a owl:ObjectProperty ; rdfs:range mvo:ProtocolRequirement ; rdfs:label "has protocol requirement" .
+mvo:addressesRequirement a owl:ObjectProperty ; rdfs:range mvo:ProtocolRequirement ; rdfs:label "addresses requirement as supporting evidence" .
+mvo:hasConsent a owl:ObjectProperty ; rdfs:range mvo:ConsentRecord ; rdfs:label "has consent record" .
+mvo:hasTenure a owl:ObjectProperty ; rdfs:range mvo:TenureRight ; rdfs:label "has tenure evidence" .
+mvo:hasMonitoringPlan a owl:ObjectProperty ; rdfs:range mvo:MonitoringPlan ; rdfs:label "has monitoring plan" .
+mvo:requiresIndependentReview a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "requires independent review" .
+mvo:validationState a owl:DatatypeProperty ; rdfs:label "bridge validation state" .
+mvo:jurisdiction a owl:DatatypeProperty ; rdfs:label "jurisdiction" .
+mvo:consentStatus a owl:DatatypeProperty ; rdfs:label "consent status" .
+mvo:accountingBoundary a owl:DatatypeProperty ; rdfs:label "accounting boundary" .
+mvo:gwpSource a owl:DatatypeProperty ; rdfs:label "GWP assessment source and version" .
+mvo:gwpHorizonYears a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "GWP time horizon in years" .
+mvo:requirementSection a owl:DatatypeProperty ; rdfs:label "external requirement section" .
+mvo:decisionDisposition a owl:DatatypeProperty ; rdfs:label "decision disposition" .

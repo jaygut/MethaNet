@@ -1,0 +1,58 @@
+name: Molecular verification ontology contracts
+
+on:
+  push:
+    paths: ["ontology/**", ".github/workflows/ontology-contracts.yml"]
+  pull_request:
+    paths: ["ontology/**", ".github/workflows/ontology-contracts.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  semantic-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ontology
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - run: python -m pip install -r requirements.lock
+      - run: python -m pip install --no-deps -e .
+      - run: python -m pytest -q
+      - name: Install checksum-verified formal tooling
+        run: python -m mvo local-neo4j install
+      - run: python -m mvo verify --robot .cache/robot-1.9.8.jar
+      - run: python -m mvo fixture --out build/synthetic-ci
+      - name: Verify generated documentation
+        run: |
+          python -m mvo document --out build/reference
+          diff -ru docs/generated build/reference
+      - name: Live local graph parity
+        run: |
+          python -m mvo local-neo4j start
+          python -m mvo local-neo4j load --projection build/synthetic-ci/neo4j --receipt build/synthetic-ci/neo4j-receipt.json
+          python -m mvo local-neo4j load --projection build/synthetic-ci/neo4j
+          python -m mvo neo4j-audit --snapshot-dir build/synthetic-ci --out build/synthetic-ci/query-parity.json
+      - name: Stop isolated graph
+        if: always()
+        run: python -m mvo local-neo4j stop
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ontology-validation
+          path: |
+            ontology/build/schema/
+            ontology/build/synthetic-ci/manifest.json
+            ontology/build/synthetic-ci/neo4j-receipt.json
+            ontology/build/synthetic-ci/query-parity.json
+          retention-days: 14
