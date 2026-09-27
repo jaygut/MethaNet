@@ -155,14 +155,16 @@ or underlying data.
 
 ## Verification recorded for this recap
 
-- Root project test suite: **222 passed, 2 skipped**; 45 existing deprecation
-  warnings were emitted.
+- Root workspace test suite: **221 passed, 2 skipped**; 45 existing deprecation
+  warnings were emitted. A fresh worktree with only Git-tracked files passed
+  **219 tests with 4 skips**; the two additional skips reflect checks whose
+  inputs are deliberately retained as local-only data.
 - MVO package test suite: **119 passed**; five RDFLib deprecation warnings
-  remain visible.
+  remain visible. The same 119 tests passed from the fresh worktree.
 - Atlas release contract validator: **352 checks, zero errors, zero warnings**
   in tracked-contract-only mode. This mode does not scan the large local data
   payloads.
-- Seven landing/atlas focused test modules: **30 passed** (included in the root
+- Seven landing/atlas focused test modules: **29 passed** (included in the root
   suite total, not additional tests).
 - Local Markdown links resolved in the reviewed documentation set; `git diff
   --check` passed.
