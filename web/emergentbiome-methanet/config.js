@@ -42,7 +42,7 @@ window.EB = (function () {
 
   const ecosystems = [
     { key: "rumen",           code: 0, label: "Rumen",           sub: "source reference",      color: color.rumen,          count: 518 },
-    { key: "wetland",         code: 1, label: "Old Woman Creek", sub: "wetland reference lane", color: color.wetland,      count: 2608 },
+    { key: "wetland",         code: 1, label: "Wetland references", sub: "POC wetland + MUCC v1", color: color.wetland,      count: 2608 },
     { key: "mangrove_msm",    code: 2, label: "Mangrove · MSM",  sub: "China 2025 expansion",  color: color.mangroveMsm,    count: 1428 },
     { key: "mangrove_futian", code: 3, label: "Mangrove · Futian", sub: "2026 expansion (Qi et al.)", color: color.mangroveFutian, count: 3156 },
   ];
@@ -175,7 +175,7 @@ window.EB = (function () {
   const hero = {
     eyebrow: "Frozen August 10, 2026 evidence release",
     sub:
-      "A molecular evidence atlas for methane-pathway screening in blue-carbon systems. " +
+      "For blue-carbon teams: inspect microbial evidence, resolve uncertain interpretations, and plan the next field measurement. " +
       "Explore 7,710 data-complete MAG/proteome records, candidate reference links, and the measurements needed before flux or risk can be estimated.",
   };
 
@@ -196,7 +196,7 @@ window.EB = (function () {
     {
       term: "Graph",
       full: "EmergentBiome evidence graph",
-      detail: "The queryable proof-of-concept graph covers 662 records. It connects molecular evidence to provenance, quality, claim scope, and validation gaps; atlas-wide persistence is planned.",
+      detail: "The August proof-of-concept graph covers 662 records. A separate September molecular extension supplies the three source-linked cases in the evidence explorer. Each view preserves its own snapshot and evidence scope.",
       hero: true,
     },
     {
@@ -290,7 +290,7 @@ window.EB = (function () {
       recorded: {
         title: "Recorded molecular evidence",
         points: [
-          "CheckM2: 94.89% completeness and 1.14% contamination, reconciled to the MAG archive and source QC.",
+          "Source-reported genome QC: 94.89% completeness and 1.14% contamination, reconciled to the MAG archive and source QC.",
           "Processed expression detects marker terms. Detection is neither activity magnitude nor methane-process rate.",
           "Raw-cosine nearest match in the 625-record POC core is rumen (0.9842857). This is a one-way reference match.",
         ],
@@ -323,7 +323,7 @@ window.EB = (function () {
     { phase: "Audit", label: "Methodology review", detail: "Reproducible evidence packets tested against applicable methodology and integrity requirements." },
   ];
 
-  /* ---- 9 scenes: kicker, headline, copy (<=25 words), data honesty. See THE STANDING BAR up top. ---- */
+  /* ---- 10 scenes: source-backed atlas and a separately scoped case explorer. ---- */
   const scenes = [
     {
       id: "stakes", n: 1, label: "01 · The Climate Question",
@@ -375,14 +375,21 @@ window.EB = (function () {
       data: "real-schema",
     },
     {
-      id: "ladder", n: 8, label: "08 · Validation Path",
+      id: "network", n: 8, label: "08 · Explore the Evidence",
+      kicker: "Source-linked review",
+      headline: "Every interpretation has an evidence trail.",
+      copy: "Three September evidence cases connect source records, review restrictions and next observations. Explore their qualitative review profiles and canonical source assertions.",
+      data: "real-schema",
+    },
+    {
+      id: "ladder", n: 9, label: "09 · Validation Path",
       kicker: "Evidence maturity",
       headline: "Today's layer supports molecular review.",
       copy: "Screening and candidate triage are available now. Exact sample links, abundance, environment, uncertainty, and field outcomes are needed for calibrated risk.",
       data: "real-ladder",
     },
     {
-      id: "path", n: 9, label: "09 · Partnership Path",
+      id: "path", n: 10, label: "10 · Partnership Path",
       kicker: "The next decision",
       headline: "Pair molecular evidence with field outcomes.",
       copy: "For blue-carbon teams planning monitoring and diligence: a partner cohort can connect exact samples, abundance, environment, and methane-process measurements.",

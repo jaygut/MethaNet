@@ -128,6 +128,60 @@ v9out/
 # Web build output (generated site; multi-MB bundles)
 web/emergentbiome-methanet/_site/
 
+# Locally retained, unpublished V17 manuscript/review package.
+# Do not stage or publish until all author and source-rights approvals are recorded.
+/docs/white-paper/v17/
+/docs/white-paper/v17_internal_review_bundle.zip
+/scripts/reports/v17_*.py
+/scripts/reports/v17_*.sbatch
+/ontology/prompts/molecular_evidence_graph_expansion_20260926.md
+
+# Earlier unpublished manuscript/review packages have the same open author,
+# source-rights, and public-deposition gates. Keep all versions local until
+# those gates are recorded as complete; do not expose only a predecessor draft.
+/docs/white-paper/v12/
+/docs/white-paper/v13/
+/docs/white-paper/v14/
+/docs/white-paper/v15/
+/docs/white-paper/v15_editorial_review/
+/docs/white-paper/v16/
+/docs/research/environmental_microbiome_transfer_learning_20260923.md
+/docs/research/mvo_application_revision/
+/docs/research/mvo_visual_revision/
+/ontology/AGENTS.md
+/scripts/reports/v12_*.py
+/scripts/reports/v12_*.sbatch
+/scripts/reports/v13_*.py
+/scripts/reports/v13_*.sbatch
+/scripts/reports/v14_*.py
+/scripts/reports/v14_*.sbatch
+/scripts/reports/v15_*.py
+/scripts/reports/v15_*.sbatch
+/scripts/reports/v16_*.py
+/scripts/reports/v16_*.sbatch
+
+# Local manuscript/demo production helpers include machine paths or proposal
+# attachments. The public landing projection has separate portable build/QA tools.
+/scripts/reports/mvo_application_*.py
+/scripts/reports/mvo_climate_*.py
+/scripts/reports/mvo_close_bundle.py
+/scripts/reports/mvo_engineering_receipts.py
+/scripts/reports/mvo_prepare_whitepaper.py
+/scripts/reports/mvo_render_acceptance.py
+/scripts/reports/mvo_render_whitepaper.py
+/scripts/reports/mvo_validate_whitepaper.py
+/scripts/reports/build_mvo_network_explorer.py
+/scripts/reports/build_mvo_public_presentation.py
+/scripts/reports/close_mvo_landing_release.py
+/scripts/reports/mvo_network_browser_qa.py
+/scripts/reports/validate_mvo_landing_editorial.py
+/scripts/reports/validate_mvo_network_explorer.py
+/scripts/reports/validate_mvo_public_presentation.py
+
+# Internal graph exports are not the separately reviewed public landing projections.
+/web/emergentbiome-methanet/data/molecular-application-cases-v1.json
+/web/emergentbiome-methanet/data/molecular-evidence-network-v1.json
+
 # The landing page ships its own lib/ (p5 helpers); override the generic `lib/` ignore above
 !web/emergentbiome-methanet/lib/
 !web/emergentbiome-methanet/lib/**

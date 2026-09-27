@@ -94,6 +94,20 @@ BOOLEAN_COLUMNS = [
 ]
 BOOLEAN_VALUES = {"true", "false", "1", "0", "yes", "no", "y", "n"}
 TRUE_VALUES = {"true", "1", "yes", "y"}
+MANIFEST_LINK_COLUMNS = (
+    "mag_id",
+    "source",
+    "ecosystem",
+    "domain",
+    "source_group",
+    "source_sample_ids",
+    "analysis_unit_type",
+    "mbag_mag_level_include",
+    "functional_run_include",
+    "match_status",
+    "claim_scope",
+    "comparability_status",
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -170,6 +184,69 @@ def validate_manifest(
                 if payload_column in fields and not str(row.get(payload_column) or "").strip():
                     errors.append(f"{row_context}: functional_run_include=true but {payload_column} is empty")
     return {"rows": len(rows), "functional_include_rows": functional_include_rows, "fields": fields}
+
+
+def validate_manifest_linkage(
+    source_rows: list[dict[str, str]],
+    functional_rows: list[dict[str, str]],
+    label: str,
+    errors: list[str],
+) -> dict[str, Any]:
+    """Prevent a functional manifest from silently changing source identity or scope.
+
+    The source manifest defines the registered units. POC may intentionally
+    carry fewer functional rows than source rows because assembly-context units
+    remain in the 662-row backbone, so only subset and shared-field equality
+    are required here.
+    """
+
+    source_by_id = {
+        str(row.get("proteome_id") or "").strip(): row
+        for row in source_rows
+        if str(row.get("proteome_id") or "").strip()
+    }
+    functional_by_id = {
+        str(row.get("proteome_id") or "").strip(): row
+        for row in functional_rows
+        if str(row.get("proteome_id") or "").strip()
+    }
+    orphan_ids = sorted(set(functional_by_id) - set(source_by_id))
+    if orphan_ids:
+        examples = ", ".join(orphan_ids[:10])
+        errors.append(
+            f"{label}: {len(orphan_ids)} functional proteome_id values absent "
+            f"from source-lane manifest: {examples}"
+        )
+
+    result: dict[str, Any] = {"orphan_ids": len(orphan_ids), "field_mismatches": {}}
+    if not source_rows or not functional_rows:
+        return result
+
+    def link_value(row: dict[str, str], column: str) -> str:
+        value = str(row.get(column) or "").strip()
+        if column in BOOLEAN_COLUMNS and value.lower() in BOOLEAN_VALUES:
+            return "true" if truthy(value) else "false"
+        return value
+
+    shared_columns = [
+        column for column in MANIFEST_LINK_COLUMNS
+        if column in source_rows[0] and column in functional_rows[0]
+    ]
+    for column in shared_columns:
+        mismatched_ids = sorted(
+            proteome_id
+            for proteome_id, functional_row in functional_by_id.items()
+            if proteome_id in source_by_id
+            and link_value(functional_row, column)
+            != link_value(source_by_id[proteome_id], column)
+        )
+        if mismatched_ids:
+            result["field_mismatches"][column] = len(mismatched_ids)
+            errors.append(
+                f"{label}: {len(mismatched_ids)} source/functional {column} "
+                f"mismatches; proteome_id examples: {', '.join(mismatched_ids[:10])}"
+            )
+    return result
 
 
 def validate_gap_register(
@@ -320,6 +397,7 @@ def validate(repo_root: Path, registry: Path, allow_missing_optional_paths: bool
 
     seen: set[str] = set()
     lane_ids: list[str] = []
+    manifest_reconciliation: list[dict[str, Any]] = []
     for idx, row in enumerate(rows, start=2):
         label = row_label(idx, row)
         lane_id = str(row.get("lane_id") or "").strip()
@@ -341,6 +419,7 @@ def validate(repo_root: Path, registry: Path, allow_missing_optional_paths: bool
 
         manifest_summaries: dict[str, dict[str, Any]] = {}
         source_manifest_rows: list[dict[str, str]] = []
+        functional_manifest_rows: list[dict[str, str]] = []
         for column in REQUIRED_PATH_COLUMNS:
             value = str(row.get(column) or "").strip()
             if not value:
@@ -366,11 +445,48 @@ def validate(repo_root: Path, registry: Path, allow_missing_optional_paths: bool
                 manifest_summaries[column] = summary
                 if column == "source_lane_manifest":
                     _, source_manifest_rows = read_tsv(resolved)
+                else:
+                    _, functional_manifest_rows = read_tsv(resolved)
         functional_summary = manifest_summaries.get("functional_manifest", {})
         source_summary = manifest_summaries.get("source_lane_manifest", {})
         source_rows = int(source_summary.get("rows", 0))
         functional_rows = int(functional_summary.get("rows", 0))
         functional_include_rows = int(functional_summary.get("functional_include_rows", 0))
+        linkage: dict[str, Any] = {"checked": False}
+        if source_manifest_rows and functional_manifest_rows:
+            linkage = validate_manifest_linkage(
+                source_manifest_rows, functional_manifest_rows, label, errors
+            )
+            linkage["checked"] = True
+        denominator_bases: dict[str, int] = {}
+        if source_manifest_rows and functional_manifest_rows:
+            denominator_bases = {
+                "source_manifest": len(source_manifest_rows),
+                "functional_manifest": len(functional_manifest_rows),
+                "functional_included": functional_include_rows,
+            }
+            if "mbag_mag_level_include" in source_manifest_rows[0]:
+                denominator_bases["source_mag_level_included"] = sum(
+                    truthy(item.get("mbag_mag_level_include"))
+                    for item in source_manifest_rows
+                )
+        matching_bases = sorted(
+            basis for basis, count in denominator_bases.items()
+            if denominator == count
+        )
+        manifest_reconciliation.append({
+            "lane_id": lane_id,
+            "denominator_units": denominator,
+            "population_counts": denominator_bases,
+            "matching_denominator_bases": matching_bases,
+            "linkage": linkage,
+        })
+        if denominator > 0 and source_manifest_rows and functional_manifest_rows:
+            if not matching_bases:
+                errors.append(
+                    f"{label}: denominator_units {denominator} does not match "
+                    f"any registered manifest population: {denominator_bases}"
+                )
         lane_role = str(row.get("lane_role") or "").strip().lower()
         source_fields = set(source_summary.get("fields", []))
         if lane_role.startswith("external") and source_fields:
@@ -447,6 +563,7 @@ def validate(repo_root: Path, registry: Path, allow_missing_optional_paths: bool
         "registry": str(registry),
         "row_count": len(rows),
         "lane_ids": lane_ids,
+        "manifest_reconciliation": manifest_reconciliation,
         "missing_columns": missing_columns,
         "extra_columns": extra_columns,
         "errors": errors,

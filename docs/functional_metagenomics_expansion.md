@@ -6,7 +6,7 @@ a governed molecular-attestation warehouse. This page defines the gates that
 connect representation context to functional mechanism evidence, monitoring
 readiness, and future calibrated methane-risk features.
 
-Documentation refresh: 2026-08-10.
+Documentation refresh: 2026-09-27.
 
 Foundation update, 2026-09-24: Resolve the active release through
 [`../configs/atlas_current_release.json`](../configs/atlas_current_release.json)
@@ -14,6 +14,13 @@ and use the [atlas data foundation](atlas_data_foundation.md) for authority,
 grain, missingness, and source-scaffold distinctions. The [knowledge graph
 foundation](knowledge_graph_foundation.md) separates the historical POC graph
 from a future full-atlas biogeochemical projection.
+
+Implementation update, 2026-09-27: MVO 0.2.0 has now materialized a selected
+molecular evidence slice as an additive RDF/Neo4j projection. It preserves the
+August release and historical 662-unit Kuzu graph, and does not establish full
+7,965-record graph materialization or sample-level flux pairing. See the
+[MVO handoff](../ontology/docs/MOLECULAR_HANDOFF_20260926.md), [verification
+history](../ontology/docs/VERIFICATION.md), and [SQL/Neo4j comparison](../ontology/docs/STORE_COMPARISON_20260926.md).
 
 Use [`methanet_positioning_and_claims.md`](methanet_positioning_and_claims.md)
 for the shared narrative and claim contract used by the repository, landing

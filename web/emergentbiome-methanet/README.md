@@ -7,6 +7,15 @@ The internal repository, report-builder, and some historical artifacts retain
 MethaNet/MBAG identifiers for traceability. Public landing copy uses
 **EmergentBiome evidence graph**.
 
+Latest landing-only release: `ec963456aa6b8cd63d016c7b889a39e4a0f1729e`,
+published and verified 27 September 2026 UTC. The three-case public explorer is
+live at [Explore the evidence](https://emergentbiome.earth/#scene-network).
+The three-reviewer package, deployment receipt and live browser checks are in
+`results/reports/mvo_landing_release_20260927/`. The `/report/` tree, frozen atlas,
+dated archive and custom-domain binding were preserved byte-for-byte.
+The reviewed runtime is committed on `gh-pages`; source-side guard updates remain
+in this working branch and should be merged before a later `main` auto-deployment.
+
 The shared position is:
 
 > The EmergentBiome Molecular Atlas organizes MAG/proteome representations,
@@ -70,7 +79,7 @@ space, independently of the displayed 2D projection.
 
 ## Landing Page Story
 
-The page uses a title sequence, nine scroll-driven scenes, and a closing ask:
+The page uses a title sequence, ten scenes, and a closing ask:
 
 | Scene | Reader takeaway | Evidence mode |
 | --- | --- | --- |
@@ -81,9 +90,35 @@ The page uses a title sequence, nine scroll-driven scenes, and a closing ask:
 | 4. Complementary Evidence | Proxies and molecular evidence answer complementary field-design questions | Explicitly illustrative teaching plot |
 | 5. Explore the Atlas | Inspect 7,710 frozen records and distinguish nearest-core matches from reciprocal-pair sensitivity | Real counts, coordinates, and selected links |
 | 6. Evidence Scope | Each gas or mechanism lens requires its own harmonization and validation gate | Real atlas geometry with bounded lens states |
-| 7. The Evidence Trail | The current POC graph preserves evidence, provenance, claim scope, and validation gaps | Real 662-record graph schema |
-| 8. Validation Path | Molecular attestation is available now; calibrated MRV follows paired validation | Real MRV roadmap |
-| 9. Partnership Path | A field cohort could connect molecular screening with paired outcomes | Roadmap and partnership target |
+| 7. Molecular evidence, practical decisions | Connect a source specimen, mechanism review and the next field observation | Illustrative mangrove workflow with three real evidence-case dialogs |
+| 8. Explore the Evidence | Follow three actual qualitative review profiles through genes, context, selected source facts and proposed follow-up | Separately scoped September source-data projection with attribution |
+| 9. Validation Path | Molecular attestation is available now; calibrated MRV follows paired validation | Real MRV roadmap |
+| 10. Partnership Path | A field cohort could connect molecular screening with paired outcomes | Roadmap and partnership target |
+
+The closing ask describes a proposed two-season study of 144 metagenome sample-events, including repeated observations within 36 plots. Funding, site access and permits remain conditions. The planned study is separate from the frozen atlas denominator. Environmental and reviewed marker baselines, outcome-blind evaluation and a prospective second-season test make the next research decision explicit.
+
+## Three-case public projection
+
+The September extension uses `molecular-application-cases-public-v1.json` and
+`molecular-evidence-network-public-v1.json`. These files retain selected numerical
+source facts, gene identities, uncertainty and project-authored review status.
+Dataset creators, versioned DOI links, CC BY 4.0 attribution and modification
+notices accompany the cases. The advanced view is labeled **Selected source
+facts**. It contains an allowlisted subset of the internal graph.
+
+Raw annotation-database text, KO assignment tables, raw sequence payloads,
+internal policy objects, private paths and the original internal case JSON files
+are excluded from every publication path. The canonical graph and internal
+query-purpose authorization remain unchanged. `noindex` is retained as an
+indexing choice; it provides no access control.
+
+`tools/assemble_landing.py` creates a new landing-only staging directory, requires
+a hash-bound publication-review receipt and rejects extra data files. It never
+changes the report alias. The independent three-reviewer package and release
+receipts are stored internally under
+`results/reports/mvo_landing_release_20260927/`. Reviews are automated internal
+reviews, with scientific-content, funding-narrative and UX scopes separately
+documented. They do not constitute independent biological or legal certification.
 
 ## Claim Boundary
 
@@ -152,6 +187,8 @@ config.js               verified numbers, public copy, claims, and milestones
 main.js                 page orchestration, copy injection, and accessibility
 scenes/                 seeded visual scenes
 data/atlas.json         local landing visualization feed
+data/*-public-v1.json   allowlisted, attributed three-case presentation
+tools/assemble_landing.py reviewed landing-only staging and exposure guard
 tools/export_atlas.py   deterministic atlas exporter
 tools/verify_page_firefox.py Firefox browser and accessibility verifier
 tools/validate_release_parity.py cross-artifact release-ledger parity gate

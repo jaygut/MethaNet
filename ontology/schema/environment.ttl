@@ -1,0 +1,51 @@
+@prefix mvo: <https://emergentbiome.earth/ontology/mvo/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix qudt: <http://qudt.org/schema/qudt/> .
+
+sosa:Sample a owl:Class .
+sosa:Observation a owl:Class .
+geo:Feature a owl:Class .
+geo:hasGeometry a owl:ObjectProperty .
+geo:asWKT a owl:DatatypeProperty .
+qudt:QuantityValue a owl:Class .
+qudt:unit a owl:ObjectProperty .
+qudt:numericValue a owl:DatatypeProperty .
+mvo:Site a owl:Class ; rdfs:subClassOf mvo:Entity, geo:Feature ; rdfs:label "Site" ; skos:definition "Spatially identified location with declared precision, not automatically a sampling location." .
+mvo:HabitatConcept a owl:Class ; rdfs:subClassOf skos:Concept ; rdfs:label "Habitat concept" ; skos:definition "Controlled habitat category; source labels require reviewed vocabulary mappings." .
+mvo:PhysicalSample a owl:Class ; rdfs:subClassOf mvo:Entity, sosa:Sample ; rdfs:label "Physical sample" ; skos:definition "Collected material linked to a sampling event and custody chain, distinct from library/accession records." .
+mvo:SamplingEvent a owl:Class ; rdfs:subClassOf mvo:Activity ; rdfs:label "Sampling event" ; skos:definition "Time, place, depth and method specific collection event." .
+mvo:CustodyTransfer a owl:Class ; rdfs:subClassOf mvo:Activity ; rdfs:label "Custody transfer" ; skos:definition "Recorded transfer of a specimen or aliquot between responsible agents." .
+mvo:Observation a owl:Class ; rdfs:subClassOf mvo:Evidence, sosa:Observation ; rdfs:label "Observation" ; skos:definition "Method-specific observation with feature, property, time, result, units, QC and uncertainty." .
+mvo:FluxObservation a owl:Class ; rdfs:subClassOf mvo:Observation ; rdfs:label "Flux observation" ; skos:definition "Measured gas exchange rate under a declared chamber/tower method and spatial/time support." .
+mvo:ConcentrationObservation a owl:Class ; rdfs:subClassOf mvo:Observation ; rdfs:label "Concentration observation" ; skos:definition "Gas concentration measurement; not gas exchange flux." .
+mvo:EnvironmentalObservation a owl:Class ; rdfs:subClassOf mvo:Observation ; rdfs:label "Environmental observation" ; skos:definition "Environmental covariate such as salinity, redox, temperature or water level." .
+mvo:Quantity a owl:Class ; rdfs:subClassOf mvo:Entity, qudt:QuantityValue ; rdfs:label "Quantity" ; skos:definition "Typed number with an explicit unit and quantity kind; original units retained." .
+mvo:ObservationWindow a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Observation window" ; skos:definition "Explicit start/end and support for paired molecular/process validation." .
+mvo:FluxObservation owl:disjointWith mvo:ConcentrationObservation, mvo:ExpressionObservation, mvo:AbundanceObservation .
+mvo:PhysicalSample owl:disjointWith mvo:SequencingSample, mvo:MolecularRecord .
+mvo:hasSite a owl:ObjectProperty ; rdfs:range mvo:Site ; rdfs:label "has site context" .
+mvo:hasHabitat a owl:ObjectProperty ; rdfs:range mvo:HabitatConcept ; rdfs:label "has habitat concept" .
+mvo:hasSamplingEvent a owl:ObjectProperty ; rdfs:range mvo:SamplingEvent ; rdfs:label "has sampling event" .
+mvo:hasPhysicalSample a owl:ObjectProperty ; rdfs:range mvo:PhysicalSample ; rdfs:label "has collected physical sample" .
+mvo:sampledAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime ; rdfs:label "collection time" .
+mvo:observedAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime ; rdfs:label "observation time" .
+mvo:observedProperty a owl:ObjectProperty ; rdfs:label "observed property" .
+mvo:featureOfInterest a owl:ObjectProperty ; rdfs:label "feature of interest" .
+mvo:hasResult a owl:ObjectProperty ; rdfs:range mvo:Quantity ; rdfs:label "has quantity result" .
+mvo:gas a owl:ObjectProperty ; rdfs:range skos:Concept ; rdfs:label "greenhouse gas" .
+mvo:quantityKind a owl:DatatypeProperty ; rdfs:label "quantity kind" .
+mvo:unitStatus a owl:DatatypeProperty ; rdfs:label "unit resolution status" .
+mvo:originalUnit a owl:DatatypeProperty ; rdfs:label "original source unit" .
+mvo:measurementMethod a owl:DatatypeProperty ; rdfs:label "measurement modality" .
+mvo:spatialSupport a owl:DatatypeProperty ; rdfs:label "spatial support and precision" .
+mvo:depthDescription a owl:DatatypeProperty ; rdfs:label "depth description and units" .
+mvo:qcStatus a owl:DatatypeProperty ; rdfs:label "quality-control status" .
+mvo:fromCustodian a owl:ObjectProperty ; rdfs:range mvo:Agent ; rdfs:label "from custodian" .
+mvo:toCustodian a owl:ObjectProperty ; rdfs:range mvo:Agent ; rdfs:label "to custodian" .
+mvo:hasWindow a owl:ObjectProperty ; rdfs:range mvo:ObservationWindow ; rdfs:label "has time window" .
+mvo:independentUnit a owl:DatatypeProperty ; rdfs:label "independent replication unit" .

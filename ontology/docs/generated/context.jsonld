@@ -1,0 +1,450 @@
+{
+  "@context": {
+    "AbundanceObservation": "https://emergentbiome.earth/ontology/mvo/AbundanceObservation",
+    "AccountingActivity": "https://emergentbiome.earth/ontology/mvo/AccountingActivity",
+    "Activity": "https://emergentbiome.earth/ontology/mvo/Activity",
+    "Agent": "https://emergentbiome.earth/ontology/mvo/Agent",
+    "AnnotationAssertion": "https://emergentbiome.earth/ontology/mvo/AnnotationAssertion",
+    "Artifact": "https://emergentbiome.earth/ontology/mvo/Artifact",
+    "Assay": "https://emergentbiome.earth/ontology/mvo/Assay",
+    "AssemblyRepresentation": "https://emergentbiome.earth/ontology/mvo/AssemblyRepresentation",
+    "Assertion": "https://emergentbiome.earth/ontology/mvo/Assertion",
+    "AtlasLane": "https://emergentbiome.earth/ontology/mvo/AtlasLane",
+    "BaselineScenario": "https://emergentbiome.earth/ontology/mvo/BaselineScenario",
+    "BridgeAxiom": "https://emergentbiome.earth/ontology/mvo/BridgeAxiom",
+    "CalledLocus": "https://emergentbiome.earth/ontology/mvo/CalledLocus",
+    "CarbonPool": "https://emergentbiome.earth/ontology/mvo/CarbonPool",
+    "CarbonProject": "https://emergentbiome.earth/ontology/mvo/CarbonProject",
+    "Claim": "https://emergentbiome.earth/ontology/mvo/Claim",
+    "ConcentrationObservation": "https://emergentbiome.earth/ontology/mvo/ConcentrationObservation",
+    "ConsentRecord": "https://emergentbiome.earth/ontology/mvo/ConsentRecord",
+    "ContigRepresentation": "https://emergentbiome.earth/ontology/mvo/ContigRepresentation",
+    "CurationAttempt": "https://emergentbiome.earth/ontology/mvo/CurationAttempt",
+    "CustodyTransfer": "https://emergentbiome.earth/ontology/mvo/CustodyTransfer",
+    "DatasetRelease": "https://emergentbiome.earth/ontology/mvo/DatasetRelease",
+    "Decision": "https://emergentbiome.earth/ontology/mvo/Decision",
+    "Embedding": "https://emergentbiome.earth/ontology/mvo/Embedding",
+    "EmbeddingConfiguration": "https://emergentbiome.earth/ontology/mvo/EmbeddingConfiguration",
+    "Entity": "https://emergentbiome.earth/ontology/mvo/Entity",
+    "EnvironmentalObservation": "https://emergentbiome.earth/ontology/mvo/EnvironmentalObservation",
+    "Evidence": "https://emergentbiome.earth/ontology/mvo/Evidence",
+    "EvidenceBundle": "https://emergentbiome.earth/ontology/mvo/EvidenceBundle",
+    "EvidencePacket": "https://emergentbiome.earth/ontology/mvo/EvidencePacket",
+    "ExpressionObservation": "https://emergentbiome.earth/ontology/mvo/ExpressionObservation",
+    "FluxObservation": "https://emergentbiome.earth/ontology/mvo/FluxObservation",
+    "GHGStatement": "https://emergentbiome.earth/ontology/mvo/GHGStatement",
+    "Gene": "https://emergentbiome.earth/ontology/mvo/Gene",
+    "GraphRelease": "https://emergentbiome.earth/ontology/mvo/GraphRelease",
+    "HabitatConcept": "https://emergentbiome.earth/ontology/mvo/HabitatConcept",
+    "IdentityAssertion": "https://emergentbiome.earth/ontology/mvo/IdentityAssertion",
+    "InterpretationAlternative": "https://emergentbiome.earth/ontology/mvo/InterpretationAlternative",
+    "Intervention": "https://emergentbiome.earth/ontology/mvo/Intervention",
+    "Method": "https://emergentbiome.earth/ontology/mvo/Method",
+    "MolecularPanel": "https://emergentbiome.earth/ontology/mvo/MolecularPanel",
+    "MolecularRecord": "https://emergentbiome.earth/ontology/mvo/MolecularRecord",
+    "MolecularSampleObservation": "https://emergentbiome.earth/ontology/mvo/MolecularSampleObservation",
+    "MonitoringPlan": "https://emergentbiome.earth/ontology/mvo/MonitoringPlan",
+    "Observation": "https://emergentbiome.earth/ontology/mvo/Observation",
+    "ObservationWindow": "https://emergentbiome.earth/ontology/mvo/ObservationWindow",
+    "PanelCoverageSummary": "https://emergentbiome.earth/ontology/mvo/PanelCoverageSummary",
+    "PanelEvaluation": "https://emergentbiome.earth/ontology/mvo/PanelEvaluation",
+    "PanelFamilyConcept": "https://emergentbiome.earth/ontology/mvo/PanelFamilyConcept",
+    "PathwayConcept": "https://emergentbiome.earth/ontology/mvo/PathwayConcept",
+    "PhysicalSample": "https://emergentbiome.earth/ontology/mvo/PhysicalSample",
+    "Policy": "https://emergentbiome.earth/ontology/mvo/Policy",
+    "Protein": "https://emergentbiome.earth/ontology/mvo/Protein",
+    "Protocol": "https://emergentbiome.earth/ontology/mvo/Protocol",
+    "ProtocolRequirement": "https://emergentbiome.earth/ontology/mvo/ProtocolRequirement",
+    "Quantity": "https://emergentbiome.earth/ontology/mvo/Quantity",
+    "ReportingPeriod": "https://emergentbiome.earth/ontology/mvo/ReportingPeriod",
+    "Review": "https://emergentbiome.earth/ontology/mvo/Review",
+    "SamplingEvent": "https://emergentbiome.earth/ontology/mvo/SamplingEvent",
+    "Scope": "https://emergentbiome.earth/ontology/mvo/Scope",
+    "SequenceProtein": "https://emergentbiome.earth/ontology/mvo/SequenceProtein",
+    "SequencingSample": "https://emergentbiome.earth/ontology/mvo/SequencingSample",
+    "SimilarityAssertion": "https://emergentbiome.earth/ontology/mvo/SimilarityAssertion",
+    "Site": "https://emergentbiome.earth/ontology/mvo/Site",
+    "SourceContextRecord": "https://emergentbiome.earth/ontology/mvo/SourceContextRecord",
+    "SourceFeature": "https://emergentbiome.earth/ontology/mvo/SourceFeature",
+    "SourceMeasurement": "https://emergentbiome.earth/ontology/mvo/SourceMeasurement",
+    "SourceMeasurementGap": "https://emergentbiome.earth/ontology/mvo/SourceMeasurementGap",
+    "TenureRight": "https://emergentbiome.earth/ontology/mvo/TenureRight",
+    "Uncertainty": "https://emergentbiome.earth/ontology/mvo/Uncertainty",
+    "ValidationAction": "https://emergentbiome.earth/ontology/mvo/ValidationAction",
+    "ValidationGap": "https://emergentbiome.earth/ontology/mvo/ValidationGap",
+    "VerificationDecision": "https://emergentbiome.earth/ontology/mvo/VerificationDecision",
+    "acceptedHit": "https://emergentbiome.earth/ontology/mvo/acceptedHit",
+    "accession": "https://emergentbiome.earth/ontology/mvo/accession",
+    "accountingBoundary": "https://emergentbiome.earth/ontology/mvo/accountingBoundary",
+    "addressesRequirement": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/addressesRequirement",
+      "@type": "@id"
+    },
+    "affectedPathCount": "https://emergentbiome.earth/ontology/mvo/affectedPathCount",
+    "allowedWording": "https://emergentbiome.earth/ontology/mvo/allowedWording",
+    "annotationCandidate": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/annotationCandidate",
+      "@type": "@id"
+    },
+    "assayContract": "https://emergentbiome.earth/ontology/mvo/assayContract",
+    "assayModality": "https://emergentbiome.earth/ontology/mvo/assayModality",
+    "assemblyDigest": "https://emergentbiome.earth/ontology/mvo/assemblyDigest",
+    "blockedBy": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/blockedBy",
+      "@type": "@id"
+    },
+    "callerNamespace": "https://emergentbiome.earth/ontology/mvo/callerNamespace",
+    "callerVersion": "https://emergentbiome.earth/ontology/mvo/callerVersion",
+    "candidateEventCount": "https://emergentbiome.earth/ontology/mvo/candidateEventCount",
+    "cohortRunId": "https://emergentbiome.earth/ontology/mvo/cohortRunId",
+    "comparisonConfiguration": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/comparisonConfiguration",
+      "@type": "@id"
+    },
+    "compatibilityStatus": "https://emergentbiome.earth/ontology/mvo/compatibilityStatus",
+    "componentAccession": "https://emergentbiome.earth/ontology/mvo/componentAccession",
+    "componentSupport": "https://emergentbiome.earth/ontology/mvo/componentSupport",
+    "configuration": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/configuration",
+      "@type": "@id"
+    },
+    "configurationFingerprint": "https://emergentbiome.earth/ontology/mvo/configurationFingerprint",
+    "consentStatus": "https://emergentbiome.earth/ontology/mvo/consentStatus",
+    "contigId": "https://emergentbiome.earth/ontology/mvo/contigId",
+    "contradicts": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/contradicts",
+      "@type": "@id"
+    },
+    "coordinateEnd": "https://emergentbiome.earth/ontology/mvo/coordinateEnd",
+    "coordinateStart": "https://emergentbiome.earth/ontology/mvo/coordinateStart",
+    "coordinateSystem": "https://emergentbiome.earth/ontology/mvo/coordinateSystem",
+    "coverageLedger": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/coverageLedger",
+      "@type": "@id"
+    },
+    "coverageProbability": "https://emergentbiome.earth/ontology/mvo/coverageProbability",
+    "coverageState": "https://emergentbiome.earth/ontology/mvo/coverageState",
+    "databaseName": "https://emergentbiome.earth/ontology/mvo/databaseName",
+    "databaseVersion": "https://emergentbiome.earth/ontology/mvo/databaseVersion",
+    "decisionDisposition": "https://emergentbiome.earth/ontology/mvo/decisionDisposition",
+    "depthDescription": "https://emergentbiome.earth/ontology/mvo/depthDescription",
+    "displaySelectionRule": "https://emergentbiome.earth/ontology/mvo/displaySelectionRule",
+    "encodes": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/encodes",
+      "@type": "@id"
+    },
+    "epistemicState": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/epistemicState",
+      "@type": "@id"
+    },
+    "evidenceState": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/evidenceState",
+      "@type": "@id"
+    },
+    "exactPhysicalSample": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/exactPhysicalSample",
+      "@type": "@id"
+    },
+    "expiresAt": "https://emergentbiome.earth/ontology/mvo/expiresAt",
+    "externalExportAllowed": "https://emergentbiome.earth/ontology/mvo/externalExportAllowed",
+    "familyId": "https://emergentbiome.earth/ontology/mvo/familyId",
+    "featureOfInterest": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/featureOfInterest",
+      "@type": "@id"
+    },
+    "forFamily": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/forFamily",
+      "@type": "@id"
+    },
+    "forLocus": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/forLocus",
+      "@type": "@id"
+    },
+    "forPanel": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/forPanel",
+      "@type": "@id"
+    },
+    "forProtein": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/forProtein",
+      "@type": "@id"
+    },
+    "forRecord": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/forRecord",
+      "@type": "@id"
+    },
+    "forSample": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/forSample",
+      "@type": "@id"
+    },
+    "fromCustodian": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/fromCustodian",
+      "@type": "@id"
+    },
+    "functionalContract": "https://emergentbiome.earth/ontology/mvo/functionalContract",
+    "functionalPotential": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/functionalPotential",
+      "@type": "@id"
+    },
+    "gas": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/gas",
+      "@type": "@id"
+    },
+    "geneId": "https://emergentbiome.earth/ontology/mvo/geneId",
+    "geneticCodeTested": "https://emergentbiome.earth/ontology/mvo/geneticCodeTested",
+    "geographicPrecision": "https://emergentbiome.earth/ontology/mvo/geographicPrecision",
+    "glmProtocol": "https://emergentbiome.earth/ontology/mvo/glmProtocol",
+    "gwpHorizonYears": "https://emergentbiome.earth/ontology/mvo/gwpHorizonYears",
+    "gwpSource": "https://emergentbiome.earth/ontology/mvo/gwpSource",
+    "habitatLabel": "https://emergentbiome.earth/ontology/mvo/habitatLabel",
+    "hasAlternative": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasAlternative",
+      "@type": "@id"
+    },
+    "hasBaseline": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasBaseline",
+      "@type": "@id"
+    },
+    "hasConsent": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasConsent",
+      "@type": "@id"
+    },
+    "hasContextRecord": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasContextRecord",
+      "@type": "@id"
+    },
+    "hasESM2": "https://emergentbiome.earth/ontology/mvo/hasESM2",
+    "hasEmbedding": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasEmbedding",
+      "@type": "@id"
+    },
+    "hasEvaluation": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasEvaluation",
+      "@type": "@id"
+    },
+    "hasEvidenceItem": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasEvidenceItem",
+      "@type": "@id"
+    },
+    "hasFunctional": "https://emergentbiome.earth/ontology/mvo/hasFunctional",
+    "hasGLM2": "https://emergentbiome.earth/ontology/mvo/hasGLM2",
+    "hasHabitat": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasHabitat",
+      "@type": "@id"
+    },
+    "hasMonitoringPlan": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasMonitoringPlan",
+      "@type": "@id"
+    },
+    "hasPhysicalSample": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasPhysicalSample",
+      "@type": "@id"
+    },
+    "hasPolicy": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasPolicy",
+      "@type": "@id"
+    },
+    "hasProject": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasProject",
+      "@type": "@id"
+    },
+    "hasReportingPeriod": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasReportingPeriod",
+      "@type": "@id"
+    },
+    "hasRequirement": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasRequirement",
+      "@type": "@id"
+    },
+    "hasResult": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasResult",
+      "@type": "@id"
+    },
+    "hasSamplingEvent": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasSamplingEvent",
+      "@type": "@id"
+    },
+    "hasScope": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasScope",
+      "@type": "@id"
+    },
+    "hasSite": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasSite",
+      "@type": "@id"
+    },
+    "hasTenure": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasTenure",
+      "@type": "@id"
+    },
+    "hasUncertainty": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasUncertainty",
+      "@type": "@id"
+    },
+    "hasValidationAction": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasValidationAction",
+      "@type": "@id"
+    },
+    "hasWindow": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/hasWindow",
+      "@type": "@id"
+    },
+    "id": "@id",
+    "identityState": "https://emergentbiome.earth/ontology/mvo/identityState",
+    "inAssembly": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/inAssembly",
+      "@type": "@id"
+    },
+    "inLane": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/inLane",
+      "@type": "@id"
+    },
+    "inRelease": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/inRelease",
+      "@type": "@id"
+    },
+    "independentUnit": "https://emergentbiome.earth/ontology/mvo/independentUnit",
+    "independentlyReviewed": "https://emergentbiome.earth/ontology/mvo/independentlyReviewed",
+    "inputSequenceDigest": "https://emergentbiome.earth/ontology/mvo/inputSequenceDigest",
+    "jurisdiction": "https://emergentbiome.earth/ontology/mvo/jurisdiction",
+    "laneId": "https://emergentbiome.earth/ontology/mvo/laneId",
+    "layerSelection": "https://emergentbiome.earth/ontology/mvo/layerSelection",
+    "licenseURI": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/licenseURI",
+      "@type": "@id"
+    },
+    "linkResolution": "https://emergentbiome.earth/ontology/mvo/linkResolution",
+    "literalValue": "https://emergentbiome.earth/ontology/mvo/literalValue",
+    "lowerBound": "https://emergentbiome.earth/ontology/mvo/lowerBound",
+    "magCompleteness": "https://emergentbiome.earth/ontology/mvo/magCompleteness",
+    "magContamination": "https://emergentbiome.earth/ontology/mvo/magContamination",
+    "measurementMethod": "https://emergentbiome.earth/ontology/mvo/measurementMethod",
+    "mechanismComparable": "https://emergentbiome.earth/ontology/mvo/mechanismComparable",
+    "modelName": "https://emergentbiome.earth/ontology/mvo/modelName",
+    "molecularSimilarity": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/molecularSimilarity",
+      "@type": "@id"
+    },
+    "mvo": "https://emergentbiome.earth/ontology/mvo/",
+    "nextAction": "https://emergentbiome.earth/ontology/mvo/nextAction",
+    "normalization": "https://emergentbiome.earth/ontology/mvo/normalization",
+    "object": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/object",
+      "@type": "@id"
+    },
+    "observedAt": "https://emergentbiome.earth/ontology/mvo/observedAt",
+    "observedProperty": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/observedProperty",
+      "@type": "@id"
+    },
+    "onContig": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/onContig",
+      "@type": "@id"
+    },
+    "originalUnit": "https://emergentbiome.earth/ontology/mvo/originalUnit",
+    "panelStatus": "https://emergentbiome.earth/ontology/mvo/panelStatus",
+    "pathwayComplete": "https://emergentbiome.earth/ontology/mvo/pathwayComplete",
+    "pooling": "https://emergentbiome.earth/ontology/mvo/pooling",
+    "predicate": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/predicate",
+      "@type": "@id"
+    },
+    "processedExpression": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/processedExpression",
+      "@type": "@id"
+    },
+    "processedValue": "https://emergentbiome.earth/ontology/mvo/processedValue",
+    "projectKey": "https://emergentbiome.earth/ontology/mvo/projectKey",
+    "proteomeId": "https://emergentbiome.earth/ontology/mvo/proteomeId",
+    "prov": "http://www.w3.org/ns/prov#",
+    "purpose": "https://emergentbiome.earth/ontology/mvo/purpose",
+    "qcStatus": "https://emergentbiome.earth/ontology/mvo/qcStatus",
+    "quantityKind": "https://emergentbiome.earth/ontology/mvo/quantityKind",
+    "reason": "https://emergentbiome.earth/ontology/mvo/reason",
+    "recordedAt": "https://emergentbiome.earth/ontology/mvo/recordedAt",
+    "regionLabel": "https://emergentbiome.earth/ontology/mvo/regionLabel",
+    "registeredDenominator": "https://emergentbiome.earth/ontology/mvo/registeredDenominator",
+    "releaseExcluded": "https://emergentbiome.earth/ontology/mvo/releaseExcluded",
+    "requirementSection": "https://emergentbiome.earth/ontology/mvo/requirementSection",
+    "requiresIndependentReview": "https://emergentbiome.earth/ontology/mvo/requiresIndependentReview",
+    "reviewState": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/reviewState",
+      "@type": "@id"
+    },
+    "reviewedBy": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/reviewedBy",
+      "@type": "@id"
+    },
+    "rightsStatus": "https://emergentbiome.earth/ontology/mvo/rightsStatus",
+    "rowCount": "https://emergentbiome.earth/ontology/mvo/rowCount",
+    "runId": "https://emergentbiome.earth/ontology/mvo/runId",
+    "sameProteinSequence": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/sameProteinSequence",
+      "@type": "@id"
+    },
+    "sampleLinkageStatus": "https://emergentbiome.earth/ontology/mvo/sampleLinkageStatus",
+    "sampledAt": "https://emergentbiome.earth/ontology/mvo/sampledAt",
+    "scopeDescription": "https://emergentbiome.earth/ontology/mvo/scopeDescription",
+    "sequenceAvailable": "https://emergentbiome.earth/ontology/mvo/sequenceAvailable",
+    "sequenceDigest": "https://emergentbiome.earth/ontology/mvo/sequenceDigest",
+    "sequenceLength": "https://emergentbiome.earth/ontology/mvo/sequenceLength",
+    "sequenceNormalization": "https://emergentbiome.earth/ontology/mvo/sequenceNormalization",
+    "sha256": "https://emergentbiome.earth/ontology/mvo/sha256",
+    "sourceContextLink": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/sourceContextLink",
+      "@type": "@id"
+    },
+    "sourceDateLabel": "https://emergentbiome.earth/ontology/mvo/sourceDateLabel",
+    "sourceDepthLabel": "https://emergentbiome.earth/ontology/mvo/sourceDepthLabel",
+    "sourceIdentifier": "https://emergentbiome.earth/ontology/mvo/sourceIdentifier",
+    "sourceLocator": "https://emergentbiome.earth/ontology/mvo/sourceLocator",
+    "sourceMeasurementLink": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/sourceMeasurementLink",
+      "@type": "@id"
+    },
+    "sourceNamespace": "https://emergentbiome.earth/ontology/mvo/sourceNamespace",
+    "sourcePayload": "https://emergentbiome.earth/ontology/mvo/sourcePayload",
+    "sourceRow": "https://emergentbiome.earth/ontology/mvo/sourceRow",
+    "sourceSiteLabel": "https://emergentbiome.earth/ontology/mvo/sourceSiteLabel",
+    "spatialSupport": "https://emergentbiome.earth/ontology/mvo/spatialSupport",
+    "status": "https://emergentbiome.earth/ontology/mvo/status",
+    "strand": "https://emergentbiome.earth/ontology/mvo/strand",
+    "subject": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/subject",
+      "@type": "@id"
+    },
+    "supersedes": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/supersedes",
+      "@type": "@id"
+    },
+    "supports": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/supports",
+      "@type": "@id"
+    },
+    "taxonomicContext": "https://emergentbiome.earth/ontology/mvo/taxonomicContext",
+    "taxonomyVersion": "https://emergentbiome.earth/ontology/mvo/taxonomyVersion",
+    "tenant": "https://emergentbiome.earth/ontology/mvo/tenant",
+    "thresholdDescription": "https://emergentbiome.earth/ontology/mvo/thresholdDescription",
+    "timeStatus": "https://emergentbiome.earth/ontology/mvo/timeStatus",
+    "toCustodian": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/toCustodian",
+      "@type": "@id"
+    },
+    "toolName": "https://emergentbiome.earth/ontology/mvo/toolName",
+    "toolVersion": "https://emergentbiome.earth/ontology/mvo/toolVersion",
+    "transactionEnd": "https://emergentbiome.earth/ontology/mvo/transactionEnd",
+    "translationStatus": "https://emergentbiome.earth/ontology/mvo/translationStatus",
+    "triViewReady": "https://emergentbiome.earth/ontology/mvo/triViewReady",
+    "type": "@type",
+    "uncertaintyDescription": "https://emergentbiome.earth/ontology/mvo/uncertaintyDescription",
+    "uncertaintyKind": "https://emergentbiome.earth/ontology/mvo/uncertaintyKind",
+    "unitStatus": "https://emergentbiome.earth/ontology/mvo/unitStatus",
+    "upperBound": "https://emergentbiome.earth/ontology/mvo/upperBound",
+    "usesMethod": {
+      "@id": "https://emergentbiome.earth/ontology/mvo/usesMethod",
+      "@type": "@id"
+    },
+    "validFrom": "https://emergentbiome.earth/ontology/mvo/validFrom",
+    "validUntil": "https://emergentbiome.earth/ontology/mvo/validUntil",
+    "validationState": "https://emergentbiome.earth/ontology/mvo/validationState",
+    "version": "https://emergentbiome.earth/ontology/mvo/version"
+  }
+}

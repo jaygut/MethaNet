@@ -36,14 +36,21 @@ build() {
   rm -rf "$OUT"; mkdir -p "$OUT"
 
   # --- landing → site root (only the runtime files; not dev docs/tools) ---
-  for item in index.html styles.css main.js config.js lib scenes vendor data assets; do
+  for item in index.html styles.css molecular-applications.css molecular-network.css main.js config.js lib scenes vendor assets; do
     cp -R "$HERE/$item" "$OUT/"
+  done
+  # Only the explicitly scoped public projections enter the site. Internal
+  # review exports remain in the source workspace, outside the deployment.
+  mkdir -p "$OUT/data"
+  for item in atlas.json molecular-application-cases-public-v1.json molecular-evidence-network-public-v1.json; do
+    cp "$HERE/data/$item" "$OUT/data/"
   done
   touch "$OUT/.nojekyll"
 
   # --- custom domain: write CNAME from the source file if present (keeps GitHub Pages
   #     custom-domain binding across republishes; harmless no-op when absent) ---
   if [[ -f "$HERE/CNAME" ]]; then cp "$HERE/CNAME" "$OUT/CNAME"; echo "    CNAME   : $(cat "$HERE/CNAME")"; fi
+  python3 "$HERE/tools/assemble_landing.py" --validate-root "$OUT"
 
   # --- report → /report/ (render-complete and self-contained) ---
   # The report embeds its interactive evidence payload. Detailed tables and audit
@@ -76,7 +83,7 @@ deploy() {
   git -C "$WT" fetch origin gh-pages --quiet
   while IFS= read -r entry; do
     case "$entry" in
-      .nojekyll|CNAME|assets|config.js|data|index.html|lib|main.js|report|scenes|styles.css|vendor|mbag_nextgen_molecular_niche_atlas_*) ;;
+      .nojekyll|CNAME|assets|config.js|data|index.html|lib|main.js|report|scenes|styles.css|molecular-applications.css|molecular-network.css|vendor|mbag_nextgen_molecular_niche_atlas_*) ;;
       *) echo "ERROR: unexpected published root entry '$entry'; aborting before replacement."; exit 1 ;;
     esac
   done < <(git -C "$WT" ls-tree --name-only origin/gh-pages)

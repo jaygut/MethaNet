@@ -47,6 +47,57 @@ def split_ids(value: Any) -> list[str]:
     return [part.strip() for part in text.split(",") if part.strip()]
 
 
+def build_process_observation_rows(
+    chamber: list[dict[str, Any]],
+    porewater: list[dict[str, Any]],
+    tower: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Project typed process sources without losing their unit and time contract."""
+
+    specs = [
+        ("chamber_methane_flux", chamber, "flux_observation_id", "methane_flux_nmol_m2_s", "source_date", "nmol m-2 s-1"),
+        ("porewater_methane", porewater, "porewater_observation_id", "porewater_ch4_mM", "source_date", "mM"),
+        ("gapfilled_tower_ch4_flux", tower, "flux_observation_id", "methane_flux_nmol_m2_s", "source_datetime_start_local_or_timezone_unknown", "nmol m-2 s-1"),
+    ]
+    observations: list[dict[str, Any]] = []
+    for observation_type, rows, id_field, value_field, time_field, unit in specs:
+        for row in rows:
+            required = {id_field, value_field, time_field, "source_value_status"}
+            missing = sorted(required - set(row))
+            if missing:
+                raise ValueError(
+                    f"{observation_type} typed source missing fields: {missing}"
+                )
+            source_time = str(row[time_field] or "")
+            if observation_type == "gapfilled_tower_ch4_flux":
+                if not source_time or (
+                    row["source_value_status"] == "reported_valid"
+                    and not present(row[value_field])
+                ):
+                    raise ValueError("gap-filled tower row lacks its typed time or valid flux value")
+            observations.append({
+                "lane_id": "mucc_v1_owc_wetland",
+                "observation_id": row[id_field],
+                "observation_type": observation_type,
+                "value": row[value_field],
+                "value_unit": unit,
+                "source_value_field": value_field,
+                "source_value_status": row["source_value_status"],
+                "source_date": source_time[:10] if observation_type == "gapfilled_tower_ch4_flux" else source_time,
+                "source_datetime_start_local_or_timezone_unknown": (
+                    source_time if observation_type == "gapfilled_tower_ch4_flux" else row.get("source_datetime_local", "")
+                ),
+                "source_datetime_end_local_or_timezone_unknown": row.get("source_datetime_end_local_or_timezone_unknown", ""),
+                "source_datetime_timezone_status": row.get("source_datetime_timezone_status", ""),
+                "measurement_approach": row.get("measurement_approach", ""),
+                "temporal_resolution": row.get("temporal_resolution", ""),
+                "site_code": row.get("site_code", "US-OWC"),
+                "sample_join_status": row.get("sample_join_status", "unlinked_no_authoritative_sequence_sample_crosswalk"),
+                "claim_scope": "source-staged process evidence; not attributed to a sequencing sample or MAG",
+            })
+    return observations
+
+
 def write_table(output_dir: Path, name: str, rows: list[dict[str, Any]]) -> dict[str, Any]:
     import pandas as pd
 
@@ -164,19 +215,9 @@ def main() -> int:
         "evidence_type": "processed_expression_detection_or_occupancy", "claim_scope": "not activity magnitude or process rate",
     } for row in mucc_expression]
 
-    fact_flux_or_process_observation: list[dict[str, Any]] = []
-    for observation_type, rows, id_field, value_field in [
-        ("chamber_methane_flux", mucc_chamber, "flux_observation_id", "methane_flux_nmol_m2_s"),
-        ("porewater_methane", mucc_porewater, "porewater_observation_id", "porewater_ch4_mM"),
-        ("gapfilled_tower_ch4_flux", mucc_tower, "flux_observation_id", "ch4_flux"),
-    ]:
-        for row in rows:
-            fact_flux_or_process_observation.append({
-                "lane_id": "mucc_v1_owc_wetland", "observation_id": row.get(id_field, ""), "observation_type": observation_type,
-                "value": row.get(value_field, ""), "source_date": row.get("source_date", row.get("timestamp", "")),
-                "site_code": row.get("site_code", "US-OWC"), "sample_join_status": row.get("sample_join_status", "unlinked_no_authoritative_sequence_sample_crosswalk"),
-                "claim_scope": "source-staged process evidence; not attributed to a sequencing sample or MAG",
-            })
+    fact_flux_or_process_observation = build_process_observation_rows(
+        mucc_chamber, mucc_porewater, mucc_tower
+    )
 
     link_sample_flux_window = [{
         "lane_id": "mucc_v1_owc_wetland", "sample_id": row.get("sample_id", ""), "flux_observation_id": "",

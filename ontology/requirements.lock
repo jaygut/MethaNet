@@ -1,0 +1,25 @@
+# Python 3.13 Linux resolution captured 2026-09-26. Install before --no-deps -e .
+# This is an exact-version lock, not a cross-platform hashed supply-chain lock.
+attrs==26.1.0
+biopython==1.85
+duckdb==1.4.4
+html5rdf==1.2.1
+iniconfig==2.3.0
+jsonschema==4.26.0
+jsonschema-specifications==2025.9.1
+neo4j==6.3.1
+numpy==2.5.3
+owlrl==7.6.2
+packaging==26.3
+pluggy==1.6.0
+prettytable==3.18.0
+pyarrow==24.0.0
+Pygments==2.21.0
+pyparsing==3.3.3
+pyshacl==0.31.0
+pytest==9.1.1
+pytz==2026.4
+rdflib==7.6.0
+referencing==0.37.0
+rpds-py==2026.6.3
+wcwidth==0.9.1

@@ -1,0 +1,2 @@
+lane_id	lane_role	lane_status	denominator_label	denominator_units	source_lane_manifest	functional_manifest	functional_per_mag_dirs	functional_warehouse_dir	consolidation_cohort_run_id	consolidation_output_dir	esm2_artifacts_dirs	glm2_artifacts_dirs	gap_register	claim_scope	notes
+fixture_core	calibration_core	active	MAG-bin fixture	2	source.tsv	functional.tsv			fixture_core					MAG molecular potential	Three source units; two MAG-bin functional units; one assembly-context unit retained only in source.

@@ -1,0 +1,66 @@
+@prefix mvo: <https://emergentbiome.earth/ontology/mvo/> .
+@prefix c: <https://emergentbiome.earth/ontology/mvo/concept/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix qudt: <http://qudt.org/schema/qudt/> .
+
+mvo:AssertionShape a sh:NodeShape ; sh:targetClass mvo:Assertion ; sh:nodeKind sh:IRI ;
+ sh:property [ sh:path mvo:subject ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+ sh:property [ sh:path mvo:predicate ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+ sh:xone ( [ sh:property [ sh:path mvo:object ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ; sh:property [ sh:path mvo:literalValue ; sh:maxCount 0 ] ] [ sh:property [ sh:path mvo:literalValue ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:Literal ] ; sh:property [ sh:path mvo:object ; sh:maxCount 0 ] ] ) ;
+ sh:property [ sh:path mvo:epistemicState ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( c:observed c:imported c:computed c:inferred c:hypothetical c:normative ) ] ;
+ sh:property [ sh:path mvo:reviewState ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( c:pending c:accepted c:rejected c:disputed c:superseded c:withdrawn ) ] ;
+ sh:property [ sh:path mvo:reviewedBy ; sh:class mvo:Agent ; sh:nodeKind sh:IRI ] ;
+ sh:property [ sh:path prov:wasDerivedFrom ; sh:minCount 1 ; sh:nodeKind sh:IRI ] ;
+ sh:property [ sh:path prov:wasAttributedTo ; sh:minCount 1 ; sh:class mvo:Agent ] ;
+ sh:property [ sh:path mvo:usesMethod ; sh:minCount 1 ; sh:class mvo:Method ] ;
+ sh:property [ sh:path mvo:hasScope ; sh:minCount 1 ; sh:class mvo:Scope ] ;
+ sh:property [ sh:path mvo:hasUncertainty ; sh:minCount 1 ; sh:class mvo:Uncertainty ] ;
+ sh:property [ sh:path mvo:hasPolicy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class mvo:Policy ] ;
+ sh:property [ sh:path mvo:recordedAt ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:dateTime ] ;
+ sh:property [ sh:path mvo:timeStatus ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "known" "unresolved" "release_snapshot" ) ] ;
+ sh:sparql [ sh:message "Known valid time needs ordered start/end; transaction interval cannot reverse." ; sh:select """
+ PREFIX mvo: <https://emergentbiome.earth/ontology/mvo/>
+ SELECT $this WHERE {
+ { $this mvo:timeStatus "known" . FILTER NOT EXISTS { $this mvo:validFrom ?start } }
+ UNION { $this mvo:validFrom ?s ; mvo:validUntil ?e . FILTER(?e < ?s) }
+ UNION { $this mvo:recordedAt ?r ; mvo:transactionEnd ?t . FILTER(?t < ?r) }
+ }""" ] ;
+ sh:sparql [ sh:message "Accepted assertions require explicit reviewer; software import is not review." ; sh:select """
+ PREFIX mvo: <https://emergentbiome.earth/ontology/mvo/>
+ PREFIX c: <https://emergentbiome.earth/ontology/mvo/concept/>
+ SELECT $this WHERE { $this mvo:reviewState c:accepted . FILTER NOT EXISTS { $this mvo:reviewedBy ?r } }
+ """ ] .
+
+mvo:ClaimShape a sh:NodeShape ; sh:targetClass mvo:Claim ;
+ sh:property [ sh:path mvo:allowedWording ; sh:minCount 1 ; sh:datatype xsd:string ] ;
+ sh:property [ sh:path mvo:nextAction ; sh:minCount 1 ; sh:datatype xsd:string ] .
+mvo:UncertaintyShape a sh:NodeShape ; sh:targetClass mvo:Uncertainty ;
+ sh:property [ sh:path mvo:uncertaintyKind ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "not_quantified" "confidence_interval" "measurement" "model" "mapping_ambiguity" ) ] ;
+ sh:property [ sh:path mvo:uncertaintyDescription ; sh:minCount 1 ] ;
+ sh:property [ sh:path mvo:coverageProbability ; sh:datatype xsd:decimal ; sh:minExclusive 0 ; sh:maxInclusive 1 ] ;
+ sh:sparql [ sh:message "Intervals require ordered bounds, coverage probability and a method." ; sh:select """
+ PREFIX mvo: <https://emergentbiome.earth/ontology/mvo/>
+ SELECT $this WHERE {
+ { $this mvo:lowerBound ?l ; mvo:upperBound ?u . FILTER (?l > ?u) }
+ UNION { $this mvo:uncertaintyKind "confidence_interval" . FILTER NOT EXISTS { $this mvo:lowerBound ?l ; mvo:upperBound ?u ; mvo:coverageProbability ?p ; mvo:usesMethod ?m } }
+ }""" ] .
+mvo:ScopeShape a sh:NodeShape ; sh:targetClass mvo:Scope ; sh:property [ sh:path mvo:scopeDescription ; sh:minCount 1 ] .
+mvo:PolicyShape a sh:NodeShape ; sh:targetClass mvo:Policy ;
+ sh:property [ sh:path mvo:tenant ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ sh:property [ sh:path mvo:projectKey ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ sh:property [ sh:path mvo:purpose ; sh:minCount 1 ] ;
+ sh:property [ sh:path mvo:rightsStatus ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "unknown" "internal_review_only" "licensed" "restricted" ) ] ;
+ sh:property [ sh:path mvo:externalExportAllowed ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+ sh:sparql [ sh:message "Export requires an identified license and licensed status." ; sh:select """
+ PREFIX mvo: <https://emergentbiome.earth/ontology/mvo/>
+ SELECT $this WHERE { $this mvo:externalExportAllowed true . FILTER NOT EXISTS { $this mvo:rightsStatus "licensed" ; mvo:licenseURI ?license } }
+ """ ] .
+mvo:ArtifactShape a sh:NodeShape ; sh:targetClass mvo:Artifact ; sh:nodeKind sh:IRI ;
+ sh:property [ sh:path mvo:sourceLocator ; sh:minCount 1 ] ;
+ sh:property [ sh:path mvo:sha256 ; sh:pattern "^[a-f0-9]{64}$" ; sh:maxCount 1 ] ;
+ sh:property [ sh:path mvo:hasPolicy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class mvo:Policy ] .
+mvo:GapShape a sh:NodeShape ; sh:targetClass mvo:ValidationGap ;
+ sh:property [ sh:path mvo:reason ; sh:minCount 1 ] ; sh:property [ sh:path mvo:nextAction ; sh:minCount 1 ] ;
+ sh:property [ sh:path mvo:evidenceState ; sh:minCount 1 ; sh:in ( c:missing c:failed c:partial c:ambiguous c:notAssayed ) ] .

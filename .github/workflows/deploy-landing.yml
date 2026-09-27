@@ -45,10 +45,14 @@ jobs:
 
           # Refresh ONLY the landing files. Everything else on gh-pages (report/, the dated
           # mbag_nextgen_* snapshots, CNAME, .git) is left exactly as-is.
-          for item in index.html styles.css main.js config.js lib scenes vendor data assets; do
+          for item in index.html styles.css molecular-applications.css molecular-network.css main.js config.js lib scenes vendor assets; do
             test -e "$SRC/$item" || { echo "::error::source $item missing on main (is lib/ committed?); aborting."; exit 1; }
             rm -rf "$DEST/$item"
             cp -R "$SRC/$item" "$DEST/$item"
+          done
+          mkdir -p "$DEST/data"
+          for item in atlas.json molecular-application-cases-public-v1.json molecular-evidence-network-public-v1.json; do
+            cp "$SRC/data/$item" "$DEST/data/"
           done
           touch "$DEST/.nojekyll"
 
@@ -60,7 +64,10 @@ jobs:
           # Final integrity guards before we touch the branch.
           test -f "$DEST/index.html" && test -f "$DEST/lib/prng.js" \
             && test -f "$DEST/lib/scene-base.js" && test -f "$DEST/data/atlas.json" \
-            && test -f "$DEST/report/index.html"
+            && test -f "$DEST/report/index.html" \
+            && test -f "$DEST/molecular-applications.css" && test -f "$DEST/molecular-network.css" \
+            && test -f "$DEST/data/molecular-evidence-network-public-v1.json"
+          python3 "$SRC/tools/assemble_landing.py" --validate-root "$DEST"
           echo "Assembled landing OK. CNAME=$(cat "$DEST/CNAME")"
 
       - name: Commit and push to gh-pages

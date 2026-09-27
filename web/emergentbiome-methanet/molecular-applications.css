@@ -1,0 +1,61 @@
+/* Application-led revision of scene 07. Existing atlas release and chrome stay intact. */
+.application-stage{background:var(--bg-base);isolation:isolate}
+.application-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.application-intro{position:absolute;z-index:2;left:3.5%;top:21%;width:40%;max-width:580px}
+.application-kicker{font-size:clamp(10px,.88vw,13px);line-height:1.6;color:var(--emergence);margin:0 0 28px}
+.application-intro h2{font-family:var(--font-display);font-weight:650;font-size:clamp(38px,4.7vw,70px);letter-spacing:-.045em;line-height:1.04;margin:0 0 28px;color:var(--text-primary)}
+.application-intro h2 em{font-style:normal;color:#FF814B}
+.application-deck{color:#B9CDD3;font-size:clamp(17px,1.7vw,25px);line-height:1.4;margin:0 0 32px}
+.application-open{background:#06181B;border:1px solid var(--emergence);color:var(--emergence);font-size:clamp(15px,1.35vw,21px);padding:17px 27px;cursor:pointer;min-height:48px}
+.application-open:hover{background:#0D3033}.application-open:focus-visible{outline:3px solid var(--text-primary);outline-offset:5px}
+.application-sources{margin-top:16px}.application-sources summary{cursor:pointer;padding:8px 0}.application-sources summary:focus-visible{outline:2px solid var(--emergence);outline-offset:3px}
+.application-labels{position:absolute;inset:0;z-index:2;pointer-events:none}
+.application-illustration-label{position:absolute;right:6%;top:12%;font-family:var(--font-mono);font-size:12px;color:#AFC5CE}
+.application-label{position:absolute;left:75%;right:4%;display:flex;gap:12px;align-items:flex-start;line-height:1.35}
+.application-label b{color:var(--emergence);font-size:24px;font-family:var(--font-display)}
+.application-label strong{font-size:clamp(13px,1.2vw,19px);display:block;color:var(--text-primary);font-weight:600}
+.application-label span{font-size:clamp(11px,.92vw,14px);color:#B9CDD3;display:block;margin-top:8px}
+.application-label::before{content:"";position:absolute;right:calc(100% + 10px);top:15px;width:5.5vw;border-top:1px solid #90B9C1;opacity:.8}
+.application-label--field{top:20%}.application-label--mechanism{top:49%}.application-label--specimen{top:68%}
+.application-pairing{position:absolute;left:73%;top:34%;font-size:clamp(12px,1vw,16px);font-weight:600;color:#F7B357;padding:10px 0}
+.application-outcomes{position:absolute;bottom:calc(35px + 3%);left:3.5%;right:4%;display:grid;grid-template-columns:1fr 1fr;gap:40px;border-top:1px solid #31454E;padding-top:23px;z-index:2}
+.application-outcomes p{font-family:var(--font-mono);font-size:clamp(10px,.82vw,12px);color:#AFBEC8;line-height:1.6;margin:0}
+.application-outcomes b{color:var(--emergence);text-transform:uppercase;display:block;margin-bottom:3px;letter-spacing:.08em;font-weight:500}
+.application-dialog{background:#0B151D;color:var(--text-primary);border:1px solid #41545F;border-radius:8px;width:min(930px,calc(100vw - 30px));max-height:88vh;margin:auto;padding:28px;box-shadow:0 20px 90px #0009;scrollbar-color:#41545F #0B151D}
+.application-dialog::backdrop{background:#02080De8}
+.application-dialog-header{display:flex;justify-content:space-between;align-items:center;gap:14px;color:var(--emergence)}
+.application-dialog button{color:var(--text-primary);background:transparent;border:1px solid #41545F;border-radius:4px;min-height:44px;padding:10px 15px;cursor:pointer;font:inherit}
+.application-dialog button:focus-visible{outline:2px solid var(--emergence);outline-offset:3px}
+.application-dialog-header button{font-size:14px}.application-dialog h2{font-size:32px;line-height:1.15;margin:24px 0 12px}
+.application-dialog-note{color:#AFC1CC;font-size:14px;line-height:1.6}
+.application-case-tabs{display:flex;gap:9px;flex-wrap:wrap;margin:22px 0}
+.application-case-tabs button[aria-pressed=true]{color:var(--emergence);border-color:var(--emergence);background:#0F2C2E}
+.application-case-heading{color:var(--emergence);font:12px var(--font-mono);line-height:1.7}
+.application-dialog h3{font-size:25px;line-height:1.25;margin:14px 0}.application-dialog h4{font:12px var(--font-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--emergence);margin:24px 0 7px}
+.application-dialog p{line-height:1.65}.application-dialog .application-evidence-number{color:#F7B357;font-size:14px}
+.application-case-boundary{border-left:2px solid #F7B357;padding-left:14px;color:#B9CDD3;font-size:14px}
+.application-lookup{overflow-x:auto}.application-lookup table{border-collapse:collapse;width:100%;font-size:14px}.application-lookup th,.application-lookup td{padding:10px;text-align:right;border-bottom:1px solid #2A3A44;white-space:nowrap}.application-lookup th:first-child{text-align:left}
+@media(max-width:1050px){.application-intro{top:22%;width:44%}.application-intro h2{font-size:clamp(38px,5vw,58px)}.application-label{left:74%;right:3%;gap:7px}.application-pairing{left:73%}.application-label span{max-width:200px}}
+@media(max-width:720px){
+ .scene--application{height:auto!important}.application-stage{position:relative;min-height:1100px;height:auto;display:flex;flex-direction:column;overflow:hidden;padding:85px 22px 75px}
+ .application-art{inset:auto 0 115px;height:550px;object-fit:cover;object-position:64% center;opacity:.85}
+ .application-intro{position:relative;left:auto;top:auto;width:100%;max-width:none}.application-kicker{font-size:10px;margin-bottom:18px}.application-intro h2{font-size:clamp(36px,9vw,54px);max-width:530px;margin-bottom:20px}
+ .application-deck{font-size:19px;line-height:1.5}.application-open{font-size:16px}
+ .application-labels{position:relative;height:530px;inset:auto;pointer-events:none;margin-top:18px}.application-illustration-label{top:14px;right:0;font-size:10px}
+ .application-label{left:51%;right:0;background:#071118ed;padding:8px;border-radius:3px}.application-label strong{font-size:14px}.application-label span{font-size:12px;margin-top:5px}.application-label b{font-size:19px}
+ .application-label::before{display:none}
+ .application-label--field{top:75px}.application-label--mechanism{top:267px}.application-label--specimen{top:399px}.application-pairing{top:199px;left:51%;font-size:12px;background:#071118ed;padding:8px}
+ .application-outcomes{position:relative;left:auto;right:auto;bottom:auto;grid-template-columns:1fr;gap:18px;padding-top:20px}.application-outcomes p{font-size:11px}
+ .application-dialog{padding:20px}.application-dialog h2{font-size:28px}.application-dialog h3{font-size:23px}.application-case-tabs button{flex:1;font-size:13px;min-width:100px}
+}
+@media(min-width:721px) and (max-height:750px){.application-intro{top:17%}.application-intro h2{font-size:clamp(35px,4vw,55px);margin-bottom:18px}.application-kicker{margin-bottom:17px}.application-deck{font-size:19px;margin-bottom:20px}.application-open{padding:12px 20px;font-size:16px}.application-outcomes{bottom:45px;padding-top:14px}}
+.application-intro h2{overflow-wrap:anywhere}
+/* At enlarged text sizes, the same illustration accompanies a flowing workflow. */
+.eb-text-enlarged .scene--application{height:auto!important}
+.eb-text-enlarged .application-stage{position:relative;height:auto;min-height:0;display:block;padding:70px 22px}
+.eb-text-enlarged .application-intro{position:relative;inset:auto;width:100%;max-width:none}
+.eb-text-enlarged .application-labels{position:relative;inset:auto;height:auto;display:grid;gap:18px;margin:35px 0}
+.eb-text-enlarged .application-label,.eb-text-enlarged .application-pairing,.eb-text-enlarged .application-illustration-label{position:relative;inset:auto;max-width:100%;padding:12px;background:#071118ed;overflow-wrap:anywhere}
+.eb-text-enlarged .application-label::before{display:none}
+.eb-text-enlarged .application-label span{max-width:none}
+.eb-text-enlarged .application-outcomes{position:relative;inset:auto;grid-template-columns:1fr;gap:18px}

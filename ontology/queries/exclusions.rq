@@ -1,0 +1,5 @@
+PREFIX mvo: <https://emergentbiome.earth/ontology/mvo/>
+SELECT DISTINCT ?unit ?reason ?action WHERE {
+ ?unit a mvo:MolecularRecord ; mvo:releaseExcluded true ; mvo:blockedBy ?gap .
+ ?gap mvo:reason ?reason ; mvo:nextAction ?action .
+} ORDER BY ?unit ?reason

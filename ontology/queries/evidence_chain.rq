@@ -1,0 +1,6 @@
+PREFIX mvo: <https://emergentbiome.earth/ontology/mvo/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+SELECT ?claim ?subject ?source ?digest ?review WHERE {
+ ?claim a mvo:Claim ; mvo:subject ?subject ; prov:wasDerivedFrom ?source ; mvo:reviewState ?review .
+ ?source mvo:sha256 ?digest .
+} ORDER BY ?claim

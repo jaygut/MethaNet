@@ -1,0 +1,81 @@
+@prefix mvo: <https://emergentbiome.earth/ontology/mvo/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Additive molecular evidence module. No gene-to-ecology property chains.
+mvo:MolecularPanel a owl:Class ; rdfs:subClassOf mvo:Artifact ; rdfs:label "Molecular panel" ; skos:definition "Versioned candidate-family selection and assay-mapping specification with explicit coverage and review limits." .
+mvo:PanelFamilyConcept a owl:Class ; rdfs:subClassOf skos:Concept ; rdfs:label "Panel family concept" ; skos:definition "Candidate family or bounded component set, distinct from demonstrated enzyme activity and complete biochemical pathways." .
+mvo:SourceFeature a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Source molecular feature" ; skos:definition "Source-scoped feature locator whose sequence or locus identity may be unresolved; not a verified called gene merely because a source supplies a name." .
+mvo:CalledLocus a owl:Class ; rdfs:subClassOf mvo:Gene ; rdfs:label "Coordinate-verified called locus" ; skos:definition "Source-scoped called feature with tested coordinates, strand and translation against a specific assembly representation." .
+mvo:SequenceProtein a owl:Class ; rdfs:subClassOf mvo:Protein ; rdfs:label "Sequence-available protein record" ; skos:definition "Protein record with an available source sequence and an explicitly normalized SHA-256 digest; identity remains locus and source scoped." .
+mvo:AssemblyRepresentation a owl:Class ; rdfs:subClassOf mvo:Artifact ; rdfs:label "Assembly representation" ; skos:definition "Byte-addressed assembly file for a lane-scoped molecular record, not an independent specimen or organism." .
+mvo:ContigRepresentation a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Contig representation" ; skos:definition "Named nucleotide sequence within a specific assembly; source names and sequence equality are independently checked." .
+mvo:PanelEvaluation a owl:Class ; rdfs:subClassOf mvo:Evidence ; rdfs:label "Panel-family evaluation" ; skos:definition "One registered molecular record evaluated for one panel family under one source assay contract, including no-hit, ambiguous, unassayed, missing, failed and excluded states." .
+mvo:PanelCoverageSummary a owl:Class ; rdfs:subClassOf mvo:Evidence ; rdfs:label "Panel coverage summary" ; skos:definition "Lane/habitat/family/status aggregate whose complete underlying MAG-level denominator is recoverable from a hashed coverage ledger." .
+mvo:InterpretationAlternative a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Interpretation alternative" ; skos:definition "Scientifically relevant competing interpretation, not an assertion that the alternative is actually active." .
+mvo:MolecularSampleObservation a owl:Class ; rdfs:subClassOf mvo:ExpressionObservation ; rdfs:label "Source-processed gene RNA observation" ; skos:definition "One exact source gene by source RNA column value with its processing contract; not raw counts, DNA abundance, a physical specimen identity or measured activity." .
+mvo:SourceContextRecord a owl:Class ; rdfs:subClassOf mvo:Evidence ; rdfs:label "Source context record" ; skos:definition "A dated/depth/site/assay metadata record at the source-declared resolution, without forcing an unresolved label into an exact sampling event." .
+mvo:SourceMeasurement a owl:Class ; rdfs:subClassOf mvo:Evidence ; rdfs:label "Typed source measurement" ; skos:definition "Source quantity and unit retained at its recorded temporal and spatial precision; molecular linkage and formal flux-observation admission are separate gates." .
+mvo:SourceMeasurementGap a owl:Class ; rdfs:subClassOf mvo:ValidationGap ; rdfs:label "Missing source measurement value" ; skos:definition "Selected source observation or chemistry cell with a missing numeric value, retained with its quantity, unit, source identity and context rather than coerced to zero or omitted." .
+mvo:SourceMeasurementGap owl:disjointWith mvo:SourceMeasurement .
+mvo:ValidationAction a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Next validation action" ; skos:definition "Review or measurement action associated with explicit blocked evidence paths; path count is not expected carbon benefit or a calibrated risk score." .
+mvo:EvidencePacket a owl:Class ; rdfs:subClassOf mvo:Artifact ; rdfs:label "Internal diligence evidence packet" ; skos:definition "Reproducible candidate-level bundle of evidence, counterevidence, rights, allowed wording and next validation actions; not a registry decision." .
+
+mvo:forPanel a owl:ObjectProperty ; rdfs:range mvo:MolecularPanel ; rdfs:label "for panel" .
+mvo:forFamily a owl:ObjectProperty ; rdfs:range mvo:PanelFamilyConcept ; rdfs:label "for candidate family" .
+mvo:forProtein a owl:ObjectProperty ; rdfs:range mvo:Protein ; rdfs:label "for source protein record" .
+mvo:forLocus a owl:ObjectProperty ; rdfs:label "for called locus or unresolved source feature" .
+mvo:inAssembly a owl:ObjectProperty ; rdfs:range mvo:AssemblyRepresentation ; rdfs:label "in assembly representation" .
+mvo:onContig a owl:ObjectProperty ; rdfs:range mvo:ContigRepresentation ; rdfs:label "on contig representation" .
+mvo:hasAlternative a owl:ObjectProperty ; rdfs:range mvo:InterpretationAlternative ; rdfs:label "has competing interpretation" .
+mvo:hasEvaluation a owl:ObjectProperty ; rdfs:range mvo:PanelEvaluation ; rdfs:label "has panel evaluation" .
+mvo:hasContextRecord a owl:ObjectProperty ; rdfs:range mvo:SourceContextRecord ; rdfs:label "has source context record" .
+mvo:hasValidationAction a owl:ObjectProperty ; rdfs:range mvo:ValidationAction ; rdfs:label "has next validation action" .
+mvo:hasEvidenceItem a owl:ObjectProperty ; rdfs:label "has evidence or counterevidence item" .
+mvo:coverageLedger a owl:ObjectProperty ; rdfs:range mvo:Artifact ; rdfs:label "complete coverage ledger" .
+mvo:annotationCandidate a owl:ObjectProperty ; rdfs:label "candidate-family assignment proposition" .
+mvo:sourceContextLink a owl:ObjectProperty ; rdfs:label "source-context relationship proposition" .
+mvo:sameProteinSequence a owl:ObjectProperty ; rdfs:label "same normalized protein sequence proposition, not locus identity" .
+mvo:sourceMeasurementLink a owl:ObjectProperty ; rdfs:label "source-measurement relationship proposition" .
+
+mvo:familyId a owl:DatatypeProperty ; rdfs:label "panel family identifier" .
+mvo:componentAccession a owl:DatatypeProperty ; rdfs:label "assayed panel component accession" .
+mvo:accession a owl:DatatypeProperty ; rdfs:label "source annotation accession" .
+mvo:callerNamespace a owl:DatatypeProperty ; rdfs:label "source caller namespace" .
+mvo:callerVersion a owl:DatatypeProperty ; rdfs:label "caller version or explicit unrecorded state" .
+mvo:contigId a owl:DatatypeProperty ; rdfs:label "source contig identifier" .
+mvo:coordinateStart a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "inclusive coordinate start" .
+mvo:coordinateEnd a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "inclusive coordinate end" .
+mvo:strand a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "strand, plus one or minus one" .
+mvo:geneticCodeTested a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "genetic code used for translation consistency check" .
+mvo:translationStatus a owl:DatatypeProperty ; rdfs:label "translation consistency state" .
+mvo:sequenceAvailable a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "source sequence available" .
+mvo:sequenceLength a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "sequence length under stated normalization" .
+mvo:sequenceNormalization a owl:DatatypeProperty ; rdfs:label "sequence digest normalization" .
+mvo:sourceNamespace a owl:DatatypeProperty ; rdfs:label "source feature namespace" .
+mvo:identityState a owl:DatatypeProperty ; rdfs:label "tested identity state" .
+mvo:panelStatus a owl:DatatypeProperty ; rdfs:label "panel evaluation status" .
+mvo:componentSupport a owl:DatatypeProperty ; rdfs:label "bounded component support, not pathway completeness" .
+mvo:pathwayComplete a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "complete pathway claim admitted" .
+mvo:magCompleteness a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "source MAG completeness percentage" .
+mvo:magContamination a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "source MAG contamination percentage" .
+mvo:taxonomicContext a owl:DatatypeProperty ; rdfs:label "source taxonomic context" .
+mvo:taxonomyVersion a owl:DatatypeProperty ; rdfs:label "taxonomy source/version contract" .
+mvo:assayContract a owl:DatatypeProperty ; rdfs:label "assay and feature semantics" .
+mvo:habitatLabel a owl:DatatypeProperty ; rdfs:label "source-qualified habitat label" .
+mvo:regionLabel a owl:DatatypeProperty ; rdfs:label "source-qualified region label" .
+mvo:geographicPrecision a owl:DatatypeProperty ; rdfs:label "geographic resolution of source attribution" .
+mvo:sourceDateLabel a owl:DatatypeProperty ; rdfs:label "original date or temporal-window label without invented precision" .
+mvo:sourceDepthLabel a owl:DatatypeProperty ; rdfs:label "original depth label and ambiguity" .
+mvo:sourceSiteLabel a owl:DatatypeProperty ; rdfs:label "original site or land-cover label" .
+mvo:assayModality a owl:DatatypeProperty ; rdfs:label "actual molecular assay modality" .
+mvo:processedValue a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "source-processed observation value" .
+mvo:registeredDenominator a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "full registered lane denominator, not a display limit" .
+mvo:candidateEventCount a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "candidate source-event count" .
+mvo:affectedPathCount a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "count of blocked source-defined paths, not carbon benefit" .
+mvo:toolName a owl:DatatypeProperty ; rdfs:label "annotation tool name" .
+mvo:sourcePayload a owl:DatatypeProperty ; rdfs:label "bounded source-row JSON retained for provenance" .
+mvo:independentlyReviewed a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "independent biological interpretation review completed" .
+mvo:displaySelectionRule a owl:DatatypeProperty ; rdfs:label "prospectively specified display selection rule" .

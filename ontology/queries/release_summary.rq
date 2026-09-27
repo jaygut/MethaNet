@@ -1,0 +1,4 @@
+PREFIX mvo: <https://emergentbiome.earth/ontology/mvo/>
+SELECT ?lane (COUNT(?unit) AS ?registered)
+WHERE { ?unit a mvo:MolecularRecord ; mvo:laneId ?lane }
+GROUP BY ?lane ORDER BY ?lane

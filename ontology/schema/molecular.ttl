@@ -1,0 +1,67 @@
+@prefix mvo: <https://emergentbiome.earth/ontology/mvo/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+mvo:AtlasLane a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Atlas lane" ; skos:definition "Registered source cohort with its own denominator and evidence contract." .
+mvo:MolecularRecord a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Molecular record" ; skos:definition "Lane-scoped MAG/proteome record, not necessarily a unique genome across lanes." .
+mvo:CurationAttempt a owl:Class ; rdfs:subClassOf mvo:Activity ; rdfs:label "Curation attempt" ; skos:definition "One cohort/proteome/run attempt, including failed, partial and superseded attempts." .
+mvo:Gene a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Gene record" ; skos:definition "Source-scoped sequence feature on a declared assembly and coordinate system." .
+mvo:Protein a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Protein record" ; skos:definition "Sequence-versioned translated protein; not automatically an experimentally validated function." .
+mvo:AnnotationAssertion a owl:Class ; rdfs:subClassOf mvo:Assertion ; rdfs:label "Annotation assertion" ; skos:definition "Tool/database/version/threshold-specific assignment, including accepted-hit state and coverage." .
+mvo:PathwayConcept a owl:Class ; rdfs:subClassOf skos:Concept ; rdfs:label "Pathway concept" ; skos:definition "Controlled concept for a functional mechanism; annotation alone does not establish process direction or magnitude." .
+mvo:Embedding a owl:Class ; rdfs:subClassOf mvo:Artifact ; rdfs:label "Embedding artifact" ; skos:definition "Vector payload reference with extraction configuration; neither coordinates nor similarity are biological function labels." .
+mvo:EmbeddingConfiguration a owl:Class ; rdfs:subClassOf mvo:Method ; rdfs:label "Embedding configuration" ; skos:definition "Model, layer, pooling, tokenization, input sequence and normalization fingerprint." .
+mvo:SimilarityAssertion a owl:Class ; rdfs:subClassOf mvo:Assertion ; rdfs:label "Similarity assertion" ; skos:definition "Scoped retrieval relation with compatibility assessment; never transitive identity, ecology or causality." .
+mvo:IdentityAssertion a owl:Class ; rdfs:subClassOf mvo:Assertion ; rdfs:label "Identity assertion" ; skos:definition "Reviewable source-to-source identity or candidate crosswalk; does not merge nodes." .
+mvo:SequencingSample a owl:Class ; rdfs:subClassOf mvo:Entity ; rdfs:label "Sequencing sample record" ; skos:definition "Assay/sample accession record distinct from a collected physical specimen." .
+mvo:Assay a owl:Class ; rdfs:subClassOf mvo:Activity ; rdfs:label "Assay" ; skos:definition "Molecular assay execution with specimen and protocol provenance." .
+mvo:ExpressionObservation a owl:Class ; rdfs:subClassOf mvo:Evidence ; rdfs:label "Expression observation" ; skos:definition "Source-processed RNA measurement, not DNA abundance, process rate or measured flux." .
+mvo:AbundanceObservation a owl:Class ; rdfs:subClassOf mvo:Evidence ; rdfs:label "DNA abundance observation" ; skos:definition "Read-coverage or abundance measurement under a declared DNA assay and normalization." .
+mvo:ExpressionObservation owl:disjointWith mvo:AbundanceObservation .
+mvo:SequencingSample owl:disjointWith mvo:MolecularRecord .
+
+mvo:inLane a owl:ObjectProperty ; rdfs:range mvo:AtlasLane ; rdfs:label "in atlas lane" .
+mvo:laneId a owl:DatatypeProperty ; rdfs:label "lane identifier" .
+mvo:proteomeId a owl:DatatypeProperty ; rdfs:label "canonical proteome identifier" .
+mvo:sourceIdentifier a owl:DatatypeProperty ; rdfs:label "original source identifier" .
+mvo:cohortRunId a owl:DatatypeProperty ; rdfs:label "cohort run identifier" .
+mvo:runId a owl:DatatypeProperty ; rdfs:label "run identifier" .
+mvo:forRecord a owl:ObjectProperty ; rdfs:range mvo:MolecularRecord ; rdfs:label "for molecular record" .
+mvo:forSample a owl:ObjectProperty ; rdfs:label "for sample" .
+mvo:hasEmbedding a owl:ObjectProperty ; rdfs:range mvo:Embedding ; rdfs:label "has embedding" .
+mvo:configuration a owl:ObjectProperty ; rdfs:range mvo:EmbeddingConfiguration ; rdfs:label "embedding configuration" .
+mvo:comparisonConfiguration a owl:ObjectProperty ; rdfs:range mvo:EmbeddingConfiguration ; rdfs:label "other embedding configuration" .
+mvo:compatibilityStatus a owl:DatatypeProperty ; rdfs:label "compatibility status" .
+mvo:configurationFingerprint a owl:DatatypeProperty ; rdfs:label "configuration fingerprint or unresolved state" .
+mvo:modelName a owl:DatatypeProperty ; rdfs:label "model name" .
+mvo:layerSelection a owl:DatatypeProperty ; rdfs:label "layer selection" .
+mvo:pooling a owl:DatatypeProperty ; rdfs:label "pooling method" .
+mvo:normalization a owl:DatatypeProperty ; rdfs:label "normalization method" .
+mvo:inputSequenceDigest a owl:DatatypeProperty ; rdfs:label "input sequence digest" .
+mvo:databaseVersion a owl:DatatypeProperty ; rdfs:label "annotation database version" .
+mvo:thresholdDescription a owl:DatatypeProperty ; rdfs:label "annotation acceptance threshold" .
+mvo:coverageState a owl:DatatypeProperty ; rdfs:label "tool coverage state" .
+mvo:hasESM2 a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "release ESM-2 availability" .
+mvo:hasGLM2 a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "release gLM2 availability" .
+mvo:hasFunctional a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "release functional payload availability" .
+mvo:triViewReady a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "release data-complete tri-view" .
+mvo:mechanismComparable a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "release mechanism comparability" .
+mvo:releaseExcluded a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "release exclusion" .
+mvo:functionalContract a owl:DatatypeProperty ; rdfs:label "functional evidence contract" .
+mvo:glmProtocol a owl:DatatypeProperty ; rdfs:label "gLM2 replicate protocol" .
+mvo:sampleLinkageStatus a owl:DatatypeProperty ; rdfs:label "sample linkage readiness" .
+mvo:linkResolution a owl:DatatypeProperty ; rdfs:label "crosswalk resolution" .
+mvo:molecularSimilarity a owl:ObjectProperty ; rdfs:label "molecular similarity proposition" .
+mvo:exactPhysicalSample a owl:ObjectProperty ; rdfs:label "exact physical sample proposition" .
+mvo:processedExpression a owl:ObjectProperty ; rdfs:label "processed expression proposition" .
+mvo:functionalPotential a owl:ObjectProperty ; rdfs:label "molecular functional potential proposition" .
+mvo:geneId a owl:DatatypeProperty ; rdfs:label "source-scoped gene identifier" .
+mvo:sequenceDigest a owl:DatatypeProperty ; rdfs:label "sequence SHA-256 digest" .
+mvo:assemblyDigest a owl:DatatypeProperty ; rdfs:label "assembly SHA-256 digest" .
+mvo:coordinateSystem a owl:DatatypeProperty ; rdfs:label "coordinate convention and reference" .
+mvo:encodes a owl:ObjectProperty ; rdfs:label "encodes protein record" .
+mvo:toolVersion a owl:DatatypeProperty ; rdfs:label "tool version" .
+mvo:databaseName a owl:DatatypeProperty ; rdfs:label "annotation database name" .
+mvo:acceptedHit a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "method-specific accepted hit" .

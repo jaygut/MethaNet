@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object", "additionalProperties": false,
+  "required": ["query", "snapshot_sha256", "tool_version", "rows", "truncated", "claim_boundary"],
+  "properties": {
+    "query": {"type": "string"}, "snapshot_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "tool_version": {"type": "string"}, "rows": {"type": "array", "maxItems": 100, "items": {"type": "object"}},
+    "truncated": {"type": "boolean"}, "claim_boundary": {"type": "string"}
+  }
+}

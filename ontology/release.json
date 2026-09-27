@@ -1,0 +1,16 @@
+{
+  "ontology_version": "0.2.0",
+  "shapes_version": "0.2.0",
+  "mapping_version": "0.2.0",
+  "tool_version": "0.2.0",
+  "molecular_panel_version": "0.1.0",
+  "projection_version": "0.1.0",
+  "namespace": "https://emergentbiome.earth/ontology/mvo/",
+  "instance_namespace": "https://emergentbiome.earth/id/",
+  "publication_status": "local_molecular_extension_in_validation_not_published",
+  "review_status": "automated_validation_not_independent_domain_signoff",
+  "semantic_baseline": ["RDF 1.1", "OWL 2 RL", "SHACL 1.0", "SKOS"],
+  "assertion_encoding": "explicit_RDF_1_1_reified_resources",
+  "intended_use": "internal_evidence_review_and_validation_planning",
+  "prohibited_use": ["automatic_credit_issuance", "molecular_to_flux_without_validation", "unrestricted_agent_queries"]
+}

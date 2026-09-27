@@ -1,6 +1,6 @@
 # MethaNet Positioning And Claim Contract
 
-Documentation refresh: 2026-09-24
+Documentation refresh: 2026-09-27
 
 This document is the shared narrative and claim contract for the MethaNet
 repository, the [EmergentBiome landing page](https://emergentbiome.earth/), and
@@ -13,8 +13,11 @@ status and artifact paths remain in
 MethaNet is the internal molecular-attestation platform and repository behind
 the public **EmergentBiome Molecular Atlas**. The public page calls its
 reviewable evidence layer the **EmergentBiome evidence graph**; MBAG remains
-the internal architecture and historical artifact identifier. Both names use
-the same bounded August 10 molecular evidence contract.
+the internal architecture and historical artifact identifier. The landing
+page's August atlas and `/report/` use the 2026-08-10 release. Its separately
+reviewed September three-case explorer uses a curated public projection of
+selected MVO 0.2.0 evidence; it is not a live connection to the local graph
+service and does not update the atlas denominator.
 
 MethaNet supports blue-carbon methane diligence.
 It turns microbiome sequencing into an evidence graph that links each MAG or
@@ -38,13 +41,18 @@ available.
 ## MBAG Knowledge Graph
 
 The MethaNet Bridge Attestation Graph, or MBAG, is the internal evidence-graph
-architecture. Its existing persistent, queryable MVP covers the 662-record
-rumen/wetland POC. The August release adds 7,965 registered
-`(lane_id, proteome_id)` rows with evidence-contract, candidate-card, and
-validation-gap projections; those rows are not yet a materialized
-sample-resolved knowledge graph. See
-[`knowledge_graph_foundation.md`](knowledge_graph_foundation.md) for the
-current/future boundary. The review path links:
+architecture. The historical persistent Kuzu MVP covers the 662-record
+rumen/wetland POC. MVO 0.2.0 is a separate additive OWL/SHACL-governed RDF
+snapshot with a rebuildable local Neo4j projection; it preserves the original
+233,190 statements and adds selected molecular evidence for 145 MAGs. The
+August release still registers 7,965 `(lane_id, proteome_id)` rows and remains
+the atlas authority. MVO does not materialize all molecular facts for those
+7,965 records or create a sample-resolved methane-flux graph. The live landing
+page's three-case network is a separately reviewed, allowlisted presentation
+projection, not a public connection to the internal graph service. See the
+[knowledge-graph foundation](knowledge_graph_foundation.md), [MVO handoff](../ontology/docs/MOLECULAR_HANDOFF_20260926.md),
+and [SQL/Neo4j comparison](../ontology/docs/STORE_COMPARISON_20260926.md) for
+current implementation and claim boundaries. The review path links:
 
 ```text
 MAG or proteome record
@@ -132,8 +140,9 @@ Use these terms consistently:
 - **Molecular attestation** for the current product category.
 - **MBAG evidence graph** or **molecular-attestation knowledge graph** for the
   internal architecture; **EmergentBiome evidence graph** for the public
-  proposal page. Name the 662-record persistent MVP and 7,965-row release
-  projection separately when describing implemented graph scope.
+  proposal page. Distinguish the historical 662-record Kuzu MVP, the selected
+  MVO 0.2.0 graph slice, the 7,965-row August release, and the allowlisted
+  three-case landing presentation when describing graph scope.
 - **Data-complete tri-view** when all three payloads exist.
 - **Mechanism-comparable tri-view** only for rows that share the validated
   accepted/present feature contract.
