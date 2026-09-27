@@ -23,6 +23,8 @@
 
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="molecular-applications.css" />
+  <link rel="stylesheet" href="molecular-network.css" />
 </head>
 <body>
   <noscript>
@@ -46,8 +48,9 @@
     <a href="#scene-atlas">5 · Explore the Atlas</a>
     <a href="#scene-engine">6 · Evidence Scope</a>
     <a href="#scene-platform">7 · The Evidence Trail</a>
-    <a href="#scene-ladder">8 · Validation Path</a>
-    <a href="#scene-path">9 · Partnership Path</a>
+    <a href="#scene-network">8 · Explore the Evidence</a>
+    <a href="#scene-ladder">9 · Validation Path</a>
+    <a href="#scene-path">10 · Partnership Path</a>
     <a href="#scene-ask">The ask</a>
   </nav>
 
@@ -104,7 +107,7 @@
       </div>
     </section>
 
-    <!-- ===================== 7 SCENES ===================== -->
+    <!-- ===================== 10 SCENES ===================== -->
     <section class="scene" id="scene-stakes" data-scene="stakes" data-accent="--methane-a" style="height:240vh; --copy-h:flex-start; --copy-v:flex-end;">
       <div class="scene__stage"><div class="scene__canvas" id="canvas-stakes" aria-hidden="true"></div><div class="scene__overlay"><div class="copy" data-copy="stakes"></div></div></div>
     </section>
@@ -126,7 +129,7 @@
             <button type="button" data-card-view="next" aria-pressed="false" aria-controls="candidateEvidencePanel">Next measurement</button>
           </div>
           <div class="candidate-card__panel" id="candidateEvidencePanel" role="region" aria-label="Recorded evidence" aria-live="polite">
-            <p>CheckM2: 94.89% completeness, 1.14% contamination. Processed expression detects marker terms; it does not measure pathway activity.</p>
+            <p>Source-reported genome QC: 94.89% completeness, 1.14% contamination. Processed expression detects marker terms; it does not measure pathway activity.</p>
           </div>
           <p class="candidate-card__source">Source: August 10, 2026 candidate table; <a href="https://journals.asm.org/doi/10.1128/msystems.00680-25" target="_blank" rel="noopener">OWC study</a> and <a href="https://zenodo.org/records/8194033" target="_blank" rel="noopener">MUCC archive</a>.</p>
         </aside>
@@ -164,8 +167,67 @@
       </div>
     </section>
 
-    <section class="scene" id="scene-platform" data-scene="platform" data-accent="--emergence" style="height:300vh; --copy-h:flex-start; --copy-v:flex-end;">
-      <div class="scene__stage"><div class="scene__canvas" id="canvas-platform" aria-hidden="true"></div><div class="scene__overlay"><div class="copy" data-copy="platform"></div></div></div>
+    <section class="scene scene--application" id="scene-platform" data-scene="platform" data-accent="--emergence" style="height:180vh;" aria-labelledby="applicationHeadline">
+      <div class="scene__stage application-stage">
+        <div class="scene__canvas" id="canvas-platform" aria-hidden="true"></div>
+        <img class="application-art" src="assets/molecular-field-cross-section-v2.png" alt="Illustrative mangrove cross-section with a sediment core, molecular inset and field chamber; not an observed site or measured result." loading="lazy" />
+        <div class="application-intro">
+          <p class="smallcaps application-kicker">07 · Molecular evidence, practical decisions</p>
+          <h2 id="applicationHeadline">Connect the molecule to the <em>measurement.</em></h2>
+          <p class="application-deck">Check what a gene can mean.<br />Resolve where it belongs.<br />Build better inputs for methane prediction.</p>
+          <button class="btn application-open" type="button" id="applicationOpen" aria-haspopup="dialog">Explore a real evidence case</button>
+          <a class="application-network-link" href="#scene-network">Follow the evidence network <span aria-hidden="true">↘</span></a>
+        </div>
+        <div class="application-labels" aria-label="Illustrative molecular-to-field workflow">
+          <p class="application-illustration-label">Illustrative mangrove workflow</p>
+          <div class="application-label application-label--field"><b>3</b><div><strong>Pair the field observation</strong><span>Chamber footprint · measurement window</span></div></div>
+          <p class="application-pairing">Exact pairing still required</p>
+          <div class="application-label application-label--mechanism"><b>2</b><div><strong>Review the mechanism</strong><span>Evidence · alternatives · confidence</span></div></div>
+          <div class="application-label application-label--specimen"><b>1</b><div><strong>Know the specimen</strong><span>Depth · time · sample identity</span></div></div>
+        </div>
+        <div class="application-outcomes"><p><b>Available now</b>Molecular diligence and measurement planning</p><p><b>Next test</b>Does molecular evidence improve prediction?</p></div>
+      </div>
+    </section>
+
+    <section class="scene scene--network" id="scene-network" data-scene="network" data-native-scene="true" data-accent="--emergence" aria-labelledby="networkTitle">
+      <div class="network-heading">
+        <div><p class="smallcaps">08 · Explore the evidence</p><h2 id="networkTitle">Every interpretation<br />has an <em>evidence trail.</em></h2></div>
+        <p>Start with a real review. Follow its genes, competing explanations and sample context to the next scientific action.</p>
+      </div>
+      <div id="networkMount">
+        <div class="net-shell" id="networkShell" aria-label="Molecular evidence explorer">
+          <div id="networkLoading" role="status">Loading the source-linked evidence…</div>
+          <div class="net-interface" id="networkInterface" hidden>
+            <div class="net-case-bar"><div id="networkCases" class="net-cases" role="group" aria-label="Choose a review case"></div><button class="net-immersive" id="networkImmersiveOpen" type="button" aria-haspopup="dialog">Immersive view</button></div>
+            <div class="net-profile" id="networkProfile" role="group" aria-label="Qualitative review status profile"></div>
+            <div class="net-workspace">
+              <div class="net-map-column">
+                <div class="net-tools">
+                  <div class="net-view-switch" role="group" aria-label="Evidence presentation"><button type="button" data-network-view="graph" aria-pressed="true">Network</button><button type="button" data-network-view="list" aria-pressed="false">Records</button></div>
+                  <label class="net-search-label"><span class="sr-only">Search records in this case</span><input type="search" id="networkSearch" placeholder="Find a gene, depth or question" autocomplete="off" /></label>
+                  <button type="button" id="networkReset">Reset</button>
+                </div>
+                <nav class="net-breadcrumb" id="networkBreadcrumb" aria-label="Current evidence path"></nav>
+                <div class="net-pagination" id="networkPagination" hidden><span id="networkPageStatus"></span><button type="button" id="networkPagePrevious">Previous</button><button type="button" id="networkPageNext">More records</button></div>
+                <div id="networkSearchResults" class="net-search-results" hidden></div>
+                <div id="networkCanvas" class="net-canvas" aria-label="Interactive evidence network">
+                  <div class="net-canvas-caption"><span id="networkGraphMode">REVIEW PATHS</span><span id="networkVisibleCount"></span></div>
+                  <div class="net-graph-layer" id="networkGraphLayer"><svg class="net-edges" id="networkEdges" aria-label="Evidence relationships"></svg><div id="networkNodes"></div></div>
+                  <div class="net-zoom" role="group" aria-label="Network zoom"><button type="button" id="networkZoomOut" aria-label="Zoom out">−</button><button type="button" id="networkFit">Fit</button><button type="button" id="networkZoomIn" aria-label="Zoom in">+</button></div>
+                  <p class="net-map-hint" id="networkMapHint">Select a node to unfold its evidence.</p>
+                </div>
+                <div id="networkRecordList" class="net-record-list" hidden></div>
+                <div class="net-legend"><span data-state="recorded">Recorded</span><span data-state="review">Review required</span><span data-state="pending">Unresolved</span><span data-state="action">Next action</span></div>
+                <a class="net-mobile-detail" href="#networkInspector">Read the selected evidence <span aria-hidden="true">↓</span></a>
+              </div>
+              <aside class="net-inspector" id="networkInspector" aria-label="Selected evidence details"><div id="networkDetail"></div></aside>
+            </div>
+            <div class="net-footer"><span>Selected cases · 26 September 2026 evidence</span><button type="button" id="networkAbout">How to read this view</button></div>
+          </div>
+          <p class="net-live sr-only" id="networkLive" aria-live="polite" aria-atomic="true"></p>
+        </div>
+      </div>
+      <div class="network-transition"><p>Better interpretation. More purposeful measurement.<br /><span>These reviews guide feature selection and sample pairing for predictive-model testing.</span></p><a href="#scene-ladder">Continue to the validation pathway <span aria-hidden="true">↘</span></a></div>
     </section>
 
     <section class="scene" id="scene-ladder" data-scene="ladder" data-accent="--methane-a" style="height:300vh; --copy-h:flex-end; --copy-v:flex-end;">
@@ -180,9 +242,10 @@
     <section class="closing" id="scene-ask">
       <div class="closing__grid">
         <div>
-          <h2 class="ask__title">A molecular map now. <span class="accent">Field-calibrated risk next.</span></h2>
+          <h2 class="ask__title">A molecular map now. <span class="accent">A rigorous field test next.</span></h2>
           <p class="ask__body" id="askBody"></p>
           <ul class="ask__points" id="askPoints"></ul>
+          <p class="ask__study-note">Proposed repeated sampling: 72 microsites within 36 plots, across two seasons.</p>
         </div>
         <aside class="factsheet" aria-label="Verified snapshot">
           <h3>Verified snapshot · <span id="fsDate" class="mono"></span></h3>
@@ -206,7 +269,7 @@
       <div class="closing__cta">
         <a class="btn btn--primary" id="atlasCta" href="#scene-atlas">Explore the evidence map <span aria-hidden="true">↗</span></a>
         <a class="btn btn--report" id="reportCta" href="report/" target="_blank" rel="noopener" aria-label="Read the full report, opens in a new tab">Read the full report <span aria-hidden="true">↗</span></a>
-        <a class="btn btn--ghost" id="contactCta" href="mailto:jay@ecosphereblue.earth,aphilosof@ecosphereblue.earth">Get in touch</a>
+        <a class="btn btn--ghost" id="contactCta" href="mailto:jay@ecosphereblue.earth,aphilosof@ecosphereblue.earth">Discuss field validation</a>
       </div>
       <p class="closing__reportnote" id="reportNote"></p>
       <p class="contact" id="contact"></p>
@@ -221,6 +284,15 @@
   </div>
 
   <!-- ===================== SCRIPTS (offline, order matters) ===================== -->
+  <dialog id="applicationDialog" class="application-dialog" aria-labelledby="applicationDialogTitle">
+    <div class="application-dialog-header"><span class="smallcaps">Recorded evidence · source-linked cases</span><button type="button" id="applicationClose">Close</button></div>
+    <h2 id="applicationDialogTitle">What decision changes?</h2>
+    <p class="application-dialog-note">In these freshwater-wetland and coastal-mudflat examples, each record leads to a practical review or measurement decision.</p>
+    <div class="application-case-tabs" role="group" aria-label="Choose an evidence case"></div>
+    <div id="applicationCase" aria-live="polite"><p>Loading the recorded evidence…</p></div>
+    <p class="application-dialog-note">These cases guide molecular interpretation and measurement planning. Methane-flux estimates and calibrated risk tiers require paired field validation. Carbon-credit decisions require the applicable verification process.</p>
+  </dialog>
+  <dialog id="networkImmersiveDialog" class="net-immersive-dialog" aria-label="Immersive molecular evidence explorer"></dialog>
   <script src="vendor/p5.min.js"></script>
   <script src="config.js"></script>
   <script src="lib/prng.js"></script>
@@ -233,6 +305,8 @@
   <script src="scenes/scene4-atlas.js"></script>
   <script src="scenes/scene-engine.js"></script>
   <script src="scenes/scene5-platform.js"></script>
+  <script src="scenes/scene5-evidence-applications.js"></script>
+  <script src="scenes/scene-evidence-network.js"></script>
   <script src="scenes/scene6-ladder.js"></script>
   <script src="scenes/scene7-path.js"></script>
   <script src="main.js"></script>
