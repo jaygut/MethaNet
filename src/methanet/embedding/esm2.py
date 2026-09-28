@@ -107,6 +107,29 @@ def resolve_pooling_layers(
     return tuple(range(start, total_hidden_states))
 
 
+def describe_embedding_configuration(
+    config: "EmbeddingConfig",
+    pooling_layer_indices: Tuple[int, ...],
+    model_revision: Optional[str] = None,
+) -> Dict[str, object]:
+    """Return the configuration fingerprint to store with every embedding run.
+
+    Vectors are comparable only when these fields match. The March 2026 pilot run
+    averaged hidden layers 20-33 while later runs used layer 33, and nothing in the
+    run records showed it; storing this fingerprint makes such a mismatch visible.
+    """
+    return {
+        "model_name": config.model_name,
+        "model_revision": model_revision,
+        "requested_pooling_layers": [int(i) for i in config.pooling_layers],
+        "pooling_layers": [int(i) for i in pooling_layer_indices],
+        "layer_aggregation": "mean",
+        "token_pooling": config.pooling_strategy,
+        "max_length": int(config.max_length),
+        "fp16": bool(config.fp16),
+    }
+
+
 class ProteinDataset(Dataset):
     """PyTorch Dataset for protein sequences."""
 
@@ -208,6 +231,13 @@ class ESM2Embedder:
                 RuntimeWarning,
                 stacklevel=2,
             )
+
+    def configuration(self) -> Dict[str, object]:
+        """Configuration fingerprint of this embedder, including the model revision."""
+        revision = getattr(self.model.config, "_commit_hash", None)
+        return describe_embedding_configuration(
+            self.config, self.pooling_layer_indices, model_revision=revision
+        )
 
     @torch.no_grad()
     def embed_proteins(

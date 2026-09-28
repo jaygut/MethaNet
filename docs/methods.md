@@ -128,7 +128,7 @@ Observed 662-genome metrics:
 - Input/source denominator: `sample_source_counts.tsv` reports 555 rumen +
   108 MUCC wetland before the final embedded cohort; one wetland coassembly/input
   record is excluded from the primary embedding denominator.
-- Embedding matrix: `662 x 1280`, ESM2-650M layer 33 mean-pooled, zero attrition
+- Embedding matrix: `662 x 1280`, ESM2-650M, mean of hidden layers 20–33 (library default until 10 June 2026), mean-pooled, zero attrition
   and zero non-finite vectors.
 - **Silhouette**: 0.398.
 - **PERMANOVA** (999 permutations, Euclidean distance): F=167.05, p=0.001,
@@ -152,7 +152,8 @@ We use ESM-2 (facebook/esm2_t33_650M_UR50D) to generate protein-level embeddings
 ```
 Input: Protein sequences from marker genes
 Model: ESM-2 650M parameter model
-Layer: 33 (final layer)
+Layer: 33 (final layer; the default since 10 June 2026. Earlier runs, including the
+       662-genome pilot, averaged layers 20–33 and are not comparable with final-layer runs.)
 Pooling: Mean across sequence length
 Output: 1280-dimensional embedding per protein
 ```

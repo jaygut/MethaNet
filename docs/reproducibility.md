@@ -232,7 +232,7 @@ Validated metrics snapshot:
 - Pre-final/source denominator: `sample_source_counts.tsv` reports 555 rumen +
   108 MUCC wetland before one wetland coassembly/input record is excluded from
   the primary final embedding denominator.
-- Embedding: `662 x 1280` ESM2-650M vectors, layer 33 mean pooled, zero
+- Embedding: `662 x 1280` ESM2-650M vectors, mean of hidden layers 20–33 (library default until 10 June 2026), mean pooled, zero
   attrition and zero non-finite vectors.
 - **Silhouette**: 0.398.
 - **PERMANOVA**: F=167.05, p=0.001, R2=0.202.
@@ -418,7 +418,8 @@ X_adapted = adapter.transform(X_target)
 ### 5.3 Train Ensemble
 
 ```python
-from methanet import MethaNetEnsemble, EnsembleConfig
+# Legacy, unvalidated scaffold: outputs are not methane-risk tiers.
+from methanet.classification import MethaNetEnsemble, EnsembleConfig
 from sklearn.model_selection import StratifiedKFold
 
 # Configure ensemble

@@ -127,7 +127,7 @@ and source are confounded in the original POC.
 | Lane | Registered or source denominator | Current role |
 | --- | ---: | --- |
 | Wetland/MUCC POC | 107 MAG/proteome units | Mechanism-comparable target-domain POC |
-| MSM China mangrove | 1,428 local candidates | Annotation-complete target expansion with one release exclusion |
+| MSM China mangrove | 1,428 local candidates | Annotation-complete target expansion; no release exclusions in the 10 August 2026 ledger |
 | Futian mangrove | 3,404 rMAGs, including 3,156 ready payload rows | Time, depth, and habitat expansion |
 | MUCC v1 Old Woman Creek | 2,508 archive MAGs | Wetland source-scaffold, expression detection, and field-validation lane |
 
@@ -148,13 +148,20 @@ accelerator program in Singapore in May 2026.
 | Metric | Value | Interpretation |
 |--------|-------|----------------|
 | Cohort | 662 genomes (107 wetland MUCC + 555 rumen PRJEB31266) | 16.5× scale-up from baseline |
-| Embedding | 662 × 1,280 (ESM2-650M, layer 33, mean-pooled) | Zero attrition, zero non-finite vectors |
+| Embedding | 662 × 1,280 (ESM2-650M, mean of hidden layers 20–33, then mean over proteins) | Zero attrition, zero non-finite vectors |
 | PERMANOVA R² | 0.202 (p=0.001) | Ecosystem explains 20.2% of embedding variance |
 | Silhouette | 0.398 [95% CI: 0.364–0.439] | Bootstrap CI from 150 resamples |
 | CV Classifier | AUC=1.000, balanced accuracy=0.999 | 5-fold CV, PCA-50, balanced class weights |
 | Cohen's d | 3.63 | Very large effect size on trajectory axis |
 | Bridge genomes | 14 with ≥1 opposite-ecosystem k-NN neighbor | Out of 662 total |
 | Top bridge | bin.8 (Archaea), alpha-transfer score=3.47 | >6 SDs above cohort mean; all top 11 are rumen Archaea |
+
+**Embedding configuration note (28 September 2026).** This run pooled the mean of ESM2 hidden
+layers 20–33, the library default until commit `5a40486` (10 June 2026). Every later run (MSM,
+Futian, MUCC v1) used the final layer (33). Statistics within this run are internally
+consistent, but its vectors are not comparable with later runs: cross-run similarities,
+nearest-neighbour matches and links that combine them are withdrawn until the 662 proteomes are
+re-embedded with the final layer. Run records now store the pooling layers.
 
 **Key scientific findings**
 

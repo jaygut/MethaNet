@@ -1,32 +1,23 @@
 """
-MethaNet: Microbial Methane Risk Assessment for Blue Carbon Verification
+MethaNet: molecular evidence for wetland methane research.
 
-Transfer learning framework for predicting methane emission risk in coastal
-ecosystems using functional gene signatures and foundation model embeddings.
+Genome- and proteome-level screening with foundation-model embeddings and
+functional gene profiles, feeding the EmergentBiome evidence graph. The package
+supports molecular review and study design only.
 
-The system leverages transfer learning from data-rich rumen microbiome studies
-to predict methane dynamics in data-sparse coastal ecosystems. The key insight
-is that methanogenic pathway conservation across environments enables
-cross-domain prediction.
+The legacy A-E classification scaffold in ``methanet.classification`` is an
+unvalidated research prototype. It is deliberately not exported here: no output
+may be reported as a methane-risk tier until sample mapping, abundance,
+environmental covariates, uncertainty propagation and flux validation exist
+(see docs/methanet_positioning_and_claims.md).
 
 Example usage:
-    >>> from methanet import MethaNetEnsemble, RiskTier
-    >>> ensemble = MethaNetEnsemble()
-    >>> ensemble.fit(X_train, y_train)
-    >>> results = ensemble.classify_risk(X_test)
-    >>> print(f"Risk Tier: {results[0].risk_tier}")
+    >>> from methanet import FunctionalQuantifier, get_embedder
+    >>> Embedder = get_embedder("esm2")
 """
 
 __version__ = "1.0.0"
 __author__ = "Philosof, Alon and Gutierrez, Jay"
-
-# Core classification
-from methanet.classification import (
-    ClassificationResult,
-    EnsembleConfig,
-    MethaNetEnsemble,
-    RiskTier,
-)
 
 # Functional gene quantification
 from methanet.functional import FunctionalProfile, FunctionalQuantifier
@@ -53,11 +44,6 @@ def get_embedder(model_type: str = "esm2"):
 
 
 __all__ = [
-    # Core classes
-    "MethaNetEnsemble",
-    "EnsembleConfig",
-    "RiskTier",
-    "ClassificationResult",
     # Functional
     "FunctionalQuantifier",
     "FunctionalProfile",

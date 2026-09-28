@@ -143,7 +143,8 @@ Repository = "https://github.com/jaygut/MethaNet"
 Documentation = "https://github.com/jaygut/MethaNet#readme"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/methanet", "src/api_bridge"]
+# src/api_bridge (legacy ONNX tier inference) is intentionally not shipped.
+packages = ["src/methanet"]
 
 [tool.ruff]
 line-length = 88

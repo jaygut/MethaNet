@@ -5,7 +5,12 @@
 > This 1.0 draft predates the current evidence reconciliation. Its classifier
 > performance, A to E risk tiers, paired-cohort results, market claims, and
 > registry language are proposed or unvalidated and should not be cited as
-> current MethaNet results. The current validated layer is MAG/proteome
+> current MethaNet results. Its sample cohort, paired flux subset and every
+> reported statistic (including R² = 0.72, macro F1 = 0.83 and 87–91% transfer
+> efficiency) are not reproducible results. Statements about named institutions,
+> partnerships, acknowledgements and an API service belong to the historical
+> concept; they are not current collaborations or services and must not be
+> cited or repeated. The current validated layer is MAG/proteome
 > molecular attestation, evidence-card review, and monitoring-readiness design.
 > See [`../methanet_positioning_and_claims.md`](../methanet_positioning_and_claims.md),
 > [`../current_artifact_inventory.md`](../current_artifact_inventory.md), and

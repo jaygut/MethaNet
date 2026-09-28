@@ -17,6 +17,7 @@ def _load_esm2_module():
 _esm2_module = _load_esm2_module()
 EmbeddingConfig = _esm2_module.EmbeddingConfig
 resolve_pooling_layers = _esm2_module.resolve_pooling_layers
+describe_embedding_configuration = _esm2_module.describe_embedding_configuration
 
 
 def test_embedding_config_defaults_to_final_layer_mean_pooling() -> None:
@@ -39,3 +40,23 @@ def test_resolve_pooling_layers_supports_negative_indices() -> None:
 def test_resolve_pooling_layers_falls_back_when_out_of_range() -> None:
     resolved = resolve_pooling_layers((20, 21, 22), total_hidden_states=13)
     assert resolved == tuple(range(1, 13))
+
+
+def test_configuration_fingerprint_records_resolved_pooling_layers() -> None:
+    fingerprint = describe_embedding_configuration(
+        EmbeddingConfig(device="cpu"), (33,), model_revision="abc123"
+    )
+    assert fingerprint["pooling_layers"] == [33]
+    assert fingerprint["requested_pooling_layers"] == [33]
+    assert fingerprint["model_revision"] == "abc123"
+    assert fingerprint["model_name"] == "facebook/esm2_t33_650M_UR50D"
+
+
+def test_configuration_fingerprint_distinguishes_the_pilot_pooling() -> None:
+    pilot = describe_embedding_configuration(
+        EmbeddingConfig(pooling_layers=tuple(range(20, 34)), device="cpu"),
+        tuple(range(20, 34)),
+    )
+    final_layer = describe_embedding_configuration(EmbeddingConfig(device="cpu"), (33,))
+    assert pilot["pooling_layers"] == list(range(20, 34))
+    assert pilot != final_layer
