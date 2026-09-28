@@ -296,6 +296,8 @@ def main() -> int:
         cache_dir=args.cache_dir,
     )
     embedder = ESM2Embedder(emb_cfg)
+    # Record how vectors were pooled; runs are comparable only when this matches.
+    stats["embedding_configuration"] = embedder.configuration()
 
     state: dict[str, Any] = {
         "next_batch_id": (max(batch_ids) + 1) if batch_ids else 1,
@@ -408,6 +410,8 @@ def main() -> int:
         n_proteins_used=meta["n_proteins_used"].astype(int).values,
         n_valid_proteins_seen=meta["n_valid_proteins_seen"].astype(int).values,
         protein_cap_applied=meta["protein_cap_applied"].astype(bool).values,
+        model_name=np.array(args.model_name),
+        pooling_layers=np.array(embedder.pooling_layer_indices, dtype=int),
     )
     meta.to_csv(output_dir / "embedding_metadata.tsv", sep="\t", index=False)
     write_json(output_dir / "embedding_stats.json", stats)

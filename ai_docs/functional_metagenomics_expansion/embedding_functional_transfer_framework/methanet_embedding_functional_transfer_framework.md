@@ -90,7 +90,7 @@ The framework uses these local sources as the source of truth:
 The 662-genome ESM2 POC reported:
 
 - 662 embedded proteomes: 107 wetland/MUCC and 555 rumen.
-- ESM2-650M, layer 33, mean-pooled genome/proteome vectors with 1280 dimensions.
+- ESM2-650M genome/proteome vectors with 1280 dimensions, pooled as the mean of hidden layers 20–33 (the library default until 10 June 2026). Runs after that date used layer 33 only, so these vectors are not comparable with the MSM, Futian or MUCC v1 vectors until the 662 proteomes are re-embedded.
 - Zero attrition and zero non-finite embeddings.
 - PERMANOVA ecosystem signal around R2 ~0.202 to 0.206 with p=0.001.
 - Silhouette around 0.398 to 0.410 depending on artifact/report source.
