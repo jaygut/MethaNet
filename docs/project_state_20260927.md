@@ -125,11 +125,15 @@ certification. The website deployment is independent of the MVO local Neo4j
 service.
 
 The latest landing-only `gh-pages` publication is commit
-[`ec963456`](https://github.com/jaygut/MethaNet/commit/ec963456aa6b8cd63d016c7b889a39e4a0f1729e).
-It preserves the `/report/` alias and published August atlas. The report alias
-should not be described as serving MVO 0.2.0 unless a separately reviewed
-release explicitly changes that wiring. See the current [landing source and
-runbook](../web/emergentbiome-methanet/README.md) and [public release
+[`458954b`](https://github.com/jaygut/MethaNet/commit/458954b545ed21c2adbf099e9797d1f07e459b37),
+deployed successfully by [GitHub Actions run 36372864079](https://github.com/jaygut/MethaNet/actions/runs/36372864079).
+It removes six internal review-status labels from the three-case public network,
+preserves the `/report/` alias and frozen August atlas, and passes a tracked,
+hash-bound three-lane publication gate. Both query-busted and ordinary live
+network responses match the reviewed SHA-256.
+The report alias should not be described as serving MVO 0.2.0 unless a separately
+reviewed release explicitly changes that wiring. See the current [landing source
+and runbook](../web/emergentbiome-methanet/README.md) and [public release
 record](methanet_triview_release_20260810.md).
 
 ## What is still open
