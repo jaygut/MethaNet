@@ -67,11 +67,16 @@ displayed visual edges: 2,200 sampled cross-domain full-atlas kNN links and
 biologically verified transfer bridges.
 
 The frozen embedding-context and candidate-card tables independently support
-the nearest-core statement: 2,434 of 2,608 wetland and 4,475 of 4,584
-mangrove records have a rumen record as their **single raw-cosine nearest
-neighbor within the 625-record POC core** (518 rumen, 107 wetland). This
-includes 26 of the 27 selected wetland/mangrove candidate cards. The
-rumen-heavy reference composition is part of the interpretation.
+the nearest-core statement. Counting only records **outside** the 625-record
+POC core (518 rumen, 107 wetland), whose members match themselves: 2,434 of
+2,501 wetland and 4,475 of 4,584 mangrove records have a rumen record as their
+**single raw-cosine nearest neighbor within the core**, as do all 26 selected
+wetland/mangrove candidates outside the core (the 27th card is a core member).
+These matches are weak: the median closest-match cosine outside the core is
+0.983, below the 0.994 median of random atlas pairs. The rumen-heavy reference
+composition is part of the interpretation. (Earlier copy quoted 2,434 of 2,608
+wetland records, a denominator that included the 107 self-matching core
+members.)
 
 The report's zero is a different analysis: **reciprocal cross-domain top-35
 neighbors across the full atlas after per-dimension standardization**.
@@ -126,10 +131,11 @@ These are metadata-rich validation opportunities, not scored samples.
 | --- | --- | --- |
 | Landing manifold | Real report coordinates and source-audited counts | Navigation and hypothesis generation, not transfer or risk proof |
 | Landing candidate card | Frozen MUCC v1 OWC_1885 record with explicit evidence states | MAG/proteome review only; expression detection is not process rate |
-| Projection controls | UMAP opens as the navigable landing view; diffusion, t-SNE, and PCA remain selectable for the same 7,710 embedding-bearing records. PHATE is unavailable in the frozen report | Two-dimensional layouts do not rank candidates or change high-dimensional link membership; 255 registered gap rows have no projection coordinates |
+| Projection controls | UMAP opens by default on the landing page and in the report; diffusion map, t-SNE and PCA remain selectable for the same 7,710 embedding-bearing records. The diffusion view is dominated by the reference-core separation, which squeezes most records into a narrow band. PHATE is not built (`--skip-phate`) | Two-dimensional layouts do not rank candidates or change high-dimensional link membership; 255 registered gap rows have no projection coordinates |
 | Evidence cards | Derived evidence records with direct, missing, contradictory, and next-action fields | Review priority, not biological truth |
 | Sample/context cards | Real metadata coverage and explicit ambiguity tiers | Context value, not exact sample risk |
-| Climate, proxy, and product scenes | Clearly badged sourced anchor, roadmap, or illustrative product shape | No illustrative score is a released prediction |
+| Climate, proxy, and product scenes | Clearly badged sourced anchor, roadmap, or illustrative product shape | No illustrative score is a released prediction; the climate scene's net-balance range carries no values |
+| Proposed field study (scene 10, closing) | Schematic of the proposed design, badged "Proposed study": 36 plots × 2 microsites × 2 seasons | 144 planned sample-events are repeated measurements, not collected or independent observations; conditional on funding, site access and permits; kept outside the atlas counts |
 
 Interactive figures must expose keyboard-operable controls, labels, legends,
 reset actions, mobile-safe dimensions, and a legible static or no-JavaScript
@@ -165,7 +171,8 @@ reduced-motion, link, Open Graph, and public-tree checks. The QA record is in
 - Freeze: `results/reports/methanet_3view_payload_freeze_20260810_end_to_end/`
 - Metadata readiness: `results/reports/methanet_atlas_metadata_readiness_20260810/`
 - August source report: `results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end/`
-- Reconciled public report: `results/reports/emergentbiome_molecular_atlas_20260923_reconciled/` and [stable `/report/` alias](https://emergentbiome.earth/report/)
+- Public report, published 28 September 2026 (same 10 August freeze; narrative, labels and figures consolidated): `results/reports/emergentbiome_molecular_atlas_20260928_consolidated/`, served at the [stable `/report/` alias](https://emergentbiome.earth/report/) and the `tools/publish_site.sh` default
+- Superseded 23 September reconciled report: `results/reports/emergentbiome_molecular_atlas_20260923_reconciled/` (kept locally; still named in `configs/atlas_current_release.json`, whose checksum the ontology pins)
 - Correction deployment receipt: `results/reports/emergentbiome_public_browser_verification_20260923_tsne/deployment_receipt.json`
 - Claim contract: `docs/methanet_positioning_and_claims.md`
 - Release inventory: `docs/current_artifact_inventory.md`
