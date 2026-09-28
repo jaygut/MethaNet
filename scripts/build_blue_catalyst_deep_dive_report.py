@@ -784,7 +784,7 @@ add_body(doc, (
     "Protein FASTA inputs were prepared from MUCC v2.0.0 (wetland, 107 genomes from JGI IMG/M "
     "BioProjects) and PRJEB31266 (rumen, 555 genomes from the Ruminant Gut Archaeome catalogue) "
     "using resilient preprocessing with per-file fault tolerance for compressed input issues and "
-    "gene-calling fallbacks. For each genome, up to 2,000 proteins (minimum length 30 aa) were "
+    "gene-calling fallbacks. For each genome, up to 6,000 proteins (minimum length 30 aa) were "
     "embedded with ESM2-650M (facebook/esm2_t33_650M_UR50D, mean of hidden layers 20-33), using numerically stable "
     "inference settings; protein embeddings were aggregated by mean pooling to produce one "
     "1,280-dimensional genome representation per sample."
