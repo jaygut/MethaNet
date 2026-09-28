@@ -12,7 +12,7 @@
   const host=document.getElementById('applicationCase');
   const tabs=document.querySelector('.application-case-tabs');
   const open=document.getElementById('applicationOpen');
-  let payload=null, selected='locate';
+  let payload=null, selected='locate', handoff=false;
   function node(tag,text,klass){const e=document.createElement(tag);e.textContent=text;if(klass)e.className=klass;return e;}
   function render(){
     if(!payload)return;
@@ -39,7 +39,9 @@
     host.append(sources);
     const explore=node('a','Follow this case in the evidence network','application-network-link');
     explore.href='#scene-network';
-    explore.addEventListener('click',()=>{dialog.close();document.dispatchEvent(new CustomEvent('emergentbiome:network-case',{detail:{caseId:c.id}}));});
+    // Hand keyboard focus to the matching explorer case instead of returning it
+    // to this scene's opener, which the handoff scrolls out of view.
+    explore.addEventListener('click',event=>{event.preventDefault();handoff=true;dialog.close();document.dispatchEvent(new CustomEvent('emergentbiome:network-case',{detail:{caseId:c.id,focus:true}}));});
     host.append(explore);
   }
   async function load(){
@@ -55,5 +57,5 @@
   }
   open.addEventListener('click',()=>{dialog.showModal();load();});
   document.getElementById('applicationClose').addEventListener('click',()=>dialog.close());
-  dialog.addEventListener('close',()=>open.focus({preventScroll:true}));
+  dialog.addEventListener('close',()=>{if(handoff){handoff=false;return;}open.focus({preventScroll:true});});
 })();

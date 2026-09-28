@@ -14,22 +14,30 @@
   window.EBScenes = window.EBScenes || {};
 
   // scene order incl. hero intro
-  const ORDER = ["hero", "stakes", "blindspot", "surveyor", "cheap", "atlas", "engine", "platform", "network", "ladder", "path"];
+  const ORDER = ["hero", "stakes", "blindspot", "atlas", "surveyor", "cheap", "engine", "platform", "network", "ladder", "path"];
 
   // ---------- copy + chrome injection ----------
   function el(html) { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstChild; }
 
   const READOUTS = {
-    stakes: [["~" + EB.num.methaneGWP20 + "×", "CH₄ vs CO₂ over 20 years", true], ["field flux", "needed for site-specific methane balance"]],
-    blindspot: [["0 verified pairs", "wetland/mangrove MAG-to-flux joins in this release", true], ["next step", "pair samples with compatible field outcomes"]],
-    surveyor: [["1 real MAG", "source-audited review example", true], ["0 matched flux", "for this candidate record"]],
-    cheap: [["salinity", "field context, not a process rate", true], ["genome evidence", "molecular screening, not site risk"]],
-    atlas: [[D.fmt(EB.num.triViewReady), "data-complete MAG/proteome records", true], [D.fmt(EB.num.bridgeEdges), "displayed map links"], [D.fmt(EB.num.highlightedCandidateLinks), "highlighted nearest-core candidate links"], ["0", "standardized reciprocal rumen top-35 pairs"]],
-    engine: [["methane", "current pathway-screening focus", true], ["other lenses", "research options requiring separate validation"], [D.fmt(EB.num.mechanismComparableTriView), "cross-lane mechanism-comparable units"]],
-    platform: [[D.fmt(EB.num.magNodes), "queryable POC graph records", true], [D.fmt(EB.num.evidenceAtoms), "POC evidence atoms"]],
-    ladder: [["rung 0", "available now · evidence review + triage", true], ["rungs 1-5", "path to calibrated MRV"]],
-    path: [["partner cohort", "exact sample + field process pairing", true], ["held-out test", "required before calibrated risk"]],
+    stakes: [["~" + EB.num.methaneGWP20 + "×", "CH₄ vs CO₂ over 20 years", true], ["field flux", "needed for a site's methane balance"]],
+    blindspot: [["0 verified pairs", "wetland/mangrove genome-to-flux pairs in this atlas", true], ["no default", "VM0033 methane value below 18 ppt"]],
+    atlas: [[D.fmt(EB.num.triViewReady), "genome records on the map", true], [D.fmt(EB.num.sampledNeighborLinks), "neighbor links drawn"], [D.fmt(EB.num.highlightedCandidateLinks), "selected nearest-reference links"], [String(EB.num.standardizedRumenReciprocalPairs), "rumen matches that stay mutual after standardizing"]],
+    surveyor: [["1 real genome", "from the August atlas", true], ["0 matched flux", "measurements for this record"]],
+    cheap: [["salinity", "sets the baseline", true], ["genome evidence", "flags exceptions worth measuring"]],
+    engine: [[D.fmt(EB.num.triViewReady), "records screened for methane-cycle genes", true], ["2", "annotation routes, compared separately"], [D.fmt(EB.num.mechanismComparableTriView), "records with a cross-route methane score"]],
+    ladder: [["rung 0", "available now: review and triage", true], ["rungs 1–5", "the path to calibrated risk"]],
+    path: [[EB.study.sampleEvents + " planned", "sample-events, not independent replicates", true], [EB.study.plots + " plots", "the replicate unit in analysis"]],
   };
+
+  // The claim-bar chip names the dated scope of the scene in view.
+  const SCOPE = {
+    atlas: "atlas data · " + EB.num.snapshot,
+    cases: "case evidence · " + EB.num.caseEvidenceDate,
+    study: "proposed study · not yet collected",
+    both: "atlas " + EB.num.snapshot + " · cases " + EB.num.caseEvidenceDate,
+  };
+  const SCENE_SCOPE = { platform: "cases", network: "cases", path: "study" };
 
   function injectCopy() {
     EB.scenes.forEach((s) => {
@@ -43,7 +51,9 @@
           ? '<span class="badge illus">Real anchor + illustrative view</span>'
           : s.data === "roadmap"
             ? '<span class="badge illus">Roadmap</span>'
-            : '<span class="badge real">Real data</span>';
+            : s.data === "proposed"
+              ? '<span class="badge illus">Proposed study</span>'
+              : '<span class="badge real">Real data</span>';
       let readoutHtml = "";
       const rs = READOUTS[s.id] || [];
       if (rs.length) {
@@ -56,21 +66,28 @@
         '<div class="copy__num smallcaps" style="margin-bottom:8px;color:var(--text-muted)">' + s.kicker + "</div>" +
         '<h2 class="copy__headline">' + s.headline + "</h2>" +
         '<p class="copy__body">' + s.copy + "</p>" +
-        readoutHtml;
+        readoutHtml +
+        (s.source ? '<p class="copy__source">' + s.source + "</p>" : "");
     });
   }
 
   function injectChrome() {
     // hero (decision-first copy from the single source of truth)
-    document.getElementById("heroEyebrow").textContent = EB.hero.eyebrow;
+    // Keep each dated scope phrase on one line when the eyebrow wraps.
+    document.getElementById("heroEyebrow").innerHTML = EB.hero.eyebrow.split(" · ")
+      .map((part) => '<span class="hero__eyebrow-part">' + part + "</span>").join(" · ");
+    document.getElementById("heroLead").textContent = EB.hero.lead;
     document.getElementById("heroSub").textContent = EB.hero.sub;
+    document.getElementById("heroRelease").textContent = EB.hero.release;
+    // Hero terms carry a plain definition, so the opening explains its own words.
     document.getElementById("heroDefs").innerHTML = EB.terminology.filter((t) => t.hero).map((t) =>
-      '<span class="hero__def"><b>' + t.term + '</b> · ' + t.full + "</span>"
+      '<span class="hero__def"><b>' + t.term + '</b> · ' + (t.chip || t.full) + "</span>"
     ).join("");
-    // header meta
+    // header meta: both dated scopes, so later September cases never read as
+    // part of the frozen August atlas counts
     document.getElementById("headerMeta").innerHTML =
-      '<span class="dot">●</span> frozen ' + EB.num.snapshot +
-      ' · ' + D.fmt(EB.num.embeddingBearingUnits) + ' MAG/proteome records · ' + D.fmt(EB.num.bridgeEdges) + ' displayed links';
+      '<span class="dot">●</span> atlas ' + EB.num.snapshot +
+      ' · ' + D.fmt(EB.num.embeddingBearingUnits) + ' genome records · case reviews ' + EB.num.caseEvidenceDate;
     // rail
     const rail = document.getElementById("rail");
     EB.scenes.forEach((s) => {
@@ -80,30 +97,36 @@
     });
     // claim strip
     document.getElementById("claimText").textContent = EB.claims.short;
-    document.getElementById("claimDate").textContent = "snapshot " + EB.num.snapshot;
+    document.getElementById("claimDate").textContent = SCOPE.both;
     // ask + factsheet
     document.getElementById("fsDate").textContent = EB.num.snapshot;
     document.getElementById("askBody").innerHTML =
-      "The EmergentBiome Molecular Atlas gives blue-carbon developers, verifiers, and research partners a source-audited way to review methane-pathway hypotheses and choose measurements. " +
-      "We seek research funding and field partners for a proposed two-season mangrove study. Fieldwork depends on funding, site access and permits.";
+      "EmergentBiome gives blue-carbon developers, verifiers and researchers a source-audited way to review methane-pathway evidence and decide what to measure. " +
+      "We are seeking research funding and field partners for a proposed two-season mangrove study. Fieldwork depends on funding, site access and permits.";
+    const S = EB.study;
     const points = [
-      "Pair 144 planned sediment metagenomes with chamber methane flux, chemistry and hydrology across three restoration stages and two seasons",
-      "Test genomic prediction against environmental covariates and a reviewed methane-marker baseline",
-      "Freeze models before held-out flux results are unblinded, then test transfer to a second season",
-      "Release paired data and reproducible modeling workflows under the agreed access and sharing terms",
+      "Pair " + S.sampleEvents + " planned sediment metagenomes with chamber methane flux, chemistry and hydrology across three restoration stages, " +
+        "four salinity positions and two seasons",
+      "Test whether molecular features predict net methane flux better than environmental covariates and a reviewed methane-marker baseline, on the same held-out records",
+      "Freeze each model before its flux outcomes are unblinded: the first campaign tests a new site; the second tests seasonal transfer at the same points, not independent-site validation",
+      "Release the paired data and reproducible workflows under the agreed access and sharing terms, including if molecular features add little",
     ];
     document.getElementById("askPoints").innerHTML = points.map((p) => "<li>" + p + "</li>").join("");
+    document.getElementById("askStudyNote").textContent =
+      S.sampleEvents + " sample-events = " + S.plots + " plots × " + S.micrositesPerPlot + " microsites × " + S.campaigns.length + " seasons. " +
+      "Revisits are repeated measurements, not independent replicates; the " + S.plotsPerCombination +
+      " plots at each stage and salinity position are the replicate unit.";
     // factsheet rows
     const F = [
-      ["Registered release records", D.fmt(EB.num.warehouseReach) + " <span class='in-progress'>(including 255 explicit source gaps)</span>"],
-      ["Data-complete MAG/proteome tri-views", D.fmt(EB.num.triViewReady) + " <span class='in-progress'>(payload completeness, not mechanism equivalence)</span>"],
-      ["Pipeline-normalized tri-views", D.fmt(EB.num.pipelineNormalizedTriView) + " <span class='in-progress'>(cross-lane comparison pending)</span>"],
-      ["Old Woman Creek source-scaffold tri-views", D.fmt(EB.num.sourceScaffoldTriView) + " <span class='in-progress'>(distinct contract)</span>"],
-      ["Cross-lane mechanism-comparable units", D.fmt(EB.num.mechanismComparableTriView)],
-      ["Queryable POC evidence graph", D.fmt(EB.num.magNodes) + " records <span class='in-progress'>(atlas-wide extension planned)</span>"],
-      ["Displayed atlas map links", D.fmt(EB.num.bridgeEdges) + " <span class='in-progress'>(2,200 sampled neighbors + 26 candidate links)</span>"],
-      ["Exact molecular + environment + process joins", "0 accepted <span class='in-progress'>(metadata-rich contexts are not scored samples)</span>"],
-      ["Field-validation need", "Exact linked samples and matched process observations"],
+      ["Genome records registered", D.fmt(EB.num.warehouseReach) + " <span class='in-progress'>(255 documented source gaps)</span>"],
+      ["With all three evidence views", D.fmt(EB.num.triViewReady)],
+      ["Annotated through the shared pipeline", D.fmt(EB.num.pipelineNormalizedTriView)],
+      ["Annotated by the Old Woman Creek source", D.fmt(EB.num.sourceScaffoldTriView)],
+      ["With a cross-source methane score", D.fmt(EB.num.mechanismComparableTriView) + " <span class='in-progress'>(awaits harmonization)</span>"],
+      ["Proof-of-concept evidence graph", D.fmt(EB.num.magNodes) + " records <span class='in-progress'>(atlas-wide extension planned)</span>"],
+      ["Links drawn on the map", D.fmt(EB.num.bridgeEdges) + " <span class='in-progress'>(" + D.fmt(EB.num.sampledNeighborLinks) + " neighbors + " + EB.num.highlightedCandidateLinks + " nearest-reference)</span>"],
+      ["Exact genome + environment + flux joins", "0 <span class='in-progress'>(context exists for some samples; no flux yet)</span>"],
+      ["What field validation needs", "Exact sample links and matched process measurements"],
     ];
     document.getElementById("factsheet").innerHTML = F.map((r) =>
       '<div class="factsheet__row"><span class="factsheet__k">' + r[0] + '</span><span class="factsheet__v">' + r[1] + "</span></div>"
@@ -112,18 +135,19 @@
     const evidenceCards = [
       {
         metric: D.fmt(EB.num.nearestCoreWetland) + " wetland · " + D.fmt(EB.num.nearestCoreMangrove) + " mangrove",
-        title: "One-way nearest-core matches",
-        detail: "Among " + D.fmt(EB.ecosystems[1].count) + " wetland and " + D.fmt(mangroveRecords) + " mangrove records, these have a rumen raw-cosine nearest neighbor within the 625-record POC core. They nominate review hypotheses, not transfer.",
+        title: "Point first to a rumen genome",
+        detail: "Of the " + D.fmt(EB.num.wetlandOutsideCore) + " wetland and " + D.fmt(mangroveRecords) + " mangrove records outside the 625-genome reference core, these have a rumen genome as their closest core match. " +
+          "The core is mostly rumen (518 genomes), and the matches are weak: their median similarity (cosine " + EB.num.nearestCoreMedianCosine + ") is below that of two random atlas genomes (" + EB.num.randomPairMedianCosine + "). Each is a lead for review, not evidence of shared function.",
       },
       {
         metric: EB.num.nearestCoreCandidates + " of " + EB.num.candidateCards,
-        title: "Selected candidate records",
-        detail: "Selected wetland/mangrove cards with a rumen nearest-core match. The map draws 26 highlighted candidate links plus 2,200 sampled cross-domain neighbor links, not every nearest-core match.",
+        title: "Selected candidate links",
+        detail: "Of " + EB.num.candidateCards + " selected wetland and mangrove candidates, " + EB.num.nearestCoreCandidates + " point to a rumen genome; the other sits inside the reference core and matches itself. The map draws these " + EB.num.highlightedCandidateLinks + " gold links and " + D.fmt(EB.num.sampledNeighborLinks) + " sampled neighbor links, not every match.",
       },
       {
         metric: String(EB.num.standardizedRumenReciprocalPairs),
-        title: "Standardized reciprocal rumen pairs",
-        detail: "Across the full atlas, no rumen–wetland or rumen–mangrove pair is reciprocal within each other's top 35 after per-dimension standardization. This is a different comparison from the one-way nearest-core matches.",
+        title: "Mutual rumen neighbors",
+        detail: "After standardizing the representation, no rumen genome and wetland or mangrove genome appear in each other's 35 closest neighbors. This stricter test is separate from the one-way matches.",
       },
     ];
     const evidenceGrid = document.getElementById("evidenceSummaryGrid");
@@ -140,16 +164,16 @@
       '<div class="terminology__item"><dt><span class="terminology__term">' + t.term + '</span><span class="terminology__full">' + t.full + '</span></dt><dd>' + t.detail + "</dd></div>"
     ).join("");
     document.getElementById("contact").innerHTML =
-      EB.claims.boundaries[0] + " &nbsp;·&nbsp; A–E tiers remain a calibration target. &nbsp;·&nbsp; " +
-      '<a href="' + EB.links.organizationUrl + '">Ecosphere Blue</a> &nbsp;·&nbsp; ' +
-      EB.links.contactEmails.map((email) => '<a href="mailto:' + email + '">' + email + "</a>").join(" &nbsp;·&nbsp; ");
+      '<span class="contact__people"><a href="' + EB.links.organizationUrl + '">Ecosphere Blue</a> &nbsp;·&nbsp; ' +
+      EB.links.contactEmails.map((email) => '<a href="mailto:' + email + '">' + email + "</a>").join(" &nbsp;·&nbsp; ") + "</span>" +
+      '<span class="contact__boundary">' + EB.claims.boundaries[0] + " A–E tiers remain a calibration target.</span>";
 
     // Primary journey stays on-page; the bundled report expands the same freeze.
     const rep = EB.links.report;
     const setHref = (id, href) => { const el = document.getElementById(id); if (el) el.href = href; };
     setHref("headerAtlasCta", "#scene-atlas");
     setHref("heroAtlasCta", "#scene-atlas");
-    setHref("atlasCta", "#scene-atlas");
+    setHref("casesCta", "#scene-network");
     setHref("headerReportCta", rep);
     setHref("reportCta", rep);
     setHref("contactCta", "mailto:" + EB.links.contactEmails.join(","));
@@ -165,8 +189,8 @@
     });
     const note = document.getElementById("reportNote");
     if (note) note.innerHTML =
-      'The <a href="' + rep + '" target="_blank" rel="noopener">reconciled technical report ↗</a> expands the same frozen ' + EB.num.snapshot +
-      " release with methods, tables, and evidence limits.";
+      'The <a href="' + rep + '" target="_blank" rel="noopener">technical report ↗</a> covers the same frozen ' + EB.num.snapshot +
+      " atlas in full, with methods, tables and evidence limits.";
 
     const cardPanel = document.getElementById("candidateEvidencePanel");
     const cardButtons = Array.from(document.querySelectorAll("[data-card-view]"));
@@ -260,6 +284,10 @@
     document.querySelectorAll(".rail__item").forEach((it) => {
       it.setAttribute("aria-current", it.dataset.target === "scene-" + activeId ? "true" : "false");
     });
+    // Hero and closing span both dated scopes; atlas scenes use the August release.
+    const scope = activeId ? SCOPE[SCENE_SCOPE[activeId] || "atlas"] : SCOPE.both;
+    const chip = document.getElementById("claimDate");
+    if (chip && chip.textContent !== scope) chip.textContent = scope;
   }
 
   function boot(data) {
@@ -294,6 +322,13 @@
       const hidden = document.hidden;
       ORDER.forEach((id) => { const r = scenes[id]; if (r && r.instance) { try { hidden ? r.instance.noLoop() : (r.ctx.active && !REDUCED && r.instance.loop()); } catch (e) {} } });
     });
+    // Canvas text uses the vendored faces only after they load. Static
+    // (reduced-motion) frames drawn earlier are redrawn once, not looped.
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => {
+        ORDER.forEach((id) => { const r = scenes[id]; if (r && r.instance) { try { r.instance.redraw(); } catch (e) {} } });
+      });
+    }
     onScroll();
   }
 
