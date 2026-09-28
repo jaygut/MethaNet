@@ -1,21 +1,44 @@
-/* SCENE 6 - THE HONEST LADDER  ·  REAL ROADMAP
-   The MRV maturity ladder (roadmap Levels 0-5, + Level 6 horizon). An ascending
-   staircase: rung 0 (molecular screening) is LIT NOW; rungs 1-4 are the climb;
-   rung 5 (calibrated probabilistic MRV / A-E tiers) is the dimmed TARGET. Each rung
-   reveals exactly what unlocks it. "YOU ARE HERE" never lies: only rung 0 is lit. */
+/* SCENE 9 - VALIDATION PATH  ·  REAL ROADMAP
+   The evidence-maturity ladder (roadmap levels 0-5). Rung 0, molecular review,
+   is available now; rung 1 is in progress; rungs 2-4 are the climb; rung 5,
+   calibrated A-E risk, is the dimmed target. Only rung 0 is lit. */
 (function () {
   window.EBScenes = window.EBScenes || {};
   window.EBScenes.ladder = function (p, ctx) {
     const EB = window.EB, D = window.EBDraw, L = EB.ladder;
     let rungs = [];
 
+    // Stage-relative box of the reading card, or null when it is hidden.
+    function rel(el) {
+      if (!el || !ctx.holder) return null;
+      const base = ctx.holder.getBoundingClientRect(), r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return null;
+      return { l: r.left - base.left, t: r.top - base.top, r: r.right - base.left, b: r.bottom - base.top };
+    }
+
     function layout() {
       const w = ctx.W, h = ctx.H;
-      const x0 = w * 0.16, x1 = w * 0.80, y0 = h * 0.82, y1 = h * 0.20;
+      const x0 = w * 0.16, x1 = w * 0.80, y1 = h * 0.20;
+      let y0 = h * 0.82;
+      // A right-hand card covers the lower right; lift the start of the
+      // climb so the line passes above the card's top-left corner.
+      const copy = w >= 720 ? rel(ctx.section.querySelector(".copy")) : null;
+      if (copy && copy.l > w * 0.4 && copy.l < x1) {
+        const cx = copy.l - 24, cy = copy.t - 48;
+        const at = y0 + (cx - x0) * (y1 - y0) / (x1 - x0);
+        if (at > cy && cx > x0) {
+          const slope = (y1 - cy) / (x1 - cx);
+          y0 = Math.max(y1 + h * 0.22, y1 - slope * (x1 - x0));
+        }
+      }
       rungs = L.map((r, i) => ({ ...r, x: D.lerp(x0, x1, i / (L.length - 1)), y: D.lerp(y0, y1, i / (L.length - 1)) }));
     }
 
-    p.setup = function () { p.createCanvas(ctx.W, ctx.H); p.pixelDensity(Math.min(2, window.devicePixelRatio || 1)); layout(); if (ctx.reduced) p.noLoop(); };
+    p.setup = function () {
+      p.createCanvas(ctx.W, ctx.H); p.pixelDensity(Math.min(2, window.devicePixelRatio || 1)); layout();
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layout(); if (p.redraw) p.redraw(); });
+      if (ctx.reduced) p.noLoop();
+    };
     p.windowResized = function () { p.resizeCanvas(ctx.W, ctx.H); layout(); };
 
     p.draw = function () {
@@ -33,7 +56,7 @@
       // heading
       D.label(p, "METHANE EVIDENCE MATURITY", w * 0.08, h * 0.12, EB.color.textMuted, 11);
       p.push(); p.fill(D.rgba(EB.color.textPrimary, 0.9)); p.textFont("IBM Plex Mono"); p.textSize(10);
-      p.text("LIT NOW: rung 0 · molecular screening      TARGET: rung 5 · calibrated A–E risk (not yet calibrated)", w * 0.08, h * 0.12 + 16);
+      p.text("AVAILABLE NOW: rung 0 · molecular review      TARGET: rung 5 · calibrated A–E risk (not yet built)", w * 0.08, h * 0.12 + 16);
       p.pop();
 
       const reveal = D.easeInOut(t);
@@ -96,10 +119,10 @@
       p.textAlign(p.LEFT, above ? p.BOTTOM : p.TOP);
       const lx = r.x + 22;
       // state chip
-      const chip = lit ? "LIT · NOW" : prog ? "IN PROGRESS" : target ? "TARGET" : "ROADMAP";
+      const chip = lit ? "AVAILABLE NOW" : prog ? "IN PROGRESS" : target ? "TARGET" : "NEXT";
       p.fill(D.rgba(col, a)); p.textFont("IBM Plex Mono"); p.textSize(8);
       p.text(chip, lx, above ? ly - 13 : ly);
-      const shortTitles = ["Molecular attestation", "Sample identity", "Abundance", "Environment", "Flux validation", "Calibrated risk"];
+      const shortTitles = ["Molecular review", "Exact sample links", "Abundance", "Site conditions", "Measured flux", "Calibrated risk"];
       p.fill(D.rgba(EB.color.textPrimary, a)); p.textFont("Bricolage Grotesque"); p.textStyle(p.BOLD); p.textSize(12);
       p.text(shortTitles[i], lx, above ? ly : ly + 14); p.textStyle(p.NORMAL);
       p.pop();
@@ -118,7 +141,7 @@
       p.noStroke(); p.fill(EB.color.emergence); p.textSize(9);
       p.text("00  AVAILABLE NOW", left + 14, 132);
       p.fill(EB.color.textPrimary); p.textFont("Bricolage Grotesque"); p.textStyle(p.BOLD); p.textSize(17);
-      p.text("Molecular screening", left + 14, 149);
+      p.text("Molecular review", left + 14, 149);
       p.textStyle(p.NORMAL);
 
       const labels = ["SAMPLE", "ABUND.", "SITE", "FLUX", "RISK"];

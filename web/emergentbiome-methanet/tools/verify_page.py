@@ -151,7 +151,7 @@ with sync_playwright() as pw:
         ("report-contract", "The Tri-View Evidence Contract"),
         ("report-geometry", "ESM-2 Geometry With Measured Limitations"),
         ("report-functional", "Functional Metric Harmonization"),
-        ("report-mucc", "MUCC v1 Adds Expression Evidence And A Field-Validation Lane"),
+        ("report-mucc", "Old Woman Creek Adds Expression Evidence And A Field-Validation Lane"),
     ):
         page.get_by_role("heading", name=heading).scroll_into_view_if_needed()
         time.sleep(0.3)

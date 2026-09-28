@@ -16,16 +16,36 @@
     let dots = [];
     let anchors = [];
     let narrow = false;
+    let showNotes = true;
+
+    // Reading-card box relative to this scene's stage, or null when hidden.
+    function rel(el) {
+      if (!el) return null;
+      const base = ctx.holder.getBoundingClientRect(), r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return null;
+      return { l: r.left - base.left, t: r.top - base.top, r: r.right - base.left, b: r.bottom - base.top };
+    }
 
     function layout() {
       const w = ctx.W, h = ctx.H;
       narrow = w < 720;
       const rng = window.EBRandom.RNG("evidence-card");
-      anchors = stages.map((s, i) => ({
-        ...s,
-        x: narrow ? w * 0.18 : w * (0.17 + i * 0.27),
-        y: narrow ? h * (0.23 + i * 0.16) : h * (0.37 + (i % 2) * 0.08),
-      }));
+      // Keep all three stages beside (desktop) or between (narrow) the DOM
+      // cards, so the pending field join is never hidden behind the card.
+      const card = rel(ctx.section.querySelector(".candidate-card"));
+      const copy = rel(ctx.section.querySelector(".copy"));
+      if (narrow) {
+        const top = card ? card.b + 34 : h * 0.23, bottom = copy ? copy.t - 26 : h * 0.7;
+        const span = Math.max(0, bottom - top);
+        showNotes = span > 120;
+        anchors = stages.map((s, i) => ({ ...s, x: w * 0.14, y: top + (span > 60 ? span * (i / 2) : i * 22) }));
+      } else {
+        const left = Math.max(48, w * 0.08);
+        const right = Math.max(left + 180, (card ? card.l : w * 0.9) - 190);
+        const yTop = Math.min(h * 0.36, (copy ? copy.t : h) - 150);
+        showNotes = true;
+        anchors = stages.map((s, i) => ({ ...s, x: D.lerp(left, right, i / 2), y: Math.max(h * 0.2, yTop) + (i % 2) * h * 0.07 }));
+      }
       dots = [];
       const total = narrow ? 54 : 96;
       for (let i = 0; i < total; i++) {
@@ -97,10 +117,12 @@
         p.textSize(narrow ? 9 : 10);
         p.textAlign(p.LEFT, p.BOTTOM);
         p.text(a.title + (i === 2 ? " · PENDING" : " · RECORDED"), a.x + 20, a.y - 3);
-        p.fill(D.rgba(EB.color.textMuted, 0.86 * appear));
-        p.textSize(narrow ? 8 : 9);
-        p.textAlign(p.LEFT, p.TOP);
-        p.text(a.note, a.x + 20, a.y + 4);
+        if (showNotes) {
+          p.fill(D.rgba(EB.color.textMuted, 0.86 * appear));
+          p.textSize(narrow ? 8 : 9);
+          p.textAlign(p.LEFT, p.TOP);
+          p.text(a.note, a.x + 20, a.y + 4);
+        }
         p.pop();
       });
 

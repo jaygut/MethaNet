@@ -4,21 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EmergentBiome Molecular Atlas | Blue-carbon methane evidence</title>
-  <meta name="description" content="Explore a frozen molecular atlas for blue-carbon methane-pathway screening, candidate review, and field-validation planning. No flux or calibrated risk is inferred." />
+  <meta name="description" content="EmergentBiome turns wetland microbial DNA into methane evidence you can check, and shows which field measurement would settle what DNA alone cannot. 7,710 genome records, three worked cases and a proposed field study." />
   <meta name="robots" content="noindex" />
 
   <!-- Open Graph / Twitter -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="EmergentBiome" />
   <meta property="og:title" content="EmergentBiome Molecular Atlas" />
-  <meta property="og:description" content="Molecular evidence for methane-pathway screening in blue-carbon systems. Explore candidate links, provenance, and the route to field validation." />
+  <meta property="og:description" content="Wetland microbes can make methane that erodes blue-carbon benefits. EmergentBiome turns their DNA into checkable evidence and points to the measurement that settles it." />
   <meta property="og:url" content="https://emergentbiome.earth/" />
   <meta property="og:image" content="https://emergentbiome.earth/assets/og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="EmergentBiome Molecular Atlas" />
-  <meta name="twitter:description" content="Molecular evidence for methane-pathway screening in blue-carbon systems. Candidate links are hypotheses; flux calibration requires paired field data." />
+  <meta name="twitter:description" content="Wetland microbes can make methane that erodes blue-carbon benefits. EmergentBiome turns their DNA into checkable evidence and points to the measurement that settles it." />
   <meta name="twitter:image" content="https://emergentbiome.earth/assets/og.png" />
 
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
@@ -32,9 +32,10 @@
     <article class="noscript">
       <div>
         <h1>EmergentBiome Molecular Atlas</h1>
-        <p>A frozen August 10, 2026 atlas of 7,710 data-complete MAG/proteome evidence units for blue-carbon methane-pathway screening and next-measurement design.</p>
-        <p>Nearest-core reference links nominate candidates for review. They do not establish biological transfer, measured methane flux, sample or project risk, final tiers, or carbon-credit approval.</p>
-        <p><a href="report/">Open the reconciled technical report</a> for methods, tables, and evidence limits. Enable JavaScript for the interactive atlas.</p>
+        <p>Microbes in wetland sediments can release methane that cancels part of the climate benefit of the carbon those wetlands store. EmergentBiome turns their DNA into evidence you can check, and shows which field measurement would settle what DNA alone cannot.</p>
+        <p>The atlas, frozen on August 10, 2026, maps 7,710 genome records from mangroves, wetlands and a rumen reference set. Three separately reviewed evidence cases, dated September 26, 2026, show how recorded evidence changes the next review or measurement; they are not part of the atlas counts.</p>
+        <p>Resemblance on the map is a lead for review. It does not establish shared biology, measured methane flux, site risk, final tiers or carbon-credit approval.</p>
+        <p><a href="report/">Open the technical report</a> for methods, tables and evidence limits. Enable JavaScript for the interactive atlas.</p>
       </div>
     </article>
   </noscript>
@@ -43,11 +44,11 @@
   <nav class="skip-nav" aria-label="Jump to scene">
     <a href="#scene-stakes">1 · The Climate Question</a>
     <a href="#scene-blindspot">2 · The Measurement Gap</a>
-    <a href="#scene-surveyor">3 · The Evidence Card</a>
-    <a href="#scene-cheap">4 · Complementary Evidence</a>
-    <a href="#scene-atlas">5 · Explore the Atlas</a>
+    <a href="#scene-atlas">3 · The Molecular Atlas</a>
+    <a href="#scene-surveyor">4 · The Evidence Card</a>
+    <a href="#scene-cheap">5 · Beyond Salinity</a>
     <a href="#scene-engine">6 · Evidence Scope</a>
-    <a href="#scene-platform">7 · The Evidence Trail</a>
+    <a href="#scene-platform">7 · Molecular Evidence, Practical Decisions</a>
     <a href="#scene-network">8 · Explore the Evidence</a>
     <a href="#scene-ladder">9 · Validation Path</a>
     <a href="#scene-path">10 · Partnership Path</a>
@@ -96,10 +97,12 @@
       <div class="hero__canvas" id="canvas-hero" aria-hidden="true"></div>
       <div class="hero__inner">
         <div class="hero__eyebrow smallcaps" id="heroEyebrow" style="color:var(--emergence)"></div>
-        <h1 class="hero__title"><span class="plat">EmergentBiome</span><br /><span class="app">Molecular Atlas</span></h1>
+        <h1 class="hero__title"><span class="plat">Emergent<wbr />Biome</span><br /><span class="app">Molecular Atlas</span></h1>
+        <p class="hero__lead" id="heroLead"></p>
         <p class="hero__sub" id="heroSub"></p>
         <a class="hero__atlas-cta" id="heroAtlasCta" href="#scene-atlas">Explore the atlas <span aria-hidden="true">↘</span></a>
         <div class="hero__defs" id="heroDefs" aria-label="Key terms"></div>
+        <p class="hero__release mono" id="heroRelease"></p>
       </div>
       <div class="scrollhint">
         <span>Scroll</span>
@@ -116,22 +119,36 @@
       <div class="scene__stage"><div class="scene__canvas" id="canvas-blindspot" aria-hidden="true"></div><div class="scene__overlay"><div class="copy" data-copy="blindspot"></div></div></div>
     </section>
 
+    <section class="scene" id="scene-atlas" data-scene="atlas" data-accent="--eco-mangrove-msm" style="height:320vh; --copy-h:flex-end; --copy-v:flex-end;">
+      <div class="scene__stage">
+        <div class="scene__canvas" id="canvas-atlas" aria-hidden="true"></div>
+        <div class="scene__controls atlas__controls" id="atlasViewControls" role="group" aria-label="Atlas evidence view">
+          <button type="button" data-atlas-view="overview" aria-pressed="true">Overview</button>
+          <button type="button" data-atlas-view="candidates" aria-pressed="false">Nearest reference</button>
+          <button type="button" data-atlas-view="neighbors" aria-pressed="false">Neighbor links</button>
+          <button type="button" data-atlas-view="sensitivity" aria-pressed="false">Stricter test</button>
+        </div>
+        <aside class="atlas__evidence-panel" id="atlasEvidencePanel" aria-label="Atlas evidence readout"></aside>
+        <div class="scene__overlay"><div class="copy" data-copy="atlas"></div></div>
+      </div>
+    </section>
+
     <section class="scene" id="scene-surveyor" data-scene="surveyor" data-accent="--methane-a" style="height:300vh; --copy-h:flex-start; --copy-v:flex-end;">
       <div class="scene__stage">
         <div class="scene__canvas" id="canvas-surveyor" aria-hidden="true"></div>
         <aside class="candidate-card" aria-labelledby="candidateCardTitle">
-          <div class="candidate-card__eyebrow">Example from the frozen atlas · wetland source scaffold</div>
-          <h3 id="candidateCardTitle">OWC_1885 <span>candidate record</span></h3>
-          <p class="candidate-card__identity">Proteome ID <code>mucc_v1__OWC_1885</code> · MAG-level review</p>
+          <div class="candidate-card__eyebrow">Example from the atlas · Old Woman Creek wetland</div>
+          <h3 id="candidateCardTitle">OWC_1885 <span>genome record</span></h3>
+          <p class="candidate-card__identity">Record <code>mucc_v1__OWC_1885</code> · genome-level review</p>
           <div class="candidate-card__controls" id="candidateCardControls" role="group" aria-label="Candidate evidence detail">
             <button type="button" data-card-view="recorded" aria-pressed="true" aria-controls="candidateEvidencePanel">Recorded</button>
-            <button type="button" data-card-view="pending" aria-pressed="false" aria-controls="candidateEvidencePanel">Pending</button>
+            <button type="button" data-card-view="pending" aria-pressed="false" aria-controls="candidateEvidencePanel">Unresolved</button>
             <button type="button" data-card-view="next" aria-pressed="false" aria-controls="candidateEvidencePanel">Next measurement</button>
           </div>
           <div class="candidate-card__panel" id="candidateEvidencePanel" role="region" aria-label="Recorded evidence" aria-live="polite">
-            <p>Source-reported genome QC: 94.89% completeness, 1.14% contamination. Processed expression detects marker terms; it does not measure pathway activity.</p>
+            <p>Genome quality reported by the source: 94.89% complete, 1.14% contamination. Marker transcripts were detected; detection shows presence, not how active the pathway is.</p>
           </div>
-          <p class="candidate-card__source">Source: August 10, 2026 candidate table; <a href="https://journals.asm.org/doi/10.1128/msystems.00680-25" target="_blank" rel="noopener">OWC study</a> and <a href="https://zenodo.org/records/8194033" target="_blank" rel="noopener">MUCC archive</a>.</p>
+          <p class="candidate-card__source">Source: August 10, 2026 atlas candidate table; <a href="https://journals.asm.org/doi/10.1128/msystems.00680-25" target="_blank" rel="noopener">OWC study</a> and <a href="https://zenodo.org/records/8194033" target="_blank" rel="noopener">MUCC archive</a>.</p>
         </aside>
         <div class="scene__overlay"><div class="copy" data-copy="surveyor"></div></div>
       </div>
@@ -139,20 +156,6 @@
 
     <section class="scene" id="scene-cheap" data-scene="cheap" data-accent="--attested" style="height:280vh; --copy-h:flex-start; --copy-v:flex-end;">
       <div class="scene__stage"><div class="scene__canvas" id="canvas-cheap" aria-hidden="true"></div><div class="scene__overlay"><div class="copy" data-copy="cheap"></div></div></div>
-    </section>
-
-    <section class="scene" id="scene-atlas" data-scene="atlas" data-accent="--eco-mangrove-msm" style="height:320vh; --copy-h:flex-end; --copy-v:flex-end;">
-      <div class="scene__stage">
-        <div class="scene__canvas" id="canvas-atlas" aria-hidden="true"></div>
-        <div class="scene__controls atlas__controls" id="atlasViewControls" role="group" aria-label="Atlas evidence view">
-          <button type="button" data-atlas-view="overview" aria-pressed="true">Atlas</button>
-          <button type="button" data-atlas-view="candidates" aria-pressed="false">Nearest core</button>
-          <button type="button" data-atlas-view="neighbors" aria-pressed="false">Neighbor sample</button>
-          <button type="button" data-atlas-view="sensitivity" aria-pressed="false">Sensitivity</button>
-        </div>
-        <aside class="atlas__evidence-panel" id="atlasEvidencePanel" aria-label="Atlas evidence readout"></aside>
-        <div class="scene__overlay"><div class="copy" data-copy="atlas"></div></div>
-      </div>
     </section>
 
     <section class="scene" id="scene-engine" data-scene="engine" data-accent="--emergence" style="height:320vh; --copy-h:flex-start; --copy-v:flex-end;">
@@ -174,7 +177,8 @@
         <div class="application-intro">
           <p class="smallcaps application-kicker">07 · Molecular evidence, practical decisions</p>
           <h2 id="applicationHeadline">Connect the molecule to the <em>measurement.</em></h2>
-          <p class="application-deck">Check what a gene can mean.<br />Resolve where it belongs.<br />Build better inputs for methane prediction.</p>
+          <p class="application-deck">Check what a gene can mean.<br />Pin down the sample and depth it came from.<br />Choose the test that settles it.</p>
+          <p class="application-scope"><span>Three source-linked cases</span><span>Evidence of 26 September 2026</span></p>
           <button class="btn application-open" type="button" id="applicationOpen" aria-haspopup="dialog">Explore a real evidence case</button>
           <a class="application-network-link" href="#scene-network">Follow the evidence network <span aria-hidden="true">↘</span></a>
         </div>
@@ -192,7 +196,20 @@
     <section class="scene scene--network" id="scene-network" data-scene="network" data-native-scene="true" data-accent="--emergence" aria-labelledby="networkTitle">
       <div class="network-heading">
         <div><p class="smallcaps">08 · Explore the evidence</p><h2 id="networkTitle">Every interpretation<br />has an <em>evidence trail.</em></h2></div>
-        <p>Start with a real review. Follow its genes, competing explanations and sample context to the next scientific action.</p>
+        <p>Behind these cases is a formal evidence model: an ontology whose rules a computer checks. It traces every statement to its source, keeps apart things that are easy to conflate, and lets a promising interpretation stay on hold with the reason in view.</p>
+      </div>
+      <div class="network-model" aria-labelledby="networkModelTitle">
+        <p class="smallcaps" id="networkModelTitle">What the evidence model will not allow</p>
+        <ul class="network-rules">
+          <li><b>A marker gene or RNA signal</b> read as a methane flux</li>
+          <li><b>A sequencing library</b> treated as a physical sample</li>
+          <li><b>An unassayed gene</b> reported as absent</li>
+          <li><b>A concentration</b> relabeled as a flux</li>
+          <li><b>A hypothesis</b> promoted to a fact</li>
+          <li><b>A carbon-credit approval</b> asserted by the graph</li>
+        </ul>
+        <p class="network-model__why">For a project developer or verifier, the output is an evidence-readiness dossier, not a credit or a tonnage estimate. It shows which molecular evidence can answer which review question, and which measurement would resolve what it cannot.</p>
+        <p class="network-model__note">Molecular Verification Ontology 0.2.0, built on the W3C RDF, OWL and SHACL standards. Each of its 18 fixed review queries was checked against the source tables. This public view shows three curated cases; the internal model holds selected evidence for 145 genome records and has not yet had independent scientific review.</p>
       </div>
       <div id="networkMount">
         <div class="net-shell" id="networkShell" aria-label="Molecular evidence explorer">
@@ -227,7 +244,7 @@
           <p class="net-live sr-only" id="networkLive" aria-live="polite" aria-atomic="true"></p>
         </div>
       </div>
-      <div class="network-transition"><p>Better interpretation. More purposeful measurement.<br /><span>These reviews guide feature selection and sample pairing for predictive-model testing.</span></p><a href="#scene-ladder">Continue to the validation pathway <span aria-hidden="true">↘</span></a></div>
+      <div class="network-transition"><p>Better interpretation. More purposeful measurement.<br /><span>These reviews define which features and samples can enter a predictive-model test.</span></p><a href="#scene-ladder">Continue to the validation pathway <span aria-hidden="true">↘</span></a></div>
     </section>
 
     <section class="scene" id="scene-ladder" data-scene="ladder" data-accent="--methane-a" style="height:300vh; --copy-h:flex-end; --copy-v:flex-end;">
@@ -245,31 +262,31 @@
           <h2 class="ask__title">A molecular map now. <span class="accent">A rigorous field test next.</span></h2>
           <p class="ask__body" id="askBody"></p>
           <ul class="ask__points" id="askPoints"></ul>
-          <p class="ask__study-note">Proposed repeated sampling: 72 microsites within 36 plots, across two seasons.</p>
+          <p class="ask__study-note" id="askStudyNote">144 sample-events = 36 plots × 2 microsites × 2 seasons. Revisits are repeated measurements, not independent replicates; the 3 plots at each stage and salinity position are the replicate unit.</p>
         </div>
-        <aside class="factsheet" aria-label="Verified snapshot">
-          <h3>Verified snapshot · <span id="fsDate" class="mono"></span></h3>
+        <aside class="factsheet" aria-label="Atlas release counts">
+          <h3>Atlas release counts · <span id="fsDate" class="mono"></span></h3>
           <div id="factsheet"></div>
         </aside>
       </div>
       <section class="evidence-summary" aria-labelledby="evidenceSummaryTitle">
         <span class="smallcaps">What the map supports</span>
-        <h3 id="evidenceSummaryTitle">Reference links are candidates, with a visible sensitivity limit.</h3>
-        <p>These counts describe MAG/proteome records in the frozen atlas. The map draws a selected set of links; it is not a count of all nearest-core matches.</p>
+        <h3 id="evidenceSummaryTitle">Reference links are leads, and the map shows their limit.</h3>
+        <p>These counts describe genome records in the August atlas. The map draws a selection of links, not every nearest-reference match.</p>
         <div class="evidence-summary__grid" id="evidenceSummaryGrid"></div>
       </section>
       <section class="terminology" aria-labelledby="terminologyTitle">
         <div class="terminology__intro">
-          <span class="smallcaps">How to read the evidence</span>
-          <h3 id="terminologyTitle">How to read the atlas</h3>
-          <p>Each term names a specific evidence object or maturity stage. The definitions keep molecular screening, mechanism comparison, and future field-calibrated risk distinct.</p>
+          <span class="smallcaps">Technical terms</span>
+          <h3 id="terminologyTitle">The words behind the evidence</h3>
+          <p>The report and the evidence explorer use a few technical terms. Each one names a specific evidence object or stage, so screening, comparison and future calibrated risk stay distinct.</p>
         </div>
         <dl class="terminology__grid" id="terminologyList"></dl>
       </section>
       <div class="closing__cta">
-        <a class="btn btn--primary" id="atlasCta" href="#scene-atlas">Explore the evidence map <span aria-hidden="true">↗</span></a>
+        <a class="btn btn--primary" id="contactCta" href="mailto:jay@ecosphereblue.earth,aphilosof@ecosphereblue.earth" aria-label="Discuss field validation, opens an email to the Ecosphere Blue team">Discuss field validation <span aria-hidden="true">→</span></a>
         <a class="btn btn--report" id="reportCta" href="report/" target="_blank" rel="noopener" aria-label="Read the full report, opens in a new tab">Read the full report <span aria-hidden="true">↗</span></a>
-        <a class="btn btn--ghost" id="contactCta" href="mailto:jay@ecosphereblue.earth,aphilosof@ecosphereblue.earth">Discuss field validation</a>
+        <a class="btn btn--ghost" id="casesCta" href="#scene-network">Revisit the evidence cases <span aria-hidden="true">↑</span></a>
       </div>
       <p class="closing__reportnote" id="reportNote"></p>
       <p class="contact" id="contact"></p>
@@ -285,12 +302,12 @@
 
   <!-- ===================== SCRIPTS (offline, order matters) ===================== -->
   <dialog id="applicationDialog" class="application-dialog" aria-labelledby="applicationDialogTitle">
-    <div class="application-dialog-header"><span class="smallcaps">Recorded evidence · source-linked cases</span><button type="button" id="applicationClose">Close</button></div>
+    <div class="application-dialog-header"><span class="smallcaps">Recorded evidence · 26 Sep 2026</span><button type="button" id="applicationClose">Close</button></div>
     <h2 id="applicationDialogTitle">What decision changes?</h2>
-    <p class="application-dialog-note">In these freshwater-wetland and coastal-mudflat examples, each record leads to a practical review or measurement decision.</p>
+    <p class="application-dialog-note">Each case uses deposited data from a freshwater wetland or a coastal mudflat, and ends in a concrete review or measurement decision.</p>
     <div class="application-case-tabs" role="group" aria-label="Choose an evidence case"></div>
     <div id="applicationCase" aria-live="polite"><p>Loading the recorded evidence…</p></div>
-    <p class="application-dialog-note">These cases guide molecular interpretation and measurement planning. Methane-flux estimates and calibrated risk tiers require paired field validation. Carbon-credit decisions require the applicable verification process.</p>
+    <p class="application-dialog-note">These cases guide interpretation and measurement planning. Flux estimates and risk tiers need paired field validation; credit decisions belong to the applicable verification process.</p>
   </dialog>
   <dialog id="networkImmersiveDialog" class="net-immersive-dialog" aria-label="Immersive molecular evidence explorer"></dialog>
   <script src="vendor/p5.min.js"></script>

@@ -10,7 +10,9 @@ import time
 from pathlib import Path
 
 from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
@@ -148,8 +150,8 @@ def audit_landing_controls(driver, url: str, width: int, height: int) -> dict:
     return {
         "measurementGapScoped": (
             "0 verified pairs" in measurement_gap
-            and "wetland/mangrove mag-to-flux joins in this release" in measurement_gap
-            and "does not imply zero methane emissions" in measurement_gap
+            and "genome-to-flux pairs in this atlas" in measurement_gap
+            and "zero pairs, not zero emissions" in measurement_gap
         ),
         "contactLinks": contact_links
         == {
@@ -165,7 +167,7 @@ def audit_landing_controls(driver, url: str, width: int, height: int) -> dict:
         "initialUmapPressed": initial_umap == "true",
         "diffusionPressed": diffusion_pressed == "true",
         "tsnePressed": tsne_pressed == "true",
-        "tsneAnnounced": "TSNE projection" in tsne_announcement,
+        "tsneAnnounced": "t-SNE view" in tsne_announcement,
         "reportLinkOpens": report_link_opens,
         "enginePressed": engine_pressed == "true",
         "pendingShowsExactJoinGap": "exact sample" in pending.lower(),
@@ -184,6 +186,127 @@ def audit_landing_controls(driver, url: str, width: int, height: int) -> dict:
             "return document.documentElement.scrollWidth > window.innerWidth + 1"
         ),
     }
+
+
+def audit_case_features(driver, url: str, width: int, height: int) -> dict:
+    """Exercise the scene-07 case dialog, its handoff into the scene-08
+    explorer, immersive mode and load-failure recovery through the live UI.
+
+    Clicks are dispatched from script after an instant scroll so page-level
+    smooth scrolling cannot race WebDriver's own scroll-into-view.
+    """
+    driver.set_window_size(width, height)
+    driver.get(url)
+    WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.ID, "claimText")))
+
+    def js(script, *args):
+        return driver.execute_script(script, *args)
+
+    def click(css):
+        js("const e=document.querySelector(arguments[0]); e.scrollIntoView({block:'center', behavior:'instant'}); e.click();", css)
+        time.sleep(0.4)
+
+    def to_scene(scene_id, fraction=0.3):
+        js("""const el=document.getElementById(arguments[0]);
+              const top=scrollY+el.getBoundingClientRect().top;
+              scrollTo({top: top + Math.max(0, el.offsetHeight - innerHeight) * arguments[1], behavior:'instant'});""",
+           scene_id, fraction)
+        time.sleep(0.8)
+
+    def wait_tabs():
+        WebDriverWait(driver, 60).until(lambda d: len(d.find_elements(By.CSS_SELECTOR, ".application-case-tabs button")) == 3)
+
+    def wait_network():
+        WebDriverWait(driver, 60).until(lambda d: d.execute_script("return !!(window.EBNetwork && EBNetwork.getState().loaded)"))
+
+    result: dict = {}
+    to_scene("scene-platform")
+    click("#applicationOpen")
+    wait_tabs()
+    result["dialogModal"] = js("return !!document.querySelector('#applicationDialog:modal')")
+    click('.application-case-tabs button[data-case="locate"]')
+    result["depthRows"] = js("return document.querySelectorAll('#applicationCase .application-lookup tbody tr').length")
+    result["missingSalinity"] = js("return [...document.querySelectorAll('#applicationCase .application-lookup tbody tr')].every(r=>r.lastElementChild.textContent==='Missing')")
+    attribution = js("return [...document.querySelectorAll('#applicationCase .application-sources a')].map(a=>a.href)")
+    result["dialogAttribution"] = ("https://doi.org/10.6084/m9.figshare.30883646.v3" in attribution
+                                   and "https://creativecommons.org/licenses/by/4.0/" in attribution)
+    ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+    time.sleep(0.4)
+    result["dialogEscapeRestoresFocus"] = js("return !document.getElementById('applicationDialog').open && document.activeElement.id==='applicationOpen'")
+
+    handoff = {}
+    for case_id in ("interpret", "locate", "design"):
+        click("#applicationOpen")
+        wait_tabs()
+        click(f'.application-case-tabs button[data-case="{case_id}"]')
+        click("#applicationCase .application-network-link")
+        wait_network()
+        time.sleep(1.2)
+        handoff[case_id] = js("""const s=EBNetwork.getState(), a=document.activeElement;
+            return s.caseId===arguments[0] && a.dataset.networkCase===arguments[0]
+              && !document.getElementById('applicationDialog').open
+              && Math.abs(document.getElementById('scene-network').getBoundingClientRect().top) < 160;""", case_id)
+        to_scene("scene-platform")
+    result["handoffSelectsCaseAndFocus"] = handoff
+
+    js("document.getElementById('scene-network').scrollIntoView({block:'start', behavior:'instant'})")
+    wait_network()
+    time.sleep(0.6)
+    profiles = {}
+    for case_id in ("interpret", "locate", "design"):
+        click(f'[data-network-case="{case_id}"]')
+        profiles[case_id] = js("return document.querySelectorAll('#networkProfile button').length")
+    result["profileDimensions"] = profiles
+    click('[data-network-case="interpret"]')
+    click('#networkProfile [data-profile-key="evidence"]')
+    js("document.querySelector('#networkNodes .net-node--leaf').click()")
+    time.sleep(0.4)
+    selected = js("return EBNetwork.getState().selected")
+    click("#networkSourceExplore")
+    result["sourceFactsMode"] = js("return document.getElementById('networkGraphMode').textContent") == "SELECTED SOURCE FACTS"
+    js("[...document.querySelectorAll('#networkDetail .net-inspect-action')].find(b=>b.textContent.trim()==='Return to review paths').click()")
+    time.sleep(0.5)
+    result["sourceReturnRestoresSelection"] = js("return EBNetwork.getState().source===null && EBNetwork.getState().selected===arguments[0]", selected)
+
+    js("const b=document.getElementById('networkImmersiveOpen'); b.scrollIntoView({block:'center', behavior:'instant'}); b.focus();")
+    time.sleep(0.4)
+    scroll_before = js("return scrollY")
+    ActionChains(driver).send_keys(Keys.ENTER).perform()
+    time.sleep(0.8)
+    result["immersiveOpens"] = js("return document.getElementById('networkImmersiveDialog').open && document.getElementById('networkImmersiveDialog').contains(document.getElementById('networkShell'))")
+    ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+    time.sleep(0.8)
+    result["immersiveReturns"] = js("""return !document.getElementById('networkImmersiveDialog').open
+        && document.getElementById('networkMount').contains(document.getElementById('networkShell'))
+        && document.activeElement.id==='networkImmersiveOpen' && document.body.style.overflow===''""")
+    result["immersiveScrollRestored"] = abs(js("return scrollY") - scroll_before) <= 3
+
+    # Transient data outage: both interfaces offer a retry that recovers.
+    driver.get(url)
+    WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.ID, "claimText")))
+    js("""window.__realFetch = window.fetch; window.__blockCases = true; window.__blockNetwork = true;
+          window.fetch = (u, o) => {
+            const url = String(u);
+            if ((window.__blockCases && url.includes('molecular-application-cases-public')) ||
+                (window.__blockNetwork && url.includes('molecular-evidence-network-public')))
+              return Promise.resolve(new Response('unavailable', {status: 503}));
+            return window.__realFetch(u, o);
+          };""")
+    to_scene("scene-platform")
+    click("#applicationOpen")
+    WebDriverWait(driver, 30).until(lambda d: "Retry evidence load" in d.execute_script("return document.getElementById('applicationCase').textContent"))
+    js("window.__blockCases = false")
+    click("#applicationCase button")
+    wait_tabs()
+    result["dialogRetryRecovers"] = js("return document.querySelectorAll('.application-case-tabs button').length === 3 && !!document.querySelector('#applicationCase h3')")
+    ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+    js("document.getElementById('scene-network').scrollIntoView({block:'start', behavior:'instant'})")
+    WebDriverWait(driver, 30).until(lambda d: d.execute_script("const e=document.getElementById('networkLoading'); return !e.hidden && e.classList.contains('net-error')"))
+    js("window.__blockNetwork = false")
+    click("#networkLoading button")
+    wait_network()
+    result["networkRetryRecovers"] = js("return !document.getElementById('networkInterface').hidden")
+    return result
 
 
 def audit_report(driver, url: str, ledger: dict, width: int, height: int, screenshot: Path) -> dict:
@@ -221,7 +344,7 @@ def audit_report(driver, url: str, ledger: dict, width: int, height: int, screen
         tsne = next(
             button
             for button in driver.find_elements(By.CSS_SELECTOR, "#method-buttons button")
-            if button.text == "TSNE"
+            if button.text == "t-SNE"
         )
         tsne.click()
         WebDriverWait(driver, 30).until(lambda _: tsne.get_attribute("aria-pressed") == "true")
@@ -293,6 +416,14 @@ def main() -> int:
                 driver, f"{args.base.rstrip('/')}/index.html", 450, 844
             ),
         }
+        case_features = {
+            "desktop": audit_case_features(
+                driver, f"{args.base.rstrip('/')}/index.html", 1440, 900
+            ),
+            "mobile": audit_case_features(
+                driver, f"{args.base.rstrip('/')}/index.html", 450, 844
+            ),
+        }
         report = audit_report(
             driver,
             f"{args.base.rstrip('/')}/report/",
@@ -359,6 +490,26 @@ def main() -> int:
         for key, expected in required.items():
             if controls[key] != expected:
                 failures.append(f"landing.{label}: {key} = {controls[key]!r}, expected {expected!r}")
+    for label, features in case_features.items():
+        required = {
+            "dialogModal": True,
+            "depthRows": 5,
+            "missingSalinity": True,
+            "dialogAttribution": True,
+            "dialogEscapeRestoresFocus": True,
+            "handoffSelectsCaseAndFocus": {"interpret": True, "locate": True, "design": True},
+            "profileDimensions": {"interpret": 4, "locate": 4, "design": 4},
+            "sourceFactsMode": True,
+            "sourceReturnRestoresSelection": True,
+            "immersiveOpens": True,
+            "immersiveReturns": True,
+            "immersiveScrollRestored": True,
+            "networkRetryRecovers": True,
+            "dialogRetryRecovers": True,
+        }
+        for key, expected in required.items():
+            if features.get(key) != expected:
+                failures.append(f"cases.{label}: {key} = {features.get(key)!r}, expected {expected!r}")
 
     for label, view in (
         ("report.desktop", report),
@@ -373,7 +524,7 @@ def main() -> int:
             failures.append(f"{label}: runtime error panel present")
     if report["svgCount"] < 5 or report["labelledSvgs"] != report["svgCount"]:
         failures.append("report.desktop: interactive SVGs missing accessible labels")
-    if report["methodButtons"] != ["Diffusion map", "UMAP", "TSNE", "PCA"]:
+    if report["methodButtons"] != ["UMAP", "Diffusion map", "t-SNE", "PCA"]:
         failures.append("report.desktop: projection methods do not match the frozen report")
     for label, view in (
         ("report.desktop", report),
@@ -403,6 +554,7 @@ def main() -> int:
         "landing_compact_tablet": compact_tablet,
         "landing_landscape_phone": landscape_phone,
         "landing_controls": landing_controls,
+        "case_features": case_features,
         "report_desktop": report,
         "report_tablet": report_tablet,
         "report_mobile": report_mobile,
