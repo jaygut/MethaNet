@@ -2,9 +2,13 @@
 import json
 from pathlib import Path
 import re
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'web/emergentbiome-methanet/tools'))
+from public_review_actions import public_fact_value
+
 DATA = ROOT / 'web/emergentbiome-methanet/data'
 
 
@@ -28,6 +32,8 @@ class PublicPresentationTests(unittest.TestCase):
         for pattern in [r'\bK\d{5}\b', 'sourcePayload', 'kegg_hit', 'pfam_hits',
                         '/home/', 'results/', '/policy/', 'internal_review', 'unknown_no_external_export']:
             self.assertIsNone(re.search(pattern, text), pattern)
+        self.assertNotRegex(text, r'\bV17\b')
+        self.assertIn('require substrate-specific validation', text)
         self.assertFalse(any(n['kind'] == 'component' for c in self.public['cases'] for n in c['nodes']))
 
     def test_public_facts_have_stable_subjects_and_scoped_predicates(self):
@@ -66,6 +72,17 @@ class PublicPresentationTests(unittest.TestCase):
                     self.assertTrue(node['source_refs'])
                     self.assertTrue(node['facts'])
                     self.assertIn(node['state'], {'recorded', 'review', 'pending'})
+
+    def test_public_review_action_wording_is_safe_even_when_source_contains_v17(self):
+        cummo = public_fact_value(
+            'interpret', 'Review action', 'Internal note; retain V17 exclusions and unresolved cases.'
+        )
+        mcr = public_fact_value('design', 'Review action', 'Internal note; retain V17 quarantines.')
+        self.assertIn('substrate-specific validation', cummo)
+        self.assertIn('keep unresolved MCR-family assignments provisional', mcr)
+        self.assertNotIn('V17', cummo + mcr)
+        with self.assertRaisesRegex(ValueError, 'No public review-action wording'):
+            public_fact_value('unexpected', 'Review action', 'V17')
 
     def test_qc_method_and_review_actor_are_correctly_typed(self):
         for case in self.public['cases']:

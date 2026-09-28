@@ -1,7 +1,7 @@
 # MethaNet Codebase, Cohort, And Dataset Expansion Strategy
 
 Date: 2026-06-14  
-Repository: `$METHANET_ROOT`  
+Repository: MethaNet checkout; resolve its root with `git rev-parse --show-toplevel`.
 Prepared for: MethaNet functional atlas / MBAG / blue-carbon MRV expansion  
 Status: Strategic internal memo, not a final MRV risk-scoring artifact
 

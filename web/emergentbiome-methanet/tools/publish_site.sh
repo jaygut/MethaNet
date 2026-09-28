@@ -65,6 +65,11 @@ build() {
 }
 
 deploy() {
+  # Keep the manual publisher under the same three-lane, hash-bound release gate
+  # as the automatic GitHub Pages workflow. Local `build` remains available for QA.
+  python3 "$HERE/tools/assemble_landing.py" \
+    --validate-publication-review "$HERE/publication-review.json" \
+    --require-tracked-review
   build
   git -C "$REPO" worktree prune
   # reuse an existing gh-pages worktree (the project's publish setup) if present

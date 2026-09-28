@@ -15,6 +15,18 @@ import pandas as pd
 
 shell.executable("/bin/bash")
 
+def expand_home_paths(value):
+    """Expand home-relative paths in the portable Apolo config scaffold."""
+    if isinstance(value, dict):
+        return {key: expand_home_paths(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [expand_home_paths(item) for item in value]
+    if isinstance(value, str) and value.startswith("~/"):
+        return str(Path(value).expanduser())
+    return value
+
+
+config = expand_home_paths(config)
 PROJECT_ROOT = Path(config["paths"]["project_root"]).resolve()
 RESULTS = config["paths"]["results"]
 LOGS = config["paths"]["logs"]

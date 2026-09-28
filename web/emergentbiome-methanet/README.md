@@ -7,14 +7,13 @@ The internal repository, report-builder, and some historical artifacts retain
 MethaNet/MBAG identifiers for traceability. Public landing copy uses
 **EmergentBiome evidence graph**.
 
-Latest landing-only release: `ec963456aa6b8cd63d016c7b889a39e4a0f1729e`,
-published and verified 27 September 2026 UTC. The three-case public explorer is
-live at [Explore the evidence](https://emergentbiome.earth/#scene-network).
-The three-reviewer package, deployment receipt and live browser checks are in
-`results/reports/mvo_landing_release_20260927/`. The `/report/` tree, frozen atlas,
-dated archive and custom-domain binding were preserved byte-for-byte.
-The reviewed runtime is committed on `gh-pages`; source-side guard updates remain
-in this working branch and should be merged before a later `main` auto-deployment.
+Landing source changes on `main` are published to `gh-pages` by the repository's
+GitHub Actions workflow. The workflow updates landing assets and preserves the
+`/report/` tree, frozen atlas, dated archive and custom-domain binding. The live
+three-case public explorer is at [Explore the evidence](https://emergentbiome.earth/#scene-network).
+The three-reviewer package, deployment receipt and browser checks are retained
+locally under `results/reports/mvo_landing_release_20260927/`; the current exact
+publication revision is recorded in the `gh-pages` branch history.
 
 The shared position is:
 
@@ -119,6 +118,14 @@ receipts are stored internally under
 `results/reports/mvo_landing_release_20260927/`. Reviews are automated internal
 reviews, with scientific-content, funding-narrative and UX scopes separately
 documented. They do not constitute independent biological or legal certification.
+
+Both GitHub Actions deployment and `tools/publish_site.sh deploy [--push]`
+require `publication-review.json` to approve all three release-review lanes and
+the exact SHA-256 hashes of both public case-data files. Any change to either
+projection invalidates that approval until the review receipt is refreshed.
+The receipt is source-side release control and is deliberately excluded from
+the published runtime. `tools/publish_site.sh build` remains available for
+local QA; a local build is not publication approval.
 
 ## Claim Boundary
 

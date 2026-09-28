@@ -39,6 +39,12 @@ jobs:
           SRC="web/emergentbiome-methanet"
           DEST=".ghpages"
 
+          # Public source facts are deployed only when the tracked review receipt
+          # approves these exact projection bytes.
+          python3 "$SRC/tools/assemble_landing.py" \
+            --validate-publication-review "$SRC/publication-review.json" \
+            --require-tracked-review
+
           # Guard: the published report must already exist on gh-pages. We never build or
           # clobber it from this Action; if it is missing, abort rather than ship a broken site.
           test -f "$DEST/report/index.html" || { echo "::error::report/ missing on gh-pages; aborting."; exit 1; }

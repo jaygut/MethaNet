@@ -41,7 +41,7 @@ Verified items:
 The shared dbCAN compatibility cache is now built once at:
 
 ```text
-$METHANET_SCRATCH/methanet_db/dbcan_compat_pressed
+${DB_ROOT}/dbcan_compat_pressed
 ```
 
 Size:

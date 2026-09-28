@@ -3,8 +3,9 @@
 
 set -Eeuo pipefail
 
-REPO_ROOT="${REPO_ROOT:-$METHANET_ROOT}"
-DB_ROOT="${DB_ROOT:-$METHANET_SCRATCH/methanet_db}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="${REPO_ROOT:-$(cd -- "${SCRIPT_DIR}/.." && pwd)}"
+DB_ROOT="${DB_ROOT:-${HOME:?Set HOME or DB_ROOT}/scratch/methanet_db}"
 RUN_ID="${RUN_ID:-fgx_db_setup_$(date -u +%Y%m%d_%H%M%S)}"
 PARTITION="${PARTITION:-longjobs}"
 CPUS="${CPUS:-16}"
