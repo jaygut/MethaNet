@@ -1,7 +1,7 @@
-/* SCENE 1 - THE STAKES (illustrative; the one hard number, CH4 ~30x GWP, is real).
+/* SCENE 1 - THE STAKES (illustrative; the one hard number, CH4 ~80x GWP-20, is real).
    Cross-section of a coastal sediment: CO2 particles settle and build a stored-carbon
-   layer; CH4 bubbles rise from vents and, weighted by ~30x GWP, erode a "net climate
-   benefit" meter. Methane emission rate rises with scroll - the sink runs in reverse. */
+   layer; CH4 bubbles rise from vents and erode a "net climate benefit" line. The
+   shaded range around that line marks what measured site flux would pin down. */
 (function () {
   window.EBScenes = window.EBScenes || {};
   window.EBScenes.stakes = function (p, ctx) {
@@ -110,15 +110,32 @@
       D.label(p, "NET ZERO", w - mx - 4, zeroY - 6, EB.color.textMuted, 10, [p.RIGHT, p.BOTTOM]);
       D.label(p, "COOLING", w - mx - 4, topY + 14, SINK, 11, [p.RIGHT, p.TOP]);
       D.label(p, "WARMING", w - mx - 4, botY - 6, M_B, 11, [p.RIGHT, p.BOTTOM]);
+      // Illustrative spread: without measured site flux the balance is a range,
+      // not a point. It widens as the methane term grows. No values are implied.
+      const spread = D.lerp(6, (botY - topY) * 0.17, D.clamp(t * 1.15));
+      p.push(); p.noStroke(); p.fill(D.lerpRgbaHex(M_B, SINK, D.clamp(0.5 + bal / 110, 0, 1), 0.09));
+      p.rect(0, lineY - spread, w, spread * 2);
+      p.stroke(D.rgba(EB.color.textMuted, 0.35)); p.strokeWeight(1); p.drawingContext.setLineDash([3, 6]);
+      p.line(0, lineY - spread, w, lineY - spread); p.line(0, lineY + spread, w, lineY + spread);
+      p.drawingContext.setLineDash([]); p.pop();
       // the travelling balance line
       p.push(); p.stroke(lineCol); p.strokeWeight(1.6);
       if (!ctx.reduced) { p.drawingContext.setLineDash([6, 6]); p.drawingContext.lineDashOffset = -(p.frameCount * 0.5); }
       p.line(0, lineY, w, lineY);
       p.drawingContext.setLineDash([]); p.drawingContext.lineDashOffset = 0; p.pop();
-      // riding readout (center-right, clear of the bottom-left card)
-      const cxr = w * 0.56;
+      // riding labels (center-right, clear of the bottom-left card and the
+      // right edge on narrow screens)
+      p.push(); p.textFont("IBM Plex Mono"); p.textSize(12);
+      const cxr = Math.max(mx + 14, Math.min(w * 0.56, w - p.textWidth("net balance · illustrative") - 20));
+      p.textSize(10.5);
+      const legendRight = mx + p.textWidth("STORED CARBON ▲   CH₄ ×" + GWP + " over 20yr ▼");
+      p.pop();
       p.push(); p.noStroke(); p.fill(lineCol); p.circle(cxr - 14, lineY, 6); p.pop();
-      D.label(p, (bal > 0 ? "+" : "") + bal + " net", cxr, lineY - 6, lineCol, 14, [p.LEFT, p.BOTTOM]);
+      // Narrow screens: skip the riding label while it would sit on the legend.
+      if (cxr > legendRight + 12 || lineY - 22 > topY + 14) {
+        D.label(p, "net balance · illustrative", cxr, lineY - 6, lineCol, 12, [p.LEFT, p.BOTTOM]);
+      }
+      if (spread > 18) D.label(p, "range without measured site flux", cxr, lineY + spread + 5, D.rgba(EB.color.textMuted, 0.9), 10, [p.LEFT, p.TOP]);
       // title + GWP legend (the only hard number, kept verbatim)
       D.label(p, "NET CLIMATE BALANCE", mx, topY - 14, EB.color.textMuted, 11);
       D.label(p, "STORED CARBON ▲   CH₄ ×" + GWP + " over 20yr ▼", mx, topY + 2, D.rgba(EB.color.textMuted, 0.9), 10.5);

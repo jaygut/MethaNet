@@ -9,7 +9,17 @@
 .network-heading .smallcaps{color:var(--emergence);margin-bottom:18px}
 .network-heading h2{font:500 clamp(36px,4.1vw,65px)/1.04 var(--font-display);letter-spacing:-.035em}
 .network-heading h2 em{font-style:normal;color:var(--emergence)}
-.network-heading>p{max-width:350px;color:#afc2c7;font-size:17px;line-height:1.6;padding-bottom:5px}
+.network-heading>p{max-width:480px;color:#afc2c7;font-size:17px;line-height:1.6;padding-bottom:5px}
+.network-model{max-width:1500px;margin:0 auto 32px;padding:20px 24px 18px;border:1px solid #22343c;border-left:2px solid var(--emergence);border-radius:3px;background:linear-gradient(180deg,rgba(14,22,28,.92),rgba(10,16,21,.86))}
+.network-model>.smallcaps{color:var(--emergence);margin-bottom:14px}
+.network-rules{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 30px}
+.network-rules li{position:relative;padding-left:20px;color:#afc2c7;font-size:15px;line-height:1.45}
+.network-rules li::before{content:"";position:absolute;left:0;top:.68em;width:9px;height:2px;border-radius:1px;background:#ff8a4c}
+.network-rules b{color:#eaf2f2;font-weight:500}
+.network-model__why{margin-top:18px;max-width:920px;color:#d5e2e5;font-size:16px;line-height:1.55}
+.network-model__note{margin-top:16px;padding-top:12px;border-top:1px solid #1d2c33;color:#8a9ba5;font:12px/1.6 var(--font-mono)}
+@media(max-width:1100px){.network-rules{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.network-rules{grid-template-columns:1fr}.network-model{padding:16px 16px 14px;margin-bottom:24px}.network-rules li{font-size:14px}.network-model__why{font-size:15px}.network-model__note{font-size:11px}}
 #networkMount{min-height:770px;max-width:1500px;margin:auto}
 .net-shell{--net-teal:#67ead1;--net-amber:#ffc477;--net-pending:#a4b7c7;--net-action:#b5a9fa;border:1px solid #263b42;background:#0a1319;border-radius:8px;overflow:hidden;color:#eaf2f2}
 .net-shell button,.net-shell input{font:inherit;color:inherit}
@@ -119,6 +129,9 @@
 @media(max-width:520px){.scene--network{padding:70px 14px 45px}.network-heading h2{font-size:38px}.net-cases .net-case{display:block;padding:12px 9px;min-height:100px}.net-case-number{display:block;margin-bottom:8px}.net-case strong{font-size:12px}.net-case small{font-size:9px;overflow-wrap:anywhere}.net-profile{grid-template-columns:repeat(2,1fr)}.net-profile button{flex-direction:row;align-items:center;padding:12px;font-size:11px;border-bottom:1px solid #263b42}.net-tools{padding:13px 12px 6px;gap:5px;flex-wrap:wrap}.net-search-label{order:3;flex-basis:100%;margin-top:6px}.net-tools>button{margin-left:auto}.net-breadcrumb{padding-left:12px;padding-right:12px}.net-canvas{height:540px}.net-node{width:112px;min-height:70px;padding:9px 7px!important}.net-node strong{font-size:12px}.net-node small{font-size:9px}.net-node--profile{width:132px;height:132px}.net-node--profile strong{font-size:17px}.net-node--leaf{width:146px;min-height:52px}.net-node--source{width:148px}.net-canvas-caption{left:12px;right:12px;font-size:8px}.net-map-hint{left:12px;font-size:9px;max-width:60%;bottom:15px}.net-legend{padding:13px;gap:10px 14px;font-size:9px}.net-inspector h3{font-size:26px}.net-inspector{padding:22px 18px}.net-footer{font-size:9px;padding:13px}.net-immersive-dialog{width:calc(100vw - 12px);height:calc(100dvh - 12px)}.net-immersive-dialog .net-canvas{min-height:540px}}
 @media(prefers-reduced-motion:reduce){.net-node{animation:none}.net-shell *{transition:none!important}}
 @media(max-width:850px){.net-mobile-detail{display:block;margin:0 22px 15px;padding:10px;text-align:center;font-size:12px;color:var(--emergence);border:1px solid #35565d;border-radius:4px;text-decoration:none}}
+/* The fixed scene rail sits over the section's right edge; keep the explorer's
+   inspector, scroll edge and case controls out from under its buttons. */
+@media(min-width:721px){.scene--network{padding-right:max(clamp(22px,4vw,64px),var(--rail-gutter))}}
 /* Native text enlargement keeps every control and source fact readable. */
 .network-heading h2,.network-transition a{overflow-wrap:anywhere}
 .net-profile{grid-template-columns:repeat(4,minmax(0,1fr))}
