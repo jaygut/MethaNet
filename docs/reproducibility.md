@@ -10,13 +10,19 @@ validation evidence.
 For the current release contract and dataset authority chain, read
 [`methanet_positioning_and_claims.md`](methanet_positioning_and_claims.md) and
 [`atlas_data_foundation.md`](atlas_data_foundation.md). The August 10 frozen
-release and its September reconciled public report use:
+release and its current public report (regenerated 28 September 2026 from the same
+freeze, superseding the 23 September reconciled bundle) use:
 
 ```text
 results/reports/methanet_3view_payload_freeze_20260810_end_to_end/
 results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end/
-results/reports/emergentbiome_molecular_atlas_20260923_reconciled/
+results/reports/emergentbiome_molecular_atlas_20260928_consolidated/
 ```
+
+The report is rebuilt with the command in
+[`web/emergentbiome-methanet/README.md`](../web/emergentbiome-methanet/README.md)
+(`.venv`, `--skip-phate`); UMAP, t-SNE and PCA are seeded, and diffusion
+coordinates use a seeded start vector and a sign convention.
 
 The July 24 scientific-reconciliation paths are historical snapshots. The
 reconciled report retains the August molecular denominator; its public

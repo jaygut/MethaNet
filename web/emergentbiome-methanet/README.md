@@ -13,7 +13,10 @@ GitHub Actions workflow. The workflow updates landing assets and preserves the
 three-case public explorer is at [Explore the evidence](https://emergentbiome.earth/#scene-network).
 The three-reviewer package, deployment receipt and browser checks are retained
 locally under `results/reports/mvo_landing_release_20260927/`; the current exact
-publication revision is recorded in the `gh-pages` branch history.
+publication revision is recorded in the `gh-pages` branch history. The 28 September
+narrative revision and the regenerated report were published together as `gh-pages`
+revision `30d8715`; [`design-qa.md`](design-qa.md) records the changes and checks, and
+the local QA package is `results/reports/landing_narrative_review_20260928/`.
 
 The shared position is:
 
@@ -82,19 +85,21 @@ The page uses a title sequence, ten scenes, and a closing ask:
 
 | Scene | Reader takeaway | Evidence mode |
 | --- | --- | --- |
-| Hero | Introduces the molecular atlas and scoped evidence graph | Decorative seeded particle field |
-| 1. The Climate Question | Methane can erode blue-carbon climate value | Sourced climate facts with illustrative motion |
-| 2. The Measurement Gap | Direct monitoring is costly and spatially sparse | Illustrative measurement gap |
-| 3. The Evidence Card | One frozen candidate exposes recorded evidence, unresolved joins, and the next measurement | Real candidate record with a schematic canvas |
-| 4. Complementary Evidence | Proxies and molecular evidence answer complementary field-design questions | Explicitly illustrative teaching plot |
-| 5. Explore the Atlas | Inspect 7,710 frozen records and distinguish nearest-core matches from reciprocal-pair sensitivity | Real counts, coordinates, and selected links |
-| 6. Evidence Scope | Each gas or mechanism lens requires its own harmonization and validation gate | Real atlas geometry with bounded lens states |
-| 7. Molecular evidence, practical decisions | Connect a source specimen, mechanism review and the next field observation | Illustrative mangrove workflow with three real evidence-case dialogs |
-| 8. Explore the Evidence | Follow three actual qualitative review profiles through genes, context, selected source facts and proposed follow-up | Separately scoped September source-data projection with attribution |
-| 9. Validation Path | Molecular attestation is available now; calibrated MRV follows paired validation | Real MRV roadmap |
-| 10. Partnership Path | A field cohort could connect molecular screening with paired outcomes | Roadmap and partnership target |
+| Hero | States the problem (wetland methane can cancel part of the carbon benefit) and the offer (DNA turned into checkable evidence, plus the field measurement that settles what DNA cannot) | Decorative seeded particle field |
+| 1. The Climate Question | Methane can erode a wetland's climate benefit, most where water is fresh, brackish or cut off from the tide | Sourced facts (IPCC AR6; Poffenbarger et al. 2011; Kroeger et al. 2017) with illustrative motion; the net-balance range is labeled illustrative and carries no values |
+| 2. The Measurement Gap | VM0033 allows a default methane value only above 18 ppt salinity; the atlas has zero genome-to-flux pairs, which is not zero emissions | Real zero-pairing anchor with an illustrative field; names what a usable DNA-to-flux pair records (specimen, depth, time window, chamber footprint) |
+| 3. The Molecular Atlas | 7,710 genome records mapped by their proteins; nearness is a lead that the four views test | Real counts, UMAP coordinates and selected links; the map is fitted to the space the reading panel and copy card leave free |
+| 4. The Evidence Card | One real genome's card separates what is recorded, what is unresolved and the next measurement | Real candidate record with a schematic canvas |
+| 5. Beyond Salinity | Salinity sets the baseline; genome evidence flags exceptions worth measuring | Explicitly illustrative teaching plot, sourced (Poffenbarger et al. 2011; Krause and Treude 2021) |
+| 6. Evidence Scope | Methane screening runs through two annotation routes that are compared separately; other gas lenses are planned | Real atlas geometry colored by route (5,209 shared pipeline, 2,501 source annotations; 0 compared across routes) |
+| 7. Molecular evidence, practical decisions | Check what a gene can mean, pin down its sample and depth, choose the test that settles it | Illustrative mangrove workflow with three real evidence-case dialogs |
+| 8. Explore the Evidence | The ontology keeps easily conflated evidence apart and shows why a claim is on hold; three real review profiles | Separately scoped September projection; six rules drawn from the MVO competency questions |
+| 9. Validation Path | Molecular review works today; calibrated risk needs five more rungs of paired evidence | Real MRV roadmap |
+| 10. Partnership Path | The proposed study pairs each sediment metagenome with chamber flux, chemistry and hydrology | Schematic of the proposed design from `EB.study`; not collected data or a site map |
 
-The closing ask describes a proposed two-season study of 144 metagenome sample-events, including repeated observations within 36 plots. Funding, site access and permits remain conditions. The planned study is separate from the frozen atlas denominator. Environmental and reviewed marker baselines, outcome-blind evaluation and a prospective second-season test make the next research decision explicit.
+The closing ask describes a proposed two-season study of 144 metagenome sample-events: 3 restoration stages × 4 salinity positions × 3 replicate plots = 36 plots, two microsites per plot, revisited in a wet and a dry campaign. Revisits are repeated measurements, not independent replicates; plots are the replicate unit. Funding, site access and permits remain conditions. The planned study is separate from the frozen atlas denominator. Environmental and reviewed marker baselines are compared on the same held-out records, with each model frozen before its flux outcomes are unblinded: the first campaign tests a new site, and the second tests seasonal transfer at the same points, not independent-site validation.
+
+Chronology stays visible without release-management detail. The hero and header name both dated scopes (the August 10 atlas and the September 26 case reviews), scene 07 marks where the case evidence enters, and the claim bar's date chip follows the scene in view: atlas data, case evidence, or the proposed study.
 
 ## Three-case public projection
 
@@ -159,8 +164,8 @@ maturity ladder, claim boundaries, and milestones.
 1. Reconcile the new release against `DIGEST.md` and the dated report freeze.
 2. Update the relevant values and copy in `config.js`.
 3. Refresh the landing visualization with `tools/export_atlas.py`.
-4. Generate the reconciled technical report into
-   `results/reports/emergentbiome_molecular_atlas_20260923_reconciled/`.
+4. Generate the technical report into
+   `results/reports/emergentbiome_molecular_atlas_20260928_consolidated/`.
 5. Build the public tree with `tools/publish_site.sh build`.
 6. Verify the landing page, the stable `/report/` alias, claim-boundary text,
    and the absence of public raw report bundles.
@@ -169,12 +174,16 @@ For the current August 10 freeze, the report build command from the repository
 root is:
 
 ```bash
-MPLCONFIGDIR=/tmp/methanet_mpl_20260923 NUMBA_CACHE_DIR=/tmp/methanet_numba_20260923 \
+MPLCONFIGDIR=/tmp/methanet_mpl NUMBA_CACHE_DIR=/tmp/methanet_numba \
 .venv/bin/python scripts/reports/build_mbag_nextgen_molecular_niche_atlas.py \
   --lane-registry configs/methanet_atlas_lanes.tsv \
   --freeze-manifest results/reports/methanet_3view_payload_freeze_20260810_end_to_end/freeze_manifest.tsv \
-  --output-dir results/reports/emergentbiome_molecular_atlas_20260923_reconciled
+  --skip-phate --output-dir results/reports/emergentbiome_molecular_atlas_20260928_consolidated
 ```
+
+`--skip-phate` keeps the published projection buttons to UMAP (the default),
+diffusion map, t-SNE and PCA; an environment with PHATE installed would add a
+fifth button and fail the browser check.
 
 That report bundle is ignored by Git and depends on the local frozen lane
 warehouses and source manifests. Regenerate or restore it before running the
@@ -183,14 +192,16 @@ site builder on a clean checkout.
 Run `tools/validate_release_parity.py` against the ledger, freeze, report,
 `DIGEST.md`, `config.js`, and `data/atlas.json`. Run
 `tools/verify_page_firefox.py` against the built tree for desktop, tablet,
-mobile, keyboard, overflow, noindex, and static-fallback checks.
+mobile, keyboard, overflow, noindex, and static-fallback checks. It also drives
+the scene-07 case dialog, its handoff (case and keyboard focus) into the scene-08
+explorer, selected source facts, immersive mode and recovery from a data outage.
 
 ## File Map
 
 ```text
 index.html              public semantic scaffold and metadata
 styles.css              responsive visual and accessibility system
-config.js               verified numbers, public copy, claims, and milestones
+config.js               verified numbers, public copy, claims, and the proposed-study design
 main.js                 page orchestration, copy injection, and accessibility
 scenes/                 seeded visual scenes
 data/atlas.json         local landing visualization feed

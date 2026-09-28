@@ -228,7 +228,7 @@ Current implemented artifact arc:
 | Metadata provenance | `results/functional_metagenomics/environmental_metadata_recovery_20260612/`, `data/external/msm_china_2025/metadata/`, and `data/external/futian_mangrove_2026_qi/metadata/` | source/environmental metadata with resolution tiers across rumen, wetland/MUCC, MSM, and Futian lanes |
 | Molecular attestation graph | `results/attestation/mmag_mvp_20260617/` plus the release-level MBAG projection | POC graph MVP plus current warehouse-wide evidence-contract, candidate-card, and validation-readiness views |
 | August 10 controlled-diligence source report | `results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end/report.html` | Frozen 7,965-unit evidence contract and 7,710 data-complete tri-views; routine scientific publication remains gated |
-| Reconciled public report | `results/reports/emergentbiome_molecular_atlas_20260923_reconciled/report.html` and [stable public alias](https://emergentbiome.earth/report/) | September correction of the already-public, `noindex` report against the same August freeze |
+| Public report | `results/reports/emergentbiome_molecular_atlas_20260928_consolidated/report.html` and [stable public alias](https://emergentbiome.earth/report/) | 28 September consolidation of the `noindex` report against the same August freeze: plain-language narrative, corrected labels and counts, redrawn figures; supersedes the 23 September reconciled bundle |
 
 These artifacts support MAG/proteome-level molecular attestation,
 bridge-candidate prioritization, evidence-card review, and monitoring-readiness

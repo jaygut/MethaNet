@@ -471,9 +471,10 @@ It registers 7,965 MAG/proteome units and exposes 7,710 ESM-2 embeddings, 7,717
 gLM2 payloads, and 7,710 data-complete tri-views. The tri-views comprise 5,209
 pipeline-normalized POC/MSM/Futian rows with cross-lane comparability pending
 and 2,501 MUCC v1 source-scaffold rows. The 255 source gaps remain explicit
-release exclusions. The public `/report/` alias currently serves the separately
-reconciled `results/reports/emergentbiome_molecular_atlas_20260923_reconciled/`
-bundle, which uses the same August freeze. The
+release exclusions. The public `/report/` alias serves
+`results/reports/emergentbiome_molecular_atlas_20260928_consolidated/`, regenerated
+on 28 September 2026 from the same August freeze; it supersedes the 23 September
+reconciled bundle. The
 [landing page](https://emergentbiome.earth/) and
 [report](https://emergentbiome.earth/report/) are live under a scoped `noindex`
 correction deployment. Routine scientific publication and indexing remain
@@ -491,6 +492,14 @@ the exact projection hashes and three internal review lanes. Query-busted live
 bytes match the reviewed network SHA-256. These reviews and checks do not
 constitute independent biological or legal certification; detailed MVO evidence
 and unpublished manuscript materials remain under separate review.
+
+Landing and report update, 2026-09-28: the narrative revision of the landing and the
+consolidated technical report were published together as `gh-pages` revision
+`30d8715` through `tools/publish_site.sh deploy --push`, after the owner approved the
+local preview. The report corrects nearest-reference denominators (records outside
+the reference core), expression flags, lane labels and the default projection
+(UMAP); counts and the release ledger are unchanged. Changes and checks are recorded
+in `web/emergentbiome-methanet/design-qa.md`.
 
 ## Molecular Attestation Graph
 
