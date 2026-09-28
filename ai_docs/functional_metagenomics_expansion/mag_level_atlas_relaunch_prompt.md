@@ -4,11 +4,9 @@ Date: 2026-06-14
 
 Purpose: copy-ready operating prompt for resuming the MethaNet functional-genomics run after discovering a unit-of-analysis mismatch between geometry-aware ESM2 proteome embeddings and functional annotations for early rumen `10676_*_idba` assembly-scale records.
 
-This prompt is intended for a future MethaNet agent/operator working inside:
-
-```text
-/home/rsg-jcorre38/Jay_Proyects/MethaNet
-```
+This prompt is intended for a future MethaNet agent/operator working from a
+repository checkout on a workstation or Apolo-3 shared filesystem. Resolve the
+checkout root with `git rev-parse --show-toplevel` and store it in `REPO_ROOT`.
 
 It should be used before canceling, relaunching, consolidating, reporting, or interpreting the functional atlas after the June 2026 Apollo-3 production run.
 
@@ -69,7 +67,8 @@ They must not be used as direct MAG-level bridge-candidate functional support.
 Before making any operational change, refresh live status:
 
 ```bash
-cd /home/rsg-jcorre38/Jay_Proyects/MethaNet
+export REPO_ROOT="${REPO_ROOT:-$(git rev-parse --show-toplevel)}"
+cd "$REPO_ROOT"
 
 squeue -u "$USER" -o "%.18i %.10P %.24j %.2t %.10M %.10l %.5D %.5C %.10m %.20R"
 
@@ -610,4 +609,3 @@ relaunch comparable MAG/bin production
 validate schemas and claim boundaries
 then generate intelligence outputs
 ```
-

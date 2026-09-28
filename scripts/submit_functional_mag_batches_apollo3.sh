@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="${REPO_ROOT:-$(cd -- "${SCRIPT_DIR}/.." && pwd)}"
-DB_ROOT="${DB_ROOT:-/home/rsg-jcorre38/scratch/methanet_db}"
+DB_ROOT="${DB_ROOT:-${HOME:?Set HOME or DB_ROOT}/scratch/methanet_db}"
 MANIFEST="${MANIFEST:-${REPO_ROOT}/results/functional_metagenomics/proteome_crosswalk_audit_20260612_0255/poc_662_functional_mag_manifest.mag_bin_remaining.tsv}"
 COHORT_RUN_ID="${COHORT_RUN_ID:-fgx_662_apollo3_$(date -u +%Y%m%d)}"
 RESULT_ROOT="${RESULT_ROOT:-${REPO_ROOT}/results/functional_metagenomics/${COHORT_RUN_ID}}"

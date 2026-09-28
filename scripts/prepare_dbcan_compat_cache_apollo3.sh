@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-DB_ROOT="${DB_ROOT:-/home/rsg-jcorre38/scratch/methanet_db}"
+DB_ROOT="${DB_ROOT:-${HOME:?Set HOME or DB_ROOT}/scratch/methanet_db}"
 DBCAN_SOURCE_DIR="${DBCAN_SOURCE_DIR:-${DB_ROOT}/dbcan}"
 DBCAN_COMPAT_DIR="${DBCAN_COMPAT_DIR:-${DB_ROOT}/dbcan_compat_pressed}"
 CONDA_SH="${CONDA_SH:-/opt/ohpc/pub/apps/miniconda3/etc/profile.d/conda.sh}"

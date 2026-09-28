@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-REPO_ROOT="${REPO_ROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="${REPO_ROOT:-$(cd -- "${SCRIPT_DIR}/.." && pwd)}"
 GLM2_RESULTS_DIRS="${GLM2_RESULTS_DIRS:-}"
 GLM2_RESULTS_DIR_LIST="${GLM2_RESULTS_DIR_LIST:-}"
 GLM2_WORKER="${GLM2_WORKER:-${REPO_ROOT}/scripts/slurm/run_glm2_smoke_apolo3.sh}"

@@ -19,7 +19,8 @@ set -euo pipefail
 #   BC_EXCLUDE_COASSEMBLY 1|0 (default: 1)
 #   BC_BACKFILL_PROFILE   1 enables a shorter/lighter scheduling profile (default: 0)
 
-MROOT="${MROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+MROOT="${MROOT:-$(cd -- "${SCRIPT_DIR}/.." && pwd)}"
 SOURCE_RUN_ID="${SOURCE_RUN_ID:-}"
 RUN_ID="${RUN_ID:-}"
 TIME_LIMIT="${TIME_LIMIT:-08:00:00}"

@@ -76,6 +76,12 @@ cohort warehouse.
 
 ## Pilot Mode
 
+Run the commands below from the MethaNet checkout root because
+`config.apollo3.yaml` uses repository-relative project paths. Its `~/...`
+database paths resolve to the current account's durable `$HOME/scratch` tree;
+change them explicitly for another approved persistent storage layout. Do not
+point large reference databases at ephemeral `$SCRATCH` storage.
+
 Use one MAG/proteome for a no-execution graph check:
 
 ```bash
@@ -136,7 +142,7 @@ params:
   eggnog_mapper_version: 2.1.15
   eggnog_db_version: 5.0.2
 databases:
-  eggnog_v2: /home/rsg-jcorre38/scratch/methanet_db/eggnog_v2
+  eggnog_v2: ~/scratch/methanet_db/eggnog_v2
 ```
 
 When enabled, the DAG validates the v2 database, runs `emapper.py` on the

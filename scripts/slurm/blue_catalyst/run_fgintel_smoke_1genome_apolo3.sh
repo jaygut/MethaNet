@@ -16,9 +16,10 @@ set -euo pipefail
 # 3) submits the notebook pipeline as a nested sbatch job
 # 4) waits and validates required artifacts
 
-MROOT="${MROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+MROOT="${MROOT:-$(cd -- "${SCRIPT_DIR}/../../.." && pwd)}"
 RUNS_ROOT="${RUNS_ROOT:-$MROOT/results/blue_catalyst_poc/runs}"
-DB_ROOT="${DB_ROOT:-$HOME/scratch/methanet_db}"
+DB_ROOT="${DB_ROOT:-${HOME:?Set HOME or DB_ROOT}/scratch/methanet_db}"
 SLURM_PARTITION="${SLURM_PARTITION:-accel}"
 SOURCE_RUN_ID="${SOURCE_RUN_ID:-}"
 OUTER_TIME_LIMIT="${OUTER_TIME_LIMIT:-06:00:00}"

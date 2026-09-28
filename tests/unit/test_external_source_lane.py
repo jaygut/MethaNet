@@ -2808,6 +2808,7 @@ def test_functional_submitter_renders_command_after_manifest_preflight(tmp_path:
         env={
             "PATH": "/usr/bin:/bin",
             "REPO_ROOT": str(repo_root),
+            "DB_ROOT": str(tmp_path / "db"),
             "MANIFEST": str(manifest),
             "ARRAY_WORKER": str(worker),
             "RESULT_ROOT": str(tmp_path / "results"),
@@ -2865,6 +2866,7 @@ def test_functional_submitter_rejects_duplicate_included_proteome_ids(tmp_path: 
         env={
             "PATH": "/usr/bin:/bin",
             "REPO_ROOT": str(repo_root),
+            "DB_ROOT": str(tmp_path / "db"),
             "MANIFEST": str(manifest),
             "ARRAY_WORKER": str(worker),
             "RESULT_ROOT": str(tmp_path / "results"),
@@ -2909,6 +2911,7 @@ def test_functional_submitter_rejects_missing_payload_in_included_rows(tmp_path:
         env={
             "PATH": "/usr/bin:/bin",
             "REPO_ROOT": str(repo_root),
+            "DB_ROOT": str(tmp_path / "db"),
             "MANIFEST": str(manifest),
             "ARRAY_WORKER": str(worker),
             "RESULT_ROOT": str(tmp_path / "results"),
@@ -2952,6 +2955,7 @@ def test_functional_submitter_rejects_included_missing_payload_status(tmp_path: 
         env={
             "PATH": "/usr/bin:/bin",
             "REPO_ROOT": str(repo_root),
+            "DB_ROOT": str(tmp_path / "db"),
             "MANIFEST": str(manifest),
             "ARRAY_WORKER": str(worker),
             "RESULT_ROOT": str(tmp_path / "results"),
@@ -3009,6 +3013,7 @@ def test_functional_array_worker_marks_failed_runner_attempt(tmp_path: Path) -> 
         env={
             "PATH": "/usr/bin:/bin",
             "REPO_ROOT": str(repo_root),
+            "DB_ROOT": str(tmp_path / "db"),
             "MANIFEST": str(manifest),
             "RESULT_BASE": os.path.relpath(result_base, repo_root),
             "RUNNER": str(runner),
@@ -3070,6 +3075,7 @@ def test_functional_array_worker_dry_run_absolutizes_relative_result_root(tmp_pa
         env={
             "PATH": "/usr/bin:/bin",
             "REPO_ROOT": str(repo_root),
+            "DB_ROOT": str(tmp_path / "db"),
             "MANIFEST": str(manifest),
             "RESULT_ROOT": "results/functional_metagenomics/relative_result_root_check",
             "RUNNER": str(runner),

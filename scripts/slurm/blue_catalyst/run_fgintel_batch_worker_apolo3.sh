@@ -9,7 +9,8 @@
 
 set -euo pipefail
 
-MROOT="${MROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+MROOT="${MROOT:-$(cd -- "${SCRIPT_DIR}/../../.." && pwd)}"
 FG_RUN_ID="${FG_RUN_ID:?FG_RUN_ID is required}"
 FG_ART_DIR="${FG_ART_DIR:-$MROOT/results/blue_catalyst_poc/runs/$FG_RUN_ID/fg_artifacts}"
 HMM_DIR="${HMM_DIR:-$MROOT/data/hmm}"

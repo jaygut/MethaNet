@@ -1,6 +1,7 @@
 # Apollo-3 Functional MAG Runbook
 
 Date: 2026-06-11
+Portability refresh: 2026-09-27
 
 This runbook records the Apolo-3 database setup state for MethaNet and the
 next operational steps to turn MAGs into QC, taxonomy, methane/sulfur,
@@ -9,8 +10,8 @@ CAZyme, KO/EC, and pathway evidence.
 ## Current DB_ROOT
 
 ```bash
-export DB_ROOT=/home/rsg-jcorre38/scratch/methanet_db
-export REPO_ROOT=/home/rsg-jcorre38/Jay_Proyects/MethaNet
+export REPO_ROOT="${REPO_ROOT:-$(git rev-parse --show-toplevel)}"
+export DB_ROOT="${DB_ROOT:-${HOME:?Set HOME or DB_ROOT}/scratch/methanet_db}"
 ```
 
 The initial setup job completed successfully as SLURM job `8437`.

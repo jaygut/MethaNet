@@ -14,14 +14,15 @@
 
 set -Eeuo pipefail
 
-REPO_ROOT="${REPO_ROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="${REPO_ROOT:-$(cd -- "${SCRIPT_DIR}/../.." && pwd)}"
 MANIFEST="${MANIFEST:?MANIFEST is required}"
 OUTPUT_MANIFEST="${OUTPUT_MANIFEST:?OUTPUT_MANIFEST is required}"
 PROTEOME_DIR="${PROTEOME_DIR:?PROTEOME_DIR is required}"
 FFN_DIR="${FFN_DIR:?FFN_DIR is required}"
 GFF_DIR="${GFF_DIR:?GFF_DIR is required}"
 LOG_DIR="${LOG_DIR:?LOG_DIR is required}"
-SCRATCH_DIR="${SCRATCH_DIR:-/home/rsg-jcorre38/scratch/methanet_prodigal}"
+SCRATCH_DIR="${SCRATCH_DIR:-${SCRATCH:-${HOME:-.}/scratch}/methanet_prodigal}"
 CONDA_ENV="${CONDA_ENV:-methanet-fgx}"
 WORKERS="${WORKERS:-${SLURM_CPUS_PER_TASK:-16}}"
 LIMIT="${LIMIT:-}"

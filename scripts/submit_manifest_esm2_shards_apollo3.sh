@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-REPO_ROOT="${REPO_ROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="${REPO_ROOT:-$(cd -- "${SCRIPT_DIR}/.." && pwd)}"
 SHARD_MANIFEST="${SHARD_MANIFEST:-}"
 OUTPUT_DIR_TEMPLATE="${OUTPUT_DIR_TEMPLATE:-}"
 ESM2_WORKER="${ESM2_WORKER:-${REPO_ROOT}/scripts/slurm/run_manifest_esm2_embeddings_apolo3.sh}"

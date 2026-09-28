@@ -24,7 +24,8 @@ set -euo pipefail
 #   DB_ROOT               shared functional DB root
 #   FG_HASH_PROTEOMES     1 computes proteome SHA256 during planning (default 0)
 
-MROOT="${MROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+MROOT="${MROOT:-$(cd -- "${SCRIPT_DIR}/.." && pwd)}"
 FG_SOURCE_EMBED_RUN_ID="${FG_SOURCE_EMBED_RUN_ID:-}"
 FG_RUN_ID="${FG_RUN_ID:-}"
 FG_BATCH_SIZE="${FG_BATCH_SIZE:-25}"
@@ -38,7 +39,7 @@ WORKER_CPUS="${WORKER_CPUS:-4}"
 WORKER_MEM="${WORKER_MEM:-24G}"
 BATCH_THREADS="${BATCH_THREADS:-4}"
 HMM_DIR="${HMM_DIR:-$MROOT/data/hmm}"
-DB_ROOT="${DB_ROOT:-$HOME/scratch/methanet_db}"
+DB_ROOT="${DB_ROOT:-${HOME:?Set HOME or DB_ROOT}/scratch/methanet_db}"
 FG_HASH_PROTEOMES="${FG_HASH_PROTEOMES:-0}"
 
 if [[ -z "$FG_SOURCE_EMBED_RUN_ID" ]]; then

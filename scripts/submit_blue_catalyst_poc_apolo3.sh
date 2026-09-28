@@ -14,7 +14,7 @@ module load miniconda3/25.5.1
 source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate MethaNet311
 
-ENV_PREFIX="${ENV_PREFIX:-$HOME/.conda/envs/MethaNet311}"
+ENV_PREFIX="${ENV_PREFIX:-${HOME:-.}/.conda/envs/MethaNet311}"
 ENV_PY="${ENV_PREFIX}/bin/python"
 export PATH="${ENV_PREFIX}/bin:${PATH}"
 
@@ -22,7 +22,8 @@ echo "DEBUG CONDA_PREFIX=${CONDA_PREFIX:-unset}"
 echo "DEBUG ENV_PY=${ENV_PY}"
 echo "DEBUG which python=$(which python)"
 
-export METHANET_ROOT="${METHANET_ROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+export METHANET_ROOT="${METHANET_ROOT:-$(cd -- "${SCRIPT_DIR}/.." && pwd)}"
 export PYTHONPATH="$METHANET_ROOT/src:${PYTHONPATH:-}"
 
 mkdir -p "$METHANET_ROOT/logs"
@@ -33,7 +34,7 @@ SCRATCH_BASE="${SCRATCH_BASE:-/scratch/$USER}"
 if [[ -d "$SCRATCH_BASE" && -w "$SCRATCH_BASE" ]]; then
   CACHE_BASE="$SCRATCH_BASE/methanet_blue_catalyst_cache"
 else
-  CACHE_BASE="$HOME/.cache/methanet_blue_catalyst_cache"
+  CACHE_BASE="${HOME:-.}/.cache/methanet_blue_catalyst_cache"
 fi
 mkdir -p "$CACHE_BASE/hf" "$CACHE_BASE/tmp" "$CACHE_BASE/xdg"
 

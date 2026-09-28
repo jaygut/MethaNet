@@ -14,7 +14,7 @@ set -Eeuo pipefail
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${PATH:-}"
 
 RUN_ID="${RUN_ID:-fgx_db_setup_$(date -u +%Y%m%d_%H%M%S)}"
-DB_ROOT="${DB_ROOT:-/home/rsg-jcorre38/scratch/methanet_db}"
+DB_ROOT="${DB_ROOT:-${HOME:?Set HOME or DB_ROOT}/scratch/methanet_db}"
 TOOL_ENV="${TOOL_ENV:-methanet-fgx}"
 CHECKM2_ENV="${CHECKM2_ENV:-checkm2_py38}"
 GUNC_ENV="${GUNC_ENV:-methanet-gunc3}"
@@ -28,7 +28,8 @@ MIN_FREE_GB="${MIN_FREE_GB:-1200}"
 THREADS="${THREADS:-16}"
 SETUP_STEPS="${SETUP_STEPS:-preflight,create_env,checkm2,gtdbtk_r232,gunc_progenomes3,kofam,eggnog_v2,mcycdb,scycdb,dbcan,dram,metabolic,mmseqs,bakta}"
 CONDA_SH="${CONDA_SH:-/opt/ohpc/pub/apps/miniconda3/etc/profile.d/conda.sh}"
-REPO_ROOT="${REPO_ROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="${REPO_ROOT:-$(cd -- "${SCRIPT_DIR}/.." && pwd)}"
 
 LOG_ROOT="${DB_ROOT}/logs/${RUN_ID}"
 STATE_DIR="${DB_ROOT}/.setup_state/${RUN_ID}"

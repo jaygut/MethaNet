@@ -1,12 +1,14 @@
 # Apollo 3 configuration scaffold for the Snakemake production-contract runner.
+# Run from the MethaNet checkout root. The Snakefile expands home-relative
+# database paths; override these settings for a different Apolo storage layout.
 # Override run_id/paths.results before a real cohort execution if needed.
 
 run_id: fgx_snakemake_apollo3_contract
 
 paths:
-  project_root: /home/rsg-jcorre38/Jay_Proyects/MethaNet
-  workdir: /home/rsg-jcorre38/Jay_Proyects/MethaNet
-  scratch: /scratch/${USER}/methanet_fgx
+  project_root: .
+  workdir: .
+  scratch: ~/scratch/methanet_fgx
   results: results/functional_metagenomics/fgx_snakemake_apollo3_contract
   logs: logs/functional_metagenomics/fgx_snakemake_apollo3_contract
   conda_sh: /opt/ohpc/pub/apps/miniconda3/etc/profile.d/conda.sh
@@ -30,24 +32,24 @@ pilot:
   pilot_mag_id: null
 
 databases:
-  db_root: /home/rsg-jcorre38/scratch/methanet_db
-  checkm2: /home/rsg-jcorre38/scratch/methanet_db/checkm2
-  gtdbtk: /home/rsg-jcorre38/scratch/methanet_db/gtdbtk_r232/release232
-  gunc_db: /home/rsg-jcorre38/scratch/methanet_db/gunc/gunc_db_progenomes3.dmnd
-  eggnog_v2: /home/rsg-jcorre38/scratch/methanet_db/eggnog_v2
-  eggnog_v3_preview: /home/rsg-jcorre38/scratch/methanet_db/eggnog_v3_preview
-  kofam_profiles: /home/rsg-jcorre38/scratch/methanet_db/kofam/profiles/prokaryote.hal
-  kofam_ko_list: /home/rsg-jcorre38/scratch/methanet_db/kofam/ko_list
-  mcycdb_diamond: /home/rsg-jcorre38/scratch/methanet_db/mcycdb/MCycDB_2021.dmnd
-  mcycdb_id2gene: /home/rsg-jcorre38/scratch/methanet_db/mcycdb/repo/id2gene.map
-  scycdb_diamond: /home/rsg-jcorre38/scratch/methanet_db/scycdb/SCycDB_2020Mar.dmnd
-  scycdb_id2gene: /home/rsg-jcorre38/scratch/methanet_db/scycdb/repo/id2gene.2020Mar.map
-  dbcan: /home/rsg-jcorre38/scratch/methanet_db/dbcan
-  dram: /home/rsg-jcorre38/scratch/methanet_db/dram
-  metabolic: /home/rsg-jcorre38/scratch/methanet_db/metabolic/METABOLIC
-  metabolic_repo: /home/rsg-jcorre38/scratch/methanet_db/metabolic/METABOLIC
-  gapseq: /home/rsg-jcorre38/scratch/methanet_db/gapseq
-  bakta_light: /home/rsg-jcorre38/scratch/methanet_db/bakta/db-light
+  db_root: ~/scratch/methanet_db
+  checkm2: ~/scratch/methanet_db/checkm2
+  gtdbtk: ~/scratch/methanet_db/gtdbtk_r232/release232
+  gunc_db: ~/scratch/methanet_db/gunc/gunc_db_progenomes3.dmnd
+  eggnog_v2: ~/scratch/methanet_db/eggnog_v2
+  eggnog_v3_preview: ~/scratch/methanet_db/eggnog_v3_preview
+  kofam_profiles: ~/scratch/methanet_db/kofam/profiles/prokaryote.hal
+  kofam_ko_list: ~/scratch/methanet_db/kofam/ko_list
+  mcycdb_diamond: ~/scratch/methanet_db/mcycdb/MCycDB_2021.dmnd
+  mcycdb_id2gene: ~/scratch/methanet_db/mcycdb/repo/id2gene.map
+  scycdb_diamond: ~/scratch/methanet_db/scycdb/SCycDB_2020Mar.dmnd
+  scycdb_id2gene: ~/scratch/methanet_db/scycdb/repo/id2gene.2020Mar.map
+  dbcan: ~/scratch/methanet_db/dbcan
+  dram: ~/scratch/methanet_db/dram
+  metabolic: ~/scratch/methanet_db/metabolic/METABOLIC
+  metabolic_repo: ~/scratch/methanet_db/metabolic/METABOLIC
+  gapseq: ~/scratch/methanet_db/gapseq
+  bakta_light: ~/scratch/methanet_db/bakta/db-light
 
 params:
   fasta_extension: fa
@@ -66,7 +68,7 @@ params:
   prepare_dbcan_cache: true
   compress_logs: true
   prune_success: true
-  dbcan_compat_dir: /home/rsg-jcorre38/scratch/methanet_db/dbcan_compat_pressed
+  dbcan_compat_dir: ~/scratch/methanet_db/dbcan_compat_pressed
   run_eggnog_v3_preview: false
   run_dram: false
   run_dram2_beta: false

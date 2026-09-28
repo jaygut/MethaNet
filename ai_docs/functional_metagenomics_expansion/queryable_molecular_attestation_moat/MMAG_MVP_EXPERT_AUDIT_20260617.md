@@ -11,8 +11,9 @@ results/attestation/mmag_mvp_20260617/
 Commands:
 
 ```bash
+REPO_ROOT="$(git rev-parse --show-toplevel)"
 ./.venv/bin/python scripts/attestation/build_molecular_attestation_mvp.py \
-  --repo-root /home/rsg-jcorre38/Jay_Proyects/MethaNet \
+  --repo-root "$REPO_ROOT" \
   --snapshot-id mmag_mvp_20260617
 
 ./.venv/bin/python scripts/attestation/audit_molecular_attestation_mvp.py \

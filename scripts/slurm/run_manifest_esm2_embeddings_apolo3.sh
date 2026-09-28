@@ -13,7 +13,8 @@ set -euo pipefail
 module load miniconda3/25.5.1
 source "$(conda info --base)/etc/profile.d/conda.sh"
 
-REPO_ROOT="${REPO_ROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="${REPO_ROOT:-$(cd -- "${SCRIPT_DIR}/../.." && pwd)}"
 CONDA_ENV="${CONDA_ENV:-MethaNet311}"
 MANIFEST="${ESM2_MANIFEST:?ESM2_MANIFEST is required}"
 OUTPUT_DIR="${ESM2_OUTPUT_DIR:?ESM2_OUTPUT_DIR is required}"
@@ -22,7 +23,7 @@ conda activate "$CONDA_ENV"
 
 export PYTHONPATH="$REPO_ROOT/src:${PYTHONPATH:-}"
 
-SCRATCH_BASE="${SCRATCH_BASE:-/home/rsg-jcorre38/scratch}"
+SCRATCH_BASE="${SCRATCH_BASE:-${SCRATCH:-${HOME:-.}/scratch}}"
 CACHE_BASE="${ESM2_CACHE_BASE:-$SCRATCH_BASE/methanet_models/esm2_hf}"
 mkdir -p "$CACHE_BASE" "$REPO_ROOT/logs" "$OUTPUT_DIR/logs"
 export HF_HOME="$CACHE_BASE"

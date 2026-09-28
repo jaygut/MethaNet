@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-REPO_ROOT="${REPO_ROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="${REPO_ROOT:-$(cd -- "${SCRIPT_DIR}/../.." && pwd)}"
 RESULT_ROOT="${RESULT_ROOT:-${REPO_ROOT}/results/functional_metagenomics/msm_china_2025_20260615}"
 HOURS="${HOURS:-8}"
 INTERVAL_SECONDS="${INTERVAL_SECONDS:-3600}"

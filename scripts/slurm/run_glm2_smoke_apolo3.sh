@@ -10,12 +10,13 @@
 
 set -euo pipefail
 
-REPO_ROOT="${REPO_ROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="${REPO_ROOT:-$(cd -- "${SCRIPT_DIR}/../.." && pwd)}"
 RESULTS_DIR="${RESULTS_DIR:-$REPO_ROOT/results/contextual_genomics/glm2_smoke_20260615_090023}"
 MODEL_NAME="${MODEL_NAME:-tattabio/gLM2_650M}"
 MODEL_REVISION="${MODEL_REVISION:-08754cba59a1f97d517f873fad6c672d2b1abdc7}"
 CONDA_ENV="${CONDA_ENV:-methanet-glm2}"
-HF_HOME="${HF_HOME:-/home/rsg-jcorre38/scratch/methanet_models/hf}"
+HF_HOME="${HF_HOME:-${SCRATCH:-${HOME:-.}/scratch}/methanet_models/hf}"
 TRANSFORMERS_CACHE="${TRANSFORMERS_CACHE:-$HF_HOME}"
 
 mkdir -p "$RESULTS_DIR/logs" "$HF_HOME"

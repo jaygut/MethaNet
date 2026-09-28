@@ -115,16 +115,18 @@ Install local dependencies if needed:
 Build the default snapshot:
 
 ```bash
+REPO_ROOT="$(git rev-parse --show-toplevel)"
 ./.venv/bin/python scripts/attestation/build_molecular_attestation_mvp.py \
-  --repo-root /home/rsg-jcorre38/Jay_Proyects/MethaNet \
+  --repo-root "$REPO_ROOT" \
   --snapshot-id mmag_mvp_20260617
 ```
 
 Run without Kuzu when only Parquet exports are needed:
 
 ```bash
+REPO_ROOT="$(git rev-parse --show-toplevel)"
 ./.venv/bin/python scripts/attestation/build_molecular_attestation_mvp.py \
-  --repo-root /home/rsg-jcorre38/Jay_Proyects/MethaNet \
+  --repo-root "$REPO_ROOT" \
   --snapshot-id mmag_mvp_parquet_only \
   --skip-kuzu
 ```

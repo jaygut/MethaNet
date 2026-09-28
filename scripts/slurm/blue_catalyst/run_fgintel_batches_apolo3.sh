@@ -9,10 +9,11 @@
 
 set -euo pipefail
 
-MROOT="${MROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+MROOT="${MROOT:-$(cd -- "${SCRIPT_DIR}/../../.." && pwd)}"
 RUNS_ROOT="${RUNS_ROOT:-$MROOT/results/blue_catalyst_poc/runs}"
 SLURM_PARTITION="${SLURM_PARTITION:-accel}"
-DB_ROOT="${DB_ROOT:-$HOME/scratch/methanet_db}"
+DB_ROOT="${DB_ROOT:-${HOME:?Set HOME or DB_ROOT}/scratch/methanet_db}"
 HMM_DIR="${HMM_DIR:-$MROOT/data/hmm}"
 FG_SOURCE_EMBED_RUN_ID="${FG_SOURCE_EMBED_RUN_ID:-}"
 FG_RUN_ID="${FG_RUN_ID:-apolo_fgintel_$(date +%Y%m%d_%H%M%S)}"

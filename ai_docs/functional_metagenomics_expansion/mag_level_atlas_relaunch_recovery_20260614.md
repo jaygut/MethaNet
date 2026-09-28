@@ -179,8 +179,9 @@ results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse_scope_
 Command:
 
 ```bash
+export REPO_ROOT="${REPO_ROOT:-$(git rev-parse --show-toplevel)}"
 ./.venv/bin/python scripts/consolidate_functional_mag_cohort.py \
-  --repo-root /home/rsg-jcorre38/Jay_Proyects/MethaNet \
+  --repo-root "$REPO_ROOT" \
   --cohort-run-id fgx_662_apollo3_20260612 \
   --cohort-dir results/functional_metagenomics/fgx_662_apollo3_20260612 \
   --manifest results/functional_metagenomics/proteome_crosswalk_audit_20260612_0255/poc_662_functional_mag_manifest.with_unit_scope.tsv \

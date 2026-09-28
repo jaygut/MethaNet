@@ -1,0 +1,32 @@
+{
+  "decision": "approved_scoped_landing",
+  "scope": "three_case_presentation_only",
+  "decision_date": "2026-09-27",
+  "authorization": "User requested closure of the public projection and Apolo portability findings, with the existing three-lane review completed before publication.",
+  "review_method": "Automated internal review by separate scientific-provenance, public-boundary, and operations-portability lanes; this receipt records review outcomes and exact content hashes, not cryptographic reviewer identity.",
+  "reviewers": {
+    "science_provenance": "approved",
+    "public_boundary": "approved",
+    "operations_portability": "approved"
+  },
+  "files": {
+    "data/molecular-evidence-network-public-v1.json": "8c115dacf00e07bf658c2886d62f0291662aa80b3931a28ea16365cc3b8a274f",
+    "data/molecular-application-cases-public-v1.json": "b0cd45d38c95258b44521792419756b48dd147e3beb03902133462d7b5eaaf26"
+  },
+  "included": [
+    "Selected source gene identities, QC, RNA, and environmental measurements",
+    "Project-authored case review status, open questions, and proposed follow-up",
+    "Dataset creators, versioned DOI links, license metadata, and modification notices"
+  ],
+  "excluded": [
+    "Unrestricted internal graph exports and database-assignment drill-downs",
+    "Raw annotation payloads, sequences, internal policy fields, local paths, and private proposal material",
+    "The review receipt itself from the deployed runtime package"
+  ],
+  "boundaries": [
+    "Ambiguous monooxygenase candidates require substrate-specific validation before a methane-oxidation interpretation.",
+    "Unresolved MCR-family assignments remain provisional; this release does not infer process direction, activity, or flux.",
+    "Independent field pairing, ecological validation, prediction performance, and carbon-credit eligibility remain unestablished.",
+    "The August atlas and /report/ alias are preserved; noindex remains an indexing request and is not access control."
+  ]
+}

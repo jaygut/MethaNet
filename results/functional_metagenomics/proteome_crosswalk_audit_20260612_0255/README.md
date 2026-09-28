@@ -1,7 +1,7 @@
 # Proteome Crosswalk Local FASTA Audit
 
 Generated: 2026-06-12 02:58:20Z
-Repository: `/home/rsg-jcorre38/Jay_Proyects/MethaNet`
+Repository: MethaNet checkout; resolve its root with `git rev-parse --show-toplevel`.
 Crosswalk: `ai_docs/functional_metagenomics_expansion/proteome_crosswalk/embedded_662_proteome_id_crosswalk.tsv`
 
 ## Git State

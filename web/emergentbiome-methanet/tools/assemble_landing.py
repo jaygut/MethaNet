@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 import re
 import shutil
+import subprocess
 from urllib.parse import urlsplit
 
 WEB = Path(__file__).resolve().parents[1]
@@ -20,6 +21,11 @@ ITEMS = ('index.html', 'styles.css', 'molecular-applications.css',
          'vendor', 'data', 'assets', 'CNAME')
 DATA_FILES = {'atlas.json', 'molecular-application-cases-public-v1.json',
               'molecular-evidence-network-public-v1.json'}
+REVIEWED_DATA_FILES = {
+    'data/molecular-application-cases-public-v1.json',
+    'data/molecular-evidence-network-public-v1.json',
+}
+REQUIRED_REVIEWERS = {'science_provenance', 'public_boundary', 'operations_portability'}
 
 
 def digest(path):
@@ -63,29 +69,58 @@ def validate(root, source=False):
             raise ValueError(name + ' has no scoped public presentation release.')
         if not data.get('public_sources'):
             raise ValueError(name + ' lacks public source attribution.')
-        if re.search(r'\bK\d{5}\b|sourcePayload|kegg_hit|pfam_hits|/home/|results/|/policy/|internal_review|unknown_no_external_export', content):
+        if re.search(r'\bK\d{5}\b|\bV17\b|sourcePayload|kegg_hit|pfam_hits|/home/|results/|/policy/|internal_review|unknown_no_external_export', content):
             raise ValueError(name + ' contains excluded annotation or internal material.')
     return {'local_dependencies': len(local_dependencies(root)), 'data_files': sorted(DATA_FILES)}
+
+
+def validate_publication_review(review_path, root=WEB, require_tracked=False):
+    """Require a current, hash-bound approval for both public evidence files."""
+    clearance = json.loads(Path(review_path).read_text())
+    if clearance.get('decision') != 'approved_scoped_landing':
+        raise ValueError('Publication review has not approved this bounded landing release.')
+    if clearance.get('scope') != 'three_case_presentation_only':
+        raise ValueError('Unexpected publication scope.')
+    reviewers = clearance.get('reviewers', {})
+    if (set(reviewers) != REQUIRED_REVIEWERS
+            or any(status != 'approved' for status in reviewers.values())):
+        raise ValueError('All three required review lanes must approve this release.')
+    expected = clearance.get('files', {})
+    if set(expected) != REVIEWED_DATA_FILES:
+        raise ValueError('Review must bind both public case-data projections and no other files.')
+    if any(not (root / name).is_file() or digest(root / name) != value
+           for name, value in expected.items()):
+        raise ValueError('Reviewed presentation hashes do not match the current files.')
+    if require_tracked:
+        repository = root.resolve().parents[1]
+        receipt_relative = Path(review_path).resolve().relative_to(repository)
+        data_paths = [(root / name).resolve().relative_to(repository)
+                      for name in sorted(REVIEWED_DATA_FILES)]
+        controlled_files = [str(receipt_relative), *(str(path) for path in data_paths)]
+        for name in controlled_files:
+            tracked = subprocess.run(
+                ['git', '-C', str(repository), 'ls-files', '--error-unmatch', '--', name],
+                capture_output=True, text=True, check=False,
+            )
+            if tracked.returncode:
+                raise ValueError(f'Publication approval input is not tracked by Git: {name}')
+        changed = subprocess.run(
+            ['git', '-C', str(repository), 'diff', '--quiet', 'HEAD', '--', *controlled_files],
+            check=False,
+        )
+        if changed.returncode:
+            raise ValueError('Publication approval inputs must be committed before deployment.')
+    return {'decision': clearance['decision'], 'scope': clearance['scope'],
+            'approved_reviewers': sorted(REQUIRED_REVIEWERS),
+            'reviewed_files': sorted(REVIEWED_DATA_FILES)}
 
 
 def assemble(destination, review, manifest):
     destination = destination.resolve()
     if destination.exists():
         raise ValueError('Use a new staging directory; existing files are preserved.')
-    clearance = json.loads(review.read_text())
-    if clearance.get('decision') != 'approved_scoped_landing':
-        raise ValueError('Publication review has not approved this bounded landing release.')
-    if clearance.get('scope') != 'three_case_presentation_only':
-        raise ValueError('Unexpected publication scope.')
+    validate_publication_review(review)
     checked = validate(WEB, source=True)
-    expected = clearance.get('files', {})
-    if not expected or any(not (WEB / name).is_file() or digest(WEB / name) != value
-                           for name, value in expected.items()):
-        raise ValueError('Reviewed presentation hashes do not match the current files.')
-    required = {'data/molecular-application-cases-public-v1.json',
-                'data/molecular-evidence-network-public-v1.json'}
-    if not required.issubset(expected):
-        raise ValueError('Both data projections require explicit review hashes.')
     destination.mkdir(parents=True)
     for item in ITEMS:
         src, dst = WEB / item, destination / item
@@ -112,12 +147,19 @@ def assemble(destination, review, manifest):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--validate-root', type=Path)
+    parser.add_argument('--validate-publication-review', type=Path)
+    parser.add_argument('--require-tracked-review', action='store_true')
     parser.add_argument('--output-dir', type=Path)
     parser.add_argument('--publication-review', type=Path)
     parser.add_argument('--manifest', type=Path)
     args = parser.parse_args()
     if args.validate_root:
         print(json.dumps(validate(args.validate_root.resolve())))
+    elif args.validate_publication_review:
+        print(json.dumps(validate_publication_review(
+            args.validate_publication_review.resolve(),
+            require_tracked=args.require_tracked_review,
+        )))
     elif args.output_dir and args.publication_review and args.manifest:
         print(json.dumps(assemble(args.output_dir, args.publication_review, args.manifest)))
     else:

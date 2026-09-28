@@ -64,6 +64,13 @@ REQUIRED_PARQUET_FIXTURE_TABLES = [
 ]
 
 
+def default_db_root(environ: dict[str, str] | None = None) -> Path:
+    """Use an explicit DB_ROOT, or the durable home scratch convention."""
+    values = os.environ if environ is None else environ
+    configured = values.get("DB_ROOT")
+    return Path(configured) if configured else Path.home() / "scratch" / "methanet_db"
+
+
 @dataclass
 class Check:
     gate: str
@@ -134,7 +141,11 @@ def main() -> int:
         default=Path("results/functional_metagenomics/proteome_crosswalk_audit_20260612_0255/poc_662_functional_mag_manifest.mag_bin_only.tsv"),
         type=Path,
     )
-    parser.add_argument("--db-root", default=Path("/home/rsg-jcorre38/scratch/methanet_db"), type=Path)
+    parser.add_argument(
+        "--db-root",
+        default=default_db_root(),
+        type=Path,
+    )
     parser.add_argument("--dbcan-compat-dir", type=Path)
     parser.add_argument(
         "--smoke-run-dir",

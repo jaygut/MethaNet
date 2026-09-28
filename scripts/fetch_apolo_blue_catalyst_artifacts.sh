@@ -6,10 +6,11 @@ set -euo pipefail
 # Usage:
 #   ./scripts/fetch_apolo_blue_catalyst_artifacts.sh --stamp 20260226_194505
 #
+# Required env var:
+#   APOLO_EXPORT_DIR=/absolute/path/to/export/directory/on/Apolo
 # Optional env vars:
-#   APOLO_USER=rsg-jcorre38
+#   APOLO_USER="$USER" (defaults to the local account name)
 #   APOLO_HOST=apolo-3.eafit.edu.co
-#   APOLO_EXPORT_DIR=/home/rsg-jcorre38/Jay_Proyects/MethaNet/results/_export
 #   APOLO_PASSWORD=...        # used only if sshpass is installed
 #
 # Notes:
@@ -56,9 +57,18 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-APOLO_USER="${APOLO_USER:-rsg-jcorre38}"
+APOLO_USER="${APOLO_USER:-${USER:-}}"
 APOLO_HOST="${APOLO_HOST:-apolo-3.eafit.edu.co}"
-APOLO_EXPORT_DIR="${APOLO_EXPORT_DIR:-/home/rsg-jcorre38/Jay_Proyects/MethaNet/results/_export}"
+APOLO_EXPORT_DIR="${APOLO_EXPORT_DIR:-}"
+
+if [[ -z "$APOLO_USER" ]]; then
+  echo "ERROR: Set APOLO_USER to the account name on Apolo." >&2
+  exit 2
+fi
+if [[ -z "$APOLO_EXPORT_DIR" ]]; then
+  echo "ERROR: Set APOLO_EXPORT_DIR to the artifact export directory on Apolo." >&2
+  exit 2
+fi
 
 PKG="blue_catalyst_poc_${STAMP}.tar.gz"
 REMOTE_PKG="${APOLO_EXPORT_DIR}/${PKG}"

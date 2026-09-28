@@ -8,8 +8,8 @@ Generated: 2026-06-12T16:19:15.006883+00:00
 - Run attempts inspected: 49
 - Completed curated MAGs selected: 24
 - Attempt status counts: {'failed': 24, 'partial': 1, 'complete': 24}
-- Output root: `/home/rsg-jcorre38/Jay_Proyects/MethaNet/results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse`
-- DuckDB catalog: `/home/rsg-jcorre38/Jay_Proyects/MethaNet/results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse/functional_atlas.duckdb`
+- Output root: `results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse`
+- DuckDB catalog: `results/functional_metagenomics/fgx_662_apollo3_20260612/cohort_warehouse/functional_atlas.duckdb`
 
 ## Decision
 

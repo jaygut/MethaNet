@@ -2,6 +2,7 @@
 
 Date: 2026-06-13
 Documentation refresh: 2026-07-24
+Portability refresh: 2026-09-27
 
 Currentness note, 2026-09-24: The commands and paths below are a dated
 Apollo-3 operational snapshot. Resolve the active warehouse paths from
@@ -15,8 +16,8 @@ This page is the operational path for running MethaNet MAG functional analytics
 on Apolo-3 with the databases that are actually installed and validated under:
 
 ```bash
-export REPO_ROOT=/home/rsg-jcorre38/Jay_Proyects/MethaNet
-export DB_ROOT=/home/rsg-jcorre38/scratch/methanet_db
+export REPO_ROOT="${REPO_ROOT:-$(git rev-parse --show-toplevel)}"
+export DB_ROOT="${DB_ROOT:-${HOME:?Set HOME or DB_ROOT}/scratch/methanet_db}"
 ```
 
 ## Current Readiness

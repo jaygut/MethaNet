@@ -204,7 +204,7 @@ This design is the safest path to a compact, auditable, analysis-ready functiona
 
 Implementation status as of 2026-06-12:
 
-- Shared dbCAN compatibility cache is implemented at `/home/rsg-jcorre38/scratch/methanet_db/dbcan_compat_pressed`.
+- Shared dbCAN compatibility cache is implemented at `$DB_ROOT/dbcan_compat_pressed`.
 - The one-MAG runner now uses `DBCAN_COMPAT_DIR` instead of creating per-run pressed indexes.
 - The closeout utility writes `curated/run_record.json`, `curated/file_manifest.tsv`, `curated/prune_plan.json`, and smoke-tested Parquet shards.
 - The production validator checks the 662-MAG manifest, file existence, script readiness, dbCAN cache readiness, and the smoke Parquet fixture.

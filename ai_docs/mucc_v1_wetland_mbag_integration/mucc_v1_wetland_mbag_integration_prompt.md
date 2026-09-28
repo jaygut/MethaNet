@@ -60,11 +60,8 @@ Use the MethaNet functional-atlas semantic layer when answering interpretation q
 
 ## Mission
 
-You are operating inside:
-
-```text
-/home/rsg-jcorre38/Jay_Proyects/MethaNet
-```
+You are operating from the MethaNet repository checkout. Set `REPO_ROOT` to
+the checkout root using `git rev-parse --show-toplevel` before running commands.
 
 Your mission is to integrate MUCC v1 as a new native wetland reference lane in MethaNet/MBAG, while preserving the exact evidence grain of every claim:
 

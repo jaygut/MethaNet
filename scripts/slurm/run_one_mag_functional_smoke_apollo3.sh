@@ -11,7 +11,7 @@ set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="${REPO_ROOT:-$(cd -- "${SCRIPT_DIR}/../.." && pwd)}"
-DB_ROOT="${DB_ROOT:-/home/rsg-jcorre38/scratch/methanet_db}"
+DB_ROOT="${DB_ROOT:-${HOME:?Set HOME or DB_ROOT}/scratch/methanet_db}"
 FASTA="${FASTA:-${REPO_ROOT}/data/assemblies/OWC_0041.fasta}"
 PROTEOME_ID="${PROTEOME_ID:-}"
 PROTEOME_FAA="${PROTEOME_FAA:-}"

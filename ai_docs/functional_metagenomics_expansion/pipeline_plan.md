@@ -342,8 +342,8 @@ module load miniconda3/25.5.1
 source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate methanet-fgintel
 
-export METHANET_ROOT=/home/rsg-jcorre38/Jay_Proyects/MethaNet
-export DB_ROOT=$HOME/scratch/methanet_db
+export METHANET_ROOT="${METHANET_ROOT:-$(git rev-parse --show-toplevel)}"
+export DB_ROOT="${DB_ROOT:-${HOME:?Set HOME or DB_ROOT}/scratch/methanet_db}"
 export XDG_CACHE_HOME=$HOME/.cache
 export TMPDIR=$HOME/.cache/tmp
 export UV_CACHE_DIR=$HOME/.cache/uv

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-REPO_ROOT="${REPO_ROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="${REPO_ROOT:-$(cd -- "${SCRIPT_DIR}/../.." && pwd)}"
 LANE_REGISTRY="${LANE_REGISTRY:-${REPO_ROOT}/configs/methanet_atlas_lanes.tsv}"
 OUTPUT_DIR="${OUTPUT_DIR:-${REPO_ROOT}/results/reports}"
 STATUS_PREFIX="${STATUS_PREFIX:-atlas_lane_registry_status}"

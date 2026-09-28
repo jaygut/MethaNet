@@ -7,17 +7,18 @@ set -euo pipefail
 #   RUN_ID=apolo_full_20260228_080644 \
 #   OLD_JOB_ID=1497 \
 #   WORKERS=24 \
-#   /home/rsg-jcorre38/Jay_Proyects/MethaNet/scripts/apolo_parallel_resume_and_relaunch.sh
+#   scripts/apolo_parallel_resume_and_relaunch.sh
 #
 # Required env:
 #   RUN_ID              Existing run id to reuse (same subset/artifacts path)
 # Optional env:
-#   MROOT               Project root (default: /home/rsg-jcorre38/Jay_Proyects/MethaNet)
+#   MROOT               Project root (defaults to this checkout)
 #   WORKERS             Parallel workers for preprocessing (default: 24)
 #   OLD_JOB_ID          If provided, this script will cancel it before relaunch
 #   SKIP_PREP           Set to 1 to skip parallel preprocess stage
 
-MROOT="${MROOT:-/home/rsg-jcorre38/Jay_Proyects/MethaNet}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+MROOT="${MROOT:-$(cd -- "${SCRIPT_DIR}/.." && pwd)}"
 RUN_ID="${RUN_ID:-}"
 WORKERS="${WORKERS:-24}"
 OLD_JOB_ID="${OLD_JOB_ID:-}"

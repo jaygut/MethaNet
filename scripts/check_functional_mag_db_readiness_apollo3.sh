@@ -3,7 +3,7 @@
 
 set -Eeuo pipefail
 
-DB_ROOT="${DB_ROOT:-/home/rsg-jcorre38/scratch/methanet_db}"
+DB_ROOT="${DB_ROOT:-${HOME:?Set HOME or DB_ROOT}/scratch/methanet_db}"
 CONDA_SH="${CONDA_SH:-/opt/ohpc/pub/apps/miniconda3/etc/profile.d/conda.sh}"
 
 status_for_file() {
