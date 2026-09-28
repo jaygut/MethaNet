@@ -479,15 +479,18 @@ bundle, which uses the same August freeze. The
 correction deployment. Routine scientific publication and indexing remain
 gated. Treat the July 24 and earlier reports as historical snapshots.
 
-Landing-page update, 2026-09-27: a landing-only interactive evidence-network
-release is live at `gh-pages` revision
-`ec963456aa6b8cd63d016c7b889a39e4a0f1729e`. It preserves the `/report/` alias,
-report archive and August release. The reviewed public projection contains
-three case profiles, 492 presentation nodes, 459 source objects and 4,725
-allowlisted source facts. Three internal science/funding/experience review
-lanes and browser/live checks passed. This is a scoped presentation release,
-not independent biological or legal certification; detailed MVO evidence and
-unpublished manuscript materials remain under separate review.
+Landing-page update, 2026-09-27: the landing-only interactive evidence network
+is live at `gh-pages` revision
+`458954b545ed21c2adbf099e9797d1f07e459b37`; deployment completed successfully
+in [GitHub Actions run 36372864079](https://github.com/jaygut/MethaNet/actions/runs/36372864079).
+It preserves the `/report/` alias, report archive and August release. The public
+projection contains three case profiles, 492 presentation nodes, 459 source
+objects and 4,725 allowlisted source facts. Six internal review-status strings
+were replaced with public-safe guidance; the committed deployment receipt binds
+the exact projection hashes and three internal review lanes. Query-busted live
+bytes match the reviewed network SHA-256. These reviews and checks do not
+constitute independent biological or legal certification; detailed MVO evidence
+and unpublished manuscript materials remain under separate review.
 
 ## Molecular Attestation Graph
 
