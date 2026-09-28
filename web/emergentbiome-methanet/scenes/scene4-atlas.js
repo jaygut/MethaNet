@@ -14,7 +14,7 @@
     // These are not counts of the selected links in this smaller visual export.
     const FROZEN = {
       snapshot: "2026-08-10", points: 7710, candidates: 26, neighbors: 2200,
-      wetlandRumen: 2434, wetlandTotal: 2608,
+      wetlandRumen: 2434, wetlandTotal: 2501, // wetland records outside the core; core members match themselves
       mangroveRumen: 4475, mangroveTotal: 4584, cardsRumen: 26, cardsTotal: 27,
     };
     let rng, pts = [], byEco = [[], [], [], []], candidates = [], neighbors = [];
@@ -47,11 +47,37 @@
         };
       });
     }
+    // Stage-relative box of an overlay element, or null when it is hidden.
+    function rel(el) {
+      if (!el || !ctx.holder) return null;
+      const base = ctx.holder.getBoundingClientRect(), r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return null;
+      return { l: r.left - base.left, t: r.top - base.top, r: r.right - base.left, b: r.bottom - base.top };
+    }
+    // Fit the map into the space the reading panel, view buttons and copy card
+    // leave free, so no record or link end sits behind text. Coordinates are
+    // normalized to about ±1 in every projection.
+    function fitRegion(w, h) {
+      const panel = rel(document.getElementById("atlasEvidencePanel"));
+      const copy = rel(ctx.section && ctx.section.querySelector(".copy"));
+      const controls = rel(document.getElementById("atlasViewControls"));
+      const box = { l: 18, r: w - 18, t: (controls ? controls.b : h * 0.12) + 18, b: h - 54 };
+      if (w > 800) {
+        if (panel && panel.l < w * 0.3) box.l = panel.r + 30;
+        if (copy && copy.l > w * 0.45) box.r = copy.l - 30;
+      } else {
+        if (panel) box.t = Math.max(box.t, panel.b + 14);
+        if (copy) box.b = Math.min(box.b, copy.t - 14);
+      }
+      const bw = box.r - box.l, bh = box.b - box.t;
+      if (bw < 150 || bh < 120) return null;
+      return { cx: (box.l + box.r) / 2, cy: Math.min((box.t + box.b) / 2, h * 0.5), s: Math.min(bw, bh) / 1.94 };
+    }
     function project() {
       const w = ctx.W, h = ctx.H;
-      region = {
+      region = fitRegion(w, h) || {
         cx: w <= 800 ? w * 0.5 : w * 0.43,
-        cy: w <= 800 ? h * 0.42 : h * 0.42,
+        cy: h * 0.42,
         s: w <= 800 ? Math.min(w * 0.42, h * 0.28) : Math.min(w * 0.17, h * 0.29),
       };
       const atlas = ctx.data && ctx.data.atlas;
@@ -93,7 +119,7 @@
       if (!controls || !panel) return;
       if (!ready) {
         controls.querySelectorAll("button").forEach((button) => { button.disabled = true; });
-        panel.textContent = "The atlas data could not be loaded. Open this page through a web server to explore the evidence view.";
+        panel.textContent = "The atlas data could not be loaded. Open this page through a web server to explore the map.";
         return;
       }
       const viewButtons = Array.from(controls.querySelectorAll("[data-atlas-view]"));
@@ -108,15 +134,15 @@
       });
       keyboardGroup(controls, "[data-atlas-view]");
       panel.innerHTML =
-        '<div class="atlas__panel-meta"><span>EXPLORE THE EVIDENCE</span><span class="atlas__panel-snapshot">FREEZE · 10 AUG 2026</span></div>' +
+        '<div class="atlas__panel-meta"><span>READ THE MAP</span><span class="atlas__panel-snapshot">ATLAS · 10 AUG 2026</span></div>' +
         '<div class="atlas__panel-body" id="atlasPanelBody"></div>' +
         '<div class="atlas__projection"><span class="atlas__projection-label">2D PROJECTION</span>' +
         '<div class="atlas__projection-buttons" role="group" aria-label="Atlas projection">' +
-        '<button type="button" data-atlas-projection="diffusion" aria-pressed="false">Diffusion</button>' +
         '<button type="button" data-atlas-projection="umap" aria-pressed="true">UMAP</button>' +
+        '<button type="button" data-atlas-projection="diffusion" aria-pressed="false">Diffusion</button>' +
         '<button type="button" data-atlas-projection="tsne" aria-pressed="false">t-SNE</button>' +
         '<button type="button" data-atlas-projection="pca" aria-pressed="false">PCA</button></div>' +
-        '<p>UMAP opens for visual navigation; compare diffusion, t-SNE, and PCA. These 2D layouts are display views; link membership stays in high-dimensional ESM-2 cosine space.</p></div>' +
+        '<p>Four ways to flatten the same map, each with its own distortions. UMAP opens by default because it keeps local neighborhoods readable. Links are computed in the full representation, so switching views moves points but never changes which links exist.</p></div>' +
         '<span id="atlasPanelAnnounce" class="vh" aria-live="polite"></span>';
       panelBody = panel.querySelector("#atlasPanelBody");
       panelAnnounce = panel.querySelector("#atlasPanelAnnounce");
@@ -127,7 +153,7 @@
           projection = button.dataset.atlasProjection;
           projectionButtons.forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
           projectCoordinates();
-          panelAnnounce.textContent = projection.toUpperCase() + " projection. Link membership is unchanged.";
+          panelAnnounce.textContent = button.textContent + " view. The links do not change.";
           requestRender();
         });
       });
@@ -139,33 +165,33 @@
       if (view === "overview") {
         const wetland = byEco[1].length, mangrove = byEco[2].length + byEco[3].length;
         panelBody.innerHTML =
-          '<p class="atlas__eyebrow">01 / Cohort</p>' +
-          '<h3>' + fmt(pts.length) + ' MAG / proteome records</h3>' +
-          '<p>Each point is a molecular record, colored by source. The 2D layout is exploratory, not a measure of ecological transfer or methane flux.</p>' +
-          '<dl class="atlas__stat-grid"><div><dt>Rumen core</dt><dd>' + fmt(byEco[0].length) + '</dd></div>' +
+          '<p class="atlas__eyebrow">01 / What you see</p>' +
+          '<h3>' + fmt(pts.length) + ' genome records</h3>' +
+          '<p>Each point is one genome record, colored by where it came from. Position reflects protein content, compressed into two dimensions for display; it is not a measure of methane activity.</p>' +
+          '<dl class="atlas__stat-grid"><div><dt>Rumen reference</dt><dd>' + fmt(byEco[0].length) + '</dd></div>' +
           '<div><dt>Wetland</dt><dd>' + fmt(wetland) + '</dd></div>' +
           '<div><dt>Mangrove</dt><dd>' + fmt(mangrove) + '</dd></div></dl>' +
           '<ul class="atlas__legend" aria-label="Atlas point colors">' +
-          '<li><span class="atlas__swatch atlas__swatch--rumen" aria-hidden="true"></span>Rumen · ' + fmt(byEco[0].length) + '</li>' +
+          '<li><span class="atlas__swatch atlas__swatch--rumen" aria-hidden="true"></span>Rumen reference · ' + fmt(byEco[0].length) + '</li>' +
           '<li><span class="atlas__swatch atlas__swatch--wetland" aria-hidden="true"></span>Wetland · ' + fmt(byEco[1].length) + '</li>' +
-          '<li><span class="atlas__swatch atlas__swatch--msm" aria-hidden="true"></span>Mangrove MSM · ' + fmt(byEco[2].length) + '</li>' +
-          '<li><span class="atlas__swatch atlas__swatch--futian" aria-hidden="true"></span>Mangrove Futian · ' + fmt(byEco[3].length) + '</li></ul>' +
-          '<p class="atlas__fineprint">Scroll reveals the map. The overview previews up to 240 teal links; use Neighbor sample to see all ' + fmt(neighbors.length) + ' exported links.</p>';
+          '<li><span class="atlas__swatch atlas__swatch--msm" aria-hidden="true"></span>Mangrove, China coast · ' + fmt(byEco[2].length) + '</li>' +
+          '<li><span class="atlas__swatch atlas__swatch--futian" aria-hidden="true"></span>Mangrove, Futian, Shenzhen · ' + fmt(byEco[3].length) + '</li></ul>' +
+          '<p class="atlas__fineprint">Scroll to reveal the map. The overview previews 240 of the ' + fmt(neighbors.length) + ' neighbor links; choose Neighbor links to see them all.</p>';
       } else if (view === "candidates") {
         const counts = validFreeze()
-          ? '<dl class="atlas__stat-grid"><div><dt>Wetland → rumen core</dt><dd>' + fmt(FROZEN.wetlandRumen) + ' / ' + fmt(FROZEN.wetlandTotal) + '</dd></div>' +
-            '<div><dt>Mangrove → rumen core</dt><dd>' + fmt(FROZEN.mangroveRumen) + ' / ' + fmt(FROZEN.mangroveTotal) + '</dd></div>' +
+          ? '<dl class="atlas__stat-grid"><div><dt>Wetland → rumen</dt><dd>' + fmt(FROZEN.wetlandRumen) + ' / ' + fmt(FROZEN.wetlandTotal) + '</dd></div>' +
+            '<div><dt>Mangrove → rumen</dt><dd>' + fmt(FROZEN.mangroveRumen) + ' / ' + fmt(FROZEN.mangroveTotal) + '</dd></div>' +
             '<div><dt>Selected cards</dt><dd>' + fmt(FROZEN.cardsRumen) + ' / ' + fmt(FROZEN.cardsTotal) + '</dd></div></dl>'
-          : '<p class="atlas__fineprint">Frozen nearest-core denominators are unavailable for this visual export.</p>';
+          : '<p class="atlas__fineprint">The frozen nearest-reference counts are unavailable for this export.</p>';
         panelBody.innerHTML =
-          '<p class="atlas__eyebrow">02 / One-way nearest core</p>' +
-          '<h3>' + fmt(candidates.length) + ' highlighted candidate links</h3>' +
-          '<p>Gold lines join selected wetland or mangrove records to their raw-cosine nearest rumen reference record in the 625-record POC core. These are one-way reference matches.</p>' +
+          '<p class="atlas__eyebrow">02 / Nearest reference</p>' +
+          '<h3>' + fmt(candidates.length) + ' highlighted links</h3>' +
+          '<p>Gold lines join selected wetland and mangrove genomes to their closest genome in the 625-genome reference core (518 rumen, 107 wetland). Outside the core, nearly every wetland and mangrove record points to a rumen genome, partly because the core is mostly rumen.</p>' +
           counts +
-          '<p class="atlas__fineprint">The large denominators count records in a separate nearest-core table; only ' + fmt(candidates.length) + ' selected nearest-core links are drawn in gold. The 27th card is a wetland core record whose nearest core member is itself. Raw-cosine ESM-2 space is anisotropic; these links nominate review, not validated transfer.</p>' +
+          '<p class="atlas__fineprint">These matches are weak. In this raw representation almost any two genomes look alike, and the typical closest match (cosine 0.983) is less similar than two random atlas genomes (0.994). Treat each link as a lead to review, not evidence of shared function. Only the ' + fmt(candidates.length) + ' selected links are drawn; the 27th card is a wetland core genome whose closest core member is itself.</p>' +
           '<label class="atlas__select-label" for="atlasCandidateSelect">Inspect a highlighted link</label>' +
           '<select id="atlasCandidateSelect" class="atlas__candidate-select"><option value="-1">All ' + fmt(candidates.length) + ' highlighted links</option></select>' +
-          '<p class="atlas__candidate-readout" id="atlasCandidateReadout" role="status" aria-live="polite" aria-atomic="true">Choose a candidate to see its proteome IDs and raw cosine similarity.</p>';
+          '<p class="atlas__candidate-readout" id="atlasCandidateReadout" role="status" aria-live="polite" aria-atomic="true">Choose a link to see both record IDs and their raw cosine similarity.</p>';
         const select = panelBody.querySelector("#atlasCandidateSelect");
         candidates.forEach((link, index) => {
           const source = pts[link.s];
@@ -180,24 +206,24 @@
         });
       } else if (view === "neighbors") {
         panelBody.innerHTML =
-          '<p class="atlas__eyebrow">03 / Capped graph sample</p>' +
-          '<h3>' + fmt(neighbors.length) + ' cross-domain kNN links</h3>' +
-          '<p>Teal lines show every link in a capped visualization export from the high-dimensional ESM-2 cosine neighbor graph. They are distinct from the ' + fmt(candidates.length) + ' nearest-core candidate links.</p>' +
-          '<p class="atlas__fineprint">A neighbor relation is molecular geometry. This export is not all graph edges, a proof of source-independent transfer, a pathway assay, or a methane-flux measurement.</p>';
+          '<p class="atlas__eyebrow">03 / Neighbor links</p>' +
+          '<h3>' + fmt(neighbors.length) + ' cross-habitat links</h3>' +
+          '<p>Teal lines show the ' + fmt(neighbors.length) + ' most similar of the ' + fmt(EB.num.crossHabitatNeighborEdges) + ' links that cross habitats in the full neighbor graph, which is computed in the complete representation. All of them join mangrove and wetland genomes. They are separate from the ' + fmt(candidates.length) + ' gold reference links.</p>' +
+          '<p class="atlas__fineprint">A neighbor link means similar protein content. It is not gene exchange, a shared pathway or a methane measurement.</p>';
       } else {
         // Top-35 reciprocal counts: frozen audit/scientific_audit.json,
         // embedding geometry sensitivity block (raw vs dimension_zscore).
         panelBody.innerHTML =
-          '<p class="atlas__eyebrow">04 / Full-atlas sensitivity</p>' +
-          '<h3>What “falls to zero” means</h3>' +
-          '<p>A reciprocal pair requires each record to place the other in its top 35 high-dimensional neighbors. This full-atlas comparison uses a different reference set and preprocessing from one-way nearest matches to the 625-record core.</p>' +
+          '<p class="atlas__eyebrow">04 / Stricter test</p>' +
+          '<h3>Which resemblances are mutual?</h3>' +
+          '<p>This test counts pairs in which each genome is among the other’s 35 closest neighbors across the whole atlas. Standardizing each dimension first removes the shared offset that makes all genomes look alike.</p>' +
           '<dl class="atlas__sensitivity-grid"><div><dt>Rumen ↔ wetland</dt><dd><span>Raw</span><b>1</b><span>Standardized</span><b>0</b></dd></div>' +
           '<div><dt>Rumen ↔ mangrove</dt><dd><span>Raw</span><b>0</b><span>Standardized</span><b>0</b></dd></div>' +
           '<div><dt>Mangrove ↔ wetland</dt><dd><span>Raw</span><b>15,728</b><span>Standardized</span><b>15,064</b></dd></div></dl>' +
-          '<p class="atlas__fineprint">“Standardized” means per-dimension z-scoring of the full embedding before neighbor search. The zero does not erase the one-way nearest-core links. This map does not draw reciprocal-pair edges.</p>';
+          '<p class="atlas__fineprint">Mangrove and wetland genomes stay mutual neighbors; rumen genomes almost never are. The one-way reference links remain useful leads, but they are not evidence of shared biology. This test draws no edges of its own.</p>';
       }
       if (panelAnnounce) {
-        const labels = { overview: "Atlas cohort view", candidates: "One-way nearest-core candidate view", neighbors: "Cross-domain neighbor sample view", sensitivity: "Full-atlas reciprocal-neighbor sensitivity view" };
+        const labels = { overview: "Overview of the atlas", candidates: "Nearest-reference links", neighbors: "Cross-habitat neighbor links", sensitivity: "Stricter mutual-neighbor test" };
         panelAnnounce.textContent = labels[view] + " selected.";
       }
     }
@@ -205,17 +231,20 @@
       const readout = panelBody && panelBody.querySelector("#atlasCandidateReadout");
       if (!readout) return;
       if (selectedCandidate < 0 || !candidates[selectedCandidate]) {
-        readout.textContent = "Choose a candidate to see its proteome IDs and raw cosine similarity.";
+        readout.textContent = "Choose a link to see both record IDs and their raw cosine similarity.";
         return;
       }
       const link = candidates[selectedCandidate];
       const source = pts[link.s], reference = pts[link.t];
-      readout.textContent = "Candidate: " + source.id + ". Nearest rumen core reference: " + reference.id +
-        ". Raw cosine similarity: " + Number(link.w).toFixed(4) + ". This is a candidate for evidence review, not validated transfer.";
+      readout.textContent = "Candidate: " + source.id + ". Closest rumen reference: " + reference.id +
+        ". Raw cosine similarity: " + Number(link.w).toFixed(4) + ". A lead for evidence review, not validated transfer.";
     }
     p.setup = function () {
       p.createCanvas(ctx.W, ctx.H); p.pixelDensity(Math.min(2, window.devicePixelRatio || 1));
-      project(); initControls(); if (ctx.reduced) p.noLoop();
+      project(); initControls();
+      project(); // refit once the reading panel has content
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { project(); requestRender(); });
+      if (ctx.reduced) p.noLoop();
     };
     p.windowResized = function () { p.resizeCanvas(ctx.W, ctx.H); project(); requestRender(); };
     p.draw = function () {

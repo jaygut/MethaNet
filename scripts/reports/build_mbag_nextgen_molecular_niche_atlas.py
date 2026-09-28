@@ -30,6 +30,9 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import matplotlib.colors
+import matplotlib.patches
+import matplotlib.ticker
 import numpy as np
 import pandas as pd
 from scipy import sparse
@@ -58,15 +61,21 @@ DEFAULT_SAMPLE_RISK_ABSTRACT = Path(
     "methanet_mag_to_sample_risk_readiness_graphical_abstract.png"
 )
 CLAIM_BOUNDARY = (
-    "Current evidence supports MAG/proteome molecular screening, bridge-candidate review, "
-    "and monitoring-readiness design. Calibrated sample risk and crediting applications require "
-    "sample linkage, abundance, environmental context, uncertainty, and field validation."
+    "Current evidence supports genome-level molecular screening, candidate review and "
+    "measurement planning. Calibrated sample risk and any crediting use require sample "
+    "linkage, abundance, environmental context, uncertainty and field validation."
 )
+# The published report no longer renders the unlabeled graphical abstract; the
+# four gated layers are shown as a labeled status list instead.
+RENDER_SAMPLE_RISK_ABSTRACT = False
 
+# Lane colors mirror the landing page's four source hues, darkened for a light page.
 COLORS = {
-    "rumen": "#c56a13",
-    "wetland": "#0284a8",
-    "mangrove": "#168a48",
+    "rumen": "#db2777",
+    "wetland": "#65a30d",
+    "mangrove": "#0891b2",
+    "msm": "#0891b2",
+    "futian": "#6366f1",
     "pending": "#d89b14",
     "ink": "#172033",
     "muted": "#607083",
@@ -204,11 +213,40 @@ def short_id(value: Any, width: int = 32) -> str:
 
 def source_label(category: str) -> str:
     return {
-        "rumen": "Rumen",
-        "wetland": "Wetland/MUCC",
-        "mangrove": "Mangrove expansion",
+        "rumen": "Rumen reference",
+        "wetland": "Wetland",
+        "mangrove": "Mangrove",
+        "msm": "Mangrove, China coast (MSM)",
+        "futian": "Mangrove, Futian (Shenzhen)",
         "context": "Embedding context",
     }.get(category, category)
+
+
+# Reader-facing lane names, shared by tables, tooltips and charts.
+LANE_DISPLAY = {
+    "poc_core": "Reference core (POC)",
+    "msm_china_2025": "Mangrove, China coast (MSM)",
+    "futian_mangrove_2026_qi": "Mangrove, Futian (Shenzhen)",
+    "mucc_v1_owc_wetland": "Wetland, Old Woman Creek (MUCC v1)",
+}
+LANE_ORDER = ["poc_core", "msm_china_2025", "futian_mangrove_2026_qi", "mucc_v1_owc_wetland"]
+
+
+def apply_public_lane_display(atlas: pd.DataFrame) -> pd.DataFrame:
+    """Name each record's source lane precisely (Futian is not MSM)."""
+    atlas = atlas.copy()
+    lane = atlas.get("lane_id", pd.Series("", index=atlas.index)).fillna("").astype(str)
+    category = atlas["source_category"].fillna("").astype(str)
+    display = lane.map(LANE_DISPLAY)
+    key = lane.map({"msm_china_2025": "msm", "futian_mangrove_2026_qi": "futian", "mucc_v1_owc_wetland": "wetland"})
+    poc = lane.eq("poc_core")
+    display.loc[poc & category.eq("rumen")] = "Rumen reference (POC core)"
+    display.loc[poc & category.eq("wetland")] = "Wetland reference (POC core)"
+    key.loc[poc] = category.loc[poc]
+    fallback = atlas["source_display"] if "source_display" in atlas.columns else category
+    atlas["source_display"] = display.fillna(fallback)
+    atlas["lane_key"] = key.fillna(category)
+    return atlas
 
 
 def frame_records(df: pd.DataFrame, cols: list[str], max_rows: int | None = None) -> list[dict[str, Any]]:
@@ -287,6 +325,7 @@ def public_report_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "proteome_id",
         "mag_id",
         "source_category",
+        "lane_key",
         "source_display",
         "analysis_unit_type",
         "claim_scope",
@@ -300,6 +339,7 @@ def public_report_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "has_functional",
         "has_glm2",
         "nearest_poc_id",
+        "nearest_poc_similarity",
         "qc_tier",
         "checkm2_completeness",
         "checkm2_contamination",
@@ -330,6 +370,7 @@ def public_report_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "proteome_id",
         "mag_id",
         "source_category",
+        "lane_key",
         "source_display",
         "domain",
         "phylum",
@@ -380,7 +421,7 @@ def public_report_payload(payload: dict[str, Any]) -> dict[str, Any]:
         },
         "evidence_contract": records(
             "evidence_contract",
-            ["lane", "registered_units", "data_complete_tri_view_units", "mechanism_comparable_tri_view_units"],
+            ["lane_id", "lane", "registered_units", "data_complete_tri_view_units", "mechanism_comparable_tri_view_units", "functional_contract"],
         ),
         "niche": {
             "methods": records("methods", ["method", "status", "role"], niche),
@@ -399,6 +440,8 @@ def public_report_payload(payload: dict[str, Any]) -> dict[str, Any]:
                 "contexts",
                 [
                     "sample_context_label",
+                    "chart_label",
+                    "lane_key",
                     "sample_linkage_bucket",
                     "units",
                     "tri_view_units",
@@ -427,8 +470,11 @@ def public_release_summary(summary: dict[str, Any]) -> dict[str, Any]:
 
 
 def compute_diffusion_map(embeddings: np.ndarray, k: int, random_state: int = 20260619) -> np.ndarray:
-    """Compute a two-dimensional diffusion map from a sparse cosine kNN graph."""
-    del random_state
+    """Compute a two-dimensional diffusion map from a sparse cosine kNN graph.
+
+    A seeded start vector and a sign convention make the coordinates
+    reproducible; eigenvector signs are otherwise arbitrary between runs.
+    """
     x = normalize(embeddings)
     n = x.shape[0]
     n_neighbors = min(max(k + 1, 4), n)
@@ -453,10 +499,14 @@ def compute_diffusion_map(embeddings: np.ndarray, k: int, random_state: int = 20
     d_inv_sqrt = sparse.diags(1.0 / np.sqrt(degree))
     sym = d_inv_sqrt @ w @ d_inv_sqrt
     eig_count = min(4, n - 1)
-    eigvals, eigvecs = eigsh(sym, k=eig_count, which="LA")
+    v0 = np.random.default_rng(random_state).random(n)
+    eigvals, eigvecs = eigsh(sym, k=eig_count, which="LA", v0=v0)
     order = np.argsort(eigvals)[::-1]
     eigvals = eigvals[order]
     eigvecs = eigvecs[:, order]
+    for column in range(eigvecs.shape[1]):
+        if eigvecs[np.argmax(np.abs(eigvecs[:, column])), column] < 0:
+            eigvecs[:, column] = -eigvecs[:, column]
     if eigvecs.shape[1] < 3:
         coords = PCA(n_components=2, random_state=20260619).fit_transform(x)
     else:
@@ -480,7 +530,7 @@ def compute_manifold_coordinates(
         {
             "method": "diffusion",
             "status": "computed",
-            "role": "Primary molecular niche-space map. Built from the cosine kNN affinity graph.",
+            "role": "Spectral view of the cosine kNN affinity graph. The separation of the reference core dominates its first coordinate.",
         },
         {
             "method": "pca",
@@ -499,7 +549,7 @@ def compute_manifold_coordinates(
                 random_state=20260619,
                 low_memory=True,
             ).fit_transform(x)
-            methods.append({"method": "umap", "status": "computed", "role": "Nonlinear neighborhood-preserving comparison."})
+            methods.append({"method": "umap", "status": "computed", "role": "Default navigation view; preserves local neighborhoods."})
         except Exception as exc:
             methods.append({"method": "umap", "status": f"unavailable: {type(exc).__name__}: {exc}", "role": "optional"})
     if not skip_phate:
@@ -1153,6 +1203,8 @@ def classify_review_tier(row: pd.Series) -> str:
         return "annotation complete; harmonization pending"
     if row.get("functional_comparability_tier") == "source_scaffold_non_equivalent":
         return "source-scaffold review"
+    if row.get("functional_comparability_tier") == "pipeline_normalized_comparability_pending":
+        return "shared-pipeline screening; cross-route comparison pending"
     if row.get("mechanism_equivalence_status") != "mechanism_equivalent":
         return "evidence contract unresolved"
     score = safe_float(row.get("molecular_attestation_index"))
@@ -1331,27 +1383,27 @@ def add_source_provenance_context(atlas: pd.DataFrame, repo_root: Path, msm_root
             "source_dataset_doi": "10.7488/ds/2470",
             "primary_accession_type": "ENA analysis accession",
             "provenance_resolution_tier": "exact_analysis_accession",
-            "metadata_caveat": "Exact MAG/proteome accession provenance; environmental context is mostly cohort-level cattle rumen.",
+            "metadata_caveat": "Exact accession for each genome; environmental context is at cohort level (cattle rumen).",
             "sample_rollup_status": "reference_context_not_blue_carbon_sample_rollup",
-            "next_metadata_action": "Retain as methane-domain reference; do not treat as blue-carbon sample context.",
+            "next_metadata_action": "Keep as a methane reference; never treat as blue-carbon sample context.",
         },
         "wetland": {
             "source_paper_doi": "10.1038/s41467-025-56133-0",
             "source_dataset_doi": "10.5281/zenodo.14532347",
             "primary_accession_type": "MUCC/NCBI/Zenodo source record",
             "provenance_resolution_tier": "mixed_mucc_resolution",
-            "metadata_caveat": "Strong paper/dataset provenance, but sample resolution is mixed across NCBI BioSample, OWC site/project, and MUCC source-bucket rows.",
+            "metadata_caveat": "Paper and dataset provenance are clear; sample resolution is mixed (NCBI BioSample, Old Woman Creek site or project, or source bucket only).",
             "sample_rollup_status": "blocked_mixed_sample_resolution",
-            "next_metadata_action": "Recover MAG-to-sample/BioSample mapping for source-bucket rows before sample-level rollup.",
+            "next_metadata_action": "Map source-bucket genomes to their BioSamples before any sample-level summary.",
         },
         "mangrove": {
             "source_paper_doi": "10.1093/gigascience/giaf081",
             "source_dataset_doi": "10.5524/102702",
             "primary_accession_type": "GigaDB/NCBI BioSample group mapping",
             "provenance_resolution_tier": "source_group_biosample_context",
-            "metadata_caveat": "Strong source provenance and sediment-sample context, but per-MAG sample assignment and 966-vs-1428 denominator reconciliation remain pending.",
+            "metadata_caveat": "Clear source provenance and sediment-sample context; each genome still needs a sample assignment, and the 1,428 deposited genomes must be reconciled with the paper's 966 final genomes.",
             "sample_rollup_status": "blocked_mag_to_sample_reconciliation",
-            "next_metadata_action": "Resolve MAG-to-sample links and paper-final MAG denominator before sample/site MRV features.",
+            "next_metadata_action": "Assign genomes to samples and reconcile the genome count before sample or site features.",
         },
     }
     for col in [
@@ -1388,16 +1440,16 @@ def add_source_provenance_context(atlas: pd.DataFrame, repo_root: Path, msm_root
                 "exact_mag_archive_qc_source_scaffold"
             ),
             "metadata_caveat": (
-                "Exact MAG/QC/source-annotation provenance and processed "
-                "expression support are available, but exact sample/date/depth "
-                "and methane-process joins remain incomplete."
+                "Exact genome, QC and source-annotation provenance, with processed "
+                "expression data; exact sample, date and depth links and "
+                "methane-process joins are not yet available."
             ),
             "sample_rollup_status": (
                 "blocked_exact_sample_depth_environment_flux_join"
             ),
             "next_metadata_action": (
-                "Complete exact sample/date/depth, abundance, environmental, "
-                "and flux joins before ecological mechanism or MRV use."
+                "Join exact sample, date, depth, abundance, environment and flux "
+                "before any ecological or MRV use."
             ),
         }
         for col, value in mucc_v1_defaults.items():
@@ -1409,13 +1461,13 @@ def add_source_provenance_context(atlas: pd.DataFrame, repo_root: Path, msm_root
             "primary_accession_type": "Figshare/source-manifest rMAG payload",
             "provenance_resolution_tier": "site_month_habitat_context",
             "metadata_caveat": (
-                "Strong source provenance and Futian time/depth/habitat metadata, but current "
-                "functional evidence is an interim archaeal slice until bacteria shards finish."
+                "Clear source provenance with Futian site, month, depth and habitat metadata; "
+                "each genome is placed at site and month, not yet in a single depth sample."
             ),
             "sample_rollup_status": "blocked_depth_resolved_mag_to_sample_and_abundance",
             "next_metadata_action": (
-                "Resolve depth-specific MAG-to-sample links, abundance/read coverage, and "
-                "validation measurements before sample/site MRV features."
+                "Link genomes to depth-resolved samples, add abundance and pair with "
+                "validation measurements before sample or site features."
             ),
         }
         for col, value in futian_defaults.items():
@@ -1496,7 +1548,7 @@ def add_source_provenance_context(atlas: pd.DataFrame, repo_root: Path, msm_root
     atlas["plot_annotation_status"] = np.where(
         atlas["has_functional"].fillna(False).astype(bool),
         atlas["review_tier"].fillna("screening signal"),
-        "ESM-2 + gLM2 only; function/QC/taxonomy pending",
+        "documented source gap; not plotted",
     )
     return atlas
 
@@ -1593,7 +1645,7 @@ def add_sample_linkage_context(atlas: pd.DataFrame, repo_root: Path, msm_root: P
         atlas.loc[futian_mask, "environmental_context_status"] = "site_month_context_present_depth_assignment_pending"
         atlas.loc[futian_mask & ~has_futian_context, "environmental_context_status"] = "site_month_context_without_sample_metadata_match"
         atlas.loc[futian_mask, "sample_context_blocking_gap"] = (
-            "Depth-resolved MAG-to-sample assignment, abundance/read coverage, and flux/process validation are still required."
+            "Still needed: depth-resolved MAG-to-sample assignment, abundance, and flux or process validation."
         )
         ctx_map = {
             "linked_sample_context_count": "linked_sample_context_count_ctx",
@@ -1644,7 +1696,7 @@ def add_sample_linkage_context(atlas: pd.DataFrame, repo_root: Path, msm_root: P
         atlas.loc[msm_mask, "sample_context_resolution"] = "source_group_multi_sample_biosample_context"
         atlas.loc[msm_mask, "environmental_context_status"] = "source_group_context_present_mag_to_sample_assignment_pending"
         atlas.loc[msm_mask, "sample_context_blocking_gap"] = (
-            "Per-MAG sample assignment, 966-vs-1428 denominator reconciliation, abundance/read coverage, and validation are still required."
+            "Still needed: a sample for each MAG, reconciliation of 1,428 deposited with 966 final MAGs, abundance, and validation."
         )
         for target, ctx in {
             "linked_sample_context_count": "linked_sample_context_count_ctx",
@@ -1737,13 +1789,12 @@ def build_candidate_cards(atlas: pd.DataFrame, top_n_poc: int, top_n_mangrove: i
     )
     defaults = {
         "allowed_claim_wording": (
-            "Reviewable MAG/proteome molecular-neighborhood hypothesis; "
-            "interpret each evidence view only within its documented contract."
+            "A genome-level hypothesis for review; read each evidence view "
+            "only within its documented contract."
         ),
         "blocking_gap": (
-            "sample mapping, abundance/read coverage, environmental covariates, "
-            "uncertainty propagation, phylogeny/source controls, and "
-            "flux/process validation"
+            "sample mapping, abundance, environmental covariates, uncertainty, "
+            "phylogeny and source controls, and flux or process validation"
         ),
         "next_validation_action": (
             "inspect marker neighborhoods, compare phylogeny versus embedding "
@@ -1765,19 +1816,19 @@ def build_candidate_cards(atlas: pd.DataFrame, top_n_poc: int, top_n_mangrove: i
         "MUCC v1 source-scaffold"
     )
     cards.loc[poc_mask, "allowed_claim_wording"] = (
-        "POC-internal bridge-screening hypothesis with pipeline-normalized "
-        "features. Cross-lane comparability, ecological transfer, methane flux, and sample-risk "
-        "interpretation each require their own evidence."
+        "Reference-core screening hypothesis with shared-pipeline features. "
+        "Cross-route comparison, ecological transfer, methane flux and sample "
+        "risk each need their own evidence."
     )
     cards.loc[mangrove_mask, "allowed_claim_wording"] = (
-        "Geometry-led mangrove review candidate with pipeline-normalized "
-        "functional screening events; mechanism strength and cross-lane ranking remain withheld "
-        "until comparability gates pass."
+        "Mangrove review candidate chosen by embedding geometry and QC, with "
+        "shared-pipeline screening events. Mechanism strength and cross-route "
+        "ranking are withheld until comparability checks pass."
     )
     cards.loc[scaffold_mask, "allowed_claim_wording"] = (
-        "MUCC wetland source-scaffold candidate with processed expression "
-        "detection where present. Canonical mechanism scoring and flux linkage "
-        "await a harmonized functional contract and exact sample linkage."
+        "Old Woman Creek candidate with source annotations and, where present, "
+        "processed expression detection. Mechanism scoring and flux linkage "
+        "need a shared functional contract and exact sample links."
     )
     return cards
 
@@ -1820,66 +1871,67 @@ def build_external_source_readiness(atlas: pd.DataFrame) -> list[dict[str, Any]]
     if "lane_id" not in atlas.columns:
         return rows
     external = atlas[~atlas["lane_id"].astype(str).eq("poc_core")].copy()
-    for lane_id, frame in external.groupby("lane_id", dropna=False):
-        lane_id = str(lane_id)
+    external_ids = external["lane_id"].astype(str)
+    present = set(external_ids)
+    for lane_id in [lane for lane in LANE_ORDER if lane in present] + sorted(present - set(LANE_ORDER)):
+        frame = external[external_ids.eq(lane_id)]
         report_units = int(len(frame))
         tri_view = int((frame["has_esm2"] & frame["has_glm2"] & frame["has_functional"]).sum())
         if lane_id == "msm_china_2025":
             rows.append(
                 {
-                    "lane": "Mangrove/MSM target",
+                    "lane": LANE_DISPLAY[lane_id],
                     "report_units": report_units,
-                    "metadata_universe": "1,428 local MAG candidates; source paper reports 966 final MAGs",
-                    "primary_source": "Pan et al. 2025",
-                    "resolution_now": f"{tri_view:,}/{report_units:,} tri-view units; 82 sediment sample rows; 71 exact BioSample rows",
-                    "use_now": "Target-domain molecular screening and sample-readiness prioritization",
-                    "blocking_gap": "MAG-to-sample assignment and 966-vs-1428 denominator reconciliation before sample/site rollups",
+                    "metadata_universe": "1,428 deposited MAGs; the source paper reports 966 final MAGs",
+                    "primary_source": "Pan et al. 2025, GigaScience",
+                    "resolution_now": f"{tri_view:,}/{report_units:,} with all three views; 82 sediment-sample rows; 71 exact BioSample rows",
+                    "use_now": "Mangrove screening and sample-readiness priorities",
+                    "blocking_gap": "Assign each MAG to its sample and reconcile 1,428 deposited with 966 final MAGs before sample or site summaries",
                 }
             )
         elif lane_id == "futian_mangrove_2026_qi":
             rows.append(
                 {
-                    "lane": "Mangrove/Futian target",
+                    "lane": LANE_DISPLAY[lane_id],
                     "report_units": report_units,
-                    "metadata_universe": "3,404 phase-1 rMAGs; 3,156 ready payload rows; 248 explicit gap rows",
-                    "primary_source": "Qi et al. 2026",
-                    "resolution_now": f"{tri_view:,}/{report_units:,} tri-view units in the current functional snapshot; 65 exact sediment sample metadata rows",
-                    "use_now": "Interim mangrove/mudflat molecular niche expansion and time/depth/habitat readiness design",
-                    "blocking_gap": "Bacteria functional completion, depth-resolved MAG-to-sample assignment, abundance/read coverage, and flux/process validation",
+                    "metadata_universe": "3,404 registered MAGs: 3,156 complete, 248 documented gaps",
+                    "primary_source": "Qi et al. 2026, Scientific Data",
+                    "resolution_now": f"{tri_view:,}/{report_units:,} with all three views; 65 exact sediment-sample metadata rows",
+                    "use_now": "Mangrove and mudflat screening; design of time, depth and habitat sampling",
+                    "blocking_gap": "Depth-resolved MAG-to-sample assignment, abundance, and flux or process validation",
                 }
             )
         elif lane_id == "mucc_v1_owc_wetland":
             rows.append(
                 {
-                    "lane": "MUCC v1 Old Woman Creek wetland reference",
+                    "lane": LANE_DISPLAY[lane_id],
                     "report_units": report_units,
                     "metadata_universe": (
-                        "2,508 checksum-validated archive MAGs; 2,502 meet the "
-                        "paper-defined HQ/MQ screen; 7 lack direct source protein payload"
+                        "2,508 checksum-validated archive MAGs; 2,502 pass the "
+                        "paper's quality screen; 7 lack a source protein file"
                     ),
                     "primary_source": "Borton et al. 2026, mSystems",
                     "resolution_now": (
-                        f"{tri_view:,}/{report_units:,} data-complete source-scaffold "
-                        "tri-views; processed expression supports 1,948 MAGs "
-                        "across 133 source sample columns; 275 chamber-flux, "
-                        "5,280 porewater, and 29,280 tower-flux rows are staged"
+                        f"{tri_view:,}/{report_units:,} with all three views (source "
+                        "annotations); processed expression for 1,948 MAGs across "
+                        "133 sample columns; chamber-flux, porewater and tower-flux "
+                        "records staged as site and time context"
                     ),
                     "use_now": (
-                        "Wetland molecular-reference screening and source-aware "
-                        "candidate review under its source-scaffold mechanism contract"
+                        "Wetland reference screening and candidate review under "
+                        "the source-annotation contract"
                     ),
                     "blocking_gap": (
-                        "A harmonized, curated mechanism feature contract and "
-                        "an authoritative sample/date/depth/environment/flux "
-                        "crosswalk. Exact ecological validation joins are 0/133, "
-                        "and expression normalization units remain unresolved"
+                        "A shared mechanism-feature contract and an authoritative "
+                        "sample, date, depth, environment and flux crosswalk "
+                        "(exact joins: 0 of 133); expression normalization units"
                     ),
                 }
             )
         else:
             rows.append(
                 {
-                    "lane": f"Registered source lane {lane_id}",
+                    "lane": LANE_DISPLAY.get(lane_id, f"Registered source lane {lane_id}"),
                     "report_units": report_units,
                     "metadata_universe": "registered source payload",
                     "primary_source": lane_id,
@@ -1894,22 +1946,22 @@ def build_external_source_readiness(atlas: pd.DataFrame) -> list[dict[str, Any]]
 def build_source_provenance_readiness(summary: dict[str, Any], atlas: pd.DataFrame | None = None) -> list[dict[str, Any]]:
     base = [
         {
-            "lane": "Rumen reference",
+            "lane": "Rumen reference (POC core)",
             "report_units": int(summary.get("poc_rumen_total", 0)),
-            "metadata_universe": "555 embedded POC rumen proteomes",
-            "primary_source": "Stewart et al. 2019",
-            "resolution_now": "555/555 exact ERZ analysis-accession matches",
-            "use_now": "Methane-domain reference provenance and source-aware bridge comparison",
-            "blocking_gap": "Animal and sample environmental metadata remain cohort-level; blue-carbon interpretation requires a target-domain sample context",
+            "metadata_universe": "555 rumen proteomes in the proof-of-concept cohort; 518 in the atlas reference core",
+            "primary_source": "Stewart et al. 2019, Nature Biotechnology",
+            "resolution_now": "555/555 exact ENA analysis-accession matches",
+            "use_now": "Methane reference with exact provenance; source-aware comparison",
+            "blocking_gap": "Animal and sample metadata are cohort-level; any blue-carbon reading needs target-site sample context",
         },
         {
-            "lane": "Wetland/MUCC target",
+            "lane": "Wetland reference (POC core)",
             "report_units": int(summary.get("poc_wetland_total", 0)),
-            "metadata_universe": "107 embedded wetland/MUCC Methanoregula proteomes",
-            "primary_source": "Bechtold et al. 2025",
-            "resolution_now": "20 exact NCBI assembly/BioSample; 23 OWC bin plus site/project; 64 source-bucket rows",
-            "use_now": "Target-domain provenance, wetland source-bucket context, and metadata-readiness triage",
-            "blocking_gap": "Uniform MAG-to-sample BioSample mapping for JGI/PPR/STM/source-bucket rows",
+            "metadata_universe": "107 wetland Methanoregula proteomes in the proof-of-concept cohort",
+            "primary_source": "Bechtold et al. 2025, Nature Communications",
+            "resolution_now": "20 with exact NCBI assembly and BioSample; 23 with an Old Woman Creek bin and site; 64 with a source bucket only",
+            "use_now": "Wetland reference with source context; metadata triage",
+            "blocking_gap": "Map every MAG to its BioSample, including source-bucket rows",
         },
     ]
     external_rows = build_external_source_readiness(atlas) if atlas is not None else []
@@ -1918,13 +1970,13 @@ def build_source_provenance_readiness(summary: dict[str, Any], atlas: pd.DataFra
     else:
         base.append(
             {
-                "lane": "Mangrove/MSM target",
+                "lane": LANE_DISPLAY["msm_china_2025"],
                 "report_units": int(summary.get("msm_total", 0)),
-                "metadata_universe": "1428 local MAG candidates; paper reports 966 final MAGs",
-                "primary_source": "Pan et al. 2025",
-                "resolution_now": "82 sediment sample rows; 71 exact BioSample rows; group-level sample lists in manifest",
-                "use_now": "Target-domain molecular screening lane and sample-readiness prioritization",
-                "blocking_gap": "MAG-to-sample assignment and 966-vs-1428 denominator reconciliation before sample/site rollups",
+                "metadata_universe": "1,428 deposited MAGs; the source paper reports 966 final MAGs",
+                "primary_source": "Pan et al. 2025, GigaScience",
+                "resolution_now": "82 sediment-sample rows; 71 exact BioSample rows; group-level sample lists",
+                "use_now": "Mangrove screening and sample-readiness priorities",
+                "blocking_gap": "Assign each MAG to its sample and reconcile 1,428 deposited with 966 final MAGs before sample or site summaries",
             }
         )
     return base
@@ -2266,6 +2318,14 @@ def build_report_validation_gates(atlas: pd.DataFrame, payload: dict[str, Any]) 
     return gates
 
 
+def expression_supported(value: Any) -> bool:
+    """Processed-expression support arrives as a boolean string or a count."""
+    if legacy.truthy(value):
+        return True
+    number = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    return bool(pd.notna(number) and number > 0)
+
+
 def build_candidate_circos(cards: pd.DataFrame) -> dict[str, Any]:
     """Summarize evidence availability, not cross-pipeline biological strength."""
     pillar_defs = [
@@ -2291,13 +2351,14 @@ def build_candidate_circos(cards: pd.DataFrame) -> dict[str, Any]:
         {
             "id": "sample",
             "label": "Sample-context key available",
-            "short": "Sample",
+            "short": "Sample context",
         },
     ]
+    # Ring order, inside to outside, follows group_defs.
     group_defs = [
-        {"id": "poc", "label": "POC reference", "color": COLORS["rumen"]},
-        {"id": "mangrove", "label": "Mangrove expansion", "color": COLORS["mangrove"]},
-        {"id": "mucc", "label": "MUCC source scaffold", "color": COLORS["wetland"]},
+        {"id": "poc", "label": "Reference-core candidates (POC)", "color": COLORS["rumen"]},
+        {"id": "mangrove", "label": "Mangrove candidates", "color": COLORS["mangrove"]},
+        {"id": "mucc", "label": "Old Woman Creek candidates", "color": COLORS["wetland"]},
     ]
 
     def group_mask(group_id: str) -> pd.Series:
@@ -2320,13 +2381,10 @@ def build_candidate_circos(cards: pd.DataFrame) -> dict[str, Any]:
                 "mechanism_equivalence_status", pd.Series("", index=frame.index)
             ).astype(str).eq("mechanism_equivalent").astype(float)
         if pillar_id == "expression":
-            return pd.to_numeric(
-                frame.get(
-                    "processed_gene_expression_support",
-                    pd.Series(0, index=frame.index),
-                ),
-                errors="coerce",
-            ).fillna(0).gt(0).astype(float)
+            return frame.get(
+                "processed_gene_expression_support",
+                pd.Series(0, index=frame.index),
+            ).map(expression_supported).astype(float)
         if pillar_id == "qc":
             completeness = pd.to_numeric(
                 frame.get(
@@ -2364,8 +2422,8 @@ def build_candidate_circos(cards: pd.DataFrame) -> dict[str, Any]:
                     "pillar_label": pillar["label"],
                     "pillar_short": pillar["short"],
                     "source": (
-                        "Availability and eligibility status from the report evidence "
-                        "contract. It summarizes review readiness rather than biological signal strength."
+                        "Share of cards in this group with the evidence available or eligible. "
+                        "It shows review readiness, not biological signal strength."
                     ),
                     "candidate_count": n,
                     "high_count": high_count,
@@ -2400,7 +2458,7 @@ def build_signature_matrix(cards: pd.DataFrame) -> dict[str, Any]:
         {"id": "taxonomy_available", "label": "Taxonomy", "source": "resolved phylum label"},
         {
             "id": "sample_context_available",
-            "label": "Sample",
+            "label": "Sample context",
             "source": "sample and context availability. Exact flux linkage requires matched source measurements.",
         },
     ]
@@ -2417,7 +2475,7 @@ def build_signature_matrix(cards: pd.DataFrame) -> dict[str, Any]:
                 == "mechanism_equivalent"
             ),
             "expression_available": float(
-                safe_float(row.get("processed_gene_expression_support")) > 0
+                expression_supported(row.get("processed_gene_expression_support"))
             ),
             "qc_available": float(
                 pd.notna(row.get("checkm2_completeness"))
@@ -2433,8 +2491,11 @@ def build_signature_matrix(cards: pd.DataFrame) -> dict[str, Any]:
 
     records: list[dict[str, Any]] = []
     for _, row in cards.iterrows():
-        source_code = {"rumen": "R", "wetland": "W", "mangrove": "M"}.get(str(row.get("source_category")), "C")
-        display_label = f"{source_code}{safe_int(row.get('rank')):02d}  {short_id(row['proteome_id'], 34)}"
+        # One code per candidate set keeps row labels unique: P = reference core,
+        # M = mangrove, O = Old Woman Creek.
+        candidate_set = str(row.get("candidate_set", ""))
+        set_code = "P" if candidate_set == "POC bridge candidate" else "M" if candidate_set.startswith("Mangrove") else "O"
+        display_label = f"{set_code}{safe_int(row.get('rank')):02d}  {short_id(row['proteome_id'], 34)}"
         values = evidence_values(row)
         for metric in metric_defs:
             records.append(
@@ -2443,6 +2504,7 @@ def build_signature_matrix(cards: pd.DataFrame) -> dict[str, Any]:
                     "candidate_set": row.get("candidate_set", ""),
                     "rank": safe_int(row.get("rank")),
                     "source_category": row.get("source_category", ""),
+                    "lane_key": row.get("lane_key", row.get("source_category", "")),
                     "label": display_label,
                     "metric": metric["id"],
                     "metric_label": metric["label"],
@@ -2454,12 +2516,7 @@ def build_signature_matrix(cards: pd.DataFrame) -> dict[str, Any]:
 
 
 def build_evidence_contract_summary(atlas: pd.DataFrame) -> list[dict[str, Any]]:
-    labels = {
-        "poc_core": "POC reference core",
-        "msm_china_2025": "MSM mangrove",
-        "futian_mangrove_2026_qi": "Futian mangrove",
-        "mucc_v1_owc_wetland": "MUCC v1 wetland",
-    }
+    labels = LANE_DISPLAY
     rows: list[dict[str, Any]] = []
     for lane_id in [
         "poc_core",
@@ -2583,6 +2640,12 @@ def build_nearest_core_context_audit(
     candidate_neighbors = targets["nearest_poc_id"].map(core_category)
     if candidate_neighbors.isna().any():
         raise ValueError("A target candidate lacks a POC core reference")
+    # Core members match themselves, so denominators for "points to rumen"
+    # count only records outside the reference core.
+    in_core = emb_meta["proteome_id"].astype(str).isin(set(core_category))
+    wetland_outside = emb_meta["source_category"].eq("wetland") & ~in_core
+    similarity = pd.to_numeric(emb_meta["nearest_poc_similarity"], errors="coerce")
+    targets_outside = ~targets["proteome_id"].astype(str).isin(set(core_category))
 
     return {
         "unit_grain": "MAG/proteome embedding record",
@@ -2597,6 +2660,12 @@ def build_nearest_core_context_audit(
         "mangrove_nearest_rumen_units": int((emb_meta["source_category"].eq("mangrove") & neighbors.eq("rumen")).sum()),
         "target_candidate_cards": int(len(targets)),
         "target_candidate_nearest_rumen_cards": int(candidate_neighbors.eq("rumen").sum()),
+        "wetland_outside_core_units": int(wetland_outside.sum()),
+        "wetland_outside_core_nearest_rumen_units": int((wetland_outside & neighbors.eq("rumen")).sum()),
+        "outside_core_units": int((~in_core).sum()),
+        "outside_core_nearest_similarity_median": float(similarity[~in_core].median()),
+        "target_candidate_cards_outside_core": int(targets_outside.sum()),
+        "target_candidate_outside_core_nearest_rumen_cards": int((targets_outside & candidate_neighbors.eq("rumen")).sum()),
         "source_tables": ["tables/embedding_context_table.tsv", "tables/candidate_cards.tsv"],
         "interpretation": "One-way nearest-reference links nominate records for review; they do not establish reciprocal neighborhoods, source-independent transfer, pathway activity, or methane flux.",
     }
@@ -2799,15 +2868,12 @@ def build_taxonomy_bridge_audit(
 
 
 def build_functional_metric_audit(atlas: pd.DataFrame) -> dict[str, Any]:
-    labels = {
-        "poc_core": "POC reference core",
-        "msm_china_2025": "MSM mangrove",
-        "futian_mangrove_2026_qi": "Futian mangrove",
-        "mucc_v1_owc_wetland": "MUCC v1 wetland",
-    }
+    labels = LANE_DISPLAY
     rows: list[dict[str, Any]] = []
-    for lane_id, frame in atlas.groupby("lane_id", dropna=False):
-        lane_id = str(lane_id)
+    lane_ids = atlas["lane_id"].astype(str)
+    ordered = [lane for lane in LANE_ORDER if lane in set(lane_ids)] + sorted(set(lane_ids) - set(LANE_ORDER))
+    for lane_id in ordered:
+        frame = atlas[lane_ids.eq(lane_id)]
         functional = frame[frame["has_functional"].map(legacy.truthy)].copy()
         raw = pd.to_numeric(
             functional["raw_methane_annotation_row_count"], errors="coerce"
@@ -2870,10 +2936,9 @@ def build_functional_metric_audit(atlas: pd.DataFrame) -> dict[str, Any]:
             top["source_category"].astype(str).eq("mangrove").mean()
         ),
         "public_action": (
-            "Cross-lane methane/sulfur/substrate densities and the universal "
-            "attestation ranking are quarantined. Raw annotation counts remain "
-            "only as provenance diagnostics until the common accepted/present "
-            "feature rebuild is complete."
+            "Cross-route methane, sulfur and substrate densities and any universal "
+            "ranking are quarantined. Raw annotation counts appear only as "
+            "diagnostics until a shared feature table is built and validated."
         ),
     }
 
@@ -3017,90 +3082,97 @@ def build_scientific_findings(
     )
     raw_pairs = geometry.get("raw_reciprocal_pair_counts", {})
     z_pairs = geometry.get("dimension_zscore_reciprocal_pair_counts", {})
+    pipeline_normalized = int(
+        atlas["functional_comparability_tier"].eq("pipeline_normalized_comparability_pending").sum()
+    )
     return [
         {
-            "severity": "contract correction",
-            "finding": "Data-complete and mechanism-comparable tri-views are distinct evidence states.",
+            "severity": "Evidence states",
+            "finding": "Complete data and comparable data are separate states.",
             "result": (
-                f"{tri_view:,} data-complete; {comparable:,} mechanism-comparable; "
-                f"{annotation_pending:,} annotation-complete/harmonization-pending; "
-                f"{source_scaffold:,} source-scaffold."
+                f"{tri_view:,} records have all three views. {pipeline_normalized:,} carry "
+                f"shared-pipeline screening events, {source_scaffold:,} carry source "
+                f"annotations, {annotation_pending:,} await shared aggregation and "
+                f"{comparable:,} are mechanism-comparable across routes."
             ),
             "report_action": (
-                "Use the four-state evidence contract everywhere and retire the "
-                "former 4,980 canonical/mechanism-equivalent claim."
+                "Every count is reported with its state. No record receives a "
+                "cross-route methane ranking."
             ),
         },
         {
-            "severity": "blocking defect",
-            "finding": "The former cross-lane methane density mixed incompatible numerators.",
+            "severity": "Functional counting",
+            "finding": "Raw annotation-hit rows are not a methane-gene count.",
             "result": (
-                "MSM/Futian used raw many-to-many annotation rows plus all HMM "
-                "rows; POC used curated accepted/present features; MUCC used "
-                "source DRAM terms."
+                "One gene can produce several hits, and hits per protein differ by "
+                "lane and tool; the source lane uses DRAM terms instead."
             ),
             "report_action": functional["public_action"],
         },
         {
-            "severity": "ranking impact",
-            "finding": "The former combined index was materially coupled to pipeline-specific methane counts.",
+            "severity": "Ranking",
+            "finding": "A combined index built on raw hit rows tracked lane-specific counting.",
             "result": (
-                f"Pearson r={functional['legacy_score_methane_component_pearson_r']:.3f}; "
-                f"{100 * functional['legacy_top_500_mangrove_share']:.1f}% of "
-                "the legacy top 500 were mangrove rows."
+                f"Its methane component correlated with the index at Pearson r = "
+                f"{functional['legacy_score_methane_component_pearson_r']:.3f}; "
+                + (
+                    "all of its top 500 records were mangrove."
+                    if functional["legacy_top_500_mangrove_share"] >= 0.9995
+                    else f"{100 * functional['legacy_top_500_mangrove_share']:.1f}% of its top 500 records were mangrove."
+                )
             ),
             "report_action": (
-                "Mangrove candidates use geometry and QC while the cross-lane "
-                "mechanism rank remains in quarantine."
+                "The index is quarantined. Mangrove candidates are chosen by "
+                "embedding geometry and QC only."
             ),
         },
         {
-            "severity": "geometry boundary",
-            "finding": "ESM-2 supports target-domain neighborhood navigation and routes source transfer into validation.",
+            "severity": "Embedding geometry",
+            "finding": "Mangrove and wetland genomes stay mutual neighbors; rumen links do not survive standardization.",
             "result": (
-                f"Raw reciprocal unique pairs include "
-                f"{raw_pairs.get('mangrove↔wetland', 0):,} mangrove↔wetland, "
-                f"{raw_pairs.get('rumen↔wetland', 0):,} rumen↔wetland, "
-                f"{raw_pairs.get('mangrove↔rumen', 0):,} mangrove↔rumen. "
-                f"After dimension z-scoring the counts are "
+                f"Mutual top-{safe_int(geometry.get('knn_k'))} pairs in raw space: "
+                f"{raw_pairs.get('mangrove↔wetland', 0):,} mangrove–wetland, "
+                f"{raw_pairs.get('rumen↔wetland', 0):,} rumen–wetland, "
+                f"{raw_pairs.get('mangrove↔rumen', 0):,} rumen–mangrove. "
+                f"After standardizing each dimension: "
                 f"{z_pairs.get('mangrove↔wetland', 0):,}, "
-                f"{z_pairs.get('rumen↔wetland', 0):,}, and "
-                f"{z_pairs.get('mangrove↔rumen', 0):,}, respectively."
+                f"{z_pairs.get('rumen↔wetland', 0):,} and "
+                f"{z_pairs.get('mangrove↔rumen', 0):,}."
             ),
             "report_action": (
-                "Describe ESM-2 links as latent neighborhoods and route "
-                "source-independent ecological or mechanism transfer to validation."
+                "Embedding links are neighborhoods to explore. Shared function "
+                "across sources needs independent validation."
             ),
         },
         {
-            "severity": "confounding",
-            "finding": "Bridge taxonomy is structured and GTDB release is source-confounded.",
+            "severity": "Taxonomy",
+            "finding": "Neighbor pairs often share a phylum, and taxonomy releases differ by source.",
             "result": (
-                f"{100 * taxonomy['synonym_normalized_share_usable']:.1f}% of "
-                "usable reciprocal mangrove↔wetland pairs match phylum after "
-                "conservative synonym normalization; release metadata is absent "
-                "outside POC."
+                f"{100 * taxonomy['synonym_normalized_share_usable']:.1f}% of usable "
+                "mutual mangrove–wetland pairs share a phylum after conservative "
+                "synonym normalization; GTDB release metadata exists only for the "
+                "reference core."
             ),
             "report_action": (
-                "Treat bridge continuity as partly taxonomic homophily and "
-                "require harmonized taxonomy/phylogeny-aware nulls."
+                "Part of the neighborhood continuity is taxonomic. Harmonized "
+                "taxonomy and phylogeny-aware null models come before any "
+                "functional reading."
             ),
         },
         {
-            "severity": "orthogonal evidence",
-            "finding": "MUCC expression and field-observation lanes are valuable, with exact joins pending.",
+            "severity": "Old Woman Creek",
+            "finding": "Expression and field data exist; exact joins do not yet.",
             "result": (
                 f"{mucc.get('methane_expression_detected_mags', 0):,} MAGs have "
                 f"processed methane-gene detection and "
-                f"{mucc.get('sulfur_expression_detected_mags', 0):,} sulfur-associated rows. "
-                f"Exact sample-environment-flux links are "
-                f"{mucc.get('exact_sample_environment_flux_links', 0)}/"
+                f"{mucc.get('sulfur_expression_detected_mags', 0):,} have sulfur-gene detection. "
+                f"Exact sample, environment and flux joins: "
+                f"{mucc.get('exact_sample_environment_flux_links', 0)} of "
                 f"{mucc.get('expression_sample_columns', 133)}."
             ),
             "report_action": (
-                "Surface expression as detection/occupancy support and staged "
-                "flux as a validation lane. Activity magnitude and flux attribution "
-                "await the authoritative join."
+                "Expression counts as detection support only. Activity levels and "
+                "flux attribution wait for the exact joins."
             ),
         },
     ]
@@ -3128,6 +3200,31 @@ def sample_linkage_bucket(row: pd.Series) -> str:
     return "context_pending"
 
 
+MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+
+def sample_context_chart_label(row: pd.Series) -> str:
+    """Short, readable chart label; the full source label stays in the tooltip."""
+    label = str(row.get("sample_context_label", "") or "")
+    lane = str(row.get("lane_id", ""))
+    if int(row.get("tri_view_units", 0) or 0) == 0:
+        return f"{LANE_DISPLAY.get(lane, 'Source')} · source gaps"
+    if lane == "futian_mangrove_2026_qi" and " · " in label:
+        site, key = label.split(" · ", 1)
+        match = re.search(r"_(\d{4})(\d{2})$", key)
+        when = f"{MONTHS[int(match.group(2)) - 1]} {match.group(1)}" if match else key
+        return f"Futian · {site} · {when}"
+    if lane == "msm_china_2025" and " · " in label:
+        group, places = label.split(" · ", 1)
+        number = re.sub(r"\D", "", group) or group
+        names = [p.split(":")[-1].strip() for p in places.split(";") if p.strip()]
+        names = [n for n in names if n and n.lower() != "china"]
+        head = names[0] if names else places
+        more = f" +{len(names) - 1}" if len(names) > 1 else ""
+        return f"MSM group {number} · {head}{more}"
+    return label
+
+
 def build_sample_linkage_payload(atlas: pd.DataFrame) -> dict[str, Any]:
     """Summarize MAG/proteome signatures at the strongest current sample-context grain."""
     df = atlas.copy()
@@ -3143,7 +3240,9 @@ def build_sample_linkage_payload(atlas: pd.DataFrame) -> dict[str, Any]:
     df["sample_context_label"] = df["sample_context_label"].fillna("").astype(str)
     df["sample_context_key"] = df["sample_context_key"].fillna("").astype(str)
     empty_context = df["sample_context_label"].str.strip().eq("")
-    df.loc[empty_context, "sample_context_label"] = df.loc[empty_context, "source_display"].fillna("").astype(str)
+    df.loc[empty_context, "sample_context_label"] = (
+        df.loc[empty_context, "source_display"].fillna("").astype(str) + " · no sample context"
+    )
     df["sample_context_sort"] = df["source_display"].fillna("").astype(str) + " · " + df["sample_context_label"].astype(str)
     metric_cols = [
         "molecular_attestation_index",
@@ -3237,9 +3336,14 @@ def build_sample_linkage_payload(atlas: pd.DataFrame) -> dict[str, Any]:
             ],
             default="not_scoreable_payload_or_metadata_gap",
         )
-        contexts = contexts.sort_values(
-            ["tri_view_units", "units"], ascending=[False, False]
-        )
+        contexts["chart_label"] = contexts.apply(sample_context_chart_label, axis=1)
+        contexts["lane_key"] = contexts["lane_id"].astype(str).map(
+            {"msm_china_2025": "msm", "futian_mangrove_2026_qi": "futian"}
+        ).fillna("mangrove")
+        # Complete contexts first, by size; source-gap rows last.
+        contexts = contexts.assign(_gap=contexts["tri_view_units"].eq(0)).sort_values(
+            ["_gap", "units"], ascending=[True, False]
+        ).drop(columns="_gap")
     status_defs = [
         {
             "id": "site_month_context",
@@ -3398,6 +3502,7 @@ def build_payloads(
         "proteome_id",
         "mag_id",
         "source_category",
+        "lane_key",
         "source_display",
         "atlas_inclusion_status",
         "analysis_unit_type",
@@ -3775,28 +3880,34 @@ def build_payloads(
 
 def plot_niche(payload: dict[str, Any], path: Path) -> Path:
     nodes = pd.DataFrame(payload["niche"]["nodes"])
+    method = "umap" if {"umap_1", "umap_2"} <= set(nodes.columns) else "diffusion"
+    xy = nodes[[f"{method}_1", f"{method}_2"]].apply(pd.to_numeric, errors="coerce")
+    nodes = nodes[xy.notna().all(axis=1)]
+    key_col = "lane_key" if "lane_key" in nodes.columns else "source_category"
     fig, ax = plt.subplots(figsize=(11, 7.3), facecolor=COLORS["surface"])
     ax.set_facecolor("#fbfdff")
-    for cat, sub in nodes.groupby("source_category"):
+    for key in ["rumen", "wetland", "msm", "futian", "mangrove"]:
+        sub = nodes[nodes[key_col].astype(str).eq(key)]
+        if sub.empty:
+            continue
         ax.scatter(
-            sub["diffusion_1"],
-            sub["diffusion_2"],
-            s=np.where(
-                sub.get("has_functional", pd.Series(False, index=sub.index))
-                .map(legacy.truthy),
-                18,
-                10,
-            ),
-            color=COLORS.get(cat, "#94a3b8"),
+            pd.to_numeric(sub[f"{method}_1"]),
+            pd.to_numeric(sub[f"{method}_2"]),
+            s=12,
+            color=COLORS.get(key, "#94a3b8"),
             alpha=0.72,
             edgecolor="white",
-            linewidth=0.25,
-            label=source_label(cat),
+            linewidth=0.2,
+            label=f"{source_label(key)} ({len(sub):,})",
         )
-    ax.set_title("Molecular niche-space map, diffusion coordinates", loc="left", fontsize=13, weight="bold")
-    ax.set_xlabel("diffusion coordinate 1")
-    ax.set_ylabel("diffusion coordinate 2")
-    ax.legend(frameon=False, ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.08))
+    name = {"umap": "UMAP", "diffusion": "Diffusion map"}[method]
+    ax.set_title(
+        f"Atlas map: {len(nodes):,} genome records, {name} projection of ESM-2 embeddings",
+        loc="left", fontsize=13, weight="bold",
+    )
+    ax.set_xlabel(f"{name} 1 (unitless)")
+    ax.set_ylabel(f"{name} 2 (unitless)")
+    ax.legend(frameon=False, ncol=2, loc="upper center", bbox_to_anchor=(0.5, -0.09))
     fig.tight_layout()
     fig.savefig(path, dpi=180, bbox_inches="tight")
     plt.close(fig)
@@ -3812,13 +3923,19 @@ def plot_evidence_contract(payload: dict[str, Any], path: Path) -> Path:
         height = 0.22
         series = [
             ("registered_units", "Registered", "#cbd5e1"),
-            ("data_complete_tri_view_units", "Data-complete tri-view", "#0284a8"),
+            ("data_complete_tri_view_units", "All three views", "#0f766e"),
             (
                 "mechanism_comparable_tri_view_units",
-                "Mechanism-comparable tri-view",
+                "Comparable across routes",
                 "#d89b14",
             ),
         ]
+        # Match the interactive chart: complete-record bars show the annotation route.
+        route_colors = np.where(
+            df.get("functional_contract", pd.Series("", index=df.index)).astype(str).eq("source_scaffold_non_equivalent"),
+            "#a16207",
+            "#0f766e",
+        )
         for offset, (column, label, color) in zip(
             [-height, 0, height], series
         ):
@@ -3827,7 +3944,7 @@ def plot_evidence_contract(payload: dict[str, Any], path: Path) -> Path:
                 y + offset,
                 values,
                 height=height * 0.9,
-                color=color,
+                color=route_colors if column == "data_complete_tri_view_units" else color,
                 edgecolor="#475569",
                 linewidth=0.45,
                 label=label,
@@ -3841,15 +3958,24 @@ def plot_evidence_contract(payload: dict[str, Any], path: Path) -> Path:
             )
         ax.set_yticks(y, df["lane"])
         ax.invert_yaxis()
-        ax.legend(frameon=False, ncol=3, loc="lower right")
-    ax.set_title("Atlas evidence contract by lane", loc="left", fontsize=13, weight="bold")
-    ax.set_xlabel("MAG/proteome units")
+        ax.legend(
+            handles=[
+                matplotlib.patches.Patch(facecolor="#cbd5e1", edgecolor="#475569", label="Registered"),
+                matplotlib.patches.Patch(facecolor="#0f766e", edgecolor="#475569", label="All three views, shared pipeline"),
+                matplotlib.patches.Patch(facecolor="#a16207", edgecolor="#475569", label="All three views, source annotations"),
+                matplotlib.patches.Patch(facecolor="#d89b14", edgecolor="#475569", label="Comparable across routes"),
+            ],
+            frameon=False, ncol=2, loc="lower right", fontsize=9,
+        )
+    ax.set_title("Genome records by source lane and evidence state", loc="left", fontsize=13, weight="bold")
+    ax.set_xlabel("Genome records")
+    ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda value, _pos: f"{int(value):,}"))
     ax.grid(axis="x", color="#e2e8f0", linewidth=0.7)
     ax.set_axisbelow(True)
     fig.text(
         0.125,
         0.015,
-        "Data-complete means ESM-2 + gLM2 + a functional payload. Pipeline normalization and cross-lane mechanism comparability remain separate gates.",
+        "All three views = ESM-2 + gLM2 + functional annotation. No record is yet comparable across annotation routes.",
         fontsize=9,
         color=COLORS["muted"],
     )
@@ -3864,22 +3990,31 @@ def plot_matrix(payload: dict[str, Any], path: Path) -> Path:
     if records.empty:
         path.touch()
         return path
+    row_order = list(dict.fromkeys(records["label"]))
     mat = records.pivot_table(index="label", columns="metric", values="value", aggfunc="first").fillna(0)
+    mat = mat.reindex(row_order)
     metric_defs = payload["matrix"].get("metric_defs") or [{"id": m, "label": m} for m in payload["matrix"]["metrics"]]
     metric_ids = [m["id"] for m in metric_defs]
     metric_labels = [m.get("label", m["id"]) for m in metric_defs]
     mat = mat[metric_ids]
     fig, ax = plt.subplots(figsize=(11.6, max(6.4, 0.38 * len(mat))), facecolor=COLORS["surface"])
-    im = ax.imshow(mat.values, aspect="auto", vmin=0, vmax=1, cmap="YlGnBu")
+    binary = matplotlib.colors.ListedColormap(["#e2e8f0", "#0f766e"])
+    ax.imshow(mat.values, aspect="auto", vmin=0, vmax=1, cmap=binary)
     ax.set_xticks(np.arange(len(mat.columns)), metric_labels, fontsize=9)
     ax.set_yticks(np.arange(len(mat.index)), mat.index, fontsize=7.5)
-    ax.set_title("EmergentBiome candidate evidence matrix", loc="left", fontsize=13, weight="bold")
+    ax.set_title("Candidate evidence matrix (P = reference core, M = mangrove, O = Old Woman Creek)", loc="left", fontsize=12, weight="bold")
     ax.tick_params(axis="x", length=0)
     ax.tick_params(axis="y", length=0)
     ax.set_xticks(np.arange(-0.5, len(mat.columns), 1), minor=True)
     ax.set_yticks(np.arange(-0.5, len(mat.index), 1), minor=True)
     ax.grid(which="minor", color="white", linestyle="-", linewidth=1.2)
-    fig.colorbar(im, ax=ax, fraction=0.025, pad=0.02)
+    ax.legend(
+        handles=[
+            matplotlib.patches.Patch(color="#0f766e", label="Available or eligible"),
+            matplotlib.patches.Patch(color="#e2e8f0", label="Not available"),
+        ],
+        frameon=False, ncol=2, loc="upper center", bbox_to_anchor=(0.5, -0.03),
+    )
     fig.tight_layout()
     fig.savefig(path, dpi=180, bbox_inches="tight")
     plt.close(fig)
@@ -3933,7 +4068,11 @@ def render_html(
         if infographic is not None and infographic.exists()
         else ""
     )
-    sample_risk_abstract_uri = asset_href(sample_risk_abstract, output_dir) if sample_risk_abstract.exists() else ""
+    sample_risk_abstract_uri = (
+        asset_href(sample_risk_abstract, output_dir)
+        if RENDER_SAMPLE_RISK_ABSTRACT and sample_risk_abstract.is_file()
+        else ""
+    )
     d3_href = asset_href(d3_path, output_dir)
     # Keep the published report self-contained. The detailed payload files remain
     # in the internal report bundle, while the public HTML embeds the minimum
@@ -3965,91 +4104,103 @@ def render_html(
     functional_audit = audit.get("functional_metric_provenance", {})
     mucc_audit = audit.get("mucc_validation_readiness", {})
     findings = audit.get("findings", [])
+    mucc_exact = safe_int(mucc_audit.get("exact_sample_environment_flux_links"))
+    mucc_columns = safe_int(mucc_audit.get("expression_sample_columns"))
     metric_cards = "\n".join(
         [
-            f"<div class='metric'><b>{release_multiview:,}</b><span>data-complete tri-view units with ESM-2, gLM2, and functional payloads</span></div>",
-            f"<div class='metric'><b>{summary['mechanism_comparable_tri_view']:,}</b><span>mechanism-comparable tri-view units; current cross-lane scoring ceiling</span></div>",
-            f"<div class='metric'><b>{summary['annotation_complete_harmonization_pending_tri_view']:,}</b><span>annotation-complete tri-views awaiting common feature aggregation</span></div>",
-            f"<div class='metric'><b>{summary['source_scaffold_tri_view']:,}</b><span>MUCC source-scaffold tri-views, explicitly non-equivalent</span></div>",
-            f"<div class='metric'><b>{summary['embedding_context_total']:,}</b><span>ESM-2-bearing units for latent-neighborhood navigation</span></div>",
-            f"<div class='metric'><b>{summary['cross_domain_knn_edges']:,}</b><span>directed cross-domain kNN edges audited in raw ESM-2 space</span></div>",
+            f"<div class='metric'><b>{summary['atlas_registered_units']:,}</b><span>registered genome records, including {summary['explicit_non_runnable_gaps']:,} documented source gaps</span></div>",
+            f"<div class='metric'><b>{release_multiview:,}</b><span>records with all three evidence views: ESM-2, gLM2 and functional annotation</span></div>",
+            f"<div class='metric'><b>{summary['pipeline_normalized_tri_view_units']:,}</b><span>screened for methane-cycle genes through the shared annotation pipeline</span></div>",
+            f"<div class='metric'><b>{summary['source_scaffold_tri_view']:,}</b><span>screened with the Old Woman Creek source annotations</span></div>",
+            f"<div class='metric'><b>{summary['mechanism_comparable_tri_view']:,}</b><span>records with a methane mechanism score comparable across annotation routes</span></div>",
+            f"<div class='metric'><b>{mucc_exact}/{mucc_columns}</b><span>Old Woman Creek sequencing samples with an exact sample, environment and flux join</span></div>",
         ]
     )
     release_ledger_cards = "\n".join(
         [
-            f"<div class='metric'><b data-release-key='snapshot_date'>{summary['snapshot_date']}</b><span>release snapshot</span></div>",
-            f"<div class='metric'><b data-release-key='registered_units'>{summary['atlas_registered_units']:,}</b><span>registered molecular units, including explicit gaps</span></div>",
-            f"<div class='metric'><b data-release-key='esm2_units'>{summary['release_esm2_units']:,}</b><span>ESM-2 payloads</span></div>",
-            f"<div class='metric'><b data-release-key='glm2_units'>{summary['release_glm2_units']:,}</b><span>gLM2 payloads across declared protocol classes</span></div>",
-            f"<div class='metric'><b data-release-key='functional_payload_units'>{summary['release_functional_payload_units']:,}</b><span>functional payloads across declared evidence contracts</span></div>",
-            f"<div class='metric'><b data-release-key='release_required_units'>{summary['embedding_context_total']:,}</b><span>release-required units</span></div>",
-            f"<div class='metric'><b data-release-key='explicit_non_runnable_gaps'>{summary['explicit_non_runnable_gaps']:,}</b><span>explicit non-runnable source gaps</span></div>",
-            f"<div class='metric'><b data-release-key='tri_view_ready_units'>{summary['release_multiview_complete']:,}</b><span>data-complete tri-views</span></div>",
-            f"<div class='metric'><b data-release-key='schema_normalized_units'>{summary['schema_normalized_units']:,}</b><span>schema-normalized functional payloads</span></div>",
-            f"<div class='metric'><b data-release-key='schema_normalized_tri_view_units'>{summary['schema_normalized_tri_view_units']:,}</b><span>schema-normalized tri-views</span></div>",
-            f"<div class='metric'><b data-release-key='pipeline_normalized_tri_view_units'>{summary['pipeline_normalized_tri_view_units']:,}</b><span>pipeline-normalized tri-views with comparability gates pending</span></div>",
-            f"<div class='metric'><b data-release-key='mechanism_comparable_units'>{summary['mechanism_comparable_tri_view']:,}</b><span>cross-lane mechanism-comparable units</span></div>",
-            f"<div class='metric'><b data-release-key='annotation_complete_tri_view_units'>{summary['annotation_complete_harmonization_pending_tri_view']:,}</b><span>annotation-complete tri-views awaiting normalized aggregation</span></div>",
-            f"<div class='metric'><b data-release-key='source_scaffold_tri_view_units'>{summary['source_scaffold_tri_view']:,}</b><span>source-scaffold tri-views</span></div>",
-            f"<div class='metric'><b data-release-key='blocking_units'>{summary['blocking_units']:,}</b><span>release-required blockers</span></div>",
+            f"<div class='metric'><b data-release-key='snapshot_date'>{summary['snapshot_date']}</b><span>release snapshot date</span></div>",
+            f"<div class='metric'><b data-release-key='registered_units'>{summary['atlas_registered_units']:,}</b><span>registered genome records, including documented gaps</span></div>",
+            f"<div class='metric'><b data-release-key='esm2_units'>{summary['release_esm2_units']:,}</b><span>ESM-2 protein embeddings</span></div>",
+            f"<div class='metric'><b data-release-key='glm2_units'>{summary['release_glm2_units']:,}</b><span>gLM2 genomic-context embeddings, under two protocols</span></div>",
+            f"<div class='metric'><b data-release-key='functional_payload_units'>{summary['release_functional_payload_units']:,}</b><span>functional annotation payloads, across both routes</span></div>",
+            f"<div class='metric'><b data-release-key='release_required_units'>{summary['embedding_context_total']:,}</b><span>records the release requires</span></div>",
+            f"<div class='metric'><b data-release-key='explicit_non_runnable_gaps'>{summary['explicit_non_runnable_gaps']:,}</b><span>documented source gaps that cannot be run</span></div>",
+            f"<div class='metric'><b data-release-key='tri_view_ready_units'>{summary['release_multiview_complete']:,}</b><span>records with all three evidence views</span></div>",
+            f"<div class='metric'><b data-release-key='schema_normalized_units'>{summary['schema_normalized_units']:,}</b><span>functional payloads in the shared schema</span></div>",
+            f"<div class='metric'><b data-release-key='schema_normalized_tri_view_units'>{summary['schema_normalized_tri_view_units']:,}</b><span>three-view records in the shared schema</span></div>",
+            f"<div class='metric'><b data-release-key='pipeline_normalized_tri_view_units'>{summary['pipeline_normalized_tri_view_units']:,}</b><span>three-view records from the shared pipeline</span></div>",
+            f"<div class='metric'><b data-release-key='mechanism_comparable_units'>{summary['mechanism_comparable_tri_view']:,}</b><span>records comparable across annotation routes</span></div>",
+            f"<div class='metric'><b data-release-key='annotation_complete_tri_view_units'>{summary['annotation_complete_harmonization_pending_tri_view']:,}</b><span>annotated records awaiting shared aggregation</span></div>",
+            f"<div class='metric'><b data-release-key='source_scaffold_tri_view_units'>{summary['source_scaffold_tri_view']:,}</b><span>three-view records with source annotations</span></div>",
+            f"<div class='metric'><b data-release-key='blocking_units'>{summary['blocking_units']:,}</b><span>unresolved release blockers</span></div>",
         ]
     )
-    citations = [
-        ("ESM-2 protein language model", "https://www.science.org/doi/10.1126/science.ade2574"),
-        ("medium-sized protein language models for transfer learning", "https://www.nature.com/articles/s41598-025-05674-x"),
-        ("dimension-reduction evaluation principles", "https://www.nature.com/articles/s42003-022-03628-x"),
-        ("Diffusion maps", "https://www.math.pku.edu.cn/teachers/yaoy/Fall2011/Lafon06.pdf"),
-        ("PHATE for biological manifolds", "https://www.nature.com/articles/s41587-019-0336-3"),
-        ("similarity network fusion", "https://www.nature.com/articles/nmeth.2810"),
-        ("graph ML for integrated multi-omics", "https://www.nature.com/articles/s41416-024-02706-7"),
-        ("UMAP documentation", "https://umap-learn.readthedocs.io/"),
-        (
-            "Old Woman Creek wetland microbiome study",
-            "https://journals.asm.org/doi/10.1128/msystems.00680-25",
-        ),
+    indexing = str(summary.get("indexing_decision", ""))
+    indexing_text = "off (noindex)" if indexing.startswith("noindex") else html.escape(indexing.replace("_", " "))
+    release_state = html.escape(str(summary.get("release_state", "")).replace("_", " "))
+    try:
+        snapshot_day = datetime.strptime(str(summary["snapshot_date"]), "%Y-%m-%d")
+        snapshot_text = f"{snapshot_day.day} {snapshot_day.strftime('%B %Y')}"
+    except ValueError:
+        snapshot_text = html.escape(str(summary["snapshot_date"]))
+    references = [
+        ("Lin et al. 2023, Science: the ESM-2 protein language model", "https://www.science.org/doi/10.1126/science.ade2574"),
+        ("Scientific Reports 2025: medium-sized protein language models in transfer learning", "https://www.nature.com/articles/s41598-025-05674-x"),
+        ("Coifman and Lafon 2006: diffusion maps", "https://doi.org/10.1016/j.acha.2006.04.006"),
+        ("McInnes, Healy and Melville 2018: UMAP", "https://arxiv.org/abs/1802.03426"),
+        ("van der Maaten and Hinton 2008: t-SNE", "https://www.jmlr.org/papers/v9/vandermaaten08a.html"),
+        ("Communications Biology 2022: evaluating dimension-reduction methods", "https://www.nature.com/articles/s42003-022-03628-x"),
+        ("Old Woman Creek wetland microbiome study, mSystems", "https://journals.asm.org/doi/10.1128/msystems.00680-25"),
     ]
-    citation_html = " · ".join(
-        f"<a href='{url}'>{html.escape(label)}</a>" for label, url in citations
+    references_html = "".join(
+        f"<li><a href='{url}'>{html.escape(label)}</a></li>" for label, url in references
     )
+    source_links = {
+        "Stewart et al. 2019, Nature Biotechnology": "https://doi.org/10.1038/s41587-019-0202-3",
+        "Bechtold et al. 2025, Nature Communications": "https://doi.org/10.1038/s41467-025-56133-0",
+        "Pan et al. 2025, GigaScience": "https://doi.org/10.1093/gigascience/giaf081",
+        "Qi et al. 2026, Scientific Data": "https://doi.org/10.1038/s41597-026-07291-3",
+        "Borton et al. 2026, mSystems": "https://doi.org/10.1128/msystems.00680-25",
+    }
+
+    def source_cell(name: Any) -> str:
+        text = html.escape(str(name))
+        url = source_links.get(str(name))
+        return f"<a href='{url}'>{text}</a>" if url else text
+
     functional_contract_labels = {
-        "canonical_mechanism_comparable": (
-            "Curated accepted/present mechanism features (comparable)"
-        ),
-        "annotation_complete_harmonization_pending": (
-            "Annotation-complete; common feature aggregation pending"
-        ),
-        "source_scaffold_non_equivalent": (
-            "DRAM/gene/expression source scaffold (non-equivalent)"
-        ),
+        "pipeline_normalized_comparability_pending": "Shared pipeline; cross-route comparison pending",
+        "source_scaffold_non_equivalent": "Source annotations (DRAM terms, genes, expression); separate contract",
+        "annotation_complete_harmonization_pending": "Annotated; shared aggregation pending",
+        "canonical_mechanism_comparable": "Comparable mechanism features",
+        "functional_incomplete": "No functional payload",
     }
     numerator_labels = {
-        "raw_many_to_many_annotation_hit_rows_plus_all_hmm_rows": (
-            "Raw many-to-many annotation-hit rows plus all HMM rows"
+        "accepted KOfam genes and present METABOLIC events; best-ranked MCycDB/SCycDB hits exposed separately": (
+            "Accepted KOfam genes and METABOLIC events; best MCycDB and SCycDB hits kept separate"
         ),
-        "source_dram_term_rows_and_processed_expression_detection": (
-            "Source DRAM term rows plus processed expression detection"
+        "source DRAM term rows and processed expression detection": (
+            "Source DRAM terms, plus processed expression detection"
         ),
-        "curated_accepted_or_present_mechanism_features": (
-            "Curated accepted/present mechanism features"
+        "curated annotation bundle present; normalized cohort aggregation pending": (
+            "Curated annotations; shared aggregation pending"
         ),
+        "raw_many_to_many_annotation_hit_rows_plus_all_hmm_rows": "Raw annotation-hit rows plus all HMM rows",
+        "source_dram_term_rows_and_processed_expression_detection": "Source DRAM terms, plus processed expression detection",
+        "curated_accepted_or_present_mechanism_features": "Curated accepted or present mechanism features",
     }
     public_rate_labels = {
-        "quarantined_raw_hit_row_numerator_not_marker_density": (
-            "Quarantined raw hit-row numerator requires feature harmonization"
-        ),
-        "source_scaffold_term_density_non_equivalent": (
-            "Source-scaffold term density with a separate cross-lane contract"
-        ),
-        "comparable_curated_feature_density": (
-            "Comparable curated-feature density within the POC contract"
-        ),
+        "pipeline_normalized_screening_not_cross_lane_mechanism_rate": "Screening events only; no cross-route rate",
+        "source_scaffold_term_density_non_equivalent": "Source-term density; not comparable across routes",
+        "quarantined_raw_hit_row_numerator_not_marker_density": "Raw hit rows quarantined; not a marker density",
+        "comparable_curated_feature_density": "Comparable curated-feature density",
     }
     provenance_rows_html = "\n".join(
         "<tr>"
         f"<td>{html.escape(str(row['lane']))}</td>"
-        f"<td>{safe_int(row['report_units']):,}</td>"
+        f"<td class='num'>{safe_int(row['report_units']):,}</td>"
         f"<td>{html.escape(str(row['metadata_universe']))}</td>"
-        f"<td>{html.escape(str(row['primary_source']))}</td>"
+        f"<td>{source_cell(row['primary_source'])}</td>"
         f"<td>{html.escape(str(row['resolution_now']))}</td>"
         f"<td>{html.escape(str(row['use_now']))}</td>"
         f"<td>{html.escape(str(row['blocking_gap']))}</td>"
@@ -4059,13 +4210,13 @@ def render_html(
     evidence_rows_html = "\n".join(
         "<tr>"
         f"<td>{html.escape(str(row['lane']))}</td>"
-        f"<td>{safe_int(row['registered_units']):,}</td>"
-        f"<td>{safe_int(row['esm2_units']):,}</td>"
-        f"<td>{safe_int(row['glm2_units']):,}</td>"
-        f"<td>{safe_int(row['functional_payload_units']):,}</td>"
-        f"<td>{safe_int(row['data_complete_tri_view_units']):,}</td>"
-        f"<td>{safe_int(row['mechanism_comparable_tri_view_units']):,}</td>"
-        f"<td>{html.escape(functional_contract_labels.get(str(row['functional_contract']), str(row['functional_contract'])))}</td>"
+        f"<td class='num'>{safe_int(row['registered_units']):,}</td>"
+        f"<td class='num'>{safe_int(row['esm2_units']):,}</td>"
+        f"<td class='num'>{safe_int(row['glm2_units']):,}</td>"
+        f"<td class='num'>{safe_int(row['functional_payload_units']):,}</td>"
+        f"<td class='num'>{safe_int(row['data_complete_tri_view_units']):,}</td>"
+        f"<td class='num'>{safe_int(row['mechanism_comparable_tri_view_units']):,}</td>"
+        f"<td>{html.escape(functional_contract_labels.get(str(row['functional_contract']), str(row['functional_contract']).replace('_', ' ')))}</td>"
         "</tr>"
         for row in evidence_contract
     )
@@ -4081,176 +4232,258 @@ def render_html(
     functional_rows_html = "\n".join(
         "<tr>"
         f"<td>{html.escape(str(row['lane']))}</td>"
-        f"<td>{safe_int(row['functional_units']):,}</td>"
+        f"<td class='num'>{safe_int(row['functional_units']):,}</td>"
         f"<td>{html.escape(numerator_labels.get(str(row['numerator_provenance']), str(row['numerator_provenance'])))}</td>"
-        f"<td>{safe_float(row['raw_methane_row_count_median']):,.1f}</td>"
-        f"<td>{safe_float(row['protein_count_median']):,.1f}</td>"
-        f"<td>{100 * safe_float(row['raw_rows_per_protein_gt_1_share']):.1f}%</td>"
-        f"<td>{html.escape(public_rate_labels.get(str(row['public_rate_metric_status']), str(row['public_rate_metric_status'])))}</td>"
+        f"<td class='num'>{safe_float(row['raw_methane_row_count_median']):,.1f}</td>"
+        f"<td class='num'>{safe_float(row['protein_count_median']):,.1f}</td>"
+        f"<td class='num'>{100 * safe_float(row['raw_rows_per_protein_gt_1_share']):.1f}%</td>"
+        f"<td>{html.escape(public_rate_labels.get(str(row['public_rate_metric_status']), str(row['public_rate_metric_status']).replace('_', ' ')))}</td>"
         "</tr>"
         for row in functional_audit.get("lane_metrics", [])
     )
+    raw_pairs = geometry.get("raw_reciprocal_pair_counts", {}) or {}
+    z_pairs = geometry.get("dimension_zscore_reciprocal_pair_counts", {}) or {}
+    raw_rumen_wetland = safe_int(raw_pairs.get("rumen↔wetland"))
+    raw_rumen_mangrove = safe_int(raw_pairs.get("mangrove↔rumen"))
+    z_rumen_total = safe_int(z_pairs.get("rumen↔wetland")) + safe_int(z_pairs.get("mangrove↔rumen"))
+    z_rumen_text = (
+        "and no mutual pair involving a rumen genome remains"
+        if z_rumen_total == 0
+        else f"and {z_rumen_total:,} mutual pairs involving a rumen genome remain"
+    )
+    knn_k = safe_int(geometry.get("knn_k"))
+    dimensions = safe_int(geometry.get("dimensions"), 1280)
+    outside_cards = safe_int(nearest_core.get("target_candidate_cards_outside_core"))
+    outside_cards_rumen = safe_int(nearest_core.get("target_candidate_outside_core_nearest_rumen_cards"))
+    nearest_median = safe_float(nearest_core.get("outside_core_nearest_similarity_median"))
+    random_median = safe_float(geometry.get("random_pair_similarity_median"))
+    cross_edges = safe_int(geometry.get("raw_cross_domain_directed_edges"))
+    drawn_neighbor_links = sum(
+        1 for link in payload.get("niche", {}).get("links", []) if link.get("evidence_type") != "case_study_nearest_poc"
+    )
+    drawn_case_links = sum(
+        1 for link in payload.get("niche", {}).get("links", []) if link.get("evidence_type") == "case_study_nearest_poc"
+    )
+    case_study_count = safe_int(payload.get("niche", {}).get("case_study_count"))
+    candidates_rumen_text = (
+        f"all {outside_cards:,} selected candidates outside the core"
+        if outside_cards and outside_cards_rumen == outside_cards
+        else f"{outside_cards_rumen:,} of the {outside_cards:,} selected candidates outside the core"
+    )
+    neighbor_link_rows = [
+        link for link in payload.get("niche", {}).get("links", []) if link.get("evidence_type") != "case_study_nearest_poc"
+    ]
+    mangrove_wetland_only = bool(neighbor_link_rows) and all(
+        {str(link.get("source_category")), str(link.get("target_category"))} == {"mangrove", "wetland"}
+        for link in neighbor_link_rows
+    )
+    mutual_share = (
+        sum(1 for link in neighbor_link_rows if link.get("reciprocal")) / len(neighbor_link_rows)
+        if neighbor_link_rows else 0.0
+    )
+    neighbor_mix_text = (
+        (" All of them join mangrove and wetland records" if mangrove_wetland_only else "")
+        + (f", and {100 * mutual_share:.1f}% are mutual." if mangrove_wetland_only else f" {100 * mutual_share:.1f}% are mutual.")
+    )
+    top500_share = safe_float(functional_audit.get("legacy_top_500_mangrove_share"))
+    top500_text = "all of its top 500 records were mangrove" if top500_share >= 0.9995 else f"{100 * top500_share:.1f}% of its top 500 records were mangrove"
     css = """
-    :root{--ink:#16202a;--muted:#64748b;--panel:#ffffff;--surface:#f6fafb;--line:#dbe5ee;--rumen:#c56a13;--wetland:#0284a8;--mangrove:#168a48;--gold:#d89b14}
-    *{box-sizing:border-box} html,body{max-width:100%;overflow-x:hidden} body{margin:0;background:var(--surface);color:var(--ink);font-family:Inter,Aptos,Segoe UI,Arial,sans-serif;line-height:1.48}
+    :root{--ink:#16202a;--muted:#5b6b7c;--panel:#ffffff;--surface:#f6fafb;--line:#dbe5ee;--rumen:#db2777;--wetland:#65a30d;--mangrove:#0891b2;--futian:#6366f1;--gold:#d89b14;--teal:#0f766e}
+    *{box-sizing:border-box} html,body{max-width:100%;overflow-x:hidden} body{margin:0;background:var(--surface);color:var(--ink);font-family:Inter,Aptos,Segoe UI,Arial,sans-serif;line-height:1.5}
     header{padding:58px 7vw 34px;background:linear-gradient(135deg,#071b25,#0d3c42 52%,#10523f);color:white}
     .eyebrow{letter-spacing:.12em;text-transform:uppercase;color:#b8f7d8;font-size:12px;font-weight:750}
     h1{font-size:clamp(34px,5vw,62px);line-height:1.02;margin:.35em 0 .25em;max-width:1120px}
-    h2{font-size:26px;margin:0 0 12px} h3{font-size:18px;margin:18px 0 8px}
-    .subtitle{max-width:980px;font-size:18px;color:#ddfff2}.claim{display:inline-block;margin-top:18px;border:1px solid #85dff1;padding:9px 12px;border-radius:999px;color:#e8fbff}
+    h2{font-size:26px;margin:0 0 12px;line-height:1.2} h3{font-size:18px;margin:18px 0 8px}
+    .subtitle{max-width:980px;font-size:18px;color:#ddfff2}.claim{display:inline-block;margin-top:18px;border:1px solid #85dff1;padding:9px 14px;border-radius:14px;color:#e8fbff;max-width:980px}
     main{width:100%;max-width:1280px;margin:auto;padding:28px 24px 76px}.section{min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;margin:18px 0;box-shadow:0 10px 30px rgba(15,23,42,.05)}
-    .metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}.metric{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:14px}.metric b{display:block;font-size:28px}.metric span{font-size:12px;color:var(--muted)}
-    .viz{min-height:540px;border:1px solid var(--line);border-radius:12px;background:#fbfdff;position:relative;overflow:hidden}.viz.tall{min-height:700px}.viz.medium{min-height:470px}.viz.graph{min-height:660px}.viz.graph>svg{width:100%;display:block}.viz.matrix{min-height:760px;overflow:auto}.viz.circos{min-height:620px}
+    .section>p{max-width:980px}
+    .metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}.metric{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:14px}.metric b{display:block;font-size:28px;font-variant-numeric:tabular-nums}.metric span{font-size:12.5px;color:var(--muted)}
+    .viz{min-height:540px;border:1px solid var(--line);border-radius:12px;background:#fbfdff;position:relative;overflow:hidden}.viz.tall{min-height:700px}.viz.medium{min-height:470px}.viz.graph{min-height:560px}.viz.graph>svg{width:100%;display:block}.viz.matrix{min-height:760px;overflow:auto}.viz.circos{min-height:620px}
+    .viz svg{display:block;width:100%;height:auto}.viz.matrix svg,.viz.chart-scroll svg{width:auto;max-width:none}.viz.chart-scroll{overflow-x:auto}
     .grid2{display:grid;grid-template-columns:1.35fr .65fr;gap:18px}.grid2-even{display:grid;grid-template-columns:1fr 1fr;gap:18px}
     .signature-stack{display:grid;grid-template-columns:1fr;gap:22px}.signature-panel{min-width:0}
-    .chart-note{font-size:13px;color:var(--muted);margin:8px 0 10px}
-    .sample-score-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}.sample-score-card{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:14px}.sample-score-card h3{font-size:15px;margin:0 0 8px}.sample-score-card p{font-size:13px;color:var(--muted);margin:0}
-    .sample-risk-abstract{width:100%;margin:18px 0 10px;border:1px solid var(--line);border-radius:14px;background:#fbfdff;box-shadow:0 10px 28px rgba(15,23,42,.06)}
-    .figure-caption{font-size:13px;color:var(--muted);line-height:1.52;margin:8px 2px 18px}
+    .figure-caption{font-size:13px;color:var(--muted);line-height:1.55;margin:8px 2px 18px;max-width:980px}
     .runtime-error{position:absolute;inset:18px;border:1px dashed #d89b14;border-radius:12px;background:#fff7ed;color:#7c2d12;padding:18px;font-size:14px;line-height:1.5}
     .approach-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}.approach-card{border:1px solid var(--line);border-radius:12px;background:#f8fafc;padding:14px}.approach-card b{display:block;margin-bottom:6px}.approach-card span{font-size:13px;color:var(--muted)}
     .decision-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}.decision-card{border:1px solid var(--line);border-radius:12px;background:#f8fafc;padding:15px}.decision-card b{display:block;margin-bottom:7px}.decision-card span{font-size:13px;color:var(--muted)}
-    .side-card{border:1px solid var(--line);border-radius:12px;background:#f8fafc;padding:16px;min-height:540px}.side-card .muted{font-size:12px;color:var(--muted)}
-    .infographic{width:100%;max-height:620px;object-fit:contain;background:#061a22;border-radius:14px;border:1px solid #0c3440}.legend-note{font-size:13px;color:var(--muted);margin-top:10px}
-    .tooltip{position:absolute;pointer-events:none;background:#0f172a;color:white;padding:8px 10px;border-radius:8px;font-size:12px;max-width:320px;opacity:0;z-index:20}
-    .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}.toolbar button{border:1px solid var(--line);background:white;border-radius:999px;padding:7px 10px;cursor:pointer}.toolbar button.active{background:#0f766e;color:white;border-color:#0f766e}
-    .legend{display:flex;gap:13px;flex-wrap:wrap;color:var(--muted);font-size:13px}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
-    .fallback{margin-top:12px}.fallback img{max-width:100%;border:1px solid var(--line);border-radius:10px}.note{color:var(--muted)}.warn{background:#fff7ed;border-left:4px solid var(--gold);padding:12px;border-radius:10px}
-    .pill{display:inline-block;padding:5px 8px;border:1px solid var(--line);border-radius:999px;margin:4px 4px 0 0;color:#334155;background:#f8fafc;font-size:12px}
-    .readiness-table{display:block;width:100%;max-width:100%;overflow-x:auto;border-collapse:collapse;font-size:13px}.readiness-table th{background:#eef7f5;text-align:left}.readiness-table th,.readiness-table td{border:1px solid var(--line);padding:9px;vertical-align:top}.readiness-table td:nth-child(2){font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
-    .status-tag{display:inline-block;border:1px solid #d89b14;background:#fff7ed;color:#7c2d12;border-radius:999px;padding:3px 7px;font-size:11px;font-weight:700;white-space:nowrap}
+    .layer-list{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}.layer{border:1px solid var(--line);border-radius:12px;background:#f8fafc;padding:14px}.layer h3{font-size:15px;margin:10px 0 6px}.layer p{font-size:13px;color:var(--muted);margin:0 0 8px}.layer .now-line{color:var(--ink);margin:0}
+    .state{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:3px 8px;border:1px solid}.state.partial{color:#92400e;border-color:#f3cf8b;background:#fff8eb}.state.missing{color:#475569;border-color:#cbd5e1;background:#f1f5f9}
+    .side-card{border:1px solid var(--line);border-radius:12px;background:#f8fafc;padding:16px;min-height:540px;font-size:14px}.side-card .muted{font-size:12.5px;color:var(--muted)}.side-card h3{margin:4px 0 6px;overflow-wrap:anywhere}
+    .card-facts{display:grid;grid-template-columns:minmax(0,1fr);gap:2px;margin:10px 0}.card-facts dt{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:8px}.card-facts dd{margin:0;overflow-wrap:anywhere}
+    .tooltip{position:absolute;pointer-events:none;background:#0f172a;color:white;padding:8px 10px;border-radius:8px;font-size:12px;line-height:1.45;max-width:340px;opacity:0;z-index:20}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 6px}.toolbar button{border:1px solid var(--line);background:white;border-radius:999px;padding:7px 12px;cursor:pointer;font:inherit;font-size:14px}.toolbar button.active{background:var(--teal);color:white;border-color:var(--teal)}
+    .legend{display:flex;gap:8px 16px;flex-wrap:wrap;color:var(--muted);font-size:13px;margin:10px 0}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}.halo{display:inline-block;width:11px;height:11px;border-radius:50%;border:1.6px solid var(--gold);margin-right:6px;vertical-align:-2px}.line{display:inline-block;width:18px;border-top:2px solid;margin-right:6px;vertical-align:middle}
+    .fallback{margin-top:12px}.fallback img{max-width:100%;border:1px solid var(--line);border-radius:10px}.note{color:var(--muted)}.warn{background:#fff7ed;border-left:4px solid var(--gold);padding:12px;border-radius:10px;max-width:980px}
+    .refs{margin:6px 0 0;padding-left:20px;color:var(--muted);font-size:13px;line-height:1.7}
+    .readiness-table{display:block;width:100%;max-width:100%;overflow-x:auto;border-collapse:collapse;font-size:13px}.readiness-table th{background:#eef7f5;text-align:left}.readiness-table th,.readiness-table td{border:1px solid var(--line);padding:9px;vertical-align:top}.readiness-table td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+    .status-tag{display:inline-block;border:1px solid #cbd5e1;background:#f1f5f9;color:#334155;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:700;white-space:nowrap}
     a{color:#075985} .closing{font-size:18px;line-height:1.58}
-    @media (max-width:1020px){.metric-grid{grid-template-columns:repeat(2,1fr)}.approach-grid,.decision-grid{grid-template-columns:1fr 1fr}.sample-score-grid{grid-template-columns:1fr 1fr}.grid2,.grid2-even{grid-template-columns:1fr}.viz.tall{min-height:560px}}
+    @media (max-width:1020px){.metric-grid{grid-template-columns:repeat(2,1fr)}.approach-grid,.decision-grid,.layer-list{grid-template-columns:1fr 1fr}.grid2,.grid2-even{grid-template-columns:1fr}.viz.tall{min-height:520px}.side-card{min-height:0}}
     :focus-visible{outline:3px solid #0ea5e9;outline-offset:3px}
-    @media (max-width:720px){header{padding:38px 18px 26px}main{padding:14px 10px 48px}.section{padding:16px 12px;margin:12px 0}.approach-grid,.decision-grid{grid-template-columns:1fr}.metric-grid{grid-template-columns:1fr}.sample-score-grid{grid-template-columns:1fr}.viz{min-height:440px}.viz.graph{min-height:520px}.viz.matrix{min-height:620px}.closing{font-size:16px}}
+    @media (max-width:720px){header{padding:38px 18px 26px}main{padding:14px 10px 48px}.section{padding:16px 12px;margin:12px 0}.approach-grid,.decision-grid,.layer-list{grid-template-columns:1fr}.metric-grid{grid-template-columns:1fr}.viz{min-height:0}.viz.tall,.viz.medium,.viz.graph,.viz.circos{min-height:0}.viz.matrix{min-height:620px}.closing{font-size:16px}h2{font-size:22px}}
     @media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
     """
     js = """
     (function(){
     const ATLAS = window.METHANET_ATLAS;
-    const COLORS = {rumen:'#c56a13', wetland:'#0284a8', mangrove:'#168a48', context:'#94a3b8', pending:'#d89b14'};
-    const fmt = v => Number.isFinite(Number(v)) ? Number(v).toLocaleString() : String(v);
+    const COLORS = {rumen:'#db2777', wetland:'#65a30d', mangrove:'#0891b2', msm:'#0891b2', futian:'#6366f1', context:'#94a3b8', pending:'#d89b14'};
+    const ROUTE_COLORS = {pipeline:'#0f766e', source:'#a16207'};
+    const METHOD_NAMES = {umap:'UMAP', diffusion:'Diffusion map', phate:'PHATE', tsne:'t-SNE', pca:'PCA'};
+    const PROJECTION_NOTES = {
+      umap:'UMAP keeps local neighborhoods readable. Distances between far-apart clusters are not meaningful.',
+      diffusion:'The diffusion map is dominated by the separation between the reference core and the other sources, which squeezes most records into a narrow band.',
+      tsne:'t-SNE preserves local neighborhoods. Cluster sizes and the gaps between clusters are not meaningful.',
+      pca:'PCA is a linear view of the largest directions of variance. It shows broad structure only.',
+      phate:'PHATE emphasizes transitions between neighborhoods.'
+    };
+    const LABELS = {
+      pipeline_normalized_comparability_pending:'shared pipeline; cross-route comparison pending',
+      source_scaffold_non_equivalent:'source annotations; separate contract',
+      functional_incomplete:'no functional payload',
+      annotation_complete_harmonization_pending:'annotated; shared aggregation pending',
+      paired_single_native_plus_single_shuffled:'single window (1 native, 1 shuffled)',
+      multiwindow_10_native_plus_10_shuffled:'multi-window (10 native, 10 shuffled)',
+      glm2_not_available:'not available',
+      pass_review:'passes review',
+      medium_low_completeness:'medium or low completeness',
+      mapped_to_ncbi_biosample:'mapped to an NCBI BioSample',
+      exact_mag_archive_qc_source_scaffold:'exact archive, QC and source annotations',
+      exact_analysis_accession:'exact ENA analysis accession',
+      site_month_habitat_context:'site, month and habitat context',
+      exact_ncbi_assembly_biosample:'exact NCBI assembly and BioSample',
+      'POC bridge candidate':'Reference-core candidate (proof of concept)',
+      'Mangrove geometry-led candidate; functional harmonization pending':'Mangrove candidate (embedding geometry and QC)',
+      'MUCC v1 source-scaffold review candidate':'Old Woman Creek candidate (source annotations)',
+      'accepted KOfam genes and present METABOLIC events; best-ranked MCycDB/SCycDB hits exposed separately':'accepted KOfam genes and METABOLIC events; best MCycDB and SCycDB hits kept separate',
+      'source DRAM term rows and processed expression detection':'source DRAM terms, plus processed expression detection'
+    };
+    const fmt = v => Number.isFinite(Number(v)) ? Number(v).toLocaleString('en-US') : String(v);
     const panelIds = ['mbag-knowledge-graph','niche-map','signature-matrix','candidate-circos','evidence-contract-chart','sample-linkage'];
     function renderFailure(err){
       console.error(err);
       panelIds.forEach(id => {
         const el = document.getElementById(id);
         if(!el){ return; }
-        el.innerHTML = `<div class="runtime-error"><b>Interactive panel did not load.</b><br>${String(err && err.message ? err.message : err)}<br><span>Confirm that the local D3 runtime and the embedded report payload were published with report.html.</span></div>`;
+        el.innerHTML = `<div class="runtime-error"><b>This interactive figure did not load.</b><br>${esc(err && err.message ? err.message : err)}<br><span>The static versions below each figure show the same data.</span></div>`;
       });
     }
     function requireAtlas(){
-      if(!window.d3){ throw new Error('D3 runtime is unavailable.'); }
-      if(!ATLAS || !ATLAS.niche || !ATLAS.summary){ throw new Error('EmergentBiome atlas payload is unavailable.'); }
+      if(!window.d3){ throw new Error('The D3 charting library is unavailable.'); }
+      if(!ATLAS || !ATLAS.niche || !ATLAS.summary){ throw new Error('The embedded atlas data is unavailable.'); }
     }
     function panelWidth(el, minWidth=760){ return Math.max(minWidth, (el.node() && el.node().clientWidth) || minWidth); }
     function tooltip(){ return d3.select('body').append('div').attr('class','tooltip'); }
-    function clean(v, fallback='unavailable'){ return (v === null || v === undefined || String(v).trim()==='' || String(v)==='NaN') ? fallback : String(v); }
+    function present(v){ return !(v === null || v === undefined || String(v).trim()==='' || ['NaN','None','null','undefined'].includes(String(v))); }
+    function esc(v){ return String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function label(v){ if(!present(v)){ return ''; } const key=String(v); return LABELS[key] || key.replace(/_/g,' '); }
     // JSON null marks a source-lane gap, not a coordinate at the origin.
     function finiteNum(v){
       return v !== null && v !== undefined && typeof v !== 'boolean' &&
         (typeof v !== 'string' || v.trim() !== '') && Number.isFinite(Number(v));
     }
-    function fixed(v, digits=2, fallback='not available'){ return finiteNum(v) ? Number(v).toFixed(digits) : fallback; }
-    function densityText(d, key){ return finiteNum(d[key]) ? `${Number(d[key]).toFixed(2)} /1k proteins` : 'unavailable'; }
-    function percentText(v, digits=1){ return finiteNum(v) ? `${Number(v).toFixed(digits)}%` : 'unavailable'; }
+    function nodeColor(d){ return COLORS[d.lane_key] || COLORS[d.source_category] || COLORS.context; }
+    function isMucc(d){ return String(d.source_display || '').indexOf('MUCC v1') >= 0; }
+    function expressionSupported(d){ const v=String(d.processed_gene_expression_support).toLowerCase(); return ['true','1','yes'].includes(v) || Number(d.processed_gene_expression_support) > 0; }
+    // An unassayed gene is not an absent gene: only the Old Woman Creek source carries expression data.
+    function expressionText(d){
+      if(expressionSupported(d) || isMucc(d)){
+        return `methane ${fmt(Number(d.methane_expressed_gene_rows || 0))} rows, sulfur ${fmt(Number(d.sulfur_expressed_gene_rows || 0))} rows (processed source tables; detection, not activity)`;
+      }
+      return 'not assayed in this source';
+    }
     function qcText(d){
-      const tier = clean(d.qc_tier, 'QC tier unavailable');
-      const gunc = clean(d.gunc_pass, 'GUNC unavailable');
-      return `${percentText(d.checkm2_completeness,1)} complete / ${percentText(d.checkm2_contamination,2)} contamination · ${tier} · GUNC ${gunc}`;
-    }
-    function provenanceText(d){
-      const resolution = clean(d.provenance_resolution_tier, '');
-      const accession = clean(d.primary_accession || d.source_bucket || d.mapped_ncbi_biosamples, '');
-      const type = clean(d.primary_accession_type, '');
-      const parts = [resolution, accession, type].filter(v => v && v !== 'unavailable');
-      return parts.length ? parts.join(' · ') : 'provenance unavailable in this payload';
-    }
-    function sampleContextText(d){
-      const label = clean(d.sample_context_label || d.source_sample_ids || d.site_label, '');
-      const resolution = clean(d.sample_context_resolution || d.sample_rollup_status, '');
-      const sampleCount = finiteNum(d.linked_sample_context_count) ? `${Number(d.linked_sample_context_count).toLocaleString()} linked sample-context rows` : '';
-      const envFields = finiteNum(d.environmental_context_fields_present) ? `${Number(d.environmental_context_fields_present).toLocaleString()} environmental fields` : '';
-      const parts = [label, resolution, sampleCount, envFields].filter(v => v && v !== 'unavailable');
-      return parts.length ? parts.join(' · ') : 'sample context unavailable';
+      if(!finiteNum(d.checkm2_completeness)){ return ''; }
+      const contamination = finiteNum(d.checkm2_contamination) ? `${Number(d.checkm2_contamination).toFixed(2)}% contamination` : 'contamination not reported';
+      const tier = label(d.qc_tier);
+      return `${Number(d.checkm2_completeness).toFixed(1)}% complete, ${contamination}${tier ? ' · ' + tier : ''}`;
     }
     function taxonomyText(d){
-      const parts=[d.domain,d.phylum,d.class,d.order,d.family,d.genus,d.species].filter(v=>v && String(v).trim());
-      if(parts.length){ return parts.join(' · '); }
-      return d.has_functional ? 'taxonomy unresolved' : 'taxonomy pending functional run';
+      const parts=[d.domain,d.phylum,d.class,d.order,d.family,d.genus,d.species].filter(v=>present(v) && String(v)!=='Unknown');
+      return parts.length ? parts.join(' · ') : 'taxonomy not resolved';
     }
+    function referenceText(d){
+      if(!present(d.nearest_poc_id)){ return ''; }
+      if(d.nearest_poc_id === d.proteome_id){ return 'this record is itself in the reference core'; }
+      const sim = finiteNum(d.nearest_poc_similarity) ? ` (raw cosine ${Number(d.nearest_poc_similarity).toFixed(3)})` : '';
+      return `${esc(d.nearest_poc_id)}${sim}`;
+    }
+    function row(name, value){ return present(value) ? `<span class="tip-k">${name}:</span> ${value}<br>` : ''; }
     function tipText(d){
-      return `${clean(d.proteome_id)}<br>
-      <span>${clean(d.mag_id,'MAG/bin id not available')}</span><br>
-      Lane: ${clean(d.source_display || d.source_category)} · Status: ${clean(d.plot_annotation_status || d.review_tier || d.atlas_inclusion_status)}<br>
-      Scope: ${clean(d.analysis_unit_type,'MAG/proteome unit')} · ${clean(d.claim_scope,'MAG/proteome molecular screening')}<br>
-      Taxonomy: ${taxonomyText(d)}<br>
-      Functional contract: ${clean(d.functional_comparability_tier)}<br>
-      Numerator provenance: ${clean(d.functional_numerator_provenance)}<br>
-      gLM2 protocol: ${clean(d.glm2_protocol_class)}<br>
-      Nearest POC reference: ${clean(d.nearest_poc_id,'not applicable')}<br>
-      Public mechanism score: ${clean(d.public_attestation_score_status)}<br>
-      Expression detection: methane ${fmt(Number(d.methane_expressed_gene_rows || 0))} rows; sulfur ${fmt(Number(d.sulfur_expressed_gene_rows || 0))} rows<br>
-      QC: ${qcText(d)}<br>
-      Provenance: ${provenanceText(d)}<br>
-      Sample context: ${sampleContextText(d)}`;
+      return `<b>${esc(d.proteome_id)}</b><br>`
+        + row('Lane', esc(d.source_display || d.source_category))
+        + row('Status', esc(d.plot_annotation_status || d.review_tier || ''))
+        + row('Taxonomy', esc(taxonomyText(d)))
+        + row('Functional route', esc(label(d.functional_comparability_tier)))
+        + row('gLM2 protocol', esc(label(d.glm2_protocol_class)))
+        + row('Closest reference-core genome', referenceText(d))
+        + row('Expression', esc(expressionText(d)))
+        + row('Genome quality', esc(qcText(d)));
     }
     const cardMap = new Map((ATLAS.cards || []).map(d => [d.proteome_id, d]));
+    function fact(name, value){ return present(value) ? `<dt>${name}</dt><dd>${value}</dd>` : ''; }
     function updateCard(id){
       const d = cardMap.get(id) || (ATLAS.niche.nodes || []).find(x => x.proteome_id === id);
       const box = d3.select('#candidate-card');
       if(!d){ return; }
-      box.html(`<h3>${d.candidate_set || 'Molecular atlas node'}</h3>
-        <p>${d.proteome_id}</p>
-        <p class='muted'>${clean(d.source_display || d.source_category)} · ${clean(d.plot_annotation_status || d.review_tier)}<br>${taxonomyText(d)}</p>
-        <p>Bridge affinity: ${fixed(d.bridge_affinity_index || d.nearest_poc_similarity,3)}<br>
-        Nearest POC reference: ${clean(d.nearest_poc_id,'not applicable')}<br>
-        Functional evidence: ${clean(d.functional_comparability_tier)} · ${clean(d.mechanism_equivalence_status)}<br>
-        Numerator provenance: ${clean(d.functional_numerator_provenance)}<br>
-        Rate status: ${clean(d.rate_metric_status)}<br>
-        gLM2: ${clean(d.glm2_protocol_class)} · ${clean(d.glm2_metric_comparability_status)}<br>
-        ${d.mechanism_equivalence_status==='mechanism_equivalent'
-          ? `POC-internal review index: ${fixed(d.molecular_attestation_index,3)}`
-          : `Cross-lane mechanism score: withheld (${clean(d.public_attestation_score_status)})`}</p>
-        <p>Processed expression detection: methane ${fmt(Number(d.methane_expressed_gene_rows || 0))} rows · sulfur ${fmt(Number(d.sulfur_expressed_gene_rows || 0))} rows.<br><span class='muted'>This supports detection and occupancy review. Activity normalization and flux linkage require paired quantitative evidence.</span></p>
-        <p>QC: ${fixed(d.checkm2_completeness,1)}% complete / ${fixed(d.checkm2_contamination,2)}% contamination · ${clean(d.qc_tier,'QC tier not available')}</p>
-        <p>Provenance: ${clean(d.provenance_resolution_tier)} · ${clean(d.primary_accession || d.source_bucket)}<br><span class='muted'>${clean(d.metadata_caveat,'No extra metadata caveat recorded.')}</span></p>
-        <p>Allowed claim: ${d.allowed_claim_wording || 'MAG/proteome-level molecular screening only.'}</p>
-        <p class='muted'>Blocks final MRV scoring: ${d.blocking_gap || 'sample mapping, abundance, environment, uncertainty, and validation.'}<br>Next metadata action: ${clean(d.next_metadata_action,'Resolve sample and validation context.')}</p>`);
+      const mechanism = d.mechanism_equivalence_status === 'mechanism_equivalent'
+        ? 'available within the comparable contract'
+        : 'not available: the annotation routes are not yet comparable';
+      box.html(`<p class='muted'>${esc(label(d.candidate_set) || 'Atlas record')}</p>
+        <h3>${esc(d.proteome_id)}</h3>
+        <p class='muted'>${esc(d.source_display || d.source_category)} · ${esc(d.review_tier || d.plot_annotation_status || '')}<br>${esc(taxonomyText(d))}</p>
+        <dl class='card-facts'>
+          ${fact('Closest reference-core genome', referenceText(d))}
+          ${fact('Functional route', esc(label(d.functional_comparability_tier)))}
+          ${fact('What is counted', esc(label(d.functional_numerator_provenance)))}
+          ${fact('Cross-route methane score', mechanism)}
+          ${fact('gLM2 protocol', present(d.glm2_protocol_class) ? esc(label(d.glm2_protocol_class)) + '; compared within protocol only' : '')}
+          ${fact('Expression', esc(expressionText(d)))}
+          ${fact('Genome quality', esc(qcText(d)))}
+          ${fact('Provenance', esc(label(d.provenance_resolution_tier)))}
+        </dl>
+        ${present(d.metadata_caveat) ? `<p class='muted'>${esc(d.metadata_caveat)}</p>` : ''}
+        <p><b>Allowed claim.</b> ${esc(d.allowed_claim_wording || 'Genome-level molecular screening only.')}</p>
+        <p class='muted'><b>Needed before any risk score:</b> ${esc(d.blocking_gap || 'sample mapping, abundance, environment, uncertainty and validation')}.${present(d.next_metadata_action) ? ' <b>Next:</b> ' + esc(d.next_metadata_action) : ''}</p>`);
     }
     function availableMethods(){
       const nodes = ATLAS.niche.nodes || [];
-      return ['diffusion','umap','phate','tsne','pca'].filter(m =>
+      return ['umap','diffusion','phate','tsne','pca'].filter(m =>
         nodes.some(node => finiteNum(node[`${m}_1`]) && finiteNum(node[`${m}_2`])));
     }
+    function arrowDefs(svg){
+      const defs=svg.append('defs');
+      defs.append('marker').attr('id','mbag-arrow').attr('viewBox','0 -5 10 10').attr('refX',9).attr('refY',0).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#94a3b8');
+      defs.append('marker').attr('id','mbag-arrow-gate').attr('viewBox','0 -5 10 10').attr('refX',9).attr('refY',0).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#d89b14');
+    }
+    const GRAPH_PALETTE={evidence:['#0f766e','#effaf8','#99d6cf'],guardrail:['#475569','#f7fafc','#cbd5e1'],core:['#0d3c42','#e7fff4','#9ee6c0'],output:['#4338ca','#eef2ff','#c7d2fe'],gate:['#a16207','#fff9e8','#efca7d']};
     function renderKnowledgeGraph(){
       const el=d3.select('#mbag-knowledge-graph'); el.selectAll('*').remove();
       const summary=ATLAS.summary || {}, audit=ATLAS.scientific_audit || {}, mucc=audit.mucc_validation_readiness || {};
-      const w=panelWidth(el,1120), h=650, margin=44, svg=el.append('svg').attr('width','100%').attr('height',h).attr('viewBox',[0,0,w,h]).attr('preserveAspectRatio','xMidYMid meet').attr('role','img').attr('aria-label','EmergentBiome evidence architecture from molecular units through validation gates');
-      const leftW=270, rightW=310, coreW=310, gateW=Math.max(250, Math.min(300, (w-margin*2-64)/3));
+      const glm2=(summary.glm2_single_window_units || 0) + (summary.glm2_multiwindow_units || 0);
+      const available=(el.node() && el.node().clientWidth) || 1120;
+      if(available < 760){ renderKnowledgeGraphNarrow(el, summary, mucc, glm2, available); return; }
+      const w=Math.max(1060, available), h=690, margin=44;
+      const svg=el.append('svg').attr('viewBox',[0,0,w,h]).attr('preserveAspectRatio','xMidYMid meet').attr('role','img').attr('aria-label','Evidence model for one genome record: evidence present today and the validation path still required');
+      arrowDefs(svg);
+      const leftW=270, rightW=300, coreW=290, gateW=Math.max(250, Math.min(300, (w-margin*2-64)/3));
       const gateGap=Math.max(32, Math.min(220, (w-margin*2-gateW*3)/2));
       const gateX=(w-gateW*3-gateGap*2)/2;
       const nodes=[
-        {id:'esm2',x:margin,y:74,w:leftW,h:102,kind:'context',eyebrow:'representation context',lines:['ESM-2 neighborhoods'],meta:[`${fmt(summary.embedding_context_total || 0)} embedded units`]},
-        {id:'function',x:margin,y:244,w:leftW,h:102,kind:'direct',eyebrow:'mechanism evidence',lines:['Functional machinery'],meta:[`${fmt(summary.release_multiview_complete || 0)} data-complete`, 'tri-views']},
-        {id:'glm2',x:margin,y:414,w:leftW,h:102,kind:'context',eyebrow:'genomic context',lines:['gLM2 architecture'],meta:[`${fmt((summary.glm2_single_window_units || 0) + (summary.glm2_multiwindow_units || 0))} protocol-stratified`, 'units']},
-        {id:'qc',x:w-margin-rightW,y:74,w:rightW,h:108,kind:'guardrail',eyebrow:'reliability guardrails',lines:['QC, taxonomy,', 'provenance'],meta:['claim scope travels with evidence']},
-        {id:'core',x:(w-coreW)/2,y:258,w:coreW,h:124,kind:'core',eyebrow:'molecular attestation graph',lines:['MAG / proteome', 'record'],meta:[`${fmt(summary.atlas_registered_units || 0)} registered`, 'evidence units']},
-        {id:'card',x:w-margin-rightW,y:258,w:rightW,h:108,kind:'output',eyebrow:'decision output',lines:['Evidence card', 'and next action'],meta:['review, diligence, study design']},
-        {id:'sample',x:gateX,y:526,w:gateW,h:98,kind:'gate',eyebrow:'validation gate',lines:['Exact sample linkage'],meta:[`${fmt(mucc.exact_sample_environment_flux_links || 0)} / ${fmt(mucc.expression_sample_columns || 0)} MUCC joins`]},
-        {id:'context',x:gateX+gateW+gateGap,y:526,w:gateW,h:98,kind:'gate',eyebrow:'validation gate',lines:['Abundance and', 'environment'],meta:['community weighting, conditions']},
-        {id:'field',x:gateX+2*(gateW+gateGap),y:526,w:gateW,h:98,kind:'gate',eyebrow:'validation gate',lines:['Field and process', 'evidence'],meta:['calibration, uncertainty']}
+        {id:'esm2',x:margin,y:54,w:leftW,h:100,kind:'evidence',eyebrow:'protein embedding',lines:['ESM-2 neighborhoods'],meta:[`${fmt(summary.embedding_context_total || 0)} embedded records`]},
+        {id:'function',x:margin,y:214,w:leftW,h:100,kind:'evidence',eyebrow:'functional annotation',lines:['Methane-cycle screening'],meta:[`${fmt(summary.release_multiview_complete || 0)} records, two routes`]},
+        {id:'glm2',x:margin,y:374,w:leftW,h:100,kind:'evidence',eyebrow:'genomic context',lines:['gLM2 embeddings'],meta:[`${fmt(glm2)} records, two protocols`]},
+        {id:'qc',x:w-margin-rightW,y:54,w:rightW,h:106,kind:'guardrail',eyebrow:'reliability checks',lines:['QC, taxonomy,', 'provenance'],meta:['claim limits travel with the evidence']},
+        {id:'core',x:(w-coreW)/2,y:222,w:coreW,h:112,kind:'core',eyebrow:'evidence graph',lines:['Genome record'],meta:[`${fmt(summary.atlas_registered_units || 0)} registered records`]},
+        {id:'card',x:w-margin-rightW,y:222,w:rightW,h:106,kind:'output',eyebrow:'decision output',lines:['Evidence card', 'and next action'],meta:['review, diligence, study design']},
+        {id:'sample',x:gateX,y:530,w:gateW,h:96,kind:'gate',eyebrow:'still required',lines:['Exact sample links'],meta:[`${fmt(mucc.exact_sample_environment_flux_links || 0)} of ${fmt(mucc.expression_sample_columns || 0)} Old Woman Creek samples joined`]},
+        {id:'context',x:gateX+gateW+gateGap,y:530,w:gateW,h:96,kind:'gate',eyebrow:'still required',lines:['Abundance and', 'environment'],meta:['who is present, under which conditions']},
+        {id:'field',x:gateX+2*(gateW+gateGap),y:530,w:gateW,h:96,kind:'gate',eyebrow:'still required',lines:['Field or process', 'measurement'],meta:['flux, calibration, uncertainty']}
       ];
       const byId=new Map(nodes.map(d=>[d.id,d]));
       const links=[
         ['esm2','core','solid'],['function','core','solid'],['glm2','core','solid'],['qc','core','solid'],
         ['core','card','solid'],['core','sample','gate'],['sample','context','gate'],['context','field','gate']
       ];
-      const palette={core:['#0d3c42','#e7fff4','#9ee6c0'],direct:['#168a48','#edfff2','#9fe0b5'],context:['#0284a8','#edf9ff','#9ad8ee'],guardrail:['#475569','#f7fafc','#cbd5e1'],output:['#c56a13','#fff8ed','#f2c78e'],gate:['#a16207','#fff9e8','#efca7d']};
-      const defs=svg.append('defs');
-      defs.append('filter').attr('id','mbag-card-shadow').attr('x','-10%').attr('y','-18%').attr('width','120%').attr('height','140%')
-        .append('feDropShadow').attr('dx',0).attr('dy',8).attr('stdDeviation',10).attr('flood-color','#0f172a').attr('flood-opacity',.08);
-      defs.append('marker').attr('id','mbag-arrow').attr('viewBox','0 -5 10 10').attr('refX',9).attr('refY',0).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#94a3b8');
       function center(node){ return [node.x+node.w/2,node.y+node.h/2]; }
       function edgePoint(from,to){
         const [fx,fy]=center(from), [tx,ty]=center(to), dx=tx-fx, dy=ty-fy;
@@ -4258,172 +4491,220 @@ def render_html(
         const scale=Math.min(sx,sy);
         return [fx+dx*scale, fy+dy*scale];
       }
-      svg.append('rect').attr('x',18).attr('y',18).attr('width',w-36).attr('height',h-36).attr('rx',16).attr('fill','#ffffff').attr('opacity',.28);
       svg.append('g').selectAll('line').data(links).join('line')
         .attr('x1',d=>edgePoint(byId.get(d[0]),byId.get(d[1]))[0]).attr('y1',d=>edgePoint(byId.get(d[0]),byId.get(d[1]))[1])
         .attr('x2',d=>edgePoint(byId.get(d[1]),byId.get(d[0]))[0]).attr('y2',d=>edgePoint(byId.get(d[1]),byId.get(d[0]))[1])
         .attr('stroke',d=>d[2]==='gate'?'#d89b14':'#8ca2b3').attr('stroke-width',d=>d[2]==='gate'?2.2:1.7)
-        .attr('stroke-dasharray',d=>d[2]==='gate'?'7 6':null).attr('opacity',.9).attr('marker-end','url(#mbag-arrow)');
+        .attr('stroke-dasharray',d=>d[2]==='gate'?'7 6':null).attr('marker-end',d=>d[2]==='gate'?'url(#mbag-arrow-gate)':'url(#mbag-arrow)');
       const group=svg.append('g').selectAll('g.node').data(nodes).join('g').attr('class','node').attr('transform',d=>`translate(${d.x},${d.y})`);
-      group.append('rect').attr('width',d=>d.w).attr('height',d=>d.h).attr('rx',14).attr('fill',d=>palette[d.kind][1]).attr('stroke',d=>palette[d.kind][2]).attr('stroke-width',1.3).attr('filter','url(#mbag-card-shadow)');
-      group.append('rect').attr('width',5).attr('height',d=>d.h-20).attr('x',11).attr('y',10).attr('rx',3).attr('fill',d=>palette[d.kind][0]);
-      group.append('text').attr('x',27).attr('y',25).attr('font-size',10).attr('font-weight',800).attr('letter-spacing','.08em').attr('fill',d=>palette[d.kind][0]).text(d=>d.eyebrow.toUpperCase());
-      group.append('text').attr('x',27).attr('y',53).attr('font-size',14).attr('font-weight',800).attr('fill','#172033')
+      group.append('rect').attr('width',d=>d.w).attr('height',d=>d.h).attr('rx',14).attr('fill',d=>GRAPH_PALETTE[d.kind][1]).attr('stroke',d=>GRAPH_PALETTE[d.kind][2]).attr('stroke-width',1.3).attr('stroke-dasharray',d=>d.kind==='gate'?'6 4':null);
+      group.append('rect').attr('width',5).attr('height',d=>d.h-20).attr('x',11).attr('y',10).attr('rx',3).attr('fill',d=>GRAPH_PALETTE[d.kind][0]);
+      group.append('text').attr('x',27).attr('y',25).attr('font-size',10).attr('font-weight',800).attr('letter-spacing','.08em').attr('fill',d=>GRAPH_PALETTE[d.kind][0]).text(d=>d.eyebrow.toUpperCase());
+      group.append('text').attr('x',27).attr('y',51).attr('font-size',15).attr('font-weight',800).attr('fill','#172033')
         .selectAll('tspan').data(d=>d.lines.map((line,i)=>({line,i}))).join('tspan').attr('x',27).attr('dy',d=>d.i===0?0:18).text(d=>d.line);
-      group.append('text').attr('x',27).attr('y',d=>d.lines.length>1?88:74).attr('font-size',11).attr('fill','#475569')
+      group.append('text').attr('x',27).attr('y',d=>d.lines.length>1?88:74).attr('font-size',12).attr('fill','#475569')
         .selectAll('tspan').data(d=>d.meta.map((line,i)=>({line,i}))).join('tspan').attr('x',27).attr('dy',d=>d.i===0?0:15).text(d=>d.line);
-      group.append('title').text(d=>`${d.lines.join(' ')}\n${d.meta.join(' ')}`);
+      const legend=svg.append('g').attr('transform',`translate(${margin},${h-26})`);
+      legend.append('line').attr('x1',0).attr('x2',28).attr('y1',0).attr('y2',0).attr('stroke','#8ca2b3').attr('stroke-width',1.7);
+      legend.append('text').attr('x',36).attr('y',4).attr('font-size',12).attr('fill','#475569').text('evidence present today');
+      legend.append('line').attr('x1',210).attr('x2',238).attr('y1',0).attr('y2',0).attr('stroke','#d89b14').attr('stroke-width',2.2).attr('stroke-dasharray','7 6');
+      legend.append('text').attr('x',246).attr('y',4).attr('font-size',12).attr('fill','#475569').text('validation still required');
     }
-    function renderNiche(method='diffusion'){
+    function renderKnowledgeGraphNarrow(el, summary, mucc, glm2, available){
+      const w=Math.max(300, available), pad=12, boxW=w-pad*2, lineH=19;
+      const blocks=[
+        {kind:'evidence', title:'Evidence present today', lines:[`ESM-2 protein embeddings: ${fmt(summary.embedding_context_total || 0)}`, `Methane-cycle screening: ${fmt(summary.release_multiview_complete || 0)}`, `gLM2 genomic context: ${fmt(glm2)}`, 'QC, taxonomy and provenance checks']},
+        {kind:'core', title:'Genome record', lines:[`${fmt(summary.atlas_registered_units || 0)} registered records`]},
+        {kind:'output', title:'Evidence card and next action', lines:['review, diligence, study design']},
+        {kind:'gate', title:'Validation still required', lines:[`Exact sample links: ${fmt(mucc.exact_sample_environment_flux_links || 0)} of ${fmt(mucc.expression_sample_columns || 0)} joined`, 'Abundance and environment', 'Field or process measurement']}
+      ];
+      let y=pad; const gap=34;
+      blocks.forEach(b=>{ b.y=y; b.h=38+b.lines.length*lineH; y+=b.h+gap; });
+      const h=y-gap+pad;
+      const svg=el.append('svg').attr('viewBox',[0,0,w,h]).attr('role','img').attr('aria-label','Evidence model for one genome record: evidence present today and the validation path still required');
+      arrowDefs(svg);
+      blocks.slice(0,-1).forEach((b,i)=>{
+        const next=blocks[i+1], gate=next.kind==='gate';
+        svg.append('line').attr('x1',w/2).attr('x2',w/2).attr('y1',b.y+b.h+3).attr('y2',next.y-4)
+          .attr('stroke',gate?'#d89b14':'#8ca2b3').attr('stroke-width',gate?2.2:1.7).attr('stroke-dasharray',gate?'7 6':null)
+          .attr('marker-end',gate?'url(#mbag-arrow-gate)':'url(#mbag-arrow)');
+      });
+      const g=svg.append('g').selectAll('g').data(blocks).join('g').attr('transform',d=>`translate(${pad},${d.y})`);
+      g.append('rect').attr('width',boxW).attr('height',d=>d.h).attr('rx',12).attr('fill',d=>GRAPH_PALETTE[d.kind][1]).attr('stroke',d=>GRAPH_PALETTE[d.kind][2]).attr('stroke-dasharray',d=>d.kind==='gate'?'6 4':null);
+      g.append('text').attr('x',14).attr('y',25).attr('font-size',14).attr('font-weight',800).attr('fill',d=>GRAPH_PALETTE[d.kind][0]).text(d=>d.title);
+      g.append('text').attr('x',14).attr('y',47).attr('font-size',13).attr('fill','#334155')
+        .selectAll('tspan').data(d=>d.lines.map((line,i)=>({line,i}))).join('tspan').attr('x',14).attr('dy',d=>d.i===0?0:lineH).text(d=>d.line);
+    }
+    function renderNiche(method='umap'){
       const el=d3.select('#niche-map'); el.selectAll('*').remove();
-      const data=(ATLAS.niche.nodes || []), links=(ATLAS.niche.links || []), w=panelWidth(el,900), h=720, m={t:54,r:34,b:58,l:64}, tip=tooltip();
-      const svg=el.append('svg').attr('viewBox',[0,0,w,h]).attr('role','img').attr('aria-label',`${method} projection of embedding-bearing molecular units with candidate links`);
-      const plotted=data.filter(d=>finiteNum(d[`${method}_1`]) && finiteNum(d[`${method}_2`]));
+      d3.selectAll('.tooltip.niche-tip').remove();
+      const data=(ATLAS.niche.nodes || []), links=(ATLAS.niche.links || []);
+      const w=panelWidth(el,560), h=w < 700 ? Math.round(w*1.08) : 720, m={t:40,r:22,b:50,l:52};
+      const tip=tooltip().classed('niche-tip',true), name=METHOD_NAMES[method] || method;
+      const svg=el.append('svg').attr('viewBox',[0,0,w,h]).attr('role','img').attr('aria-label',`${name} projection of ${fmt(data.length)} genome records colored by source lane, with candidate and neighbor links`);
+      // A fixed pseudo-random draw order keeps any one lane from hiding another.
+      const order=id=>{let hsh=0; for(let i=0;i<id.length;i++){hsh=(hsh*31+id.charCodeAt(i))|0;} return hsh;};
+      const plotted=data.filter(d=>finiteNum(d[`${method}_1`]) && finiteNum(d[`${method}_2`])).sort((a,b)=>order(String(a.proteome_id))-order(String(b.proteome_id)));
       const x=d3.scaleLinear().domain(d3.extent(plotted,d=>+d[`${method}_1`])).nice().range([m.l,w-m.r]);
       const y=d3.scaleLinear().domain(d3.extent(plotted,d=>+d[`${method}_2`])).nice().range([h-m.b,m.t]);
       const byId=new Map(data.map(d=>[d.proteome_id,d]));
-      const linkData=links
-        .filter(d=>byId.has(d.source)&&byId.has(d.target))
-        .filter(d=>[byId.get(d.source),byId.get(d.target)].every(node=>
-          finiteNum(node[`${method}_1`]) && finiteNum(node[`${method}_2`])))
-        .sort((a,b)=>(a.evidence_type==='case_study_nearest_poc'?-1:0)-(b.evidence_type==='case_study_nearest_poc'?-1:0) || Number(b.similarity||0)-Number(a.similarity||0))
-        .slice(0,1200);
-      svg.append('g').selectAll('line').data(linkData).join('line')
-        .attr('x1',d=>x(+byId.get(d.source)[`${method}_1`])).attr('y1',d=>y(+byId.get(d.source)[`${method}_2`]))
-        .attr('x2',d=>x(+byId.get(d.target)[`${method}_1`])).attr('y2',d=>y(+byId.get(d.target)[`${method}_2`]))
-        .attr('stroke',d=>d.evidence_type==='case_study_nearest_poc'?'#d89b14':(d.reciprocal?'#0f766e':'#94a3b8'))
-        .attr('stroke-width',d=>d.evidence_type==='case_study_nearest_poc'?1.55:(d.reciprocal?1.05:.45))
-        .attr('opacity',d=>d.evidence_type==='case_study_nearest_poc'?.72:(d.reciprocal?.42:.20));
-      svg.append('g').attr('transform',`translate(0,${h-m.b})`).call(d3.axisBottom(x).ticks(5)); svg.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5));
-      svg.append('text').attr('x',w/2).attr('y',h-12).attr('text-anchor','middle').attr('font-size',12).text(`${method} coordinate 1`);
-      svg.append('text').attr('transform','rotate(-90)').attr('x',-h/2).attr('y',18).attr('text-anchor','middle').attr('font-size',12).text(`${method} coordinate 2`);
-      svg.append('text').attr('x',m.l).attr('y',22).attr('font-size',13).attr('font-weight',700).attr('fill','#172033')
-        .text(`${fmt(plotted.length)} embedding-bearing MAG/proteome units · ${fmt((ATLAS.niche.case_study_count || 0))} case-study candidates`);
-      svg.append('text').attr('x',m.l).attr('y',40).attr('font-size',12).attr('fill','#64748b')
-        .text(`Gold links connect a candidate to its nearest POC reference. Gray and teal links show high-dimensional cross-domain kNN evidence.`);
-      const caseNodes=plotted.filter(d=>d.is_case_study);
-      svg.append('g').selectAll('circle.case-halo').data(caseNodes).join('circle')
-        .attr('class','case-halo')
-        .attr('cx',d=>x(+d[`${method}_1`])).attr('cy',d=>y(+d[`${method}_2`]))
-        .attr('r',9).attr('fill','none').attr('stroke','#d89b14').attr('stroke-width',1.5).attr('opacity',.82);
+      const drawable=links.filter(d=>byId.has(d.source)&&byId.has(d.target)).filter(d=>[byId.get(d.source),byId.get(d.target)].every(node=>
+          finiteNum(node[`${method}_1`]) && finiteNum(node[`${method}_2`])));
+      const neighborLinks=drawable.filter(d=>d.evidence_type!=='case_study_nearest_poc');
+      const caseLinks=drawable.filter(d=>d.evidence_type==='case_study_nearest_poc');
+      const px=d=>x(+d[`${method}_1`]), py=d=>y(+d[`${method}_2`]);
+      svg.append('g').selectAll('line').data(neighborLinks).join('line')
+        .attr('x1',d=>px(byId.get(d.source))).attr('y1',d=>py(byId.get(d.source)))
+        .attr('x2',d=>px(byId.get(d.target))).attr('y2',d=>py(byId.get(d.target)))
+        .attr('stroke',d=>d.reciprocal?'#0f766e':'#94a3b8').attr('stroke-width',d=>d.reciprocal?.9:.5).attr('opacity',d=>d.reciprocal?.34:.2);
+      svg.append('g').attr('transform',`translate(0,${h-m.b})`).call(d3.axisBottom(x).ticks(5)).call(g=>g.selectAll('text').attr('fill','#64748b'));
+      svg.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5)).call(g=>g.selectAll('text').attr('fill','#64748b'));
+      svg.append('text').attr('x',(m.l+w-m.r)/2).attr('y',h-12).attr('text-anchor','middle').attr('font-size',12).attr('fill','#475569').text(`${name} 1 (unitless)`);
+      svg.append('text').attr('transform','rotate(-90)').attr('x',-(m.t+h-m.b)/2).attr('y',14).attr('text-anchor','middle').attr('font-size',12).attr('fill','#475569').text(`${name} 2 (unitless)`);
+      svg.append('text').attr('x',m.l).attr('y',24).attr('font-size',13).attr('font-weight',700).attr('fill','#172033')
+        .text(`${fmt(plotted.length)} genome records · ${name}`);
       svg.append('g').selectAll('circle').data(plotted).join('circle')
-        .attr('cx',d=>x(+d[`${method}_1`])).attr('cy',d=>y(+d[`${method}_2`]))
-        .attr('r',d=>d.has_functional ? 3.8 : 2.4)
-        .attr('fill',d=>COLORS[d.source_category] || COLORS.context).attr('stroke',d=>d.is_case_study?'#fff7ed':'white').attr('stroke-width',d=>d.is_case_study?1.2:.45).attr('opacity',d=>d.has_functional?.78:.28).style('cursor','pointer')
-        .attr('tabindex',d=>d.is_case_study?0:-1).attr('role',d=>d.is_case_study?'button':null)
-        .attr('aria-label',d=>d.is_case_study?`Inspect candidate ${d.proteome_id}`:null)
+        .attr('cx',px).attr('cy',py).attr('r',2.6)
+        .attr('fill',nodeColor).attr('stroke','white').attr('stroke-width',.3).attr('opacity',.72).style('cursor','pointer')
+        .attr('tabindex',d=>d.is_case_study?0:null).attr('role',d=>d.is_case_study?'button':null)
+        .attr('aria-label',d=>d.is_case_study?`Show the evidence card for candidate ${d.proteome_id}`:null)
         .on('mouseover',(e,d)=>tip.style('opacity',1).html(tipText(d))).on('mousemove',e=>tip.style('left',`${e.pageX+12}px`).style('top',`${e.pageY+12}px`)).on('mouseout',()=>tip.style('opacity',0)).on('click',(e,d)=>updateCard(d.proteome_id))
         .on('keydown',(e,d)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();updateCard(d.proteome_id);}});
-      const labelNodes=caseNodes.filter(d=>Number(d.case_study_rank||999)<=8);
-      svg.append('g').selectAll('text.case-label').data(labelNodes).join('text')
-        .attr('class','case-label').attr('x',d=>x(+d[`${method}_1`]) + 8).attr('y',d=>y(+d[`${method}_2`]) - 8)
-        .attr('font-size',10).attr('font-weight',700).attr('fill','#334155')
-        .text(d=>`${(d.source_category||'').slice(0,1).toUpperCase()}${String(Math.round(d.case_study_rank||0)).padStart(2,'0')}`);
+      svg.append('g').selectAll('line').data(caseLinks).join('line')
+        .attr('x1',d=>px(byId.get(d.source))).attr('y1',d=>py(byId.get(d.source)))
+        .attr('x2',d=>px(byId.get(d.target))).attr('y2',d=>py(byId.get(d.target)))
+        .attr('stroke','#d89b14').attr('stroke-width',1.5).attr('opacity',.8).style('pointer-events','none');
+      svg.append('g').selectAll('circle.case-halo').data(plotted.filter(d=>d.is_case_study)).join('circle')
+        .attr('class','case-halo').attr('cx',px).attr('cy',py)
+        .attr('r',8).attr('fill','none').attr('stroke','#d89b14').attr('stroke-width',1.5).attr('opacity',.85).style('pointer-events','none');
     }
     function renderMethodButtons(){
       const methods=availableMethods(), box=d3.select('#method-buttons');
-      box.selectAll('button').data(methods).join('button').attr('class',(d,i)=>i===0?'active':null).attr('aria-pressed',(d,i)=>i===0?'true':'false').text(d=>d==='diffusion'?'Diffusion map':d.toUpperCase()).on('click',function(e,d){box.selectAll('button').classed('active',false).attr('aria-pressed','false'); d3.select(this).classed('active',true).attr('aria-pressed','true'); renderNiche(d);});
-      renderNiche(methods[0] || 'diffusion');
+      const note=d3.select('#projection-note');
+      box.attr('role','group').attr('aria-label','Map projection');
+      function choose(method){ note.text(PROJECTION_NOTES[method] || ''); renderNiche(method); }
+      box.selectAll('button').data(methods).join('button').attr('type','button')
+        .attr('class',(d,i)=>i===0?'active':null).attr('aria-pressed',(d,i)=>i===0?'true':'false')
+        .text(d=>METHOD_NAMES[d] || d)
+        .on('click',function(e,d){box.selectAll('button').classed('active',false).attr('aria-pressed','false'); d3.select(this).classed('active',true).attr('aria-pressed','true'); choose(d);});
+      choose(methods[0] || 'umap');
     }
     function renderMatrix(){
       const rec=ATLAS.matrix.records || [], metricDefs=ATLAS.matrix.metric_defs || (ATLAS.matrix.metrics || []).map(d=>({id:d,label:d})), metrics=metricDefs.map(d=>d.id);
       const rows=Array.from(new Set(rec.map(d=>d.label))), el=d3.select('#signature-matrix'); el.selectAll('*').remove();
-      const w=panelWidth(el,1120), cellH=30, h=84+rows.length*cellH, m={t:48,r:36,b:36,l:360};
-      const svg=el.append('svg').attr('viewBox',[0,0,w,h]).attr('width',w).attr('height',h).attr('role','img').attr('aria-label','Candidate evidence eligibility matrix');
+      const w=panelWidth(el,980), cellH=28, m={t:78,r:24,b:24,l:330}, h=m.t+rows.length*cellH+m.b;
+      const svg=el.append('svg').attr('viewBox',[0,0,w,h]).attr('width',w).attr('height',h).attr('role','img').attr('aria-label','Candidate evidence matrix: which evidence each candidate has');
       const x=d3.scaleBand().domain(metrics).range([m.l,w-m.r]).padding(.08), y=d3.scaleBand().domain(rows).range([m.t,h-m.b]).padding(.08);
-      const c=d3.scaleSequential(d3.interpolateYlGnBu).domain([0,1]), rowMeta=new Map(rec.map(d=>[d.label,d]));
+      const on='#0f766e', off='#e2e8f0', rowMeta=new Map(rec.map(d=>[d.label,d]));
+      const yes=d=>Number(d.value)>=1;
       svg.append('g').selectAll('rect.row').data(rows).join('rect').attr('class','row').attr('x',m.l-10).attr('y',d=>y(d)).attr('width',w-m.l-m.r+10).attr('height',y.bandwidth()).attr('fill',(d,i)=>i%2?'#f8fafc':'#ffffff');
-      svg.selectAll('rect.cell').data(rec).join('rect').attr('class','cell').attr('x',d=>x(d.metric)).attr('y',d=>y(d.label)).attr('width',x.bandwidth()).attr('height',y.bandwidth()).attr('rx',4).attr('fill',d=>c(d.value)).attr('stroke','white').attr('stroke-width',1.6).style('cursor','pointer').attr('tabindex',0).attr('role','button').attr('aria-label',d=>`${d.label}; ${d.metric_label}: ${d.value.toFixed(2)}`).on('click',(e,d)=>updateCard(d.proteome_id)).on('keydown',(e,d)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();updateCard(d.proteome_id);}}).append('title').text(d=>`${d.label}\\n${d.metric_label}: ${d.value.toFixed(2)}\\n${d.metric_source || ''}`);
-      svg.append('g').selectAll('rect.strip').data(rows).join('rect').attr('class','strip').attr('x',m.l-24).attr('y',d=>y(d)).attr('width',9).attr('height',y.bandwidth()).attr('rx',4).attr('fill',d=>COLORS[(rowMeta.get(d)||{}).source_category] || '#64748b');
-      svg.append('g').attr('transform',`translate(0,${m.t-12})`).call(d3.axisTop(x).tickFormat(d=>((metricDefs.find(m=>m.id===d)||{}).label)||d)).call(g=>g.select('.domain').remove()).selectAll('text').attr('font-weight',700).attr('font-size',13).attr('fill','#172033');
-      svg.append('g').attr('transform',`translate(${m.l-30},0)`).call(d3.axisLeft(y)).call(g=>g.select('.domain').remove()).call(g=>g.selectAll('.tick line').remove()).selectAll('text').attr('font-size',12).attr('fill',d=>COLORS[(rowMeta.get(d)||{}).source_category] || '#334155');
+      svg.selectAll('rect.cell').data(rec).join('rect').attr('class','cell').attr('x',d=>x(d.metric)).attr('y',d=>y(d.label)).attr('width',x.bandwidth()).attr('height',y.bandwidth()).attr('rx',4).attr('fill',d=>yes(d)?on:off).attr('stroke','white').attr('stroke-width',1.6).style('cursor','pointer').attr('tabindex',0).attr('role','button').attr('aria-label',d=>`${d.label}; ${d.metric_label}: ${yes(d)?'available':'not available'}`).on('click',(e,d)=>updateCard(d.proteome_id)).on('keydown',(e,d)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();updateCard(d.proteome_id);}}).append('title').text(d=>`${d.label}\\n${d.metric_label}: ${yes(d)?'available or eligible':'not available'}\\n${d.metric_source || ''}`);
+      svg.append('g').selectAll('rect.strip').data(rows).join('rect').attr('class','strip').attr('x',m.l-24).attr('y',d=>y(d)).attr('width',9).attr('height',y.bandwidth()).attr('rx',4).attr('fill',d=>nodeColor(rowMeta.get(d)||{}));
+      svg.append('g').attr('transform',`translate(0,${m.t-10})`).call(d3.axisTop(x).tickFormat(d=>((metricDefs.find(md=>md.id===d)||{}).label)||d)).call(g=>g.select('.domain').remove()).selectAll('text').attr('font-weight',700).attr('font-size',12.5).attr('fill','#172033');
+      svg.append('g').attr('transform',`translate(${m.l-30},0)`).call(d3.axisLeft(y)).call(g=>g.select('.domain').remove()).call(g=>g.selectAll('.tick line').remove()).selectAll('text').attr('font-size',12).attr('fill','#334155');
+      const legend=svg.append('g').attr('transform',`translate(${m.l},18)`);
+      [[on,'available or eligible'],[off,'not available']].forEach((item,i)=>{
+        const g=legend.append('g').attr('transform',`translate(${i*190},0)`);
+        g.append('rect').attr('width',14).attr('height',14).attr('rx',3).attr('fill',item[0]).attr('stroke','#cbd5e1');
+        g.append('text').attr('x',20).attr('y',11).attr('font-size',12).attr('fill','#334155').text(item[1]);
+      });
     }
     function renderEvidenceContract(){
-      const data=ATLAS.evidence_contract || [], el=d3.select('#evidence-contract-chart'), w=panelWidth(el,900), h=520, m={t:72,r:60,b:72,l:230};
+      const data=ATLAS.evidence_contract || [], el=d3.select('#evidence-contract-chart');
       el.selectAll('*').remove();
-      if(!data.length){ el.append('div').attr('class','runtime-error').html('Evidence-contract summary is unavailable.'); return; }
-      const svg=el.append('svg').attr('viewBox',[0,0,w,h]).attr('role','img').attr('aria-label','Registered, tri-view complete, and mechanism-comparable units by lane');
-      const series=[
-        {key:'registered_units',label:'Registered',color:'#cbd5e1'},
-        {key:'data_complete_tri_view_units',label:'Data-complete tri-view',color:'#0284a8'},
-        {key:'mechanism_comparable_tri_view_units',label:'Mechanism-comparable',color:'#d89b14'}
-      ];
-      const y0=d3.scaleBand().domain(data.map(d=>d.lane)).range([m.t,h-m.b]).padding(.24);
-      const y1=d3.scaleBand().domain(series.map(d=>d.key)).range([0,y0.bandwidth()]).padding(.12);
+      if(!data.length){ el.append('div').attr('class','runtime-error').html('The evidence-contract summary is unavailable.'); return; }
+      const w=panelWidth(el,760), m={t:92,r:70,b:96,l:250}, bandH=78, h=m.t+data.length*bandH+m.b;
+      const svg=el.append('svg').attr('viewBox',[0,0,w,h]).attr('width',w).attr('height',h).attr('role','img').attr('aria-label','Genome records by source lane: registered, with all three evidence views, and comparable across annotation routes');
+      const route=d=>d.functional_contract==='source_scaffold_non_equivalent'?'source':'pipeline';
+      const y0=d3.scaleBand().domain(data.map(d=>d.lane)).range([m.t,h-m.b]).padding(.22);
+      const y1=d3.scaleBand().domain(['registered','complete']).range([0,y0.bandwidth()]).padding(.14);
       const x=d3.scaleLinear().domain([0,d3.max(data,d=>d.registered_units)||1]).nice().range([m.l,w-m.r]);
-      svg.append('text').attr('x',m.l).attr('y',24).attr('font-weight',800).attr('font-size',14).text('Registered, data-complete, and mechanism-comparable units by lane');
-      svg.append('text').attr('x',m.l).attr('y',44).attr('font-size',12).attr('fill','#64748b').text('Data-complete rows carry ESM-2, gLM2, and a functional payload. Cross-lane mechanism comparability is a stricter, separately gated state.');
-      svg.append('g').attr('transform',`translate(0,${h-m.b})`).call(d3.axisBottom(x).ticks(6));
-      svg.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(y0)).call(g=>g.select('.domain').remove());
+      const comparable=d3.sum(data,d=>Number(d.mechanism_comparable_tri_view_units||0)), complete=d3.sum(data,d=>Number(d.data_complete_tri_view_units||0));
+      svg.append('text').attr('x',16).attr('y',26).attr('font-weight',800).attr('font-size',14).attr('fill','#172033').text('Genome records by source lane and evidence state');
+      svg.append('text').attr('x',16).attr('y',46).attr('font-size',12).attr('fill','#64748b').text('All three views = ESM-2 + gLM2 + functional annotation. Bar color shows the annotation route.');
+      svg.append('text').attr('x',16).attr('y',64).attr('font-size',12).attr('fill','#64748b').text(`Comparable across routes: ${fmt(comparable)} of ${fmt(complete)} complete records.`);
+      svg.append('g').attr('transform',`translate(0,${h-m.b})`).call(d3.axisBottom(x).ticks(6).tickFormat(d3.format(',')));
+      svg.append('text').attr('x',(m.l+w-m.r)/2).attr('y',h-m.b+38).attr('text-anchor','middle').attr('font-size',12).attr('fill','#475569').text('Genome records');
+      svg.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(y0)).call(g=>g.select('.domain').remove()).call(g=>g.selectAll('text').attr('font-size',12).attr('fill','#172033'));
       const rows=svg.append('g').selectAll('g').data(data).join('g').attr('transform',d=>`translate(0,${y0(d.lane)})`);
-      rows.selectAll('rect').data(d=>series.map(s=>({...s,row:d,value:Number(d[s.key]||0)}))).join('rect')
-        .attr('x',m.l).attr('y',d=>y1(d.key)).attr('width',d=>Math.max(0,x(d.value)-m.l)).attr('height',y1.bandwidth()).attr('rx',4)
-        .attr('fill',d=>d.color).attr('stroke','#475569').attr('stroke-width',.45);
-      rows.selectAll('text.value').data(d=>series.map(s=>({...s,row:d,value:Number(d[s.key]||0)}))).join('text').attr('class','value')
-        .attr('x',d=>x(d.value)+5).attr('y',d=>y1(d.key)+y1.bandwidth()/2+4).attr('font-size',10).attr('fill','#334155').text(d=>fmt(d.value));
-      const legend=svg.append('g').attr('transform',`translate(${m.l},${h-42})`);
-      legend.selectAll('g').data(series).join('g').attr('transform',(d,i)=>`translate(${i*210},0)`).each(function(d){const r=d3.select(this);r.append('rect').attr('width',12).attr('height',12).attr('rx',3).attr('fill',d.color).attr('stroke','#475569').attr('stroke-width',.4);r.append('text').attr('x',18).attr('y',10).attr('font-size',11).text(d.label);});
+      const bars=d=>[{key:'registered',value:Number(d.registered_units||0),color:'#cbd5e1'},{key:'complete',value:Number(d.data_complete_tri_view_units||0),color:ROUTE_COLORS[route(d)]}];
+      rows.selectAll('rect').data(bars).join('rect').attr('x',m.l).attr('y',d=>y1(d.key)).attr('width',d=>Math.max(0,x(d.value)-m.l)).attr('height',y1.bandwidth()).attr('rx',4).attr('fill',d=>d.color);
+      rows.selectAll('text.value').data(bars).join('text').attr('class','value').attr('x',d=>x(d.value)+5).attr('y',d=>y1(d.key)+y1.bandwidth()/2+4).attr('font-size',11).attr('fill','#334155').text(d=>fmt(d.value));
+      const legend=svg.append('g').attr('transform',`translate(${m.l},${h-30})`);
+      [['#cbd5e1','Registered'],[ROUTE_COLORS.pipeline,'All three views, shared pipeline'],[ROUTE_COLORS.source,'All three views, source annotations']].forEach((item,i)=>{
+        const g=legend.append('g').attr('transform',`translate(${[0,110,360][i]},0)`);
+        g.append('rect').attr('width',12).attr('height',12).attr('rx',3).attr('fill',item[0]);
+        g.append('text').attr('x',18).attr('y',10).attr('font-size',11.5).attr('fill','#334155').text(item[1]);
+      });
     }
     function renderSampleLinkage(){
-      const payload=ATLAS.sample_linkage || {}, contexts=payload.contexts || [];
+      const contexts=((ATLAS.sample_linkage || {}).contexts || []);
       const el=d3.select('#sample-linkage'); el.selectAll('*').remove();
-      const w=panelWidth(el,980), h=580, m={t:70,r:44,b:82,l:260}, tip=tooltip();
-      const svg=el.append('svg').attr('viewBox',[0,0,w,h]).attr('role','img').attr('aria-label','Sample and context linkage readiness by evidence lane');
-      const topContexts=contexts.slice(0,26);
-      if(!topContexts.length){
-        svg.append('text').attr('x',24).attr('y',44).attr('fill','#64748b').text('No sample-context linkage rows are available yet.');
-        return;
-      }
-      const x=d3.scaleLinear().domain([0,d3.max(topContexts,d=>Math.max(d.units||0,d.tri_view_units||0))||1]).nice().range([m.l,w-m.r]);
-      const y=d3.scaleBand().domain(topContexts.map(d=>d.sample_context_label || d.sample_context_key)).range([m.t,h-m.b]).padding(.18);
-      const color=d3.scaleOrdinal().domain(['site_month_context','sample_set_context','mixed_wetland_context','source_bucket_only','context_pending']).range(['#168a48','#0284a8','#d89b14','#94a3b8','#cbd5e1']);
-      svg.append('text').attr('x',m.l).attr('y',24).attr('font-weight',800).attr('font-size',14).attr('fill','#172033')
-        .text('Top sample/context groups by linked MAG/proteome units');
-      svg.append('text').attr('x',m.l).attr('y',44).attr('font-size',12).attr('fill','#64748b')
-        .text('Bars show context-linked units. The dark overlay marks tri-view complete units and supports sample-readiness planning.');
-      svg.append('g').attr('transform',`translate(0,${h-m.b})`).call(d3.axisBottom(x).ticks(5)).call(g=>g.selectAll('text').attr('font-size',11));
-      svg.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(y).tickFormat(d=>String(d).length>34 ? String(d).slice(0,31)+'...' : d)).call(g=>g.select('.domain').remove()).call(g=>g.selectAll('.tick text').attr('font-size',11).attr('fill','#334155'));
-      svg.selectAll('rect.context-total').data(topContexts).join('rect')
-        .attr('class','context-total').attr('x',m.l).attr('y',d=>y(d.sample_context_label || d.sample_context_key)).attr('width',d=>x(d.units||0)-m.l).attr('height',y.bandwidth())
-        .attr('rx',6).attr('fill',d=>color(d.sample_linkage_bucket)).attr('opacity',.28);
-      svg.selectAll('rect.context-triview').data(topContexts).join('rect')
-        .attr('class','context-triview').attr('x',m.l).attr('y',d=>y(d.sample_context_label || d.sample_context_key)+y.bandwidth()*.18)
-        .attr('width',d=>Math.max(1,x(d.tri_view_units||0)-m.l)).attr('height',y.bandwidth()*.64).attr('rx',5)
-        .attr('fill',d=>color(d.sample_linkage_bucket)).attr('opacity',.86)
-        .on('mouseover',(e,d)=>tip.style('opacity',1).html(`${clean(d.sample_context_label || d.sample_context_key)}<br>Units ${fmt(d.units||0)} · data-complete tri-view ${fmt(d.tri_view_units||0)}<br>Context ${clean(d.sample_context_resolution)}<br>Sample contexts ${fmt(d.linked_sample_context_count||0)} · environmental fields ${fmt(d.environmental_context_fields_present||0)}<br>${clean(d.sample_context_blocking_gap)}<br><b>Current output is a sample-readiness state.</b>`))
+      d3.selectAll('.tooltip.sample-tip').remove();
+      if(!contexts.length){ el.append('p').attr('class','note').style('padding','18px').text('No sample-context groups are available yet.'); return; }
+      const w=panelWidth(el,760), rowH=25, m={t:92,r:60,b:92,l:290}, h=m.t+contexts.length*rowH+m.b, tip=tooltip().classed('sample-tip',true);
+      const labelOf=d=>d.chart_label || d.sample_context_label;
+      const svg=el.append('svg').attr('viewBox',[0,0,w,h]).attr('width',w).attr('height',h).attr('role','img').attr('aria-label','Mangrove genome records grouped by their best available sample context');
+      const x=d3.scaleLinear().domain([0,d3.max(contexts,d=>d.units||0)||1]).nice().range([m.l,w-m.r]);
+      const y=d3.scaleBand().domain(contexts.map(labelOf)).range([m.t,h-m.b]).padding(.2);
+      const gap=d=>Number(d.tri_view_units||0)===0;
+      const colorOf=d=>gap(d)?'#cbd5e1':(COLORS[d.lane_key]||COLORS.mangrove);
+      const complete=contexts.filter(d=>!gap(d) && Number(d.tri_view_units)===Number(d.units)).length;
+      svg.append('text').attr('x',16).attr('y',26).attr('font-weight',800).attr('font-size',14).attr('fill','#172033').text('Mangrove records by best available sample context');
+      svg.append('text').attr('x',16).attr('y',46).attr('font-size',12).attr('fill','#64748b').text('Futian: site and month, several depths each. MSM: source sample groups.');
+      svg.append('text').attr('x',16).attr('y',64).attr('font-size',12).attr('fill','#64748b').text(`No record is yet assigned to one physical sample. ${complete} of ${contexts.length} groups are complete in all three views.`);
+      svg.append('g').attr('transform',`translate(0,${h-m.b})`).call(d3.axisBottom(x).ticks(5).tickFormat(d3.format(','))).call(g=>g.selectAll('text').attr('font-size',11));
+      svg.append('text').attr('x',(m.l+w-m.r)/2).attr('y',h-m.b+36).attr('text-anchor','middle').attr('font-size',12).attr('fill','#475569').text('Genome records');
+      svg.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(y)).call(g=>g.select('.domain').remove()).call(g=>g.selectAll('.tick text').attr('font-size',11).attr('fill','#334155'));
+      svg.selectAll('rect.context').data(contexts).join('rect').attr('class','context')
+        .attr('x',m.l).attr('y',d=>y(labelOf(d))).attr('width',d=>Math.max(1,x(d.units||0)-m.l)).attr('height',y.bandwidth()).attr('rx',4)
+        .attr('fill',colorOf).attr('opacity',.88)
+        .on('mouseover',(e,d)=>tip.style('opacity',1).html(`<b>${esc(d.sample_context_label || labelOf(d))}</b><br>${fmt(d.units||0)} records · ${fmt(d.tri_view_units||0)} with all three views<br>${fmt(d.linked_sample_context_count||0)} linked sample contexts · ${fmt(d.environmental_context_fields_present||0)} environmental fields<br>${esc(d.sample_context_blocking_gap || '')}<br><b>Readiness only; no risk score.</b>`))
         .on('mousemove',e=>tip.style('left',`${e.pageX+12}px`).style('top',`${e.pageY+12}px`)).on('mouseout',()=>tip.style('opacity',0));
-      svg.append('text').attr('x',m.l).attr('y',h-28).attr('font-size',12).attr('fill','#64748b')
-        .text('Use the contexts to prioritize metadata reconciliation, abundance mapping, and field validation.');
-      const legend=svg.append('g').attr('transform',`translate(${m.l},${h-58})`);
-      const legendItems=[['site_month_context','Futian site-month'],['sample_set_context','MSM sample set'],['mixed_wetland_context','wetland mixed'],['context_pending','context pending']];
-      legend.selectAll('g').data(legendItems).join('g').attr('transform',(d,i)=>`translate(${i*170},0)`).each(function(d){
-        const row=d3.select(this); row.append('rect').attr('width',11).attr('height',11).attr('rx',3).attr('fill',color(d[0])); row.append('text').attr('x',17).attr('y',10).attr('font-size',11).attr('fill','#334155').text(d[1]);
+      svg.selectAll('text.count').data(contexts).join('text').attr('class','count').attr('x',d=>x(d.units||0)+5).attr('y',d=>y(labelOf(d))+y.bandwidth()/2+4).attr('font-size',11).attr('fill','#334155').text(d=>fmt(d.units||0));
+      const legend=svg.append('g').attr('transform',`translate(${m.l},${h-34})`);
+      [[COLORS.futian,'Futian site and month'],[COLORS.msm,'MSM sample group'],['#cbd5e1','Source gaps']].forEach((item,i)=>{
+        const g=legend.append('g').attr('transform',`translate(${i*185},0)`);
+        g.append('rect').attr('width',12).attr('height',12).attr('rx',3).attr('fill',item[0]);
+        g.append('text').attr('x',18).attr('y',10).attr('font-size',11.5).attr('fill','#334155').text(item[1]);
       });
     }
     function renderCircos(){
       const data=ATLAS.circos || {}, records=data.records || [], pillars=data.pillars || [], groups=data.groups || [];
       const el=d3.select('#candidate-circos'); el.selectAll('*').remove();
-      const w=panelWidth(el,760), h=620, cx=w/2, cy=290, outer=220, inner=88, ringStep=(outer-inner)/Math.max(groups.length,1), labelR=outer+38;
-      const svg=el.append('svg').attr('viewBox',[0,0,w,h]).attr('role','img').attr('aria-label','Evidence coverage wheel for selected candidate'); const g=svg.append('g').attr('transform',`translate(${cx},${cy})`);
+      const w=panelWidth(el,340), outer=Math.max(96, Math.min(210, w/2-104)), inner=outer*0.41, cx=w/2, cy=outer+56, h=cy+outer+56+groups.length*20+18;
+      const ringStep=(outer-inner)/Math.max(groups.length,1), labelR=outer+30;
+      const svg=el.append('svg').attr('viewBox',[0,0,w,h]).attr('role','img').attr('aria-label','Evidence coverage by candidate group: the share of cards in each group with each type of evidence');
+      const g=svg.append('g').attr('transform',`translate(${cx},${cy})`);
       const angle=d3.scaleBand().domain(pillars.map(d=>d.id)).range([0,Math.PI*2]).padding(.16);
       const arc=d3.arc(); const groupColor=new Map(groups.map(d=>[d.id,d.color]));
       groups.forEach((grp,gi)=>{
-        const r0=inner+gi*ringStep+4, r1=r0+ringStep-10;
+        const r0=inner+gi*ringStep+ringStep*0.08, r1=r0+ringStep*0.84;
         g.append('circle').attr('r',r0).attr('fill','none').attr('stroke','#dbe5ee').attr('stroke-dasharray','2 4');
         g.append('circle').attr('r',r1).attr('fill','none').attr('stroke','#edf3f7');
       });
-      g.selectAll('path.bar').data(records).join('path').attr('class','bar')
-        .attr('d',d=>{const gi=groups.findIndex(g=>g.id===d.group); const base=inner+gi*ringStep+6; const maxLen=ringStep-16; return arc({innerRadius:base, outerRadius:base+4+Math.max(1,maxLen*d.average_value), startAngle:angle(d.pillar), endAngle:angle(d.pillar)+angle.bandwidth()});})
-        .attr('fill',d=>groupColor.get(d.group) || '#64748b').attr('opacity',d=>0.36+0.58*Math.max(d.high_share,d.average_value)).attr('stroke','white').attr('stroke-width',.8)
-        .append('title').text(d=>`${d.group_label} · ${d.pillar_label}\\nAvailability share: ${d.average_value.toFixed(2)}\\nAvailable/eligible cards: ${d.high_count}/${d.candidate_count}\\nEvidence source: ${d.source}`);
-      g.selectAll('text.pillar').data(pillars).join('text').attr('class','pillar').attr('font-size',11).attr('font-weight',700).attr('fill','#334155')
+      g.selectAll('path.bar').data(records.filter(d=>Number(d.average_value)>0)).join('path').attr('class','bar')
+        .attr('d',d=>{const gi=groups.findIndex(gr=>gr.id===d.group); const base=inner+gi*ringStep+ringStep*0.12; const maxLen=ringStep*0.76; return arc({innerRadius:base, outerRadius:base+maxLen*d.average_value, startAngle:angle(d.pillar), endAngle:angle(d.pillar)+angle.bandwidth()});})
+        .attr('fill',d=>groupColor.get(d.group) || '#64748b').attr('opacity',.85).attr('stroke','white').attr('stroke-width',.8)
+        .append('title').text(d=>`${d.group_label} · ${d.pillar_label}\\n${d.high_count} of ${d.candidate_count} cards (${Math.round(100*d.average_value)}%)\\n${d.source}`);
+      g.selectAll('text.pillar').data(pillars).join('text').attr('class','pillar').attr('font-size',11.5).attr('font-weight',700).attr('fill','#334155')
         .attr('x',d=>{const a=angle(d.id)+angle.bandwidth()/2-Math.PI/2; return Math.cos(a)*labelR;})
         .attr('y',d=>{const a=angle(d.id)+angle.bandwidth()/2-Math.PI/2; return Math.sin(a)*labelR+4;})
         .attr('text-anchor',d=>{const a=angle(d.id)+angle.bandwidth()/2-Math.PI/2; const c=Math.cos(a); return Math.abs(c)<.18?'middle':c>0?'start':'end';})
         .text(d=>d.short);
-      g.append('circle').attr('r',inner-22).attr('fill','#f8fafc').attr('stroke','#dbe5ee');
-      g.append('text').attr('text-anchor','middle').attr('y',-8).attr('font-weight',800).attr('font-size',13).text('Evidence graph');
-      g.append('text').attr('text-anchor','middle').attr('y',14).attr('font-size',11).attr('fill','#64748b').text('evidence coverage');
+      // The center label needs room; on small screens the caption carries it.
+      if(inner >= 70){
+        g.append('circle').attr('r',inner-22).attr('fill','#f8fafc').attr('stroke','#dbe5ee');
+        g.append('text').attr('text-anchor','middle').attr('y',-4).attr('font-weight',800).attr('font-size',12.5).text('Share of cards');
+        g.append('text').attr('text-anchor','middle').attr('y',14).attr('font-size',11).attr('fill','#64748b').text('with the evidence');
+      }
+      const counts=new Map(); records.forEach(r=>counts.set(r.group, r.candidate_count));
+      const legend=svg.append('g').attr('transform',`translate(${Math.max(12,cx-200)},${cy+outer+50})`);
+      groups.forEach((grp,i)=>{
+        const row=legend.append('g').attr('transform',`translate(0,${i*20})`);
+        row.append('rect').attr('width',12).attr('height',12).attr('rx',3).attr('fill',grp.color);
+        row.append('text').attr('x',18).attr('y',10).attr('font-size',12).attr('fill','#334155').text(`${i===0?'Inner':i===groups.length-1?'Outer':'Middle'} ring: ${grp.label}, ${fmt(counts.get(grp.id)||0)} cards`);
+      });
     }
     function startReport(){
       requireAtlas();
@@ -4438,23 +4719,28 @@ def render_html(
     try { startReport(); } catch(err) { renderFailure(err); }
     })();
     """
-
     infographic_block = ""
     if infographic_uri:
         infographic_block = f"""
         <section class="section">
           <h2>The Operating Model Behind The Atlas</h2>
           <img class="infographic" src="{infographic_uri}" alt="Molecular intelligence research workflow infographic">
-          <p class="legend-note">The infographic summarizes the research workflow from environment setup and reference database assembly through MAG and proteome processing, multiview feature generation, and report-ready interpretation. It illustrates how evidence enters the EmergentBiome atlas.</p>
         </section>
         """
 
     sample_risk_abstract_block = ""
     if sample_risk_abstract_uri:
         sample_risk_abstract_block = f"""
-        <img class="sample-risk-abstract" src="{sample_risk_abstract_uri}" alt="Graphical abstract showing MAG and proteome molecular fingerprints flowing through sample linkage, abundance weighting, environmental covariates, uncertainty, and validation gates into sample-risk readiness labels.">
-        <p class="figure-caption">Graphical abstract. The current evidence layer operates at MAG and proteome grain. ESM-2 and gLM2 context, methane, sulfur, and substrate annotations, QC, taxonomy, and provenance define molecular fingerprints for candidate review. A future sample layer would link those fingerprints to physical samples or metagenomes, weight them by MAG or read abundance and unbinned marker evidence, and add environmental covariates, uncertainty, and flux or process validation status. Calibrated MRV outputs require the relevant validation gates to pass.</p>
+        <img class="sample-risk-abstract" src="{sample_risk_abstract_uri}" alt="Illustrative concept art for the path from genome evidence to sample-risk readiness; not data.">
+        <p class="figure-caption">Illustrative concept art, not data.</p>
         """
+
+    wetland_outside = safe_int(nearest_core.get("wetland_outside_core_units"))
+    wetland_outside_rumen = safe_int(nearest_core.get("wetland_outside_core_nearest_rumen_units"))
+    mangrove_units = safe_int(nearest_core.get("mangrove_embedding_units"))
+    mangrove_rumen = safe_int(nearest_core.get("mangrove_nearest_rumen_units"))
+    mucc_methane = safe_int(mucc_audit.get("methane_expression_detected_mags"))
+    mucc_sulfur = safe_int(mucc_audit.get("sulfur_expression_detected_mags"))
 
     return f"""<!doctype html>
 <html lang="en">
@@ -4467,160 +4753,160 @@ def render_html(
 </head>
 <body>
 <header>
-  <div class="eyebrow">EmergentBiome · Molecular evidence for blue-carbon research</div>
+  <div class="eyebrow">EmergentBiome · Technical evidence report</div>
   <h1>EmergentBiome Molecular Atlas</h1>
-  <p class="subtitle">Molecular evidence for methane-pathway screening and field measurement priorities in blue-carbon systems.</p>
+  <p class="subtitle">Methods, evidence states and limits of the {snapshot_text} atlas release: {release_multiview:,} genome records screened for methane-cycle genes, and the validation each claim still needs.</p>
   <div class="claim">{html.escape(CLAIM_BOUNDARY)}</div>
 </header>
 <main>
   <section class="section">
-    <h2>Executive Summary</h2>
-    <p><b>EmergentBiome organizes molecular evidence to guide blue-carbon methane research.</b> The current warehouse contains {summary['atlas_registered_units']:,} registered MAG/proteome units, {summary['embedding_context_total']:,} ESM-2 embeddings, {summary['external_glm2'] + summary['poc_core_total']:,} gLM2 payloads, and {release_multiview:,} data-complete tri-views. The atlas records evidence type, provenance, comparability state, and next validation action alongside each molecular unit.</p>
-    <p>The queryable persistent evidence graph remains the earlier 662-proteome proof of concept. This expanded atlas is a release-specific evidence view; its {summary['embedding_context_total']:,} embedding-bearing records are not a persistent graph of that size.</p>
-    <p>The tri-view contract gives the release a durable scientific structure. {summary['pipeline_normalized_tri_view_units']:,} tri-views use the guarded functional pipeline with accepted KOfam and best-ranked MCycDB/SCycDB event semantics. {summary['source_scaffold_tri_view']:,} MUCC v1 wetland tri-views use a distinct source-annotation scaffold with processed expression detection. Cross-lane mechanism-comparable units remain {summary['mechanism_comparable_tri_view']:,} until version, database, source-aware null, taxonomy, and stability gates pass.</p>
-    <p>That structure supports a practical research workflow. A collaborator can inspect a candidate or a monitoring context, see direct molecular evidence separately from representation context, identify the claim currently supported, and choose the next measurement. The result is an evidence card and validation plan for molecular diligence, sampling design, and study prioritization while paired evidence accumulates for future calibrated methane-risk intelligence.</p>
+    <h2>Executive summary</h2>
+    <p><b>The atlas is a frozen, source-audited map of microbial genomes from methane-relevant environments.</b> It registers {summary['atlas_registered_units']:,} genome records (metagenome-assembled genomes and their proteomes) from a rumen reference set, freshwater wetlands and mangrove sediments. {release_multiview:,} carry all three evidence views: an ESM-2 protein embedding, a gLM2 genomic-context embedding and a functional annotation. The remaining {summary['explicit_non_runnable_gaps']:,} are documented source gaps and stay in the release as explicit rows.</p>
+    <p>Every record was screened for methane-cycle genes through one of two annotation routes. {summary['pipeline_normalized_tri_view_units']:,} records went through a shared pipeline (accepted KOfam genes and METABOLIC events, with the best MCycDB and SCycDB hits kept separate). {summary['source_scaffold_tri_view']:,} Old Woman Creek wetland records keep the source's own DRAM annotations and processed expression data. Because the two routes count genes differently, the number of records with a methane mechanism score comparable across routes is {summary['mechanism_comparable_tri_view']:,}.</p>
+    <p><b>What the atlas supports today:</b> genome-level screening, candidate review with source and quality context, and measurement planning. <b>What it does not support yet:</b> measured methane flux, calibrated site risk, A–E risk tiers or carbon-credit decisions. Those need exact sample links, abundance, environmental covariates, uncertainty and paired flux or process measurements, and none of these is joined to the atlas records yet.</p>
     <div class="metric-grid">{metric_cards}</div>
   </section>
   <section class="section">
-    <h2>Verified Release Snapshot</h2>
-    <p>These figures are rendered from the same machine-validated release ledger used by the freeze and report parity gate. Payload availability, schema normalization, mechanism comparability, and sample or field validation are separate evidence rungs.</p>
+    <h2>Verified release snapshot</h2>
+    <p>Each figure below is rendered from the machine-checked release ledger; the build stops if any count disagrees with it. Payload availability, shared-schema normalization, comparability across annotation routes and field validation are separate rungs, so their counts differ by design.</p>
     <div class="metric-grid">{release_ledger_cards}</div>
-    <p class="note">Release state: <b>{html.escape(str(summary['release_state']))}</b>. Indexing decision: <b>{html.escape(str(summary['indexing_decision']))}</b>. The controlled-diligence report remains noindex.</p>
+    <p class="note">Release state: <b>{release_state}</b>. Search indexing: <b>{indexing_text}</b>.</p>
   </section>
   <section class="section">
-    <h2>The EmergentBiome Evidence Graph</h2>
-    <p>The EmergentBiome evidence graph is the organizing model for MAG and proteome representations, direct functional observations, genomic-context evidence, QC and provenance guardrails, sample-linkage readiness, and field-validation requirements. Relationships preserve their evidence class. The diagram below expresses that model; the persistent queryable implementation currently covers the 662-proteome proof of concept.</p>
-    <p>The evidence model supports candidate review, measurement design, project-data diligence, and validation-study selection. The 662-proteome proof of concept demonstrates queryable evidence paths, while the expanded atlas provides broader release-specific views. A calibrated sample-level methane-risk model requires sample linkage, abundance, environmental covariates, uncertainty, and field or process validation.</p>
+    <h2>The EmergentBiome evidence graph</h2>
+    <p>Each genome record sits at the center of an evidence model. Embeddings, functional annotations, genomic context, quality checks and validation requirements attach to it as separate, typed relationships. A neighbor in embedding space is therefore never mistaken for a measured function, and a missing measurement stays visible as a gap.</p>
+    <p>The queryable implementation covers a 662-record proof of concept. A formal ontology slice, added on 26 September 2026, holds selected evidence for 145 atlas records and is described with the evidence cases on the landing page. Neither yet spans the full atlas.</p>
     <div id="mbag-knowledge-graph" class="viz graph"></div>
-    <p class="figure-caption">EmergentBiome evidence architecture. Solid relationships join present molecular evidence and reliability guardrails to a MAG or proteome record. Dashed amber relationships identify the validation pathway from exact sample linkage to abundance and environmental context, then to field or process evidence. The visual expresses an evidence model and a decision workflow. Causal assertions require direct mechanism and field-validation evidence.</p>
+    <p class="figure-caption">Evidence model for one genome record. Solid arrows: evidence present today, feeding an evidence card. Dashed amber arrows: the validation path still required, from exact sample links to abundance and environment, then to field or process measurement. The diagram shows structure, not causation.</p>
     <div class="decision-grid">
-      <div class="decision-card"><b>Molecular diligence</b><span>Review candidate evidence with its source, QC state, functional contract, and claim boundary.</span></div>
-      <div class="decision-card"><b>Monitoring design</b><span>Identify whether sample identity, abundance, environmental metadata, or field evidence will most improve a decision.</span></div>
-      <div class="decision-card"><b>Validation portfolio</b><span>Route contexts into explicit readiness states and concentrate field investment where information value is highest.</span></div>
-      <div class="decision-card"><b>MRV infrastructure</b><span>Retain a traceable molecular-to-measurement ledger that can support calibrated models after validation gates pass.</span></div>
+      <div class="decision-card"><b>Candidate review</b><span>See each candidate's evidence with its source, quality, annotation route and claim limit.</span></div>
+      <div class="decision-card"><b>Measurement planning</b><span>Find which missing link, whether sample identity, abundance, environment or flux, would most change a decision.</span></div>
+      <div class="decision-card"><b>Validation priorities</b><span>Rank sites and samples for field work by how much a measurement would resolve.</span></div>
+      <div class="decision-card"><b>Audit trail</b><span>Keep a traceable path from molecule to measurement that calibrated models can use later.</span></div>
     </div>
   </section>
   <section class="section">
-    <h2>Evidence Integrity And Current Scope</h2>
-    <p>The table records the consequential findings from reconciling the current warehouse against the prior V9 ledger, per-MAG outputs, embedding protocols, taxonomy fields, MUCC expression tables, and staged ecological evidence. This reconciliation establishes the evidence states that the atlas carries forward. It protects partner decisions from numerical comparisons across unlike feature contracts.</p>
-    <table class="readiness-table">
-      <thead><tr><th>Audit class</th><th>Finding</th><th>Observed result</th><th>Report action</th></tr></thead>
+    <h2>Evidence integrity and current scope</h2>
+    <p>Before release, the warehouse was checked against its source tables, per-genome outputs, embedding protocols, taxonomy fields and the Old Woman Creek expression tables. The table lists the findings that shape how the atlas can be used.</p>
+    <table class="readiness-table findings-table">
+      <thead><tr><th>Area</th><th>Finding</th><th>Result</th><th>Consequence for use</th></tr></thead>
       <tbody>{findings_rows_html}</tbody>
     </table>
-    <p class="note">Interpretation follows four evidence stages. The sequence begins with payload availability, advances through within-protocol signal and cross-lane mechanism comparability, then reaches sample and ecological validation.</p>
-    <p class="note">The underlying warehouse retains detailed audit records and source provenance. This public report presents the resulting evidence contract, decision logic, and validation agenda without exposing raw technical bundles.</p>
+    <p class="note">Evidence matures in four stages: payload availability, signal within one protocol, comparability across annotation routes, then sample and ecological validation. Detailed audit tables stay in the internal warehouse; this report shows the resulting evidence states and the validation agenda.</p>
   </section>
   {infographic_block}
   <section class="section">
-    <h2>The Tri-View Evidence Contract</h2>
-    <p>A formal tri-view row carries ESM-2, gLM2, and a functional payload. Its evidence state records whether those payloads support a common quantitative interpretation. The atlas carries this distinction at row level, in the freeze manifest, in candidate cards, and in release validation gates.</p>
+    <h2>The tri-view evidence contract</h2>
+    <p>A tri-view record carries an ESM-2 embedding, a gLM2 embedding and a functional annotation. Its evidence state records whether those payloads support a common quantitative interpretation. That state travels with the record into the freeze manifest, the candidate cards and the release checks.</p>
     <table class="readiness-table">
-      <thead><tr><th>Lane</th><th>Registered</th><th>ESM-2</th><th>gLM2</th><th>Functional payload</th><th>Data-complete tri-view</th><th>Mechanism-comparable tri-view</th><th>Functional contract</th></tr></thead>
+      <thead><tr><th>Source lane</th><th>Registered</th><th>ESM-2</th><th>gLM2</th><th>Functional annotation</th><th>All three views</th><th>Comparable across routes</th><th>Functional contract</th></tr></thead>
       <tbody>{evidence_rows_html}</tbody>
     </table>
-    <div id="evidence-contract-chart" class="viz medium"></div>
-    <details class="fallback"><summary>Static fallback</summary><img src="{fallback_uri['evidence_contract']}" alt="Atlas evidence-contract counts by lane"></details>
-    <p class="note">gLM2 remains protocol-stratified. {summary['glm2_single_window_units']:,} units use one native and one shuffled window, while {summary['glm2_multiwindow_units']:,} MUCC units use 10 native and 10 shuffled windows. The shared model family supports context availability across the atlas. Numerical comparisons remain within protocol class. ESM-2 uses one 650M model family with a 6,000-protein cap, and {summary['esm2_cap_applied_units']:,} capped rows remain explicit.</p>
+    <div id="evidence-contract-chart" class="viz medium chart-scroll"></div>
+    <details class="fallback"><summary>Static version of this chart</summary><img src="{fallback_uri['evidence_contract']}" alt="Genome records by source lane: registered, with all three evidence views, and comparable across annotation routes"></details>
+    <p class="note">gLM2 runs under two protocols and is compared only within a protocol: {summary['glm2_single_window_units']:,} records use one native and one shuffled gene-order window, and {summary['glm2_multiwindow_units']:,} Old Woman Creek records use ten of each. ESM-2 uses one 650-million-parameter model with a cap of 6,000 proteins per genome; the {summary['esm2_cap_applied_units']:,} capped records are flagged.</p>
   </section>
   <section class="section">
-    <h2>Source Provenance And Environmental Readiness</h2>
-    <p>Environmental metadata gives the evidence graph a provenance-aware route into future sample and site rollups. The report shows where each evidence lane originates, its current resolution, and the next required link. This turns metadata gaps into a practical partner agenda for abundance mapping, environmental context, and field validation.</p>
+    <h2>Source provenance and environmental readiness</h2>
+    <p>Where each source comes from, how precisely its genomes can be placed in a sample today, and the next link needed. Together these gaps set a concrete agenda for abundance mapping, environmental context and field validation.</p>
     <table class="readiness-table">
-      <thead><tr><th>Evidence lane</th><th>Report units</th><th>Metadata universe</th><th>Primary source</th><th>Resolution now</th><th>Use now</th><th>Blocking gap</th></tr></thead>
+      <thead><tr><th>Source lane</th><th>Records</th><th>Source universe</th><th>Primary source</th><th>Resolution now</th><th>Use now</th><th>Blocking gap</th></tr></thead>
       <tbody>{provenance_rows_html}</tbody>
     </table>
-    <p class="note">The POC crosswalk spans a broader 662-proteome context. This report renders 625 MAG or bin comparable POC units plus registered mangrove and MUCC v1 wetland rows. The embedding map contains {summary['embedding_context_total']:,} registered ESM-2-bearing units. Pending, source-gap, mixed-resolution, and unlinked rows remain visible as explicit readiness states.</p>
+    <p class="note">The proof-of-concept crosswalk covers a 662-proteome cohort; the atlas reference core holds 625 of those genomes ({safe_int(nearest_core.get('reference_core_rumen_units')):,} rumen, {safe_int(nearest_core.get('reference_core_wetland_units')):,} wetland) alongside the registered mangrove and Old Woman Creek records. Pending, source-gap, mixed-resolution and unlinked rows stay visible as explicit states.</p>
   </section>
   <section class="section">
-    <h2>Three Molecular Views In One Evidence Graph</h2>
-    <p>The EmergentBiome evidence graph organizes molecular similarity into a reviewable evidence trail. A 2D embedding map provides discovery context. Functional mechanism claims require convergent evidence from the appropriate view and protocol. Each view therefore carries its own eligible comparison set and validation gaps.</p>
+    <h2>Three molecular views in one evidence graph</h2>
+    <p>Each view answers a different question, has its own comparison set and carries its own validation gaps. A mechanism claim needs convergent evidence from the right view under a compatible protocol; nearness on a map is only a starting point.</p>
     <div class="approach-grid">
-      <div class="approach-card"><b>ESM-2 proteome geometry</b><span>Protein-language embeddings provide a high-dimensional hypothesis engine for MAG and proteome similarity. The atlas uses neighborhoods and graph links as representation context.</span></div>
-      <div class="approach-card"><b>Functional annotations</b><span>POC, MSM, and Futian expose normalized accepted, present, and best-hit screening events. MUCC contributes a separate source DRAM, gene, and expression scaffold. Cross-contract mechanism ranks remain disabled.</span></div>
-      <div class="approach-card"><b>gLM2 genomic context</b><span>Native and shuffled context is available for {summary.get('release_glm2_units', summary['external_glm2'] + summary['poc_core_total']):,} units. Single-window and 10-window protocols remain separate numerical regimes, so metrics are compared within protocol class.</span></div>
-      <div class="approach-card"><b>QC and provenance guardrails</b><span>CheckM2, GUNC, GTDB-Tk, annotation coverage, source labels, and missingness protect against attractive artifacts. Weak evidence remains visible instead of being silently dropped.</span></div>
+      <div class="approach-card"><b>ESM-2 protein embeddings</b><span>A protein language model summarizes each genome's proteins as one vector. Neighborhoods suggest genomes worth comparing; they do not establish shared function.</span></div>
+      <div class="approach-card"><b>Functional annotation</b><span>The reference core and both mangrove sources carry shared-pipeline screening events. Old Woman Creek keeps its source annotations and expression data. No ranking crosses the two routes.</span></div>
+      <div class="approach-card"><b>gLM2 genomic context</b><span>Available for {summary.get('release_glm2_units', summary['external_glm2'] + summary['poc_core_total']):,} records. Native and shuffled gene-order windows run under two protocols, so scores are compared within a protocol.</span></div>
+      <div class="approach-card"><b>Quality and provenance checks</b><span>Genome completeness and contamination, taxonomy, annotation coverage, source labels and missingness guard against attractive artifacts. Weak evidence stays visible instead of being dropped.</span></div>
     </div>
-    <p class="note">The public report exposes evidence availability, protocol class, numerator provenance, and authorized claim wording. A common cross-lane mechanism score becomes eligible after the shared feature contract is rebuilt and validated.</p>
+    <p class="note">For every record the report shows what evidence exists, its protocol, what each functional count measures and the claim the record supports. A methane mechanism score across routes becomes possible once a shared feature table is built and validated.</p>
   </section>
   <section class="section">
-    <h2>ESM-2 Geometry With Measured Limitations</h2>
-    <p>ESM-2 defines a high-dimensional proteome-neighborhood surface for {safe_int(geometry.get('embedding_units')):,} units. The current raw cosine space is strongly anisotropic. Random-pair cosine has mean {safe_float(geometry.get('random_pair_similarity_mean')):.4f} and median {safe_float(geometry.get('random_pair_similarity_median')):.4f}. Median similarity to the global centroid is {safe_float(geometry.get('similarity_to_global_centroid_median')):.4f}. Raw cross-domain kNN edges therefore occupy a saturated range with median {safe_float(geometry.get('raw_cross_edge_similarity_median')):.6f}. The atlas uses this geometry for neighborhood navigation and carries functional and validation evidence separately.</p>
-    <p>The full-atlas top-{safe_int(geometry.get('knn_k'))} neighbor analysis contains a reproducible target-domain pattern. Raw space contains {safe_int(geometry.get('raw_reciprocal_pair_counts', {}).get('mangrove↔wetland')):,} unique reciprocal mangrove↔wetland pairs, {safe_int(geometry.get('raw_reciprocal_pair_counts', {}).get('rumen↔wetland')):,} rumen↔wetland pair, and {safe_int(geometry.get('raw_reciprocal_pair_counts', {}).get('mangrove↔rumen')):,} rumen↔mangrove pairs. After per-dimension standardization, {safe_int(geometry.get('dimension_zscore_reciprocal_pair_counts', {}).get('mangrove↔wetland')):,} mangrove↔wetland reciprocal pairs remain, while both rumen cross-domain categories fall to zero. A reciprocal pair requires each record to appear among the other's top-{safe_int(geometry.get('knn_k'))} neighbors across the full atlas.</p>
-    <p>That zero does not mean nearest-core links are absent. In a separate raw-cosine comparison against the {safe_int(nearest_core.get('reference_core_units')):,}-record POC reference core ({safe_int(nearest_core.get('reference_core_rumen_units')):,} rumen; {safe_int(nearest_core.get('reference_core_wetland_units')):,} wetland), {safe_int(nearest_core.get('wetland_nearest_rumen_units')):,} of {safe_int(nearest_core.get('wetland_embedding_units')):,} wetland and {safe_int(nearest_core.get('mangrove_nearest_rumen_units')):,} of {safe_int(nearest_core.get('mangrove_embedding_units')):,} mangrove MAG/proteome records have a rumen record as their single nearest core neighbor. This includes {safe_int(nearest_core.get('target_candidate_nearest_rumen_cards')):,} of {safe_int(nearest_core.get('target_candidate_cards')):,} selected wetland/mangrove candidate cards. These one-way representation-space links nominate records for review; they do not establish source-independent biological transfer or methane flux. Counts were derived from the release's frozen embedding-context and candidate-card tables, which remain in the internal report bundle.</p>
-    <p>Taxonomy explains an important fraction of that continuity. Among reciprocal mangrove↔wetland pairs with usable phylum labels, {100 * safe_float(taxonomy_audit.get('raw_exact_name_share_usable')):.1f}% are exact raw-name matches and {100 * safe_float(taxonomy_audit.get('synonym_normalized_share_usable')):.1f}% match after conservative synonym normalization. Because GTDB release metadata is recorded only for the POC lane, source and taxonomy-release effects are confounded. Harmonized taxonomy and phylogeny-aware source nulls are required before interpreting neighborhood enrichment as functional convergence.</p>
-    <p>Diffusion coordinates are the primary navigation view because they are built from the same neighborhood graph used for inspection. UMAP, t-SNE, and PCA remain sensitivity views; no projection is treated as proof.</p>
-    <p class="note">Scientific anchors include {citation_html}. Recent dimensionality-reduction benchmarks reinforce this design. Visual methods differ in local and global preservation, so the report exposes the high-dimensional kNN substrate and candidate evidence cards alongside each projection.</p>
+    <h2>ESM-2 geometry with measured limitations</h2>
+    <p>The ESM-2 representation places {safe_int(geometry.get('embedding_units')):,} records in a {dimensions:,}-dimensional space. Raw cosine similarity in this space is strongly anisotropic: two random records have a mean cosine of {safe_float(geometry.get('random_pair_similarity_mean')):.4f} (median {random_median:.4f}), and the median similarity to the global centroid is {safe_float(geometry.get('similarity_to_global_centroid_median')):.4f}. Cross-habitat neighbor edges therefore sit in a saturated range, with a median raw cosine of {safe_float(geometry.get('raw_cross_edge_similarity_median')):.6f}. The atlas uses this geometry to navigate neighborhoods and keeps functional and validation evidence separate.</p>
+    <p>A stricter test counts mutual neighbors: pairs in which each record is among the other's {knn_k} closest across the full atlas. Raw space holds {safe_int(raw_pairs.get('mangrove↔wetland')):,} mutual mangrove–wetland pairs, {raw_rumen_wetland:,} rumen–wetland pair{'' if raw_rumen_wetland == 1 else 's'} and {raw_rumen_mangrove:,} rumen–mangrove pair{'' if raw_rumen_mangrove == 1 else 's'}. After each dimension is standardized, {safe_int(z_pairs.get('mangrove↔wetland')):,} mangrove–wetland pairs remain {z_rumen_text}.</p>
+    <p>A separate, one-way comparison asks which member of the {safe_int(nearest_core.get('reference_core_units')):,}-genome reference core ({safe_int(nearest_core.get('reference_core_rumen_units')):,} rumen, {safe_int(nearest_core.get('reference_core_wetland_units')):,} wetland) is closest to each record. Outside the core, {wetland_outside_rumen:,} of {wetland_outside:,} wetland and {mangrove_rumen:,} of {mangrove_units:,} mangrove records point to a rumen genome, as do {candidates_rumen_text}. These matches are weak: the median closest-match similarity outside the core ({nearest_median:.3f}) is lower than that of two random atlas records ({random_median:.3f}). The core is mostly rumen, so a rumen match nominates a record for review; it does not establish shared biology, transfer between sources or methane flux.</p>
+    <p>Taxonomy explains part of the mangrove–wetland continuity. Among mutual pairs with usable phylum labels, {100 * safe_float(taxonomy_audit.get('raw_exact_name_share_usable')):.1f}% match exactly and {100 * safe_float(taxonomy_audit.get('synonym_normalized_share_usable')):.1f}% match after conservative synonym normalization. GTDB release metadata exists only for the reference core, so source and taxonomy-release effects are confounded. Harmonized taxonomy and phylogeny-aware null models are needed before neighborhood enrichment can be read as functional convergence.</p>
+    <p>UMAP is the default map view because it keeps local neighborhoods readable. The diffusion map is dominated by the separation between the reference core and the other sources, which squeezes most records into a narrow band; t-SNE and PCA are offered for comparison. No projection is evidence on its own, and link membership is always computed in the full representation.</p>
+    <p class="note"><b>References</b></p>
+    <ol class="refs">{references_html}</ol>
   </section>
   <section class="section">
-    <h2>Molecular Niche-Space Bridge Map</h2>
-    <p>The bridge map provides a navigation layer for every embedding-bearing MAG or proteome unit in the release payload. It overlays auditable high-dimensional evidence links from the original 1,280-dimensional ESM-2 space. Source-lane gap records remain visible in status tables as explicit evidence states.</p>
-    <p>Gold links connect selected case-study candidates to their nearest POC reference neighbor. Gray and teal links show cross-domain kNN evidence from the ESM-2 neighborhood graph. Points encode source ecosystem and functional-payload availability. Select a halo to inspect the row's evidence contract, gLM2 protocol, numerator provenance, QC, taxonomy, expression detection, and authorized claim.</p>
+    <h2>Molecular niche-space map</h2>
+    <p>Every record with an ESM-2 embedding appears on the map, colored by source lane. Positions come from a two-dimensional projection; links come from the full {dimensions:,}-dimensional representation, so switching projections moves points but never changes which links exist.</p>
+    <p>Gold lines join the {drawn_case_links:,} selected candidates outside the reference core to their closest reference-core genome. Teal lines are mutual neighbor pairs and gray lines one-way neighbor pairs; the map draws the {drawn_neighbor_links:,} most similar of the {cross_edges:,} directed cross-habitat neighbor edges.{neighbor_mix_text} Gold rings mark the {case_study_count:,} case-study candidates: select one to read its evidence card, or hover over any point.</p>
     <div class="toolbar" id="method-buttons"></div>
-    <div class="legend"><span><i class="dot" style="background:var(--rumen)"></i>Rumen</span><span><i class="dot" style="background:var(--wetland)"></i>Wetland/MUCC</span><span><i class="dot" style="background:var(--mangrove)"></i>Mangrove expansion</span></div>
+    <p class="note" id="projection-note"></p>
+    <div class="legend"><span><i class="dot" style="background:var(--rumen)"></i>Rumen reference</span><span><i class="dot" style="background:var(--wetland)"></i>Wetland (mostly Old Woman Creek)</span><span><i class="dot" style="background:var(--mangrove)"></i>Mangrove, China coast (MSM)</span><span><i class="dot" style="background:var(--futian)"></i>Mangrove, Futian (Shenzhen)</span><span><i class="halo"></i>Case-study candidate</span><span><i class="line" style="border-color:var(--gold)"></i>Candidate to closest core genome</span><span><i class="line" style="border-color:var(--teal)"></i>Mutual neighbors</span><span><i class="line" style="border-color:#94a3b8"></i>One-way neighbors</span></div>
     <div class="grid2">
       <div id="niche-map" class="viz tall"></div>
-      <aside id="candidate-card" class="side-card" aria-live="polite"><p class="note">Select a node or signature cell to inspect bridge evidence.</p></aside>
+      <aside id="candidate-card" class="side-card" aria-live="polite"><p class="note">Select a case-study candidate on the map, or a cell in the matrix below, to read its evidence card.</p></aside>
     </div>
-    <details class="fallback"><summary>Static fallback</summary><img src="{fallback_uri['niche']}" alt="Molecular niche-space fallback"></details>
+    <details class="fallback"><summary>Static version of this map</summary><img src="{fallback_uri['niche']}" alt="UMAP projection of the atlas records colored by source lane"></details>
   </section>
   <section class="section">
-    <h2>Candidate Evidence Cards</h2>
-    <p>The candidate layer asks which evidence exists for each review hypothesis and which comparisons can support an authorized review. POC cards retain their historical internal bridge ordering. Mangrove cards use ESM-2 neighborhood geometry and QC. MUCC cards carry source-scaffold review evidence with processed expression detection where present.</p>
-    <p>The matrix and wheel display ESM-2, gLM2, functional payload, common mechanism contract, expression, QC, taxonomy, and sample context. Filled cells record evidence availability or eligibility. Mechanism strength, activity, and flux causality require their own direct supporting evidence.</p>
+    <h2>Candidate evidence cards</h2>
+    <p>The candidate layer asks which evidence exists for each review hypothesis, and which comparisons that evidence can support. Reference-core cards (P) keep the ranking used in the proof-of-concept study. Mangrove cards (M) are ranked by embedding geometry and QC. Old Woman Creek cards (O) carry the source's annotations and, where present, processed expression detection.</p>
+    <p>The matrix and the wheel show availability and eligibility, not strength: ESM-2, gLM2, functional annotation, comparability across routes, expression, QC, taxonomy and sample context. Mechanism strength, activity and any causal link to flux need their own direct evidence.</p>
     <div class="signature-stack">
       <div class="signature-panel">
-        <h3>Candidate evidence-eligibility matrix</h3>
+        <h3>Candidate evidence matrix</h3>
         <div id="signature-matrix" class="viz medium matrix"></div>
       </div>
       <div class="signature-panel">
-        <h3>Evidence coverage wheel</h3>
+        <h3>Evidence coverage by candidate group</h3>
         <div id="candidate-circos" class="viz medium circos"></div>
+        <p class="figure-caption">Each ring is a candidate group, from the reference core (inner) to Old Woman Creek (outer). A wedge's length is the share of that group's cards with the evidence; an empty position means no card in the group has it. Expression exists only in the Old Woman Creek source, so its absence elsewhere means not assayed rather than not expressed.</p>
       </div>
     </div>
-    <details class="fallback"><summary>Static fallback</summary><img src="{fallback_uri['matrix']}" alt="Candidate signature matrix fallback"></details>
+    <details class="fallback"><summary>Static version of the matrix</summary><img src="{fallback_uri['matrix']}" alt="Candidate evidence matrix: which evidence each candidate has"></details>
   </section>
   <section class="section">
-    <h2>Functional Metric Harmonization</h2>
-    <p>The audit found that the prior report's “methane marker density per 1,000 proteins” mixed lane-dependent row aggregates and could count several hits for one gene. The rebuilt guarded warehouses now expose accepted KOfam genes and best-ranked MCycDB/SCycDB hits as explicit, separate events. MCycDB is not folded into a methane score without a validated family map. MUCC retains a distinct source-scaffold contract.</p>
+    <h2>Functional metric harmonization</h2>
+    <p>A methane-marker density is only meaningful if every source counts genes the same way. Raw annotation-hit rows do not: one gene can produce several hits, and the number of hits per protein differs by source and tool. The shared pipeline therefore records accepted KOfam genes and METABOLIC events as explicit events and keeps the best MCycDB and SCycDB hits separate; MCycDB hits do not enter a methane score until a validated family map exists. Old Woman Creek keeps its own source annotations under a separate contract.</p>
     <table class="readiness-table">
-      <thead><tr><th>Lane</th><th>Functional units</th><th>Numerator provenance</th><th>Median raw methane rows</th><th>Median proteins</th><th>Raw rows/protein &gt;1</th><th>Public status</th></tr></thead>
+      <thead><tr><th>Source lane</th><th>Annotated records</th><th>What is counted now</th><th>Raw methane hit rows (median)</th><th>Proteins (median)</th><th>Records with over one raw hit per protein</th><th>Public status</th></tr></thead>
       <tbody>{functional_rows_html}</tbody>
     </table>
-    <p>The legacy methane component correlated with the former combined index at Pearson r={safe_float(functional_audit.get('legacy_score_methane_component_pearson_r')):.3f}; {100 * safe_float(functional_audit.get('legacy_top_500_mangrove_share')):.1f}% of the former top 500 were mangrove rows. That historical ranking remains quarantined. The normalized event tables support within-contract screening and audit; they do not yet authorize a universal mechanism rank.</p>
-    <div class="warn"><b>Closure condition</b> Lock tool and database fingerprints, validate the family mappings and denominator behavior, quantify missingness and QC sensitivity, and pass source-aware, taxonomy-aware, null, stability, and ablation tests before enabling a cross-lane mechanism score.</div>
+    <p>The raw-row columns are diagnostics that show why raw hits cannot be compared. A combined index built on them is quarantined and plays no part in any ranking here: its methane component tracked the index closely (Pearson r = {safe_float(functional_audit.get('legacy_score_methane_component_pearson_r')):.3f}), and {top500_text}, a pattern consistent with counting differences between sources rather than biology. The event tables support screening and audit within one route; they do not authorize a ranking across routes.</p>
+    <div class="warn"><b>Before a cross-route methane score is enabled:</b> lock tool and database versions, validate the gene-family mappings and denominator behavior, quantify missingness and QC sensitivity, and pass source-aware, taxonomy-aware, null, stability and ablation tests.</div>
   </section>
   <section class="section">
-    <h2>MUCC v1 Adds Expression Evidence And A Field-Validation Lane</h2>
-    <p>The Old Woman Creek lane adds processed metatranscriptome detection across {safe_int(mucc_audit.get('expression_sample_columns')):,} source sample columns. Expression support is present for {safe_int(mucc_audit.get('processed_expression_supported_mags')):,} MAGs. {safe_int(mucc_audit.get('methane_expression_detected_mags')):,} carry at least one processed methane-associated expressed-gene row, and {safe_int(mucc_audit.get('sulfur_expression_detected_mags')):,} carry sulfur-associated rows. These are detection and occupancy signals from deposited processed tables. Expression normalization remains the next requirement for activity-magnitude comparison.</p>
-    <p>The warehouse also stages {safe_int(mucc_audit.get('chamber_flux_rows')):,} chamber-flux rows ({safe_int(mucc_audit.get('chamber_flux_valid_rows')):,} source-valid), {safe_int(mucc_audit.get('porewater_rows')):,} porewater rows ({safe_int(mucc_audit.get('porewater_valid_rows')):,} source-valid), and {safe_int(mucc_audit.get('tower_flux_rows')):,} half-hourly gap-filled tower rows. It includes {safe_int(mucc_audit.get('flashweave_edges')):,} exploratory FlashWeave associations, of which {safe_int(mucc_audit.get('flashweave_stable_edges')):,} pass the current stability filter, plus {safe_int(mucc_audit.get('wgcna_non_grey_modules')):,} non-grey descriptive WGCNA modules.</p>
-    <p>The decisive evidence gap is linkage. {safe_int(mucc_audit.get('exact_sample_environment_flux_links')):,}/{safe_int(mucc_audit.get('expression_sample_columns')):,} sequencing samples currently have an authoritative exact sample, depth, environment, and flux join. {safe_int(mucc_audit.get('ecological_join_blocked_samples')):,} remain in an explicit ecological-validation block. Flux records therefore form staged validation context. MAG, expression-signature, and network-edge attribution await the authoritative join.</p>
+    <h2>Old Woman Creek adds expression evidence and a field-validation lane</h2>
+    <p>The Old Woman Creek wetland lane (MUCC v1) adds processed metatranscriptome detection across {mucc_columns:,} source sample columns. Expression support exists for {safe_int(mucc_audit.get('processed_expression_supported_mags')):,} MAGs: {mucc_methane:,} have at least one processed methane-associated expressed-gene row and {mucc_sulfur:,} have sulfur-associated rows. These are detection signals from deposited processed tables; comparing activity levels needs expression normalization first.</p>
+    <p>The warehouse also stages {safe_int(mucc_audit.get('chamber_flux_rows')):,} chamber-flux rows ({safe_int(mucc_audit.get('chamber_flux_valid_rows')):,} valid in the source), {safe_int(mucc_audit.get('porewater_rows')):,} porewater rows ({safe_int(mucc_audit.get('porewater_valid_rows')):,} valid) and {safe_int(mucc_audit.get('tower_flux_rows')):,} half-hourly, gap-filled tower-flux rows. It includes {safe_int(mucc_audit.get('flashweave_edges')):,} exploratory FlashWeave associations, {safe_int(mucc_audit.get('flashweave_stable_edges')):,} of which pass the current stability filter, and {safe_int(mucc_audit.get('wgcna_non_grey_modules')):,} descriptive WGCNA modules (excluding the unassigned grey module).</p>
+    <p>The decisive gap is linkage: {mucc_exact:,} of {mucc_columns:,} sequencing samples have an authoritative exact join to sample, depth, environment and flux, and {safe_int(mucc_audit.get('ecological_join_blocked_samples')):,} remain blocked for ecological validation. Until that join exists, the flux records are site and time context, and no MAG, expression signature or network edge can be attributed to a measured flux.</p>
   </section>
   <section class="section">
-    <h2>Sample-Linkage Readiness</h2>
-    <p>This panel organizes MAG and proteome evidence at the strongest environmental context available today. Futian rows are grouped by site and month with chemistry metadata across multiple depth samples. MSM rows are grouped by source sample and BioSample sets. The dark bar overlay shows the share of each context carrying ESM-2, gLM2, and functional annotations.</p>
-    <p>The readiness layer guides abundance mapping, metadata reconciliation, and field validation. Sample-level methane-risk estimates enter the product after per-MAG abundance, exact sample assignment, environmental permissiveness, and flux or process validation become available.</p>
-    <div id="sample-linkage" class="viz medium"></div>
+    <h2>Sample-linkage readiness</h2>
+    <p>This chart groups mangrove records at the most precise environmental context available today. Futian records are grouped by site and month, each context spanning several depth samples with chemistry metadata. MSM records are grouped by the source's sample groups and BioSample sets. No record is yet assigned to a single physical sample.</p>
+    <p>These groups show a field team where abundance mapping, metadata reconciliation and validation measurements would pay off first. Sample-level methane-risk estimates become possible only after per-genome abundance, exact sample assignment, environmental conditions and flux or process validation are in place.</p>
+    <div id="sample-linkage" class="viz medium chart-scroll"></div>
   </section>
   <section class="section">
-    <h2>From Molecular Evidence To Environmental Readiness</h2>
-    <p>The atlas becomes operationally stronger when validated MAG and proteome features roll up to physical samples, metagenomes, sites, and monitoring periods. POC, MSM, and Futian now supply pipeline-normalized screening events; MUCC contributes source-scaffold and expression-detection evidence. None is yet authorized as a cross-lane mechanism score. Environmental methane-risk modeling becomes eligible when comparable molecular features receive abundance weights, exact sample provenance, environmental covariates, uncertainty, and field or process validation.</p>
+    <h2>From molecular evidence to environmental readiness</h2>
+    <p>The atlas becomes decision-grade when validated genome features roll up to physical samples, sites and monitoring periods. Today the reference core and both mangrove sources carry shared-pipeline screening events, and Old Woman Creek carries source annotations and expression detection; none is yet a mechanism score comparable across routes. A defensible sample-level score needs four gated layers.</p>
     {sample_risk_abstract_block}
-    <p>A defensible sample score combines four gated layers. The molecular layer uses one common validated mechanism-feature contract across MAGs and unbinned marker evidence. The community layer weights those features by read coverage, relative or absolute abundance, pathway redundancy, and unassembled signal. The environmental layer captures salinity, sulfate, redox or oxygen proxies, pH, temperature, organic carbon, depth, vegetation, hydrology, season, and management. The validation layer anchors predictions against chamber fluxes, dissolved methane, porewater chemistry, incubations, or repeated field observations with explicit temporal and spatial joins.</p>
-    <div class="sample-score-grid">
-      <div class="sample-score-card"><h3>1. Link molecules to samples</h3><p>Resolve MAG-to-sample and MAG-to-site provenance, retain resolution tiers, and preserve unlinked MAGs as explicit readiness states.</p></div>
-      <div class="sample-score-card"><h3>2. Weight by community abundance</h3><p>Turn genome potential into sample capacity using MAG coverage, marker abundance, unbinned functional reads, and uncertainty from incomplete assembly.</p></div>
-      <div class="sample-score-card"><h3>3. Add environmental permissiveness</h3><p>Use measured metadata first, modeled covariates second, and mark every salinity, sulfate, redox, substrate, depth, and vegetation field by evidence tier.</p></div>
-      <div class="sample-score-card"><h3>4. Calibrate with field evidence</h3><p>Use flux, porewater, geochemistry, and temporal resampling to learn which molecular signatures predict methane risk under real blue-carbon conditions.</p></div>
+    <div class="layer-list">
+      <div class="layer"><span class="state partial">Partial</span><h3>1. Link molecules to samples</h3><p>Assign each genome to its sample and site, keep resolution tiers, and show unlinked genomes as explicit states.</p><p class="now-line">Now: site-month or sample-group context for mangroves; {mucc_exact:,} of {mucc_columns:,} exact joins at Old Woman Creek.</p></div>
+      <div class="layer"><span class="state missing">Not yet</span><h3>2. Weight by community abundance</h3><p>Turn genome potential into sample capacity with genome coverage, marker abundance, unbinned functional reads and assembly uncertainty.</p><p class="now-line">Now: no abundance joined to the atlas records.</p></div>
+      <div class="layer"><span class="state partial">Partial</span><h3>3. Add environmental conditions</h3><p>Measured metadata first, modeled covariates second, with every salinity, sulfate, redox, substrate, depth and vegetation field marked by evidence tier.</p><p class="now-line">Now: environmental fields for some mangrove sample contexts, not yet joined to genomes.</p></div>
+      <div class="layer"><span class="state missing">Not yet</span><h3>4. Calibrate with field evidence</h3><p>Anchor predictions to chamber flux, dissolved methane, porewater chemistry, incubations or repeated observations, with explicit joins in time and place.</p><p class="now-line">Now: no genome-to-flux pairs.</p></div>
     </div>
-    <p>Field work is the learning engine that can turn the molecular atlas into a progressively stronger risk system. Dense sampling across mangroves, salt marshes, freshwater wetlands, restored sites, degraded sites, salinity gradients, depth profiles, seasons, and management regimes can expand the molecular niche map, reveal source-specific blind spots, and test candidate signatures in blue-carbon settings. Every new sample strengthens the atlas when it arrives with clean provenance, abundance, environmental measurements, and a validation target.</p>
-    <p>The next operational output is a sample-risk readiness layer. Once samples are mapped, their evidence can be labeled scoreable, monitor more, needs metadata, needs abundance, needs environmental covariates, or needs flux validation. Current atlas records do not yet support calibrated sample-risk scores. Readiness labels would guide sampling and validation plans while the evidence base grows.</p>
+    <p>Field work is how the atlas learns. Sampling across habitats, restoration stages, salinity gradients, depths and seasons would widen the map, expose source-specific blind spots and test candidate signatures under blue-carbon conditions, provided each sample arrives with clean provenance, abundance, environmental measurements and a validation target.</p>
+    <p>The next operational output is a sample-readiness layer. Once samples are mapped, each would be labeled scoreable, monitor more, needs metadata, needs abundance, needs environmental covariates or needs flux validation. Current records do not support calibrated sample-risk scores; the labels would guide sampling while the evidence grows.</p>
   </section>
   <section class="section">
-    <h2>Strategic Readout</h2>
-    <p class="closing">The durable achievement is a queryable, provenance-rich warehouse spanning {summary['atlas_registered_units']:,} registered units and multiple evidence lanes. It already supports payload auditing, latent-neighborhood exploration, protocol-aware candidate review, expression-detection queries, metadata-gap prioritization, and validation-study design. The EmergentBiome Molecular Atlas consolidates those capabilities into a scientific decision aid.</p>
-    <p class="closing">The current release carries explicit evidence states. {summary['pipeline_normalized_tri_view_units']:,} tri-views have guarded pipeline-normalized screening events; {summary['source_scaffold_tri_view']:,} use the distinct MUCC source scaffold; {summary['mechanism_comparable_tri_view']:,} currently pass the full cross-lane mechanism-comparability gate. Keeping those rungs separate protects downstream partner decisions from pipeline artifacts.</p>
-    <p class="closing">The highest-value next build produces one lane-independent mechanism-feature table, harmonized taxonomy with phylogeny-aware nulls, calibrated gLM2 protocols, exact sample and abundance mappings, and field or process validation with uncertainty. Those gates will enable cross-lane mechanism ranking and calibrated sample-risk modeling on a sound scientific foundation.</p>
-    <div class="warn">Current evidence supports molecular screening, evidence-card review, and monitoring-readiness design. Final A to E risk tiers, measured methane-flux claims, carbon-credit determinations, and source-independent transfer conclusions require further validation.</div>
+    <h2>What comes next</h2>
+    <p class="closing">The atlas rests on a source-audited warehouse of {summary['atlas_registered_units']:,} registered genome records across four source lanes. It already supports payload auditing, neighborhood exploration, protocol-aware candidate review, expression-detection queries, metadata-gap priorities and validation-study design.</p>
+    <p class="closing">Its evidence states are explicit: {summary['pipeline_normalized_tri_view_units']:,} records carry shared-pipeline screening events, {summary['source_scaffold_tri_view']:,} carry Old Woman Creek source annotations, and {summary['mechanism_comparable_tri_view']:,} pass the cross-route comparability gate. Keeping those states separate protects decisions from pipeline artifacts.</p>
+    <p class="closing">The next build should deliver one mechanism-feature table shared by all sources, harmonized taxonomy with phylogeny-aware null models, calibrated gLM2 protocols, exact sample and abundance mappings, and field or process validation with uncertainty. Together these enable cross-route mechanism ranking and calibrated sample-risk modeling.</p>
+    <div class="warn">Current evidence supports molecular screening, evidence-card review and measurement planning. Final A–E risk tiers, measured methane-flux claims, carbon-credit decisions and claims of transfer between independent sources all require further validation.</div>
   </section>
 </main>
 <script src="{d3_href}"></script>
@@ -4766,7 +5052,7 @@ def write_outputs(
         shutil.copy2(audit_file, audit_dir / audit_file.name)
     if infographic_path is not None and infographic_path.exists():
         shutil.copy2(infographic_path, output_dir / "assets/figures/methanet_agentic_workflow_moat_v3.png")
-    if sample_risk_abstract_path.exists():
+    if RENDER_SAMPLE_RISK_ABSTRACT and sample_risk_abstract_path.exists():
         shutil.copy2(
             sample_risk_abstract_path,
             output_dir / "assets/figures/figure_04_mag_to_sample_risk_readiness_graphical_abstract.png",
@@ -4853,13 +5139,15 @@ def write_outputs(
             ## Regenerate
 
             ```bash
-            source /opt/ohpc/pub/apps/miniconda3/etc/profile.d/conda.sh
-            conda activate methanet-fgx
-            export NUMBA_CACHE_DIR=/tmp/methanet-numba-cache
-            python scripts/reports/build_mbag_nextgen_molecular_niche_atlas.py \\
+            MPLCONFIGDIR=/tmp/methanet_mpl NUMBA_CACHE_DIR=/tmp/methanet_numba \\
+            .venv/bin/python scripts/reports/build_mbag_nextgen_molecular_niche_atlas.py \\
               --lane-registry configs/methanet_atlas_lanes.tsv \\
-              --freeze-manifest results/reports/methanet_3view_payload_freeze_<UTCSTAMP>/freeze_manifest.tsv
+              --freeze-manifest results/reports/methanet_3view_payload_freeze_<UTCSTAMP>/freeze_manifest.tsv \\
+              --skip-phate --output-dir results/reports/<new_report_dir>
             ```
+
+            Use `--skip-phate` (or an environment without PHATE) so the published
+            projection buttons stay UMAP, diffusion map, t-SNE and PCA.
             """
         )
     )
@@ -4975,18 +5263,17 @@ def main() -> None:
     atlas["review_tier"] = atlas.apply(classify_review_tier, axis=1)
     row_defaults = {
         "allowed_claim_wording": (
-            "MAG/proteome-level molecular screening and monitoring-priority "
-            "hypothesis only; requires sample, abundance, environmental, "
-            "uncertainty, and validation layers before MRV scoring."
+            "Genome-level screening and monitoring-priority hypothesis only; "
+            "sample, abundance, environmental, uncertainty and validation "
+            "layers come before any MRV score."
         ),
         "blocking_gap": (
-            "sample mapping, abundance/read coverage, environmental covariates, "
-            "uncertainty propagation, phylogeny/source controls, and "
-            "flux/process validation"
+            "sample mapping, abundance, environmental covariates, uncertainty, "
+            "phylogeny and source controls, and flux or process validation"
         ),
         "next_validation_action": (
-            "connect to sample metadata, run source-aware nulls, compare "
-            "phylogeny versus embedding proximity, and validate against flux or "
+            "connect to sample metadata, run source-aware null models, compare "
+            "phylogeny with embedding proximity, and validate against flux or "
             "process measurements before risk scoring"
         ),
     }
@@ -4998,6 +5285,7 @@ def main() -> None:
             atlas.loc[existing.eq(""), column] = default
     atlas = add_source_provenance_context(atlas, repo_root, msm_root)
     atlas = add_sample_linkage_context(atlas, repo_root, msm_root)
+    atlas = apply_public_lane_display(atlas)
 
     # Re-split report frames after freeze/provenance enrichment so release
     # accounting uses the audited atlas, not stale loader slices.
@@ -5312,9 +5600,13 @@ def main() -> None:
         if infographic is not None
         else None
     )
-    sample_risk_abstract_bundle = copy_report_asset(
-        sample_risk_abstract,
-        output_dir / "assets/figures/figure_04_mag_to_sample_risk_readiness_graphical_abstract.png",
+    sample_risk_abstract_bundle = (
+        copy_report_asset(
+            sample_risk_abstract,
+            output_dir / "assets/figures/figure_04_mag_to_sample_risk_readiness_graphical_abstract.png",
+        )
+        if RENDER_SAMPLE_RISK_ABSTRACT
+        else Path("")
     )
     summary["interactive_runtime_asset"] = str(d3_path)
     summary["interactive_data_asset"] = str(payload_paths["atlas_bundle_js"])

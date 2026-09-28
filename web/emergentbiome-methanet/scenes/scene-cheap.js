@@ -1,7 +1,7 @@
-/* SCENE — COMPLEMENTARY EVIDENCE.
-   This schematic makes a field-design point: a salinity proxy and a molecular
-   screen answer different questions. Its scatter and highlighted cases are
-   illustrative, not observations or released methane-risk predictions. */
+/* SCENE — BEYOND SALINITY.
+   A schematic for a field-design point: salinity sets the expected baseline,
+   and genome evidence can flag the exceptions worth measuring. The scatter and
+   highlighted cases are illustrative, not observations or risk predictions. */
 (function () {
   window.EBScenes = window.EBScenes || {};
   window.EBScenes.cheap = function (p, ctx) {
@@ -9,20 +9,33 @@
     const M_A = EB.color.methaneA, M_B = EB.color.methaneB, EMG = EB.color.emergence, MUT = EB.color.textMuted;
     let rng, pts = [], exc = [], R = {};
     const METHODS = [
-      { name: "single marker test", sees: "one selected marker", kind: "dot" },
-      { name: "metabarcoding", sees: "taxonomic composition", kind: "names" },
-      { name: "salinity context", sees: "one environmental covariate", kind: "flat" },
-      { name: "EmergentBiome atlas", sees: "pathway hypotheses + provenance", kind: "guilds", hi: true },
+      { name: "single-gene test", sees: "one chosen marker gene", kind: "dot" },
+      { name: "community census", sees: "which microbes are present", kind: "names" },
+      { name: "salinity reading", sees: "one site condition", kind: "flat" },
+      { name: "EmergentBiome atlas", sees: "whole-genome pathways, with sources", kind: "guilds", hi: true },
     ];
+
+    // Stage-relative box of the copy card, or null when it is hidden.
+    function copyBox() {
+      const el = ctx.section && ctx.section.querySelector(".copy");
+      if (!el || !ctx.holder) return null;
+      const r = el.getBoundingClientRect(), base = ctx.holder.getBoundingClientRect();
+      return r.height ? { l: r.left - base.left, t: r.top - base.top, r: r.right - base.left } : null;
+    }
 
     function layout() {
       const w = ctx.W, h = ctx.H, narrow = w < 720;
       R.narrow = narrow;
-      // scatter field (right side on desktop, full-width lower on mobile)
+      // scatter field: right side on desktop; on mobile, above the copy card
       R.px0 = narrow ? w * 0.12 : w * 0.46;
       R.px1 = narrow ? w * 0.94 : w * 0.93;
-      R.py0 = narrow ? h * 0.30 : h * 0.20;
+      R.py0 = narrow ? h * 0.13 : h * 0.20;
       R.py1 = narrow ? h * 0.62 : h * 0.66;
+      const copy = copyBox();
+      if (narrow && copy) R.py1 = Math.max(R.py0 + 90, Math.min(R.py1, copy.t - 36));
+      if (!narrow && copy && copy.l < w * 0.2) R.px0 = Math.max(R.px0, copy.r + 40);
+      // The method list sits above a left-hand card; drop it if the card reaches it.
+      R.methodsFit = !narrow && !(copy && copy.l < w * 0.3 && copy.t < h * 0.16 + 4 * h * 0.062 + 12);
       rng = window.EBRandom.RNG("cheap");
       pts = [];
       for (let i = 0; i < 22; i++) {
@@ -37,7 +50,11 @@
       ];
     }
 
-    p.setup = function () { p.createCanvas(ctx.W, ctx.H); p.pixelDensity(Math.min(2, window.devicePixelRatio || 1)); layout(); if (ctx.reduced) p.noLoop(); };
+    p.setup = function () {
+      p.createCanvas(ctx.W, ctx.H); p.pixelDensity(Math.min(2, window.devicePixelRatio || 1)); layout();
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layout(); if (p.redraw) p.redraw(); });
+      if (ctx.reduced) p.noLoop();
+    };
     p.windowResized = function () { p.resizeCanvas(ctx.W, ctx.H); layout(); };
 
     function X(s) { return D.lerp(R.px0, R.px1, s); }
@@ -58,8 +75,8 @@
 
       // teaching takeaway; the visible plot is explicitly illustrative
       if (!R.narrow) {
-        D.label(p, "proxy context + molecular evidence guide paired measurements", R.px0, R.py1 + h * 0.075, D.rgba(EB.color.textPrimary, 0.9 * axesA), 10.5);
-        D.label(p, "schematic only · no site flux or risk is inferred", R.px0, R.py1 + h * 0.105, D.rgba(MUT, 0.85 * axesA), 9);
+        D.label(p, "salinity sets the baseline; genome evidence flags where to measure", R.px0, R.py1 + h * 0.075, D.rgba(EB.color.textPrimary, 0.9 * axesA), 10.5);
+        D.label(p, "schematic · not site data, no flux or risk inferred", R.px0, R.py1 + h * 0.105, D.rgba(MUT, 0.85 * axesA), 9);
       }
       D.vignette(p, w, h, EB.color.bgBase, 0.5);
     };
@@ -70,7 +87,7 @@
       p.stroke(D.rgba(MUT, 0.5 * axesA)); p.strokeWeight(1);
       p.line(R.px0, R.py0, R.px0, R.py1); p.line(R.px0, R.py1, R.px1, R.py1);
       p.pop();
-      D.label(p, "ILLUSTRATIVE METHANE RESPONSE", R.px0 - 4, R.py0 - 12, D.rgba(MUT, 0.8 * axesA), 8.5);
+      D.label(p, "METHANE (ILLUSTRATIVE)", R.px0 - 4, R.py0 - 12, D.rgba(MUT, 0.8 * axesA), 8.5);
       D.label(p, "SALINITY →", R.px1, R.py1 + 14, D.rgba(MUT, 0.8 * axesA), 8.5, [p.RIGHT, p.TOP]);
       // stylized baseline trend for the teaching plot
       if (baseA > 0.01) {
@@ -78,7 +95,7 @@
         p.stroke(D.rgba(MUT, 0.55 * baseA)); p.strokeWeight(1.4);
         p.line(X(0.02), Y(0.98), X(0.98), Y(0.06));
         p.drawingContext.setLineDash([]); p.pop();
-        D.label(p, "salinity baseline", X(0.5) + 6, Y(0.5) - 8, D.rgba(MUT, 0.7 * baseA), 8.5);
+        D.label(p, "expected from salinity", X(0.5) + 6, Y(0.5) - 8, D.rgba(MUT, 0.7 * baseA), 8.5);
       }
       // on-trend points (what salinity gets right)
       p.push(); p.noStroke();
@@ -98,14 +115,14 @@
         }
         // annotations desktop-only (the small mobile plot cannot hold them without overlap)
         if (!R.narrow) {
-          D.label(p, "hypothetical high response", X(exc[2].sal) - 12, Y(exc[2].meth) - 14, D.rgba(M_A, excA), 9, [p.RIGHT, p.BOTTOM]);
-          D.label(p, "measure to test the hypothesis", X(exc[2].sal) - 12, Y(exc[1].meth) + 20, D.rgba(M_A, 0.9 * excA), 8.5, [p.RIGHT, p.TOP]);
+          D.label(p, "salty, yet methane-active (hypothetical)", X(exc[2].sal) - 12, Y(exc[2].meth) - 14, D.rgba(M_A, excA), 9, [p.RIGHT, p.BOTTOM]);
+          D.label(p, "measure here first", X(exc[1].sal), Y(exc[1].meth) + 16, D.rgba(M_A, 0.9 * excA), 8.5, [p.CENTER, p.TOP]);
         }
       }
     }
 
     function drawMethods(w, h, t) {
-      if (R.narrow) return;   // mobile: the copy card + scatter carry it; skip the legend to stay uncluttered
+      if (R.narrow || !R.methodsFit) return;   // no room: the copy card carries the point
       const x = w * 0.06, y0 = h * 0.16, rh = h * 0.062;
       D.label(p, "WHAT EACH METHOD SEES", x, y0 - h * 0.03, D.rgba(MUT, 0.95), 10);
       for (let i = 0; i < METHODS.length; i++) {

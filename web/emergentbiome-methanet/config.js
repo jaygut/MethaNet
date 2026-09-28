@@ -14,7 +14,11 @@
      3. What exactly do I get?      (the concrete output object, shown)
      4. Why add it to proxy screening? (vs using metabarcoding, qPCR, or salinity alone)
      5. What does it NOT claim?     (the honesty that makes it credible)
-   No em-dashes in any public copy. Decision-first headlines. Body <= 25 words.
+   Voice: plain words first, technical terms in the glossary and report. One
+   caveat per point, placed where it changes the reading. Every external fact
+   carries a source line. No em-dashes in any public copy. Decision-first
+   headlines. Bodies up to about 60 words; scenes that explain the atlas may
+   run to about 80.
    ===================================================================== */
 window.EB = (function () {
   "use strict";
@@ -52,6 +56,9 @@ window.EB = (function () {
     snapshot: "2026-08-10",
     snapshotLiveUTC: "2026-08-10 controlled-diligence audit",
     snapshotFreezeUTC: "2026-08-10 release-ledger freeze",
+    // Separately reviewed three-case extension (scenes 07-08); its own date and
+    // scope, never merged into the atlas counts. Matches the public case files.
+    caseEvidenceDate: "2026-09-26",
 
     calibrationCore: 625,            // rumen + wetland POC, consolidated warehouse
     msmCandidates: 1428,
@@ -99,13 +106,16 @@ window.EB = (function () {
 
     bridgeEdges: 2226,               // displayed map links: 2,200 sampled cross-domain k-NN + 26 highlighted candidate links
     bridgeNodes: 930,
-    caseStudies: 36,
     pocBridgeGenomes: 14,            // POC 662 cohort
-    nearestCoreWetland: 2434,        // wetland records whose raw-cosine nearest POC-core match is rumen
-    nearestCoreMangrove: 4475,       // mangrove records whose raw-cosine nearest POC-core match is rumen
-    nearestCoreCandidates: 26,       // of 27 selected wetland/mangrove candidate cards
+    nearestCoreWetland: 2434,        // wetland records outside the core whose raw-cosine nearest POC-core match is rumen
+    wetlandOutsideCore: 2501,        // wetland records outside the 625-record core; the 107 core wetland records match themselves
+    nearestCoreMangrove: 4475,       // of 4,584 mangrove records (none is in the core)
+    nearestCoreMedianCosine: 0.983,  // median raw cosine to the nearest core member, 7,085 records outside the core
+    randomPairMedianCosine: 0.994,   // median raw cosine of random atlas pairs (embedding geometry audit)
+    nearestCoreCandidates: 26,       // of 27 selected wetland/mangrove candidate cards; the 27th is a core record matching itself
     candidateCards: 27,
     sampledNeighborLinks: 2200,
+    crossHabitatNeighborEdges: 57193, // directed raw-cosine top-35 edges that cross habitats (embedding geometry audit)
     highlightedCandidateLinks: 26,
     standardizedRumenReciprocalPairs: 0, // full-atlas, dimension-standardized reciprocal top-35 pairs
 
@@ -133,11 +143,6 @@ window.EB = (function () {
 
     // program
     pairedFluxNow: 0,                // authoritative exact sample + environment + process joins
-    pairedFluxTargetLo: 80,
-    pairedFluxTargetHi: 100,
-    pipelineDays: 4,
-    analystMonthsLo: 6,
-    analystMonthsHi: 12,
     methaneGWP: 30,                  // ~30x CO2 over 100yr (round GWP-100)
     methaneGWP20: 80,                // ~80x CO2 over 20yr (biogenic GWP-20, IPCC AR6, the front-loaded story)
     methaneLifetimeYears: 12,        // perturbation lifetime ~11.8yr (IPCC AR6). NOT a half-life.
@@ -173,10 +178,16 @@ window.EB = (function () {
 
   /* ---- hero copy: published molecular evidence, with validation status visible ---- */
   const hero = {
-    eyebrow: "Frozen August 10, 2026 evidence release",
+    eyebrow: "Methane evidence for blue carbon, from microbial DNA",
+    // Problem, then value proposition: the two sentences a visitor must keep.
+    lead:
+      "Microbes in wetland sediments can release methane that cancels part of the climate benefit of the carbon those wetlands store. " +
+      "EmergentBiome turns their DNA into evidence you can check, and shows which field measurement would settle what DNA alone cannot.",
     sub:
-      "For blue-carbon teams: inspect microbial evidence, resolve uncertain interpretations, and plan the next field measurement. " +
-      "Explore 7,710 data-complete MAG/proteome records, candidate reference links, and the measurements needed before flux or risk can be estimated.",
+      "Available now: 7,710 genome records from mangroves, wetlands and a rumen reference set, and three worked evidence cases. " +
+      "Next: a proposed field study to test whether molecular data improves methane prediction.",
+    // Two dated scopes: the frozen August atlas and the September case reviews.
+    release: "Atlas released 10 August 2026 · Case reviews added 26 September 2026",
   };
 
   /* ---- model views (kept jargon-free for the public page) ---- */
@@ -190,49 +201,56 @@ window.EB = (function () {
     {
       term: "Atlas",
       full: "EmergentBiome Molecular Atlas",
-      detail: "A frozen release view of 7,710 data-complete MAG/proteome records across distinct evidence contracts. Completeness does not establish cross-lane mechanism comparability.",
+      chip: "7,710 genome records mapped by their proteins",
+      detail: "A frozen map of 7,710 genome records, each with protein, genomic-context and functional evidence. Complete data is not the same as comparable data: comparing sources needs a shared annotation standard.",
       hero: true,
     },
     {
       term: "Graph",
       full: "EmergentBiome evidence graph",
-      detail: "The August proof-of-concept graph covers 662 records. A separate September molecular extension supplies the three source-linked cases in the evidence explorer. Each view preserves its own snapshot and evidence scope.",
+      chip: "each claim tied to its source and status",
+      detail: "The evidence model behind the atlas and the cases: a 662-record proof-of-concept graph, and a formal ontology slice with selected evidence for 145 genome records. The explorer shows three curated cases from it.",
       hero: true,
-    },
-    {
-      term: "MRV",
-      full: "Monitoring, reporting, and verification",
-      detail: "A future calibrated application requiring exact sample linkage, abundance, environmental context, uncertainty, and process or field validation.",
     },
     {
       term: "MAG",
       full: "Metagenome-assembled genome",
-      detail: "A reconstructed microbial genome used as one molecular evidence unit. Sample-level conclusions require community mapping and weighting.",
+      detail: "A microbial genome reconstructed from the mixed DNA of a sediment or gut sample. It shows what an organism could do; judging its role in a sample needs abundance data.",
+    },
+    {
+      term: "MRV",
+      full: "Monitoring, reporting and verification",
+      detail: "How climate projects demonstrate their outcomes. A calibrated methane-risk layer for MRV needs exact sample links, abundance, environmental context, uncertainty and field validation.",
     },
     {
       term: "ESM-2",
-      full: "Protein language model view",
-      detail: "A protein-sequence representation used to map molecular neighborhoods and nominate candidates for review.",
+      full: "Protein language model",
+      detail: "A model that turns each protein sequence into numbers. Combined across a genome's proteins, it places genomes with similar protein sets near each other on the atlas.",
     },
     {
       term: "gLM2",
-      full: "Genome-context language model view",
-      detail: "Gene-order and neighborhood context. Numerical comparisons remain within the applicable protocol class.",
+      full: "Genomic-context language model",
+      detail: "A model that reads genes in their neighborhood order on the genome. Its scores are compared only within the same analysis protocol.",
     },
     {
       term: "Tri-view",
-      full: "Three coordinated evidence views",
-      detail: "ESM-2, gLM2, and a functional payload. The atlas tracks payload completeness and mechanism comparability as separate states.",
+      full: "Three evidence views of one genome",
+      detail: "Protein embedding, genomic context and functional annotation. The atlas records whether all three exist separately from whether they can be compared across sources.",
     },
     {
       term: "MUCC v1",
-      full: "Old Woman Creek wetland reference lane",
-      detail: "A genome and metatranscriptome source warehouse. Its current functional evidence uses a source-scaffold contract.",
+      full: "Old Woman Creek wetland data, Ohio",
+      detail: "Genomes and RNA data from a freshwater coastal wetland on Lake Erie, annotated by the source's own pipeline and kept separate from the shared pipeline.",
     },
     {
       term: "VM0033",
-      full: "Verra Methodology for Tidal Wetland and Seagrass Restoration",
-      detail: "A project-methodology context for blue-carbon restoration and future field-validation planning.",
+      full: "Verra methodology for tidal wetland restoration",
+      detail: "The carbon-crediting method for tidal wetland and seagrass restoration. It allows a default methane value only where salinity is above 18 ppt.",
+    },
+    {
+      term: "Sample-event",
+      full: "One planned collection in the proposed study",
+      detail: "A sediment metagenome from one microsite in one campaign, paired with chamber methane flux, chemistry and hydrology. Revisits to a microsite are repeated measurements, not independent replicates.",
     },
   ];
 
@@ -243,29 +261,29 @@ window.EB = (function () {
       "Measured methane flux, final risk scores, A–E tiers, and carbon-credit decisions require paired abundance, environmental, uncertainty, and field-validation evidence. " +
       "A–E risk tiers remain target product vocabulary while calibration is completed. " +
       "Snapshot " + num.snapshot + ".",
-    short: "MAG/proteome screening and candidate review only. Flux and calibrated risk require paired field validation.",
+    short: "Genome-level screening and review only. Methane flux and calibrated site risk need paired field validation.",
     boundaries: [
-      "Molecular attestation, candidate triage, and monitoring prioritization at metagenome-assembled genome or proteome grain.",
+      "Genome-level molecular screening, candidate review and measurement planning.",
       "A–E risk tiers are target product vocabulary. Calibration requires paired validation.",
       "Measured flux, final MRV scores, and carbon-credit decisions require evidence beyond the molecular map.",
       "Reference-to-target signals stay provisional until source-balanced validation exists.",
     ],
   };
 
-  /* ---- maturity ladder (MRV roadmap Levels 0–5, + 6 horizon) ---- */
+  /* ---- evidence-maturity ladder (MRV roadmap levels 0–5, + 6 horizon) ---- */
   const ladder = [
-    { rung: 0, title: "Molecular attestation", state: "lit",
-      unlock: "Proteome embeddings, genomic context, functional annotation, quality control, atlas records, and a scoped POC evidence graph. Available now." },
-    { rung: 1, title: "Sample identity & metadata", state: "progress",
-      unlock: "Underway: sample, site, and season metadata recovered for the mangrove lanes (147 sediment samples, 71 environmental rows). Full genome-to-sample mapping is next." },
-    { rung: 2, title: "Abundance & community capacity", state: "dim",
-      unlock: "Read coverage and relative abundance. Weight genome potential by who is actually there." },
-    { rung: 3, title: "Environmental permissiveness", state: "dim",
-      unlock: "Salinity, sulfate, redox, temperature, hydroperiod: the site conditions that let methane express, or suppress it." },
-    { rung: 4, title: "Flux & process validation", state: "dim",
-      unlock: "Chamber and eddy-covariance methane flux, incubations. Paired molecular and measured GHG." },
-    { rung: 5, title: "Calibrated probabilistic MRV risk", state: "target",
-      unlock: "Holdout-validated risk distribution; A–E tiers mapped to thresholds with uncertainty." },
+    { rung: 0, title: "Molecular review", state: "lit",
+      unlock: "Protein fingerprints, genome context, functional annotation, quality control, atlas records and a proof-of-concept evidence graph. Available now." },
+    { rung: 1, title: "Exact sample links", state: "progress",
+      unlock: "Underway: sample and site context recovered for part of the mangrove records. Exact genome-to-sample links are next." },
+    { rung: 2, title: "Abundance", state: "dim",
+      unlock: "Read coverage and relative abundance, so genome potential is weighted by which microbes are actually present." },
+    { rung: 3, title: "Site conditions", state: "dim",
+      unlock: "Salinity, sulfate, redox, temperature and hydroperiod: the conditions that allow or suppress methane production." },
+    { rung: 4, title: "Measured flux", state: "dim",
+      unlock: "Chamber or eddy-covariance methane flux and incubations, paired with the molecular evidence." },
+    { rung: 5, title: "Calibrated risk", state: "target",
+      unlock: "A risk model tested on held-out sites, with A–E tiers mapped to thresholds and uncertainty." },
   ];
   const ladderHorizon = "6 · MRV product & audit / registry integration";
 
@@ -288,112 +306,137 @@ window.EB = (function () {
     id: "mucc_v1__OWC_1885",
     views: {
       recorded: {
-        title: "Recorded molecular evidence",
+        title: "What is recorded",
         points: [
-          "Source-reported genome QC: 94.89% completeness and 1.14% contamination, reconciled to the MAG archive and source QC.",
-          "Processed expression detects marker terms. Detection is neither activity magnitude nor methane-process rate.",
-          "Raw-cosine nearest match in the 625-record POC core is rumen (0.9842857). This is a one-way reference match.",
+          "Genome quality reported by the source: 94.89% complete, 1.14% contamination, checked against the archived genome.",
+          "Marker transcripts were detected in the source's processed RNA data. Detection shows presence, not how active the pathway is.",
+          "Closest genome in the 625-genome reference core: a rumen genome, raw cosine 0.9843. A one-way lead for review.",
         ],
       },
       pending: {
-        title: "What remains unresolved",
+        title: "What is still unresolved",
         points: [
-          "No authoritative exact sample, collection date, and depth link for this MAG.",
-          "No joined abundance/read coverage, matched environment, or methane-flux/process observation.",
-          "The source-scaffold functional contract is not mechanism-equivalent to the pipeline-normalized lanes.",
+          "No exact sample, collection date or depth is linked to this genome yet.",
+          "No abundance, matched environmental data or methane-process measurement is joined to it.",
+          "Its annotations come from the source's own pipeline, which is not yet comparable with the shared pipeline.",
         ],
       },
       next: {
-        title: "Next validation action",
+        title: "The next measurement",
         points: [
-          "Resolve the MAG to an exact physical sample with date and depth.",
-          "Pair abundance and environment with a compatible methane-process measurement.",
-          "Then review marker identity and test source-aware stability before ecological or risk inference.",
+          "Link the genome to its physical sample, with date and depth.",
+          "Measure abundance and environment alongside a compatible methane-process measurement.",
+          "Then review the marker genes and test whether the signal holds across sources before any ecological reading.",
         ],
       },
     },
   };
 
-  /* ---- Scene 7 milestones ---- */
-  const timeline = [
-    { phase: "Now",   label: "Molecular atlas + POC graph", detail: "7,710 data-complete MAG/proteome records in the atlas; a separate 662-record queryable POC evidence graph." },
-    { phase: "Field", label: "Partner validation cohort", detail: "Paired molecular, environmental, abundance, and methane-process measurements." },
-    { phase: "Pair",  label: "Paired data", detail: "Target: pair molecular evidence with field methane flux across seasons and habitats." },
-    { phase: "Model", label: "Calibrated methane risk", detail: "Holdout-validated risk distribution; A–E tiers earn their thresholds." },
-    { phase: "Audit", label: "Methodology review", detail: "Reproducible evidence packets tested against applicable methodology and integrity requirements." },
-  ];
+  /* ---- Proposed field study (scene 10 and the closing ask) ----
+     A prospective design, not collected data, and conditional on funding, site
+     access and permits. Source: the submitted proposal's research plan and
+     docs/research/mvo_application_revision/whitepaper.md section 7. It stays
+     outside the frozen atlas counts above. */
+  const study = {
+    stages: ["Recently reconnected", "Transitional", "Mature or reference"],
+    salinityPositions: 4,
+    plotsPerCombination: 3,          // replicate plots per stage and salinity position
+    plots: 36,
+    micrositesPerPlot: 2,            // two tidal heights per plot
+    microsites: 72,
+    campaigns: ["Wet season", "Dry season"],
+    sampleEvents: 144,               // repeated visits, not 144 independent replicates
+  };
 
   /* ---- 10 scenes: source-backed atlas and a separately scoped case explorer. ---- */
   const scenes = [
     {
       id: "stakes", n: 1, label: "01 · The Climate Question",
       kicker: "Blue carbon",
-      headline: "Methane can narrow a wetland's net climate benefit.",
-      copy: "Methane has roughly 80 times CO₂'s warming impact over 20 years. Its contribution depends on habitat, conditions, and measured exchange.",
+      headline: "Methane can erode a wetland's climate benefit.",
+      copy: "Wetland sediments store carbon, but their microbes can also make methane, which warms about 80 times more than CO₂ over 20 years, tonne for tonne. " +
+        "Where the water is fresh or brackish, or cut off from the tide, those emissions can offset much of the benefit of the carbon the site stores.",
+      source: "Sources: IPCC AR6 WG1 (warming potential); Poffenbarger et al. 2011, Wetlands; Kroeger et al. 2017, Scientific Reports.",
       data: "mixed-real-and-illustrative",
     },
     {
       id: "blindspot", n: 2, label: "02 · The Measurement Gap",
-      kicker: "The measurement gap",
-      headline: "Project-scale methane evidence is still sparse.",
-      copy: "This frozen public-source atlas has no verified wetland or mangrove MAG-to-flux pairings. That linkage gap motivates paired field measurements; it does not imply zero methane emissions.",
+      kicker: "Verification today",
+      headline: "Methane evidence is thinnest where it matters most.",
+      copy: "Under Verra's VM0033 methodology, only tidal wetlands above 18 ppt salinity may use a default methane value; fresher sites must estimate it from field data, published values, proxies or models. " +
+        "Field measurements are costly, cover little ground, and are rarely paired with the sediment DNA. " +
+        "In this atlas, no wetland or mangrove genome yet has a methane measurement from the same sample: zero pairs, not zero emissions.",
+      source: "Source: Verra VM0033, default factor from Poffenbarger et al. 2011.",
       data: "mixed-real-and-illustrative",
     },
     {
-      id: "surveyor", n: 3, label: "03 · The Evidence Card",
-      kicker: "What the atlas gives you",
-      headline: "Inspect one candidate's evidence trail.",
-      copy: "This frozen wetland MAG card joins source, QC, expression detection, a one-way reference match, unresolved joins, and the next measurement.",
+      id: "atlas", n: 3, label: "03 · The Molecular Atlas",
+      kicker: "The data asset",
+      headline: "7,710 genome records, mapped by their proteins.",
+      copy: "Each point is a genome rebuilt from environmental DNA, drawn from three settings: the rumen, a well-studied methane system used as a reference; " +
+        "freshwater wetlands, mostly Old Woman Creek in Ohio; and mangrove sediments along the coast of China. " +
+        "A protein language model condenses each genome's proteins into one fingerprint, so genomes with similar protein sets sit close together. " +
+        "Nearness is a lead, not shared function: the map's views test which resemblances hold up.",
+      data: "real-coords",
+    },
+    {
+      id: "surveyor", n: 4, label: "04 · The Evidence Card",
+      kicker: "What you get for each genome",
+      headline: "Every genome comes with its evidence, and its gaps.",
+      copy: "Here is one wetland genome from the atlas. Its card separates what is recorded from what is still unknown, and names the measurement that would move it forward. " +
+        "This one is 95% complete and its marker transcripts were detected, yet no sample, depth or methane measurement is linked to it.",
       data: "real-schema",
     },
     {
-      id: "cheap", n: 4, label: "04 · Complementary Evidence",
-      kicker: "Context plus biology",
-      headline: "Salinity, markers, and genomes each add context.",
-      copy: "Salinity frames field conditions. Marker and genome evidence nominate review hypotheses; none alone yields methane flux or calibrated site risk.",
+      id: "cheap", n: 5, label: "05 · Beyond Salinity",
+      kicker: "Why genomes add information",
+      headline: "Salinity sets the baseline. Microbes set the exceptions.",
+      copy: "Saltier wetlands usually emit less methane, because sulfate-reducing microbes outcompete most methane makers. " +
+        "Some methanogens use substrates that sulfate reducers ignore, and keep producing methane in salty sediments. " +
+        "A salinity reading cannot see them. Genome evidence can reveal the microbes involved, which tells a field team where a measurement is most informative.",
+      source: "Sources: Poffenbarger et al. 2011, Wetlands; Krause and Treude 2021, Geochimica et Cosmochimica Acta.",
       data: "illustrative",
     },
     {
-      id: "atlas", n: 5, label: "05 · Explore the Atlas",
-      kicker: "A map with explicit scope",
-      headline: "Explore the links, then test what survives.",
-      copy: "Switch between atlas coverage, nearest-core candidates, sampled neighbor links, and standardized sensitivity. Each view asks a different question of the same frozen release.",
-      data: "real-coords",
-    },
-    {
       id: "engine", n: 6, label: "06 · Evidence Scope",
-      kicker: "Scope before extension",
-      headline: "Methane screening is the present use.",
-      copy: "Other pathway lenses are research options. Each needs its own evidence contract, independent validation, and paired field outcomes before process claims.",
+      kicker: "What is screened today",
+      headline: "Screened for methane. Compared like with like.",
+      copy: "Every genome on the map was screened for methane-cycle genes through one of two annotation routes: a shared pipeline for 5,209 records, and the source's own annotations for 2,501 Old Woman Creek records. " +
+        "Until the two are harmonized, methane evidence is compared within a route, never ranked across the map. " +
+        "Nitrous oxide and sulfur lenses are planned; each will need its own validation.",
       data: "real-coords",
     },
     {
-      id: "platform", n: 7, label: "07 · The Evidence Trail",
-      kicker: "An auditable starting point",
-      headline: "The released graph and atlas have different coverage.",
-      copy: "A queryable 662-record POC evidence graph anchors the broader 7,710-record atlas. Extending graph persistence across the atlas is a planned step.",
-      data: "real-schema",
+      // Scenes 07 and 08 render their own HTML in index.html. These entries
+      // name them in the rail and skip links; keep each label equal to the
+      // scene's visible kicker.
+      id: "platform", n: 7, label: "07 · Molecular Evidence, Practical Decisions",
+      kicker: "Three September evidence cases",
+      headline: "Connect the molecule to the measurement.",
+      copy: "Check what a gene can mean. Pin down the sample and depth it came from. Choose the test that settles it.",
+      data: "illustrative",
     },
     {
       id: "network", n: 8, label: "08 · Explore the Evidence",
-      kicker: "Source-linked review",
+      kicker: "The evidence model",
       headline: "Every interpretation has an evidence trail.",
-      copy: "Three September evidence cases connect source records, review restrictions and next observations. Explore their qualitative review profiles and canonical source assertions.",
+      copy: "A formal evidence model keeps genes, samples, measurements and hypotheses distinct, so each case shows its sources, its open questions and the reason a claim is on hold.",
       data: "real-schema",
     },
     {
       id: "ladder", n: 9, label: "09 · Validation Path",
       kicker: "Evidence maturity",
-      headline: "Today's layer supports molecular review.",
-      copy: "Screening and candidate triage are available now. Exact sample links, abundance, environment, uncertainty, and field outcomes are needed for calibrated risk.",
+      headline: "Molecular review works today. Calibrated risk is five rungs up.",
+      copy: "Each rung adds evidence the one below cannot supply: exact sample links, community abundance, environmental conditions, measured flux, " +
+        "and finally a model tested on sites it has never seen. Until then, A–E risk tiers remain a target.",
       data: "real-ladder",
     },
     {
       id: "path", n: 10, label: "10 · Partnership Path",
-      kicker: "The next decision",
+      kicker: "Proposed field study",
       headline: "Pair molecular evidence with field outcomes.",
-      copy: "For blue-carbon teams planning monitoring and diligence: a partner cohort can connect exact samples, abundance, environment, and methane-process measurements.",
-      data: "roadmap",
+      copy: "A proposed two-season study would pair each sediment metagenome with chamber methane flux, chemistry and hydrology at two microsites in each of 36 plots.",
+      data: "proposed",
     },
   ];
 
@@ -401,7 +444,7 @@ window.EB = (function () {
   const links = {
     report: "report/",                 // stable alias published with the landing bundle
     reportName: "EmergentBiome Molecular Atlas technical report",
-    reportDate: "2026-09-23",
+    reportDate: "2026-09-28",
     siteUrl: "https://emergentbiome.earth/",
     contactEmails: ["jay@ecosphereblue.earth", "aphilosof@ecosphereblue.earth"],
     organizationUrl: "https://www.ecosphereblue.earth/",
@@ -419,7 +462,7 @@ window.EB = (function () {
 
   return {
     color, ecosystems, num, ext, hero, stack, terminology, claims, ladder, ladderHorizon,
-    attestation, candidateExample, timeline, scenes, brand, links,
+    attestation, candidateExample, study, scenes, brand, links,
     // global seed for all reproducible sketches
     seed: 0xE13B10,
   };

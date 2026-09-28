@@ -6,6 +6,9 @@
 .application-intro h2{font-family:var(--font-display);font-weight:650;font-size:clamp(38px,4.7vw,70px);letter-spacing:-.045em;line-height:1.04;margin:0 0 28px;color:var(--text-primary)}
 .application-intro h2 em{font-style:normal;color:#FF814B}
 .application-deck{color:#B9CDD3;font-size:clamp(17px,1.7vw,25px);line-height:1.4;margin:0 0 32px}
+/* Marks where the separately dated September case evidence enters the page. */
+.application-scope{display:flex;flex-wrap:wrap;gap:4px 14px;margin:-14px 0 16px;font:clamp(10px,.8vw,12px)/1.5 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:#AFC5CE}
+.application-scope span:first-child{color:#F7B357}
 .application-open{background:#06181B;border:1px solid var(--emergence);color:var(--emergence);font-size:clamp(15px,1.35vw,21px);padding:17px 27px;cursor:pointer;min-height:48px}
 .application-open:hover{background:#0D3033}.application-open:focus-visible{outline:3px solid var(--text-primary);outline-offset:5px}
 .application-sources{margin-top:16px}.application-sources summary{cursor:pointer;padding:8px 0}.application-sources summary:focus-visible{outline:2px solid var(--emergence);outline-offset:3px}
@@ -35,7 +38,20 @@
 .application-dialog p{line-height:1.65}.application-dialog .application-evidence-number{color:#F7B357;font-size:14px}
 .application-case-boundary{border-left:2px solid #F7B357;padding-left:14px;color:#B9CDD3;font-size:14px}
 .application-lookup{overflow-x:auto}.application-lookup table{border-collapse:collapse;width:100%;font-size:14px}.application-lookup th,.application-lookup td{padding:10px;text-align:right;border-bottom:1px solid #2A3A44;white-space:nowrap}.application-lookup th:first-child{text-align:left}
+/* Narrow screens: the full table, including the explicit missing salinity
+   values, stays in view without sideways scrolling. */
+@media(max-width:560px){.application-lookup table{font-size:13px}.application-lookup th,.application-lookup td{padding:8px 5px}.application-lookup thead th{white-space:normal;vertical-align:bottom}}
 @media(max-width:1050px){.application-intro{top:22%;width:44%}.application-intro h2{font-size:clamp(38px,5vw,58px)}.application-label{left:74%;right:3%;gap:7px}.application-pairing{left:73%}.application-label span{max-width:200px}}
+/* Keep workflow labels and outcomes clear of the fixed scene rail. */
+@media(min-width:721px){.application-label{right:max(3%,var(--rail-gutter))}.application-outcomes{right:max(4%,var(--rail-gutter))}.application-illustration-label{right:max(6%,var(--rail-gutter))}}
+/* Where the cover-cropped art no longer sits behind the labels (tablets and
+   short screens), give each label a readable backdrop. */
+@media(min-width:721px) and (max-width:1100px),(min-width:721px) and (max-height:620px){
+ .application-label{left:70%;padding:8px 10px;border-radius:4px;background:#071118e0;box-shadow:0 6px 22px #0007}
+ .application-label::before{display:none}
+ .application-pairing{left:70%;padding:6px 10px;border-radius:4px;background:#071118e0}
+ .application-illustration-label{padding:4px 8px;border-radius:3px;background:#071118cc}
+}
 @media(max-width:720px){
  .scene--application{height:auto!important}.application-stage{position:relative;min-height:1100px;height:auto;display:flex;flex-direction:column;overflow:hidden;padding:85px 22px 75px}
  .application-art{inset:auto 0 115px;height:550px;object-fit:cover;object-position:64% center;opacity:.85}

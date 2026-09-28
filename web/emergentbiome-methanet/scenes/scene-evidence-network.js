@@ -10,8 +10,8 @@
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   const labels = {recorded:'Recorded evidence',review:'Review required',pending:'Unresolved',action:'Scientific recommendation'};
   const caseTitles = {interpret:'Interpret the gene',locate:'Resolve the depth',design:'Choose the next test'};
-  const state = {data:null,caseId:'interpret',focus:null,selected:null,source:null,sourceSelection:null,reviewPage:0,page:0,view:'graph',zoom:1,pan:{x:0,y:0},loading:false};
-  let activeNodes = [], activeEdges = [], resizeFrame = null, priorFocus = null;
+  const state = {data:null,caseId:'interpret',focus:null,selected:null,source:null,sourceSelection:null,reviewPage:0,page:0,view:'graph',zoom:1,pan:{x:0,y:0},loading:false,focusCase:false};
+  let activeNodes = [], activeEdges = [], resizeFrame = null, priorFocus = null, priorScroll = null;
   function el(tag, text, cls) { const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n; }
   function button(text, action, cls) {const b=el('button',text,cls);b.type='button';b.addEventListener('click',action);return b;}
   function current() {return state.data.cases.find(c=>c.id===state.caseId);}
@@ -104,6 +104,8 @@
     state.caseId=id;state.focus=current().root;state.selected=current().root;state.source=null;state.sourceSelection=null;state.reviewPage=0;state.page=0;
     $('networkSearch').value='';$('networkSearchResults').hidden=true;
     fit();render();announce(caseTitles[id]+'. '+current().status+'.');
+    // A dialog handoff lands keyboard focus on the chosen case, once loaded.
+    if(state.focusCase){state.focusCase=false;$('networkCases').querySelector('[data-network-case="'+id+'"]')?.focus({preventScroll:true});}
   }
   function select(id) {
     const n=getNode(id);if(!n)return;
@@ -316,13 +318,15 @@
   }
   function immersive() {
     if(dialog.open){dialog.close();return;}
-    priorFocus=document.activeElement;dialog.append(shell);dialog.showModal();
+    priorFocus=document.activeElement;priorScroll=window.scrollY;dialog.append(shell);dialog.showModal();
     $('networkImmersiveOpen').textContent='Return to page';document.body.style.overflow='hidden';
     requestAnimationFrame(()=>{fit();renderGraph();});
   }
   dialog.addEventListener('close',()=>{
     $('networkMount').append(shell);$('networkImmersiveOpen').textContent='Immersive view';document.body.style.overflow='';
-    requestAnimationFrame(()=>{fit();renderGraph();priorFocus?.focus({preventScroll:true});});
+    // Return the visitor to the exact place they left, even if the explorer's
+    // height changed while it was in the dialog.
+    requestAnimationFrame(()=>{fit();renderGraph();if(priorScroll!==null){window.scrollTo({top:priorScroll,behavior:'instant'});priorScroll=null;}priorFocus?.focus({preventScroll:true});});
   });
   async function load() {
     if(state.data||state.loading)return;
@@ -370,7 +374,7 @@
     }
   }).observe(textProbe);
   document.addEventListener('emergentbiome:network-case',e=>{
-    if(['interpret','locate','design'].includes(e.detail?.caseId)){chooseCase(e.detail.caseId);section.scrollIntoView({behavior:reduced.matches?'auto':'smooth'});}
+    if(['interpret','locate','design'].includes(e.detail?.caseId)){state.focusCase=!!e.detail.focus;chooseCase(e.detail.caseId);section.scrollIntoView({behavior:reduced.matches?'auto':'smooth'});}
   });
   const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){load();observer.disconnect();}},{rootMargin:'400px'});observer.observe(section);
   if(location.hash==='#scene-network')load();
