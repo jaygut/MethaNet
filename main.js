@@ -33,11 +33,12 @@
   // The claim-bar chip names the dated scope of the scene in view.
   const SCOPE = {
     atlas: "atlas data · " + EB.num.snapshot,
+    geometry: "geometry · " + EB.num.geometryDate,
     cases: "case evidence · " + EB.num.caseEvidenceDate,
     study: "proposed study · not yet collected",
     both: "atlas " + EB.num.snapshot + " · cases " + EB.num.caseEvidenceDate,
   };
-  const SCENE_SCOPE = { platform: "cases", network: "cases", path: "study" };
+  const SCENE_SCOPE = { atlas: "geometry", cheap: "geometry", platform: "cases", network: "cases", path: "study" };
 
   function injectCopy() {
     EB.scenes.forEach((s) => {
@@ -123,7 +124,7 @@
       ["Annotated through the shared pipeline", D.fmt(EB.num.pipelineNormalizedTriView)],
       ["Annotated by the Old Woman Creek source", D.fmt(EB.num.sourceScaffoldTriView)],
       ["With a cross-source methane score", D.fmt(EB.num.mechanismComparableTriView) + " <span class='in-progress'>(awaits harmonization)</span>"],
-      ["Proof-of-concept evidence graph", D.fmt(EB.num.magNodes) + " records <span class='in-progress'>(atlas-wide extension planned)</span>"],
+      ["Worked molecular evidence reviews", "3 cases <span class='in-progress'>(interpretation, identity, field design)</span>"],
       ["Links drawn on the map", D.fmt(EB.num.bridgeEdges) + " <span class='in-progress'>(" + D.fmt(EB.num.sampledNeighborLinks) + " neighbors + " + EB.num.highlightedCandidateLinks + " nearest-reference)</span>"],
       ["Exact genome + environment + flux joins", "0 <span class='in-progress'>(context exists for some samples; no flux yet)</span>"],
       ["What field validation needs", "Exact sample links and matched process measurements"],
@@ -137,17 +138,17 @@
         metric: D.fmt(EB.num.nearestCoreWetland) + " wetland · " + D.fmt(EB.num.nearestCoreMangrove) + " mangrove",
         title: "Point first to a rumen genome",
         detail: "Of the " + D.fmt(EB.num.wetlandOutsideCore) + " wetland and " + D.fmt(mangroveRecords) + " mangrove records outside the 625-genome reference core, these have a rumen genome as their closest core match. " +
-          "The core is mostly rumen (518 genomes), and the matches are weak: their median similarity (cosine " + EB.num.nearestCoreMedianCosine + ") is below that of two random atlas genomes (" + EB.num.randomPairMedianCosine + "). Each is a lead for review, not evidence of shared function.",
+          "The core contains 518 rumen genomes. Median nearest-core similarity (cosine " + EB.num.nearestCoreMedianCosine + ") is shown alongside the random-pair median (" + EB.num.randomPairMedianCosine + "). Each is a lead for review, not evidence of shared function.",
       },
       {
         metric: EB.num.nearestCoreCandidates + " of " + EB.num.candidateCards,
         title: "Selected candidate links",
-        detail: "Of " + EB.num.candidateCards + " selected wetland and mangrove candidates, " + EB.num.nearestCoreCandidates + " point to a rumen genome; the other sits inside the reference core and matches itself. The map draws these " + EB.num.highlightedCandidateLinks + " gold links and " + D.fmt(EB.num.sampledNeighborLinks) + " sampled neighbor links, not every match.",
+        detail: "Of " + EB.num.candidateCards + " selected wetland and mangrove candidates, " + EB.num.nearestCoreCandidates + " point to a rumen genome. Core self-matches are excluded from the drawn links. The map draws these " + EB.num.highlightedCandidateLinks + " gold links and " + D.fmt(EB.num.sampledNeighborLinks) + " sampled neighbor links, not every match.",
       },
       {
         metric: String(EB.num.standardizedRumenReciprocalPairs),
         title: "Mutual rumen neighbors",
-        detail: "After standardizing the representation, no rumen genome and wetland or mangrove genome appear in each other's 35 closest neighbors. This stricter test is separate from the one-way matches.",
+        detail: "Count of wetland or mangrove–rumen pairs that remain mutual top-35 neighbors after dimension standardization. These corrected geometry diagnostics are separate from functional transfer validation.",
       },
     ];
     const evidenceGrid = document.getElementById("evidenceSummaryGrid");
@@ -336,9 +337,16 @@
   function start() {
     injectCopy();
     injectChrome();
-    fetch("data/atlas.json")
+    fetch("data/atlas.json?v=20260929-layer33", { cache: "no-cache" })
       .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then((atlas) => boot({ atlas }))
+      .then((atlas) => {
+        const cfg = atlas.meta && atlas.meta.embedding_configuration;
+        if (!cfg || cfg.status !== "verified" || cfg.geometry_date !== EB.num.geometryDate ||
+            JSON.stringify(cfg.pooling_layers) !== "[33]") {
+          throw new Error("Atlas geometry does not match this release");
+        }
+        boot({ atlas });
+      })
       .catch((err) => {
         console.warn("atlas.json not loaded (serve over http, not file://):", err);
         boot({ atlas: null }); // scenes that need atlas show a graceful note
