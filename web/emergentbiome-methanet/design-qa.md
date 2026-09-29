@@ -1,3 +1,15 @@
+# Embedding correction: 29 September 2026
+
+The current geometry is recomputed under layer-33 pooling. The historical QA notes below describe superseded geometry wherever they discuss coordinates, nearest-reference matches, similarities, or neighbor counts.
+
+- All 662 pilot records passed retained-input, protein-count, configuration and historical-reproduction checks.
+- The rebuilt report passed 20/20 gates. The local browser audit passed desktop, tablet, mobile, atlas controls, evidence cases and report checks.
+- PDF and editable PowerPoint contain 19 slides. Layout checks found no overflow; a separate native PowerPoint render retained all text and seven reference links.
+- Current release evidence: `docs/releases/atlas_embedding_reconciliation_20260929.json` and `results/reports/atlas_embedding_release_20260929/`.
+- The user explicitly authorized this correction and deployment. Existing public-case scope and `noindex` remain in force.
+
+---
+
 # Narrative and report consolidation: 28 September 2026
 
 final result: passed locally and on the live site; published 28 September 2026 after

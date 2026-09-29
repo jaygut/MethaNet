@@ -198,10 +198,10 @@
 
     function drawReadouts(w, h, a) {
       const items = [
-        [D.fmt(N.magNodes), "POC graph records"],
-        [D.fmt(N.evidenceAtoms), "evidence atoms"],
-        [D.fmt(N.nearEsm2Edges), "embedding-neighbor links"],
-        [N.validationGapNodes, "recorded validation gaps"],
+        [D.fmt(N.triViewReady), "atlas records with three views"],
+        [3, "worked evidence cases"],
+        [2, "sources in the case review"],
+        [0, "calibrated risk tiers"],
       ];
       const x = w - 18; let y = h * 0.40;
       p.push(); p.textAlign(p.RIGHT, p.CENTER);

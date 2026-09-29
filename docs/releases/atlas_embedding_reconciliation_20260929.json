@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "geometry_release_id": "atlas-layer33-20260929",
+  "status": "validated_for_scoped_correction",
+  "molecular_payload_release": "molecular-atlas-20260810",
+  "configuration": {
+    "status": "verified",
+    "geometry_date": "2026-09-29",
+    "model_name": "facebook/esm2_t33_650M_UR50D",
+    "pooling_layers": [
+      33
+    ],
+    "contract_sha256": "fae6d2c31c0cba7c17affff9c285128a401970cbb917fa3e76f11bbe624136c6",
+    "artifact_count": 10,
+    "scope": "Configuration-reconciled exploratory genome geometry; biological transfer and flux prediction remain unvalidated.",
+    "remaining_limits": [
+      "Historical lane model revisions are not fully recorded; final-layer identity is supported by code lineage and numerical controls.",
+      "Functional pipeline comparability, ecological transfer, exact flux joins and MRV scores are not established by this configuration reconciliation."
+    ],
+    "builder_sha256": "cb1d109ad8d03b04f101142fa5262aeddb1251f335f37ddb1df9df90077b0e52",
+    "niche_sha256": "c2094991af7ea178e9d5ec1223d40e854e538464bd7efbeac92077a7d83bb7df",
+    "scientific_audit_sha256": "4be5450d25d2b923233638d728f73eb8ff101e351af40861a1ade9536495bdd7",
+    "report_sha256": "c210ab4a59dbe146a6c34f9dc136b858cb53384d14b2d6e7878b3efbce7b9cbc"
+  },
+  "pilot_verification": {
+    "path": "results/blue_catalyst_poc/reembed_single_configuration_20260928/verify_and_collate_summary.json",
+    "sha256": "5e2b62d5f3aea4bd3230299f75b503ff76df27bc1169ab19fe0bdb41d0d0ab05",
+    "records_ok": 662,
+    "gates": {
+      "manifest_covers_pilot": true,
+      "shards_complete": true,
+      "shard_order_matches_manifest": true,
+      "configuration_consistent": true,
+      "input_sha256_match": true,
+      "protein_counts_match": true,
+      "vectors_finite": true,
+      "pilot_reproduction": true
+    },
+    "max_one_minus_cos_reproduction": 4.3298697960381105e-15
+  },
+  "geometry_audit": {
+    "embedding_units": 7710,
+    "dimensions": 1280,
+    "knn_k": 35,
+    "raw_directed_edges": 269850,
+    "raw_cross_domain_directed_edges": 59496,
+    "raw_cross_edge_similarity_mean": 0.9993317566217955,
+    "raw_cross_edge_similarity_median": 0.9994713664054871,
+    "raw_cross_edge_similarity_min": 0.9854006767272949,
+    "raw_reciprocal_unique_cross_pairs": 16104,
+    "raw_reciprocal_pair_counts": {
+      "mangrove\u2194wetland": 15626,
+      "rumen\u2194wetland": 111,
+      "mangrove\u2194rumen": 367
+    },
+    "random_pair_similarity_mean": 0.9930475950241089,
+    "random_pair_similarity_median": 0.9941577911376953,
+    "similarity_to_global_centroid_median": 0.9970315098762512,
+    "dimension_zscore_cross_domain_directed_edges": 53597,
+    "dimension_zscore_cross_edge_similarity_median": 0.8954013586044312,
+    "dimension_zscore_reciprocal_unique_cross_pairs": 14359,
+    "dimension_zscore_reciprocal_pair_counts": {
+      "mangrove\u2194wetland": 13873,
+      "rumen\u2194wetland": 131,
+      "mangrove\u2194rumen": 355
+    },
+    "interpretation": "Raw ESM-2 cosine similarity and dimension-standardized neighborhoods are reported separately. Biological transfer requires independent evidence. The graph supports neighborhood navigation and routes mechanism attestation to its dedicated evidence contract."
+  },
+  "nearest_core_audit": {
+    "unit_grain": "MAG/proteome embedding record",
+    "metric": "raw ESM-2 cosine similarity",
+    "comparison": "single nearest member of the POC reference core",
+    "reference_core_units": 625,
+    "reference_core_rumen_units": 518,
+    "reference_core_wetland_units": 107,
+    "wetland_embedding_units": 2608,
+    "wetland_nearest_rumen_units": 1403,
+    "mangrove_embedding_units": 4584,
+    "mangrove_nearest_rumen_units": 2823,
+    "target_candidate_cards": 26,
+    "target_candidate_nearest_rumen_cards": 10,
+    "wetland_outside_core_units": 2501,
+    "wetland_outside_core_nearest_rumen_units": 1403,
+    "outside_core_units": 7085,
+    "outside_core_nearest_similarity_median": 0.9972993731498718,
+    "target_candidate_cards_outside_core": 26,
+    "target_candidate_outside_core_nearest_rumen_cards": 10,
+    "interpretation": "One-way nearest-reference links nominate records for review; they do not establish reciprocal neighborhoods, source-independent transfer, pathway activity, or methane flux."
+  },
+  "report_gates_passed": 20,
+  "browser_audit": {
+    "path": "results/reports/atlas_embedding_release_20260929/browser/browser_audit.json",
+    "sha256": "8f035ec2a060f1aa93cdfc129fd41ad9dbb3e7a177f65969825b5f5c043248be",
+    "status": "pass"
+  },
+  "site_atlas_sha256": "26804714fdbda3c46175468b0a6b41ef05caf1df2db7026b2d45b3c35f8d03b8",
+  "previous_pointer_snapshot": "docs/releases/atlas_20260810_pointer_before_geometry_reconciliation.json",
+  "scope": "User-authorized correction of existing landing/report; noindex retained. No broader scientific-publication or ecological-validation clearance."
+}

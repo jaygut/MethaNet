@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "status": "verified",
+  "geometry_date": "2026-09-29",
+  "molecular_payload_snapshot": "2026-08-10",
+  "model_name": "facebook/esm2_t33_650M_UR50D",
+  "pooling_layers": [
+    33
+  ],
+  "token_pooling": "attention-mask mean including CLS/EOS",
+  "genome_pooling": "mean protein vector",
+  "min_aa_len": 30,
+  "max_proteins": 6000,
+  "truncate_residues": 1020,
+  "artifacts": [
+    {
+      "lane_id": "poc_core",
+      "path": "results/blue_catalyst_poc/reconciled_layer33_20260929/artifacts/genome_embeddings.npz",
+      "sha256": "e371efe793cc14fab3e8c542b2947dccc0701e6e728b02320400e8ec224dd4a7",
+      "records": 662,
+      "model_name": "facebook/esm2_t33_650M_UR50D",
+      "pooling_layers": [
+        33
+      ],
+      "configuration_evidence": "Full 662-record retained-FASTA reproduction and final-layer recomputation; verify_and_collate_summary.json"
+    },
+    {
+      "lane_id": "msm_china_2025",
+      "path": "results/blue_catalyst_poc/runs/msm_china_2025_esm2_20260616_082112/artifacts/genome_embeddings.npz",
+      "sha256": "8f4b6f6b4b883542b433c7dd11714c2dc9629873c2ce6bf9969963963fc4649f",
+      "records": 1428,
+      "model_name": "facebook/esm2_t33_650M_UR50D",
+      "pooling_layers": [
+        33
+      ],
+      "configuration_evidence": "Archived run statistics, code-lineage and same-DNA configuration audit; historical model revision is not recorded in these NPZ files"
+    },
+    {
+      "lane_id": "futian_mangrove_2026_qi",
+      "path": "results/blue_catalyst_poc/runs/futian_mangrove_2026_esm2_phase1_shard001_20260621/artifacts/genome_embeddings.npz",
+      "sha256": "85fe0835fb283e0688f63ca8ff58272ad0b6bd93636fed8322893cceeb5f1120",
+      "records": 789,
+      "model_name": "facebook/esm2_t33_650M_UR50D",
+      "pooling_layers": [
+        33
+      ],
+      "configuration_evidence": "Archived run statistics, code-lineage and same-DNA configuration audit; historical model revision is not recorded in these NPZ files"
+    },
+    {
+      "lane_id": "futian_mangrove_2026_qi",
+      "path": "results/blue_catalyst_poc/runs/futian_mangrove_2026_esm2_phase1_shard002_20260621/artifacts/genome_embeddings.npz",
+      "sha256": "fefbb55c618940457f57bb83d48781152ce6baced1828797e1434964a7e4c7b7",
+      "records": 789,
+      "model_name": "facebook/esm2_t33_650M_UR50D",
+      "pooling_layers": [
+        33
+      ],
+      "configuration_evidence": "Archived run statistics, code-lineage and same-DNA configuration audit; historical model revision is not recorded in these NPZ files"
+    },
+    {
+      "lane_id": "futian_mangrove_2026_qi",
+      "path": "results/blue_catalyst_poc/runs/futian_mangrove_2026_esm2_phase1_shard003_20260621/artifacts/genome_embeddings.npz",
+      "sha256": "9acbc6047059974b1e1192ed4867d817f07dadf348b7514d0a83c3e326d86752",
+      "records": 789,
+      "model_name": "facebook/esm2_t33_650M_UR50D",
+      "pooling_layers": [
+        33
+      ],
+      "configuration_evidence": "Archived run statistics, code-lineage and same-DNA configuration audit; historical model revision is not recorded in these NPZ files"
+    },
+    {
+      "lane_id": "futian_mangrove_2026_qi",
+      "path": "results/blue_catalyst_poc/runs/futian_mangrove_2026_esm2_phase1_shard004_20260621/artifacts/genome_embeddings.npz",
+      "sha256": "91abc2fa6fe6305e44425696a3424658c0865fd068d95a6c799479fa54587d17",
+      "records": 789,
+      "model_name": "facebook/esm2_t33_650M_UR50D",
+      "pooling_layers": [
+        33
+      ],
+      "configuration_evidence": "Archived run statistics, code-lineage and same-DNA configuration audit; historical model revision is not recorded in these NPZ files"
+    },
+    {
+      "lane_id": "mucc_v1_owc_wetland",
+      "path": "results/blue_catalyst_poc/runs/mucc_v1_owc_wetland_esm2_20260626_gpu_v2_shard001/artifacts/genome_embeddings.npz",
+      "sha256": "c3b3fc844dced6f902505d2910ce37415bad0078ae3845c01043f3df8e86931f",
+      "records": 626,
+      "model_name": "facebook/esm2_t33_650M_UR50D",
+      "pooling_layers": [
+        33
+      ],
+      "configuration_evidence": "Archived run statistics, code-lineage and same-DNA configuration audit; historical model revision is not recorded in these NPZ files"
+    },
+    {
+      "lane_id": "mucc_v1_owc_wetland",
+      "path": "results/blue_catalyst_poc/runs/mucc_v1_owc_wetland_esm2_20260626_gpu_v2_shard002/artifacts/genome_embeddings.npz",
+      "sha256": "ab3009b7229e46e848e85124df1d723f8d12d0ea542f6e82d509484f8c8c32f8",
+      "records": 626,
+      "model_name": "facebook/esm2_t33_650M_UR50D",
+      "pooling_layers": [
+        33
+      ],
+      "configuration_evidence": "Archived run statistics, code-lineage and same-DNA configuration audit; historical model revision is not recorded in these NPZ files"
+    },
+    {
+      "lane_id": "mucc_v1_owc_wetland",
+      "path": "results/blue_catalyst_poc/runs/mucc_v1_owc_wetland_esm2_20260626_gpu_v2_shard003/artifacts/genome_embeddings.npz",
+      "sha256": "ed544e6131be047834cb5f82d265d654c6654deb56848d7e9ee41def30f244f0",
+      "records": 626,
+      "model_name": "facebook/esm2_t33_650M_UR50D",
+      "pooling_layers": [
+        33
+      ],
+      "configuration_evidence": "Archived run statistics, code-lineage and same-DNA configuration audit; historical model revision is not recorded in these NPZ files"
+    },
+    {
+      "lane_id": "mucc_v1_owc_wetland",
+      "path": "results/blue_catalyst_poc/runs/mucc_v1_owc_wetland_esm2_20260626_gpu_v2_shard004/artifacts/genome_embeddings.npz",
+      "sha256": "770fa73e077a83ebb4261004db988bea6adaa01b92d29bafc670a0d4bf6de69d",
+      "records": 623,
+      "model_name": "facebook/esm2_t33_650M_UR50D",
+      "pooling_layers": [
+        33
+      ],
+      "configuration_evidence": "Archived run statistics, code-lineage and same-DNA configuration audit; historical model revision is not recorded in these NPZ files"
+    }
+  ],
+  "absent_registry_paths": [
+    {
+      "lane_id": "futian_mangrove_2026_qi",
+      "path": "results/blue_catalyst_poc/runs/futian_mangrove_2026_esm2_phase1_20260621/artifacts",
+      "status": "no embedding payload; retained registry placeholder"
+    }
+  ],
+  "verification_files": [
+    {
+      "path": "results/blue_catalyst_poc/reembed_single_configuration_20260928/verify_and_collate_summary.json",
+      "sha256": "5e2b62d5f3aea4bd3230299f75b503ff76df27bc1169ab19fe0bdb41d0d0ab05"
+    },
+    {
+      "path": "results/blue_catalyst_poc/reembed_single_configuration_20260928/pilot_final_layer_vectors.npz",
+      "sha256": "fedb92244278e6b9ec592c8194bff28e79bb46f1c915f664a7a500fb3822a01e"
+    },
+    {
+      "path": "results/blue_catalyst_poc/reembed_single_configuration_20260928/configuration_evidence/run_fingerprint.tsv",
+      "sha256": "86782791d17b9388871dc33c88062f1da11678640a6b42d1e6861e537ab72a59"
+    },
+    {
+      "path": "results/blue_catalyst_poc/reembed_single_configuration_20260928/pilot_reproduction_check.tsv",
+      "sha256": "e6438b51b64970b50aedb3c0df1dc56807d4e144a4d10418b34b88886415310d"
+    },
+    {
+      "path": "results/blue_catalyst_poc/reembed_single_configuration_20260928/configuration_evidence/same_dna_46_reembedding_record.json",
+      "sha256": "e299fe47a4c8b3ca97a52bf9f193cc527cdacbac919f51a503c2b3d4eb7749da"
+    },
+    {
+      "path": "results/blue_catalyst_poc/reembed_single_configuration_20260928/configuration_evidence/matched_configuration_retrieval.tsv",
+      "sha256": "2eb021c175e061df76355bcd3a7a59b31649487e2666cf7afb13e734e0259168"
+    },
+    {
+      "path": "results/blue_catalyst_poc/reembed_single_configuration_20260928/configuration_evidence/reproduction.tsv",
+      "sha256": "5860f074ddce86831145aa9fdf129cdf217bf8948e6403f48805406fda20444d"
+    }
+  ],
+  "remaining_limits": [
+    "Historical lane model revisions are not fully recorded; final-layer identity is supported by code lineage and numerical controls.",
+    "Functional pipeline comparability, ecological transfer, exact flux joins and MRV scores are not established by this configuration reconciliation."
+  ]
+}

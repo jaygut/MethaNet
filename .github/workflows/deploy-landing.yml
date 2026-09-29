@@ -48,6 +48,10 @@ jobs:
           # Guard: the published report must already exist on gh-pages. We never build or
           # clobber it from this Action; if it is missing, abort rather than ship a broken site.
           test -f "$DEST/report/index.html" || { echo "::error::report/ missing on gh-pages; aborting."; exit 1; }
+          # Geometry is a paired landing/report release. Reject a landing export
+          # whose report is not the exact one already published by the full builder.
+          python3 "$SRC/tools/sync_geometry_release.py" \
+            --published-report "$DEST/report/index.html"
 
           # Refresh ONLY the landing files. Everything else on gh-pages (report/, the dated
           # mbag_nextgen_* snapshots, CNAME, .git) is left exactly as-is.

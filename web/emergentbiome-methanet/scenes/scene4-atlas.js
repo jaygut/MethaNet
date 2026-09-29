@@ -1,5 +1,5 @@
-/* Source-audited 2026-08-10 atlas. Points are MAG/proteome records, not samples.
-   Gold: 26 selected one-way nearest-core links. Teal: a separate capped export
+/* Molecular payload 2026-08-10; geometry reconciled 2026-09-29. Points are MAG/proteome records, not samples.
+   Gold: selected one-way nearest-core links. Teal: a separate capped export
    of 2,200 cross-domain kNN links. 2D projection never changes link membership. */
 (function () {
   window.EBScenes = window.EBScenes || {};
@@ -8,26 +8,32 @@
     const ECOC = {}; EB.ecosystems.forEach((e) => { ECOC[e.code] = e.color; });
     const VIEWS = ["overview", "candidates", "neighbors", "sensitivity"];
     const PROJECTIONS = ["diffusion", "umap", "tsne", "pca"];
-    // Frozen raw-cosine nearest-core results from
-    // results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end/
-    // tables/embedding_context_table.tsv and tables/candidate_cards.tsv.
-    // These are not counts of the selected links in this smaller visual export.
+    // Every count below comes from the same hash-bound export as the points.
+    const META = (ctx.data && ctx.data.atlas && ctx.data.atlas.meta) || {};
+    const AUDIT = META.nearest_core_audit || {};
+    const GEOMETRY = META.geometry_audit || {};
     const FROZEN = {
-      snapshot: "2026-08-10", points: 7710, candidates: 26, neighbors: 2200,
-      wetlandRumen: 2434, wetlandTotal: 2501, // wetland records outside the core; core members match themselves
-      mangroveRumen: 4475, mangroveTotal: 4584, cardsRumen: 26, cardsTotal: 27,
+      snapshot: META.snapshot, points: META.n_points,
+      candidates: ((ctx.data && ctx.data.atlas && ctx.data.atlas.bridges) || []).filter(b => b.cs).length,
+      neighbors: ((ctx.data && ctx.data.atlas && ctx.data.atlas.bridges) || []).filter(b => !b.cs).length,
+      wetlandRumen: AUDIT.wetland_outside_core_nearest_rumen_units,
+      wetlandTotal: AUDIT.wetland_outside_core_units,
+      mangroveRumen: AUDIT.mangrove_nearest_rumen_units,
+      mangroveTotal: AUDIT.mangrove_embedding_units,
+      cardsRumen: AUDIT.target_candidate_nearest_rumen_cards,
+      cardsTotal: AUDIT.target_candidate_cards,
     };
+    const pairCount = (mode, key) => fmt(((GEOMETRY[mode] || {})[key]) || 0);
     let rng, pts = [], byEco = [[], [], [], []], candidates = [], neighbors = [];
     let region = {}, cent = {}, ready = false, view = "overview";
-    // UMAP is the initial navigation layout because the diffusion view compresses
-    // the target cohorts into a near-vertical band. Both remain inspectable.
+    // UMAP is the initial navigation view. All projections remain inspectable.
     let projection = "umap", selectedCandidate = -1;
     let panelBody, panelAnnounce;
 
     function fmt(n) { return D.fmt(n); }
     function validFreeze() {
       const meta = ctx.data && ctx.data.atlas && ctx.data.atlas.meta;
-      return !!meta && meta.snapshot === FROZEN.snapshot &&
+      return !!meta && meta.embedding_configuration?.status === "verified" && meta.snapshot === FROZEN.snapshot &&
         pts.length === FROZEN.points && candidates.length === FROZEN.candidates &&
         neighbors.length === FROZEN.neighbors;
     }
@@ -134,7 +140,7 @@
       });
       keyboardGroup(controls, "[data-atlas-view]");
       panel.innerHTML =
-        '<div class="atlas__panel-meta"><span>READ THE MAP</span><span class="atlas__panel-snapshot">ATLAS · 10 AUG 2026</span></div>' +
+        '<div class="atlas__panel-meta"><span>READ THE MAP</span><span class="atlas__panel-snapshot">GEOMETRY · 29 SEP 2026</span></div>' +
         '<div class="atlas__panel-body" id="atlasPanelBody"></div>' +
         '<div class="atlas__projection"><span class="atlas__projection-label">2D PROJECTION</span>' +
         '<div class="atlas__projection-buttons" role="group" aria-label="Atlas projection">' +
@@ -186,9 +192,9 @@
         panelBody.innerHTML =
           '<p class="atlas__eyebrow">02 / Nearest reference</p>' +
           '<h3>' + fmt(candidates.length) + ' highlighted links</h3>' +
-          '<p>Gold lines join selected wetland and mangrove genomes to their closest genome in the 625-genome reference core (518 rumen, 107 wetland). Outside the core, nearly every wetland and mangrove record points to a rumen genome, partly because the core is mostly rumen.</p>' +
+          '<p>Gold lines join selected wetland and mangrove genomes to their closest genome in the 625-genome reference core (518 rumen, 107 wetland). The counts below describe the corrected final-layer representation. Reference composition and shared ancestry can influence the closest match.</p>' +
           counts +
-          '<p class="atlas__fineprint">These matches are weak. In this raw representation almost any two genomes look alike, and the typical closest match (cosine 0.983) is less similar than two random atlas genomes (0.994). Treat each link as a lead to review, not evidence of shared function. Only the ' + fmt(candidates.length) + ' selected links are drawn; the 27th card is a wetland core genome whose closest core member is itself.</p>' +
+          '<p class="atlas__fineprint">Median nearest-core cosine: ' + Number(AUDIT.outside_core_nearest_similarity_median).toFixed(4) + '. Random-pair median: ' + Number(GEOMETRY.random_pair_similarity_median).toFixed(4) + '. High raw cosine alone does not establish shared function. Only the ' + fmt(candidates.length) + ' selected links are drawn; core self-matches are excluded.</p>' +
           '<label class="atlas__select-label" for="atlasCandidateSelect">Inspect a highlighted link</label>' +
           '<select id="atlasCandidateSelect" class="atlas__candidate-select"><option value="-1">All ' + fmt(candidates.length) + ' highlighted links</option></select>' +
           '<p class="atlas__candidate-readout" id="atlasCandidateReadout" role="status" aria-live="polite" aria-atomic="true">Choose a link to see both record IDs and their raw cosine similarity.</p>';
@@ -208,8 +214,8 @@
         panelBody.innerHTML =
           '<p class="atlas__eyebrow">03 / Neighbor links</p>' +
           '<h3>' + fmt(neighbors.length) + ' cross-habitat links</h3>' +
-          '<p>Teal lines show the ' + fmt(neighbors.length) + ' most similar of the ' + fmt(EB.num.crossHabitatNeighborEdges) + ' links that cross habitats in the full neighbor graph, which is computed in the complete representation. All of them join mangrove and wetland genomes. They are separate from the ' + fmt(candidates.length) + ' gold reference links.</p>' +
-          '<p class="atlas__fineprint">A neighbor link means similar protein content. It is not gene exchange, a shared pathway or a methane measurement.</p>';
+          '<p>Teal lines show the ' + fmt(neighbors.length) + ' most similar of the ' + fmt(EB.num.crossHabitatNeighborEdges) + ' links that cross habitats in the full neighbor graph, which is computed in the complete representation. They are separate from the ' + fmt(candidates.length) + ' gold reference links.</p>' +
+          '<p class="atlas__fineprint">A neighbor link means similarity in this protein representation. It is not gene exchange, a shared pathway or a methane measurement.</p>';
       } else {
         // Top-35 reciprocal counts: frozen audit/scientific_audit.json,
         // embedding geometry sensitivity block (raw vs dimension_zscore).
@@ -217,10 +223,11 @@
           '<p class="atlas__eyebrow">04 / Stricter test</p>' +
           '<h3>Which resemblances are mutual?</h3>' +
           '<p>This test counts pairs in which each genome is among the other’s 35 closest neighbors across the whole atlas. Standardizing each dimension first removes the shared offset that makes all genomes look alike.</p>' +
-          '<dl class="atlas__sensitivity-grid"><div><dt>Rumen ↔ wetland</dt><dd><span>Raw</span><b>1</b><span>Standardized</span><b>0</b></dd></div>' +
-          '<div><dt>Rumen ↔ mangrove</dt><dd><span>Raw</span><b>0</b><span>Standardized</span><b>0</b></dd></div>' +
-          '<div><dt>Mangrove ↔ wetland</dt><dd><span>Raw</span><b>15,728</b><span>Standardized</span><b>15,064</b></dd></div></dl>' +
-          '<p class="atlas__fineprint">Mangrove and wetland genomes stay mutual neighbors; rumen genomes almost never are. The one-way reference links remain useful leads, but they are not evidence of shared biology. This test draws no edges of its own.</p>';
+          '<dl class="atlas__sensitivity-grid">' +
+          [['Rumen ↔ wetland','rumen↔wetland'],['Rumen ↔ mangrove','mangrove↔rumen'],['Mangrove ↔ wetland','mangrove↔wetland']].map(([label,key]) =>
+            '<div><dt>' + label + '</dt><dd><span>Raw</span><b>' + pairCount('raw_reciprocal_pair_counts',key) + '</b><span>Standardized</span><b>' + pairCount('dimension_zscore_reciprocal_pair_counts',key) + '</b></dd></div>').join('') + '</dl>' +
+          '<p class="atlas__fineprint">These are geometry sensitivity counts after pooling reconciliation. Mutual neighbors remain hypotheses for review; phylogeny, source effects and functional evidence must be tested independently. This test draws no edges of its own.</p>';
+
       }
       if (panelAnnounce) {
         const labels = { overview: "Overview of the atlas", candidates: "Nearest-reference links", neighbors: "Cross-habitat neighbor links", sensitivity: "Stricter mutual-neighbor test" };
@@ -236,7 +243,7 @@
       }
       const link = candidates[selectedCandidate];
       const source = pts[link.s], reference = pts[link.t];
-      readout.textContent = "Candidate: " + source.id + ". Closest rumen reference: " + reference.id +
+      readout.textContent = "Candidate: " + source.id + ". Closest core reference: " + reference.id +
         ". Raw cosine similarity: " + Number(link.w).toFixed(4) + ". A lead for evidence review, not validated transfer.";
     }
     p.setup = function () {

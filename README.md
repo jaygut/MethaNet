@@ -143,7 +143,7 @@ embeddings. The POC was developed for the
 [Hatch Blue Blue Catalyst](https://www.hatch.blue/programs/blue-catalyst)
 accelerator program in Singapore in May 2026.
 
-**662-genome cohort (current, `apolo_full_20260228_080644_embed_20260305_061952`)**
+**Historical 662-genome cohort (`apolo_full_20260228_080644_embed_20260305_061952`)**
 
 | Metric | Value | Interpretation |
 |--------|-------|----------------|
@@ -156,12 +156,7 @@ accelerator program in Singapore in May 2026.
 | Bridge genomes | 14 with ≥1 opposite-ecosystem k-NN neighbor | Out of 662 total |
 | Top bridge | bin.8 (Archaea), alpha-transfer score=3.47 | >6 SDs above cohort mean; all top 11 are rumen Archaea |
 
-**Embedding configuration note (28 September 2026).** This run pooled the mean of ESM2 hidden
-layers 20–33, the library default until commit `5a40486` (10 June 2026). Every later run (MSM,
-Futian, MUCC v1) used the final layer (33). Statistics within this run are internally
-consistent, but its vectors are not comparable with later runs: cross-run similarities,
-nearest-neighbour matches and links that combine them are withdrawn until the 662 proteomes are
-re-embedded with the final layer. Run records now store the pooling layers.
+**Embedding configuration reconciliation (29 September 2026).** The historical run above pooled layers 20–33; later atlas lanes used layer 33. All 662 retained pilot proteomes have now been recomputed under final-layer pooling, with per-record retained-input and original-pooling reproduction checks. The corrected public geometry is bound to `configs/atlas_embedding_contract_20260929.json` and uses `configs/methanet_atlas_lanes_20260929.tsv`. Old mixed-pooling cross-run positions, links and rankings remain superseded; the historical within-run statistics above are not claims about the corrected atlas. Historical June model-revision metadata remains incomplete. Biological transfer and methane prediction require independent validation. See [the release receipt](docs/releases/atlas_embedding_reconciliation_20260929.md).
 
 **Key scientific findings**
 

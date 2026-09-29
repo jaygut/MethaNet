@@ -13,12 +13,6 @@
   "release_ledger_sha256": "e59ee4df0e244e734f4e4735af17a70ea1f0547f417ad813ddf446061d3a09d1",
   "tracked_ledger_snapshot": "docs/releases/atlas_20260810_release_ledger.json",
   "source_report_bundle": "results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end",
-  "reconciled_public_report_bundle": "results/reports/emergentbiome_molecular_atlas_20260929_layer33",
-  "site_source": "web/emergentbiome-methanet",
-  "geometry_date": "2026-09-29",
-  "embedding_lane_registry": "configs/methanet_atlas_lanes_20260929.tsv",
-  "embedding_contract": "configs/atlas_embedding_contract_20260929.json",
-  "geometry_receipt": "docs/releases/atlas_embedding_reconciliation_20260929.json",
-  "embedding_lane_registry_sha256": "53b8f8778bf8deebae770b42a4ca5ced7bd9610d9117baef90ec2ca7817a503c",
-  "embedding_contract_sha256": "fae6d2c31c0cba7c17affff9c285128a401970cbb917fa3e76f11bbe624136c6"
+  "reconciled_public_report_bundle": "results/reports/emergentbiome_molecular_atlas_20260923_reconciled",
+  "site_source": "web/emergentbiome-methanet"
 }
