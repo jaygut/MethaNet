@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
   <title id="title">EmergentBiome Molecular Atlas</title>
-  <desc id="desc">A frozen molecular evidence atlas for methane-pathway screening in blue-carbon systems, with candidate links and validation gaps in view.</desc>
+  <desc id="desc">Molecular evidence screening with configuration-reconciled geometry and explicit validation gaps. Network artwork is conceptual.</desc>
   <defs>
     <radialGradient id="field" cx="70%" cy="42%" r="72%">
       <stop offset="0" stop-color="#102a2b"/>
@@ -36,7 +36,7 @@
       <circle cx="12" cy="12" r="10" fill="none" stroke="#2fe3c2" stroke-opacity="0.55"/>
       <text x="34" y="18" fill="#eaf2f2" font-size="21" font-weight="700">EmergentBiome</text>
     </g>
-    <text x="56" y="141" fill="#2fe3c2" font-size="15" font-weight="700" letter-spacing="3">FROZEN MOLECULAR EVIDENCE · 10 AUG 2026</text>
+    <text x="56" y="141" fill="#2fe3c2" font-size="15" font-weight="700" letter-spacing="3">MOLECULAR SCREENING · GEOMETRY RECONCILED 29 SEP 2026</text>
     <text x="54" y="226" fill="#eaf2f2" font-size="64" font-weight="750">EmergentBiome</text>
     <text x="54" y="294" fill="url(#methane)" font-size="64" font-weight="750">Molecular Atlas</text>
     <text x="57" y="352" fill="#b9c8cd" font-size="23">Methane-pathway screening in blue-carbon systems.</text>
@@ -54,7 +54,7 @@
     </g>
     <line x1="0" y1="574" x2="1200" y2="574" stroke="#1b2730"/>
     <text x="56" y="608" fill="#86f0e0" font-size="14" font-weight="700" letter-spacing="1">CANDIDATE REVIEW</text>
-    <text x="264" y="608" fill="#8a9ba5" font-size="14">Reference links nominate hypotheses. Flux remains a field question.</text>
-    <text x="1092" y="608" fill="#8a9ba5" font-size="14">2026-08-10</text>
+    <text x="264" y="608" fill="#8a9ba5" font-size="14">Layer-33 geometry reconciled. Field validation remains pending.</text>
+    <text x="1092" y="608" fill="#8a9ba5" font-size="14">2026-09-29</text>
   </g>
 </svg>

@@ -18,6 +18,9 @@ narrative revision and the regenerated report were published together as `gh-pag
 revision `30d8715`; [`design-qa.md`](design-qa.md) records the changes and checks, and
 the local QA package is `results/reports/landing_narrative_review_20260928/`.
 
+The 29 September embedding correction and its verification are documented in
+[`../../docs/releases/atlas_embedding_reconciliation_20260929.md`](../../docs/releases/atlas_embedding_reconciliation_20260929.md).
+
 The shared position is:
 
 > The EmergentBiome Molecular Atlas organizes MAG/proteome representations,
@@ -41,7 +44,7 @@ release parity before its public alias is promoted.
 | Landing page | Proposal reviewers, blue-carbon developers, verifiers, partners, and funders | Explain the methane measurement gap, show one real evidence card and the frozen atlas, and distinguish current screening from field validation |
 | Technical report | Scientific and diligence reviewers | Expose the tri-view evidence contract, comparability boundaries, candidate cards, source provenance, and validation agenda |
 
-The source and locally built surfaces use the August 10, 2026 controlled-diligence release. Routine scientific publication and indexing remain blocked until the publication gates pass. A September 23 user-directed correction of the already-public landing and stale report is scoped to the reconciled, claim-bounded `noindex` bundle:
+The source and locally built surfaces retain the August 10, 2026 molecular payload and use the independently versioned September 29 layer-33 geometry release. Routine scientific publication and indexing remain blocked until the publication gates pass. A September 23 user-directed correction of the already-public landing and stale report is scoped to the reconciled, claim-bounded `noindex` bundle:
 
 | Measure | Current release |
 | --- | ---: |
@@ -62,22 +65,11 @@ The hero defines the molecular atlas and EmergentBiome evidence graph. The
 closing evidence-language key defines monitoring, reporting, and verification,
 MAG, ESM-2, gLM2, tri-view, MUCC v1, and VM0033.
 
-The August 10 visual export contains 7,710 embedding-bearing MAG/proteome
-records and 2,226 **displayed map links**. Its 26 selected one-way
-nearest-core candidate links are distinct from the 2,200 sampled full-atlas
-cross-domain kNN links. In the frozen tables, 2,434 of 2,608 wetland and
-4,475 of 4,584 mangrove records have a rumen record as their raw-cosine
-nearest neighbor in the 625-record POC core; 26 of 27 selected wetland or
-mangrove candidate cards share that property. The reference core is
-rumen-heavy (518 rumen, 107 wetland), and these assignments do not prove
-transfer. The report's zero concerns reciprocal cross-domain top-35 pairs
-after per-dimension standardization, a separate statistic.
-The map opens in UMAP for visual navigation because the diffusion projection
-compresses most target records into a narrow band. Diffusion, t-SNE, and PCA remain
-selectable. t-SNE is computed for the same 7,710 embedding-bearing records as the
-other views; the 255 registered gap rows have no projection coordinates. All link
-membership is computed in the high-dimensional ESM-2
-space, independently of the displayed 2D projection.
+The 29 September geometry release maps **7,710 MAG/proteome records**. It draws **2,226 links**: 2,200 sampled cross-habitat neighbor links and 26 selected one-way nearest-core links. These are exploratory representation similarities.
+
+Outside the 625-record core (518 rumen, 107 wetland), **1,403/2,501 wetland** and **2,823/4,584 mangrove** records have a rumen genome as their closest core match. The nearest-core median cosine is 0.9973; the random-pair median is 0.9942. The corrected dimension-standardized graph contains 486 mutual pairs involving rumen and another habitat. One-way core matches and reciprocal full-atlas neighbors answer different questions; neither validates ecological transfer.
+
+Counts and candidate selection are recomputed from the corrected vectors. The public export includes its geometry audit and contract hash, and publication rejects stale quantities or a mismatched report. UMAP, diffusion, t-SNE and PCA show the same records; changing projection does not change high-dimensional link membership. The 255 registered gap rows remain explicit and unplotted.
 
 ## Landing Page Story
 

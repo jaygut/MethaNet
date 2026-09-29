@@ -54,7 +54,8 @@ window.EB = (function () {
   /* ---- verified headline numbers (see DIGEST.md §1) ---- */
   const num = {
     snapshot: "2026-08-10",
-    snapshotLiveUTC: "2026-08-10 controlled-diligence audit",
+    geometryDate: "2026-09-29",
+    snapshotLiveUTC: "2026-09-29 configuration-reconciled geometry",
     snapshotFreezeUTC: "2026-08-10 release-ledger freeze",
     // Separately reviewed three-case extension (scenes 07-08); its own date and
     // scope, never merged into the atlas counts. Matches the public case files.
@@ -104,31 +105,25 @@ window.EB = (function () {
     futianSites: 2,
     futianMonths: 8,
 
-    bridgeEdges: 2226,               // displayed map links: 2,200 sampled cross-domain k-NN + 26 highlighted candidate links
-    bridgeNodes: 930,
-    pocBridgeGenomes: 14,            // POC 662 cohort
-    nearestCoreWetland: 2434,        // wetland records outside the core whose raw-cosine nearest POC-core match is rumen
-    wetlandOutsideCore: 2501,        // wetland records outside the 625-record core; the 107 core wetland records match themselves
-    nearestCoreMangrove: 4475,       // of 4,584 mangrove records (none is in the core)
-    nearestCoreMedianCosine: 0.983,  // median raw cosine to the nearest core member, 7,085 records outside the core
-    randomPairMedianCosine: 0.994,   // median raw cosine of random atlas pairs (embedding geometry audit)
-    nearestCoreCandidates: 26,       // of 27 selected wetland/mangrove candidate cards; the 27th is a core record matching itself
-    candidateCards: 27,
-    sampledNeighborLinks: 2200,
-    crossHabitatNeighborEdges: 57193, // directed raw-cosine top-35 edges that cross habitats (embedding geometry audit)
-    highlightedCandidateLinks: 26,
-    standardizedRumenReciprocalPairs: 0, // full-atlas, dimension-standardized reciprocal top-35 pairs
+    bridgeEdges: 2226, // corrected geometry audit, 2026-09-29
+    bridgeNodes: 950, // corrected geometry audit, 2026-09-29
+    nearestCoreWetland: 1403, // corrected geometry audit, 2026-09-29
+    wetlandOutsideCore: 2501, // corrected geometry audit, 2026-09-29
+    nearestCoreMangrove: 2823, // corrected geometry audit, 2026-09-29
+    nearestCoreMedianCosine: 0.9973, // corrected geometry audit, 2026-09-29
+    randomPairMedianCosine: 0.9942, // corrected geometry audit, 2026-09-29
+    nearestCoreCandidates: 10, // corrected geometry audit, 2026-09-29
+    candidateCards: 26, // corrected geometry audit, 2026-09-29
+    sampledNeighborLinks: 2200, // corrected geometry audit, 2026-09-29
+    crossHabitatNeighborEdges: 59496, // corrected geometry audit, 2026-09-29
+    highlightedCandidateLinks: 26, // corrected geometry audit, 2026-09-29
+    standardizedRumenReciprocalPairs: 486, // corrected geometry audit, 2026-09-29
 
     // POC geometry (662-genome cohort)
     pocCohort: 662,
     pocRumen: 555,
     pocWetland: 107,
     embedDim: 1280,
-    permanovaR2: 0.202,
-    permanovaP: 0.001,
-    silhouette: 0.398,
-    classifierAUC: 1.0,
-    cohensD: 3.63,
 
     // attestation graph (MMAG MVP)
     magNodes: 662,
@@ -139,7 +134,6 @@ window.EB = (function () {
     validationGapNodes: 8,
     claimNodes: 5,
     sourceDomains: 2,
-    nearEsm2Edges: 9930,
 
     // program
     pairedFluxNow: 0,                // authoritative exact sample + environment + process joins
@@ -187,7 +181,7 @@ window.EB = (function () {
       "Available now: 7,710 genome records from mangroves, wetlands and a rumen reference set, and three worked evidence cases. " +
       "Next: a proposed field study to test whether molecular data improves methane prediction.",
     // Two dated scopes: the frozen August atlas and the September case reviews.
-    release: "Atlas released 10 August 2026 · Case reviews added 26 September 2026",
+    release: "Payload: 10 Aug · Case reviews: 26 Sep · Geometry reconciled: 29 Sep 2026",
   };
 
   /* ---- model views (kept jargon-free for the public page) ---- */
@@ -310,7 +304,7 @@ window.EB = (function () {
         points: [
           "Genome quality reported by the source: 94.89% complete, 1.14% contamination, checked against the archived genome.",
           "Marker transcripts were detected in the source's processed RNA data. Detection shows presence, not how active the pathway is.",
-          "Closest genome in the 625-genome reference core: a rumen genome, raw cosine 0.9843. A one-way lead for review.",
+          "Closest core reference after pooling reconciliation: mucc__3300005325_23, raw cosine 0.9979. An exploratory match for review.",
         ],
       },
       pending: {
@@ -444,7 +438,7 @@ window.EB = (function () {
   const links = {
     report: "report/",                 // stable alias published with the landing bundle
     reportName: "EmergentBiome Molecular Atlas technical report",
-    reportDate: "2026-09-28",
+    reportDate: "2026-09-29",
     siteUrl: "https://emergentbiome.earth/",
     contactEmails: ["jay@ecosphereblue.earth", "aphilosof@ecosphereblue.earth"],
     organizationUrl: "https://www.ecosphereblue.earth/",

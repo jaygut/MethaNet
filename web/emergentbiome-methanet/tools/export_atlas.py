@@ -28,6 +28,7 @@ Usage:
 """
 from __future__ import annotations
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -38,7 +39,7 @@ from collections import Counter, OrderedDict
 REPO_ROOT_FROM_HERE = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 SOURCE_NICHE = os.path.join(
     REPO_ROOT_FROM_HERE,
-    "results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end",
+    "results/reports/emergentbiome_molecular_atlas_20260929_layer33",
     "assets/data/niche.json",
 )
 OUT_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data", "atlas.json"))
@@ -150,6 +151,21 @@ def main():
 
     with open(src) as fh:
         doc = json.load(fh)
+
+    report_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(src))))
+    config_path = os.path.join(report_root, "embedding_configuration.json")
+    audit_path = os.path.join(report_root, "audit/scientific_audit.json")
+    with open(config_path) as fh:
+        embedding_configuration = json.load(fh)
+    if embedding_configuration.get("status") != "verified" or embedding_configuration.get("pooling_layers") != [33]:
+        sys.exit("ERROR: a verified final-layer embedding configuration is required")
+    for path, key in [(src, "niche_sha256"), (audit_path, "scientific_audit_sha256")]:
+        with open(path, "rb") as fh:
+            digest = hashlib.sha256(fh.read()).hexdigest()
+        if digest != embedding_configuration.get(key):
+            sys.exit("ERROR: report geometry or scientific audit changed after verification: " + path)
+    with open(audit_path) as fh:
+        scientific_audit = json.load(fh)
 
     raw_nodes = doc["nodes"]
     raw_links = doc["links"]
@@ -326,6 +342,9 @@ def main():
             ("coord_transform", f"diffusion: per-axis linear min-max (0.3/99.7 clip); {nonlinear_name}/pca: standardize + tanh for display only; tsne: shared affine scale preserving 2D distances"),
             ("projection_note", f"The primary hero map is the diffusion map built from the proteome-embedding cosine kNN affinity graph. {nonlinear_name.upper()}, t-SNE and PCA are retained as projection-sensitivity views. None determines high-dimensional link membership."),
             ("snapshot", snap),
+            ("embedding_configuration", embedding_configuration),
+            ("geometry_audit", scientific_audit["embedding_geometry"]),
+            ("nearest_core_audit", {k:v for k,v in scientific_audit["nearest_core_context"].items() if k != "source_tables"}),
             ("n_points", len(points)),
             ("n_bridges", len(bridges)),
             ("n_case_study", sum(p["cs"] for p in points)),

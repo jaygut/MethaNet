@@ -124,6 +124,8 @@ def audit_landing_controls(driver, url: str, width: int, height: int) -> dict:
     candidate_readout = driver.find_element(By.ID, "atlasCandidateReadout").text
     driver.find_element(By.CSS_SELECTOR, "[data-atlas-view='sensitivity']").click()
     sensitivity = driver.find_element(By.ID, "atlasPanelBody").text
+    displayed_pair_counts = [int(el.text.replace(',', '')) for el in
+        driver.find_elements(By.CSS_SELECTOR, '.atlas__sensitivity-grid b')]
     driver.find_element(By.CSS_SELECTOR, "[data-atlas-projection='diffusion']").click()
     diffusion_pressed = driver.find_element(
         By.CSS_SELECTOR, "[data-atlas-projection='diffusion']"
@@ -147,6 +149,15 @@ def audit_landing_controls(driver, url: str, width: int, height: int) -> dict:
     report_link_opens = driver.current_url.rstrip("/").endswith("/report")
     driver.close()
     driver.switch_to.window(original_window)
+    geometry_export = driver.execute_async_script(
+        "const done=arguments[0]; fetch('data/atlas.json').then(r=>r.json()).then(a=>done({meta:a.meta,candidates:a.bridges.filter(b=>b.cs).length}));"
+    )
+    geometry = geometry_export["meta"]["geometry_audit"]
+    expected_pair_counts = [
+        int(geometry[mode].get(key, 0))
+        for key in ("rumen↔wetland", "mangrove↔rumen", "mangrove↔wetland")
+        for mode in ("raw_reciprocal_pair_counts", "dimension_zscore_reciprocal_pair_counts")
+    ]
     return {
         "measurementGapScoped": (
             "0 verified pairs" in measurement_gap
@@ -164,6 +175,7 @@ def audit_landing_controls(driver, url: str, width: int, height: int) -> dict:
         "viewButtons": len(view_buttons),
         "projectionButtons": len(projection_buttons),
         "candidateOptions": candidate_options,
+        "expectedCandidateOptions": geometry_export["candidates"] + 1,
         "initialUmapPressed": initial_umap == "true",
         "diffusionPressed": diffusion_pressed == "true",
         "tsnePressed": tsne_pressed == "true",
@@ -177,8 +189,7 @@ def audit_landing_controls(driver, url: str, width: int, height: int) -> dict:
             and "not validated transfer" in candidate_readout
         ),
         "sensitivityShowsBothMethods": (
-            "15,728" in sensitivity
-            and "15,064" in sensitivity
+            displayed_pair_counts == expected_pair_counts
             and "Rumen ↔ wetland" in sensitivity
             and "Standardized" in sensitivity
         ),
@@ -474,7 +485,7 @@ def main() -> int:
             "contactCta": True,
             "viewButtons": 4,
             "projectionButtons": 4,
-            "candidateOptions": 27,
+            "candidateOptions": controls["expectedCandidateOptions"],
             "initialUmapPressed": True,
             "diffusionPressed": True,
             "tsnePressed": True,

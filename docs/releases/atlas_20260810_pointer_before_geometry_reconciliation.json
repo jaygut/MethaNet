@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "release_id": "molecular-atlas-20260810",
+  "snapshot_date": "2026-08-10",
+  "release_scope": "controlled_diligence_noindex",
+  "lane_registry": "configs/methanet_atlas_lanes.tsv",
+  "lane_registry_sha256": "7e02e18033b1e33bd29867407c32a4f84c1930512cba995df9229fe54f45b9c3",
+  "freeze_manifest": "results/reports/methanet_3view_payload_freeze_20260810_end_to_end/freeze_manifest.tsv",
+  "freeze_manifest_sha256": "7dd870ac3cdf0142b8050dbeec4f310ac18e6c21d1f34c4728e43b18df986cfc",
+  "freeze_decision": "results/reports/methanet_3view_payload_freeze_20260810_end_to_end/freeze_decision.json",
+  "freeze_decision_sha256": "c59abd192f46124d455983f57810a5b9e3d539e025e87dbaf37d842050d67fbf",
+  "release_ledger": "results/reports/methanet_3view_payload_freeze_20260810_end_to_end/release_ledger.json",
+  "release_ledger_sha256": "e59ee4df0e244e734f4e4735af17a70ea1f0547f417ad813ddf446061d3a09d1",
+  "tracked_ledger_snapshot": "docs/releases/atlas_20260810_release_ledger.json",
+  "source_report_bundle": "results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end",
+  "reconciled_public_report_bundle": "results/reports/emergentbiome_molecular_atlas_20260923_reconciled",
+  "site_source": "web/emergentbiome-methanet"
+}

@@ -47,6 +47,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import build_mbag_expanded_multiview_atlas as legacy
+from atlas_embedding_contract import validate_embedding_contract
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -88,6 +89,9 @@ COLORS = {
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo-root", type=Path, default=REPO_ROOT)
+    parser.add_argument("--embedding-contract", type=Path,
+                        default=Path("configs/atlas_embedding_contract_20260929.json"),
+                        help="Hash-bound configuration evidence for every ESM-2 geometry input.")
     parser.add_argument("--poc-esm-dir", type=Path, default=legacy.DEFAULT_POC_ESM_DIR)
     parser.add_argument("--poc-warehouse-dir", type=Path, default=legacy.DEFAULT_POC_WAREHOUSE_DIR)
     parser.add_argument("--poc-glm-dir", type=Path, default=legacy.DEFAULT_POC_GLM_DIR)
@@ -97,13 +101,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--lane-registry",
         type=Path,
-        default=legacy.DEFAULT_LANE_REGISTRY,
+        default=Path("configs/methanet_atlas_lanes_20260929.tsv"),
         help="Atlas lane registry TSV. When present, report inputs are derived from this registry.",
     )
     parser.add_argument(
         "--allow-legacy-defaults",
         action="store_true",
-        help="Allow the historical POC plus MSM-only fallback when the lane registry is absent.",
+        help="Deprecated compatibility flag; unverified historical geometry is no longer accepted.",
     )
     parser.add_argument(
         "--freeze-manifest",
@@ -530,7 +534,7 @@ def compute_manifold_coordinates(
         {
             "method": "diffusion",
             "status": "computed",
-            "role": "Spectral view of the cosine kNN affinity graph. The separation of the reference core dominates its first coordinate.",
+            "role": "Spectral view of the cosine kNN affinity graph; coordinates are exploratory and do not establish ecological transfer.",
         },
         {
             "method": "pca",
@@ -807,7 +811,7 @@ def apply_scientific_evidence_contract(atlas: pd.DataFrame) -> pd.DataFrame:
     )
     atlas["esm2_protocol_class"] = np.where(
         has_esm2,
-        "esm2_650m_proteome_mean_pool_max_6000_proteins",
+        "esm2_650m_layer33_proteome_mean_pool_max_6000_proteins",
         "esm2_not_available",
     )
     cap_applied = atlas.get(
@@ -1735,9 +1739,15 @@ def add_sample_linkage_context(atlas: pd.DataFrame, repo_root: Path, msm_root: P
 
 
 def build_candidate_cards(atlas: pd.DataFrame, top_n_poc: int, top_n_mangrove: int) -> pd.DataFrame:
-    poc = atlas[atlas["source_category"].isin(["rumen", "wetland"])].copy()
-    poc_top = poc[poc.get("rank").notna()].sort_values("rank").head(top_n_poc).copy()
-    poc_top["candidate_set"] = "POC bridge candidate"
+    poc = atlas[atlas["atlas_inclusion_status"].eq("poc_core_complete")].copy()
+    # Recompute selection from the current geometry. Archived pilot bridge ranks
+    # belong to the withdrawn pooling configuration and must never be reused.
+    poc_top = poc.sort_values(
+        ["cross_domain_neighbor_fraction", "qc_confidence_index", "proteome_id"],
+        ascending=[False, False, True],
+    ).head(top_n_poc).copy()
+    poc_top["rank"] = np.arange(1, len(poc_top) + 1)
+    poc_top["candidate_set"] = "POC geometry-led review candidate"
     msm = atlas[
         atlas["source_category"].eq("mangrove")
         & atlas["has_functional"]
@@ -1808,7 +1818,7 @@ def build_candidate_cards(atlas: pd.DataFrame, top_n_poc: int, top_n_mangrove: i
         else:
             existing = cards[column].fillna("").astype(str).str.strip()
             cards.loc[existing.eq(""), column] = default
-    poc_mask = cards["candidate_set"].astype(str).eq("POC bridge candidate")
+    poc_mask = cards["candidate_set"].astype(str).eq("POC geometry-led review candidate")
     mangrove_mask = cards["candidate_set"].astype(str).str.startswith(
         "Mangrove geometry-led"
     )
@@ -1997,6 +2007,11 @@ def build_report_validation_gates(atlas: pd.DataFrame, payload: dict[str, Any]) 
 
     non_scoped = atlas["atlas_inclusion_status"].astype(str).eq("non_poc_or_unscoped").sum()
     add("no_unscoped_rows_in_atlas_payload", int(non_scoped) == 0, f"non_scoped_rows={int(non_scoped)}")
+    wrong_habitat_flags = [link for link in payload.get("niche", {}).get("links", [])
+        if legacy.truthy(link.get("cross_domain")) !=
+        (str(link.get("source_category")) != str(link.get("target_category")))]
+    add("niche_link_habitat_flags_match_source_categories", not wrong_habitat_flags,
+        f"mislabeled_links={len(wrong_habitat_flags)}")
 
     poc = atlas[atlas["atlas_inclusion_status"].astype(str).eq("poc_core_complete")].copy()
     poc_methane_source = pd.to_numeric(
@@ -2364,7 +2379,7 @@ def build_candidate_circos(cards: pd.DataFrame) -> dict[str, Any]:
     def group_mask(group_id: str) -> pd.Series:
         candidate_set = cards["candidate_set"].fillna("").astype(str)
         if group_id == "poc":
-            return candidate_set.eq("POC bridge candidate")
+            return candidate_set.eq("POC geometry-led review candidate")
         if group_id == "mangrove":
             return candidate_set.str.startswith("Mangrove geometry-led")
         return candidate_set.str.startswith("MUCC v1 source-scaffold")
@@ -2494,7 +2509,7 @@ def build_signature_matrix(cards: pd.DataFrame) -> dict[str, Any]:
         # One code per candidate set keeps row labels unique: P = reference core,
         # M = mangrove, O = Old Woman Creek.
         candidate_set = str(row.get("candidate_set", ""))
-        set_code = "P" if candidate_set == "POC bridge candidate" else "M" if candidate_set.startswith("Mangrove") else "O"
+        set_code = "P" if candidate_set == "POC geometry-led review candidate" else "M" if candidate_set.startswith("Mangrove") else "O"
         display_label = f"{set_code}{safe_int(row.get('rank')):02d}  {short_id(row['proteome_id'], 34)}"
         values = evidence_values(row)
         for metric in metric_defs:
@@ -2770,9 +2785,8 @@ def build_embedding_geometry_audit(
         ),
         "dimension_zscore_reciprocal_pair_counts": dict(z_pair_counts),
         "interpretation": (
-            "Raw ESM-2 cosine space is strongly anisotropic. Mangrove↔wetland "
-            "neighborhood continuity persists after per-dimension z-scoring, "
-            "while rumen transfer requires independent evidence. The graph supports "
+            "Raw ESM-2 cosine similarity and dimension-standardized neighborhoods "
+            "are reported separately. Biological transfer requires independent evidence. The graph supports "
             "neighborhood navigation and routes mechanism attestation to its dedicated evidence contract."
         ),
     }
@@ -3128,7 +3142,7 @@ def build_scientific_findings(
         },
         {
             "severity": "Embedding geometry",
-            "finding": "Mangrove and wetland genomes stay mutual neighbors; rumen links do not survive standardization.",
+            "finding": "Raw and dimension-standardized neighbor counts are sensitivity diagnostics, not transfer validation.",
             "result": (
                 f"Mutual top-{safe_int(geometry.get('knn_k'))} pairs in raw space: "
                 f"{raw_pairs.get('mangrove↔wetland', 0):,} mangrove–wetland, "
@@ -3625,7 +3639,7 @@ def build_payloads(
                 "source_category": source_category_by_id.get(source_id, ""),
                 "target_category": source_category_by_id.get(target_id, ""),
                 "similarity": safe_float(getattr(row, "nearest_poc_similarity", np.nan)),
-                "cross_domain": True,
+                "cross_domain": source_category_by_id.get(source_id, "") != source_category_by_id.get(target_id, ""),
                 "reciprocal": False,
                 "rank": safe_int(getattr(row, "rank", 0)),
                 "evidence_type": "case_study_nearest_poc",
@@ -4331,7 +4345,7 @@ def render_html(
     const METHOD_NAMES = {umap:'UMAP', diffusion:'Diffusion map', phate:'PHATE', tsne:'t-SNE', pca:'PCA'};
     const PROJECTION_NOTES = {
       umap:'UMAP keeps local neighborhoods readable. Distances between far-apart clusters are not meaningful.',
-      diffusion:'The diffusion map is dominated by the separation between the reference core and the other sources, which squeezes most records into a narrow band.',
+      diffusion:'The diffusion map summarizes the cosine-neighbor graph after pooling reconciliation; habitat and source structure still require controls.',
       tsne:'t-SNE preserves local neighborhoods. Cluster sizes and the gaps between clusters are not meaningful.',
       pca:'PCA is a linear view of the largest directions of variance. It shows broad structure only.',
       phate:'PHATE emphasizes transitions between neighborhoods.'
@@ -4351,7 +4365,7 @@ def render_html(
       exact_analysis_accession:'exact ENA analysis accession',
       site_month_habitat_context:'site, month and habitat context',
       exact_ncbi_assembly_biosample:'exact NCBI assembly and BioSample',
-      'POC bridge candidate':'Reference-core candidate (proof of concept)',
+      'POC geometry-led review candidate':'Reference-core candidate (reconciled geometry)',
       'Mangrove geometry-led candidate; functional harmonization pending':'Mangrove candidate (embedding geometry and QC)',
       'MUCC v1 source-scaffold review candidate':'Old Woman Creek candidate (source annotations)',
       'accepted KOfam genes and present METABOLIC events; best-ranked MCycDB/SCycDB hits exposed separately':'accepted KOfam genes and METABOLIC events; best MCycDB and SCycDB hits kept separate',
@@ -4830,9 +4844,9 @@ def render_html(
     <h2>ESM-2 geometry with measured limitations</h2>
     <p>The ESM-2 representation places {safe_int(geometry.get('embedding_units')):,} records in a {dimensions:,}-dimensional space. Raw cosine similarity in this space is strongly anisotropic: two random records have a mean cosine of {safe_float(geometry.get('random_pair_similarity_mean')):.4f} (median {random_median:.4f}), and the median similarity to the global centroid is {safe_float(geometry.get('similarity_to_global_centroid_median')):.4f}. Cross-habitat neighbor edges therefore sit in a saturated range, with a median raw cosine of {safe_float(geometry.get('raw_cross_edge_similarity_median')):.6f}. The atlas uses this geometry to navigate neighborhoods and keeps functional and validation evidence separate.</p>
     <p>A stricter test counts mutual neighbors: pairs in which each record is among the other's {knn_k} closest across the full atlas. Raw space holds {safe_int(raw_pairs.get('mangrove↔wetland')):,} mutual mangrove–wetland pairs, {raw_rumen_wetland:,} rumen–wetland pair{'' if raw_rumen_wetland == 1 else 's'} and {raw_rumen_mangrove:,} rumen–mangrove pair{'' if raw_rumen_mangrove == 1 else 's'}. After each dimension is standardized, {safe_int(z_pairs.get('mangrove↔wetland')):,} mangrove–wetland pairs remain {z_rumen_text}.</p>
-    <p>A separate, one-way comparison asks which member of the {safe_int(nearest_core.get('reference_core_units')):,}-genome reference core ({safe_int(nearest_core.get('reference_core_rumen_units')):,} rumen, {safe_int(nearest_core.get('reference_core_wetland_units')):,} wetland) is closest to each record. Outside the core, {wetland_outside_rumen:,} of {wetland_outside:,} wetland and {mangrove_rumen:,} of {mangrove_units:,} mangrove records point to a rumen genome, as do {candidates_rumen_text}. These matches are weak: the median closest-match similarity outside the core ({nearest_median:.3f}) is lower than that of two random atlas records ({random_median:.3f}). The core is mostly rumen, so a rumen match nominates a record for review; it does not establish shared biology, transfer between sources or methane flux.</p>
+    <p>A separate, one-way comparison asks which member of the {safe_int(nearest_core.get('reference_core_units')):,}-genome reference core ({safe_int(nearest_core.get('reference_core_rumen_units')):,} rumen, {safe_int(nearest_core.get('reference_core_wetland_units')):,} wetland) is closest to each record. Outside the core, {wetland_outside_rumen:,} of {wetland_outside:,} wetland and {mangrove_rumen:,} of {mangrove_units:,} mangrove records point to a rumen genome, as do {candidates_rumen_text}. The median closest-match similarity outside the core is {nearest_median:.3f}; the random-pair atlas median is {random_median:.3f}. These values describe representation geometry, not a calibrated measure of biological equivalence. The core is mostly rumen, so a rumen match nominates a record for review; it does not establish shared biology, transfer between sources or methane flux.</p>
     <p>Taxonomy explains part of the mangrove–wetland continuity. Among mutual pairs with usable phylum labels, {100 * safe_float(taxonomy_audit.get('raw_exact_name_share_usable')):.1f}% match exactly and {100 * safe_float(taxonomy_audit.get('synonym_normalized_share_usable')):.1f}% match after conservative synonym normalization. GTDB release metadata exists only for the reference core, so source and taxonomy-release effects are confounded. Harmonized taxonomy and phylogeny-aware null models are needed before neighborhood enrichment can be read as functional convergence.</p>
-    <p>UMAP is the default map view because it keeps local neighborhoods readable. The diffusion map is dominated by the separation between the reference core and the other sources, which squeezes most records into a narrow band; t-SNE and PCA are offered for comparison. No projection is evidence on its own, and link membership is always computed in the full representation.</p>
+    <p>UMAP is the default map view because it keeps local neighborhoods readable. Diffusion, t-SNE and PCA are offered for comparison; source structure and projection distortion must be assessed in the reconciled release. No projection is evidence on its own, and link membership is always computed in the full representation.</p>
     <p class="note"><b>References</b></p>
     <ol class="refs">{references_html}</ol>
   </section>
@@ -4851,7 +4865,7 @@ def render_html(
   </section>
   <section class="section">
     <h2>Candidate evidence cards</h2>
-    <p>The candidate layer asks which evidence exists for each review hypothesis, and which comparisons that evidence can support. Reference-core cards (P) keep the ranking used in the proof-of-concept study. Mangrove cards (M) are ranked by embedding geometry and QC. Old Woman Creek cards (O) carry the source's annotations and, where present, processed expression detection.</p>
+    <p>The candidate layer asks which evidence exists for each review hypothesis, and which comparisons that evidence can support. Reference-core cards (P) are reselected from the corrected cross-habitat neighbor fraction, QC and stable record identity. Mangrove cards (M) are ranked by embedding geometry and QC. Old Woman Creek cards (O) carry the source's annotations and, where present, processed expression detection.</p>
     <p>The matrix and the wheel show availability and eligibility, not strength: ESM-2, gLM2, functional annotation, comparability across routes, expression, QC, taxonomy and sample context. Mechanism strength, activity and any causal link to flux need their own direct evidence.</p>
     <div class="signature-stack">
       <div class="signature-panel">
@@ -5141,7 +5155,8 @@ def write_outputs(
             ```bash
             MPLCONFIGDIR=/tmp/methanet_mpl NUMBA_CACHE_DIR=/tmp/methanet_numba \\
             .venv/bin/python scripts/reports/build_mbag_nextgen_molecular_niche_atlas.py \\
-              --lane-registry configs/methanet_atlas_lanes.tsv \\
+              --lane-registry configs/methanet_atlas_lanes_20260929.tsv \\
+              --embedding-contract configs/atlas_embedding_contract_20260929.json \\
               --freeze-manifest results/reports/methanet_3view_payload_freeze_<UTCSTAMP>/freeze_manifest.tsv \\
               --skip-phate --output-dir results/reports/<new_report_dir>
             ```
@@ -5210,19 +5225,17 @@ def main() -> None:
             "lane_registry_rows": int(len(registry)),
             "input_mode": "lane_registry",
         }
+        embedding_configuration = validate_embedding_contract(
+            repo_root, resolve(repo_root, args.embedding_contract), esm_inputs
+        )
         emb_meta, edge_df, embeddings = legacy.build_embedding_context_from_inputs(esm_inputs, atlas, args.knn)
     else:
         if not args.allow_legacy_defaults:
             raise SystemExit(
                 "Lane registry is required for current nextgen atlas rebuilds. "
-                "Pass --allow-legacy-defaults only for historical POC/MSM-only rebuilds."
+                "Supply the reconciled lane registry and a verified embedding contract."
             )
-        poc = legacy.load_poc_features(poc_warehouse_dir, poc_glm_dir, poc_esm_dir)
-        msm, msm_status, msm_esm_stats = legacy.load_msm_features(msm_root, msm_esm_dir, msm_glm_dir)
-        atlas = pd.concat([poc, msm], ignore_index=True, sort=False)
-        lane_ledger = [legacy.lane_counts(poc, "POC core"), legacy.lane_counts(msm, "Mangrove/MSM local candidates")]
-        registry_metadata = {"input_mode": "legacy_poc_msm_defaults"}
-        emb_meta, edge_df, embeddings = legacy.build_embedding_context(poc_esm_dir, msm_esm_dir, atlas, args.knn)
+        raise SystemExit("Historical mixed-configuration geometry is withdrawn. Use a registry and verified embedding contract.")
 
     atlas, msm_status, freeze_metadata = apply_freeze_manifest(atlas, msm_status, freeze_manifest)
     emb_meta, edge_df, embeddings = rebuild_scoped_embedding_context(emb_meta, embeddings, atlas, args.knn)
@@ -5237,6 +5250,9 @@ def main() -> None:
     emb_meta = pd.concat([emb_meta.reset_index(drop=True), manifold_df.reset_index(drop=True)], axis=1)
     emb_meta = emb_meta.loc[:, ~emb_meta.columns.duplicated()]
     atlas = apply_scientific_evidence_contract(atlas)
+    atlas["mixing_coeff"] = atlas["proteome_id"].map(
+        emb_meta.set_index("proteome_id")["cross_domain_neighbor_fraction"]
+    )
     atlas = legacy.add_report_metrics(atlas, emb_meta)
     # The legacy metric helper derives useful within-contract diagnostics but
     # predates the pipeline-normalized freeze state and maps unknown complete
@@ -5590,6 +5606,9 @@ def main() -> None:
     summary["graph_node_count"] = len(payload["candidate_graph"]["nodes"])
     summary["graph_edge_count"] = len(payload["candidate_graph"]["links"])
     payload_paths = save_payloads(payload, output_dir / "assets/data")
+    (output_dir / "embedding_configuration.json").write_text(
+        json.dumps(embedding_configuration, indent=2) + "\n"
+    )
     fallback_paths = build_fallbacks(payload, output_dir / "assets/figures")
     d3_path, _d3_source = legacy.fetch_d3(output_dir / "assets/js")
     infographic_bundle = (
@@ -5620,6 +5639,12 @@ def main() -> None:
         output_dir,
         source_readiness,
     )
+    notice = ('<aside style="padding:14px 5%;background:#e8f4ef;color:#163e37;font:14px/1.5 sans-serif">'
+        '<strong>Geometry reconciled 29 September 2026.</strong> Displayed ESM-2 geometry uses final-layer (33) pooling; '
+        'the original pilot was recomputed from retained inputs. Molecular payload counts retain the 10 August snapshot. '
+        'Historical June model-revision metadata is incomplete; layer choice is supported by code lineage and numerical controls. '
+        'Neighbor links are exploratory sequence-representation similarities; functional transfer and flux prediction remain unvalidated.</aside>')
+    html_text = re.sub(r'(<body[^>]*>)', lambda m: m.group(1) + notice, html_text, count=1)
     write_outputs(
         output_dir=output_dir,
         atlas=atlas,
@@ -5638,6 +5663,19 @@ def main() -> None:
         sample_risk_abstract_path=sample_risk_abstract,
         release_ledger_path=release_ledger_path,
         html_text=html_text,
+    )
+    embedding_configuration["builder_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    embedding_configuration["niche_sha256"] = hashlib.sha256(
+        (output_dir / "assets/data/niche.json").read_bytes()
+    ).hexdigest()
+    embedding_configuration["scientific_audit_sha256"] = hashlib.sha256(
+        (output_dir / "audit/scientific_audit.json").read_bytes()
+    ).hexdigest()
+    embedding_configuration["report_sha256"] = hashlib.sha256(
+        (output_dir / "report.html").read_bytes()
+    ).hexdigest()
+    (output_dir / "embedding_configuration.json").write_text(
+        json.dumps(embedding_configuration, indent=2) + "\n"
     )
     print(json.dumps({"output_dir": str(output_dir), "summary": summary, "manifold_methods": manifold_methods}, indent=2))
 

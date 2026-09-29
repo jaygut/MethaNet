@@ -19,7 +19,7 @@ set -euo pipefail
 CMD="${1:-build}"
 HERE="$(cd "$(dirname "$0")/.." && pwd)"          # web/emergentbiome-methanet
 REPO="$(cd "$HERE/../.." && pwd)"                  # repo root
-DEFAULT_REPORT="$REPO/results/reports/emergentbiome_molecular_atlas_20260928_consolidated"
+DEFAULT_REPORT="$REPO/results/reports/emergentbiome_molecular_atlas_20260929_layer33"
 REPORT="${2:-$DEFAULT_REPORT}"
 [[ "$REPORT" == --* ]] && REPORT="$DEFAULT_REPORT"   # allow `deploy --push`
 OUT="$HERE/_site"
@@ -33,6 +33,7 @@ build() {
     echo "Regenerate the reconciled report with scripts/reports/build_mbag_nextgen_molecular_niche_atlas.py before building the site."
     exit 1
   }
+  python3 "$HERE/tools/sync_geometry_release.py" --report "$REPORT"
   rm -rf "$OUT"; mkdir -p "$OUT"
 
   # --- landing → site root (only the runtime files; not dev docs/tools) ---
@@ -98,6 +99,31 @@ deploy() {
   ( cd "$WT" && find . -maxdepth 1 -mindepth 1 \
       ! -name '.git' ! -name 'CNAME' ! -name 'mbag_nextgen_molecular_niche_atlas_*' -exec rm -rf {} + )
   cp -R "$OUT"/. "$WT"/
+  # Preserve the historical URL, with a visible notice that its mixed-pooling
+  # geometry is superseded. The dated scientific content remains an archive.
+  python3 - "$WT" <<'PY'
+import re
+import sys
+from pathlib import Path
+page = Path(sys.argv[1]) / 'mbag_nextgen_molecular_niche_atlas_20260619_113355/index.html'
+if page.exists():
+    content = page.read_text()
+    if 'id="embedding-archive-notice"' not in content:
+        notice = ('<aside id="embedding-archive-notice" role="note" '
+                  'style="position:relative;z-index:1000;background:#fff3cd;color:#332600;'
+                  'padding:20px 28px;font:16px/1.5 system-ui,sans-serif">'
+                  '<strong>Historical report: embedding geometry superseded.</strong> '
+                  'Cross-run maps, neighbor links and closest-reference rankings in this archive '
+                  'combined different ESM-2 pooling configurations. Use the '
+                  '<a href="/report/" style="color:#004e61;text-decoration:underline">'
+                  'corrected September 29 report</a> for current geometry. '
+                  'Neither release establishes ecological transfer or methane prediction.</aside>')
+        content, count = re.subn(r'(<body\b[^>]*>)', lambda m: m[0] + notice,
+                                 content, count=1, flags=re.I)
+        if count != 1:
+            raise SystemExit('Cannot mark superseded historical report')
+        page.write_text(content)
+PY
   git -C "$WT" add -A
   if git -C "$WT" diff --cached --quiet; then
     echo "✓ gh-pages already up to date (no changes)"

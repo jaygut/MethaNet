@@ -60,39 +60,13 @@ artifact guides molecular screening, evidence review, and field-validation
 design. It does not claim validated methane-flux biomarkers, a measured flux
 estimate, or a calibrated site-risk product.
 
-The 7,710 mapped units are MAG/proteome records with embeddings, not a claim
-of 7,710 globally dereplicated genomes. The landing's 2,226 links are
-displayed visual edges: 2,200 sampled cross-domain full-atlas kNN links and
-26 selected one-way nearest-core candidate links. They are not 2,226
-biologically verified transfer bridges.
+The 29 September geometry release maps **7,710 MAG/proteome records**. It draws **2,226 links**: 2,200 sampled cross-habitat neighbor links and 26 selected one-way nearest-core links. These are exploratory representation similarities.
 
-The frozen embedding-context and candidate-card tables independently support
-the nearest-core statement. Counting only records **outside** the 625-record
-POC core (518 rumen, 107 wetland), whose members match themselves: 2,434 of
-2,501 wetland and 4,475 of 4,584 mangrove records have a rumen record as their
-**single raw-cosine nearest neighbor within the core**, as do all 26 selected
-wetland/mangrove candidates outside the core (the 27th card is a core member).
-These matches are weak: the median closest-match cosine outside the core is
-0.983, below the 0.994 median of random atlas pairs. The rumen-heavy reference
-composition is part of the interpretation. (Earlier copy quoted 2,434 of 2,608
-wetland records, a denominator that included the 107 self-matching core
-members.)
+Outside the 625-record core (518 rumen, 107 wetland), **1,403/2,501 wetland** and **2,823/4,584 mangrove** records have a rumen genome as their closest core match. The nearest-core median cosine is 0.9973; the random-pair median is 0.9942. The corrected dimension-standardized graph contains 486 mutual pairs involving rumen and another habitat. One-way core matches and reciprocal full-atlas neighbors answer different questions; neither validates ecological transfer.
 
-The report's zero is a different analysis: **reciprocal cross-domain top-35
-neighbors across the full atlas after per-dimension standardization**.
-One-way nearest-core assignments and reciprocal full-atlas neighbors are not
-interchangeable and neither establishes biological transfer. Source and
-method detail live in the frozen report's
-`tables/embedding_context_table.tsv`,
-`tables/candidate_cards.tsv`, and geometry audit.
+Counts and candidate selection are recomputed from the corrected vectors. The public export includes its geometry audit and contract hash, and publication rejects stale quantities or a mismatched report. UMAP, diffusion, t-SNE and PCA show the same records; changing projection does not change high-dimensional link membership. The 255 registered gap rows remain explicit and unplotted.
 
-The proposal-facing candidate example is MUCC v1 `mucc_v1__OWC_1885`.
-Its frozen card records strong source QC (94.89% completeness, 1.14%
-contamination), processed expression-marker **detection**, and a one-way
-raw-cosine nearest POC rumen record (0.9842857). Expression is not an
-activity or flux magnitude; exact sample/date/depth, environmental,
-abundance, and methane-process joins remain unresolved. Its next action is
-to make those joins before ecological or risk interpretation.
+The proposal-facing OWC_1885 card retains its source QC and expression-detection facts. Its nearest-core reference and similarity are refreshed by `tools/sync_geometry_release.py` from the corrected `embedding_context_table.tsv`; old cosine values are superseded. Expression detection remains distinct from activity or flux, and exact sample/environment/process pairing remains unresolved.
 
 ## Functional and comparison contract
 
@@ -131,7 +105,7 @@ These are metadata-rich validation opportunities, not scored samples.
 | --- | --- | --- |
 | Landing manifold | Real report coordinates and source-audited counts | Navigation and hypothesis generation, not transfer or risk proof |
 | Landing candidate card | Frozen MUCC v1 OWC_1885 record with explicit evidence states | MAG/proteome review only; expression detection is not process rate |
-| Projection controls | UMAP opens by default on the landing page and in the report; diffusion map, t-SNE and PCA remain selectable for the same 7,710 embedding-bearing records. The diffusion view is dominated by the reference-core separation, which squeezes most records into a narrow band. PHATE is not built (`--skip-phate`) | Two-dimensional layouts do not rank candidates or change high-dimensional link membership; 255 registered gap rows have no projection coordinates |
+| Projection controls | UMAP opens by default on the landing page and in the report; diffusion map, t-SNE and PCA remain selectable for the same 7,710 embedding-bearing records. PHATE is not built (`--skip-phate`) | Two-dimensional layouts do not rank candidates or change high-dimensional link membership; 255 registered gap rows have no projection coordinates |
 | Evidence cards | Derived evidence records with direct, missing, contradictory, and next-action fields | Review priority, not biological truth |
 | Sample/context cards | Real metadata coverage and explicit ambiguity tiers | Context value, not exact sample risk |
 | Climate, proxy, and product scenes | Clearly badged sourced anchor, roadmap, or illustrative product shape | No illustrative score is a released prediction; the climate scene's net-balance range carries no values |
@@ -160,19 +134,23 @@ ungated release. On September 23, 2026, the user requested a scoped correction
 of the already-public domain: replace its stale landing/report pair with this
 reconciled, claim-bounded `noindex` bundle. That direction authorizes the
 correction deployment only; it does not clear the scientific gates, permit
-indexing, or expand the claims above. The current local bundle passes 201/201 release
-parity checks, 19/19 report gates, browser checks, and no-JavaScript,
-reduced-motion, link, Open Graph, and public-tree checks. The QA record is in
+indexing, or expand the claims above. The September 23 local bundle passed its recorded release-parity, report, browser and public-tree checks. The QA record is in
 `results/reports/emergentbiome_public_browser_verification_20260923_tsne/`.
 
+The user explicitly authorized pooling reconciliation and correction deployment on September 28. The September 29 release preserves the `noindex` and claim boundaries above. Its current validation receipt is `docs/releases/atlas_embedding_reconciliation_20260929.json`; the case-review payloads retain their original scope.
+
 ## Provenance pointers
+
+- Current geometry registry: `configs/methanet_atlas_lanes_20260929.tsv`
+- Current embedding contract: `configs/atlas_embedding_contract_20260929.json`
+- Current public report: `results/reports/emergentbiome_molecular_atlas_20260929_layer33/` (publisher default)
 
 - Lane registry: `configs/methanet_atlas_lanes.tsv`
 - Freeze: `results/reports/methanet_3view_payload_freeze_20260810_end_to_end/`
 - Metadata readiness: `results/reports/methanet_atlas_metadata_readiness_20260810/`
 - August source report: `results/reports/mbag_nextgen_molecular_niche_atlas_20260810_end_to_end/`
-- Public report, published 28 September 2026 (same 10 August freeze; narrative, labels and figures consolidated): `results/reports/emergentbiome_molecular_atlas_20260928_consolidated/`, served at the [stable `/report/` alias](https://emergentbiome.earth/report/) and the `tools/publish_site.sh` default
-- Superseded 23 September reconciled report: `results/reports/emergentbiome_molecular_atlas_20260923_reconciled/` (kept locally; still named in `configs/atlas_current_release.json`, whose checksum the ontology pins)
+- Superseded public report, published 28 September 2026 (same 10 August freeze): `results/reports/emergentbiome_molecular_atlas_20260928_consolidated/` (kept locally; the stable `/report/` alias now serves the September 29 correction)
+- Superseded 23 September reconciled report: `results/reports/emergentbiome_molecular_atlas_20260923_reconciled/` (kept locally; the pre-correction pointer bytes are archived in `docs/releases/atlas_20260810_pointer_before_geometry_reconciliation.json`)
 - Correction deployment receipt: `results/reports/emergentbiome_public_browser_verification_20260923_tsne/deployment_receipt.json`
 - Claim contract: `docs/methanet_positioning_and_claims.md`
 - Release inventory: `docs/current_artifact_inventory.md`
