@@ -79,11 +79,11 @@ The page uses a title sequence, ten scenes, and a closing ask:
 | --- | --- | --- |
 | Hero | States the problem (wetland methane can cancel part of the carbon benefit) and the offer (DNA turned into checkable evidence, plus the field measurement that settles what DNA cannot) | Decorative seeded particle field |
 | 1. The Climate Question | Methane can erode a wetland's climate benefit, most where water is fresh, brackish or cut off from the tide | Sourced facts (IPCC AR6; Poffenbarger et al. 2011; Kroeger et al. 2017) with illustrative motion; the net-balance range is labeled illustrative and carries no values |
-| 2. The Measurement Gap | VM0033 allows a default methane value only above 18 ppt salinity; the atlas has zero genome-to-flux pairs, which is not zero emissions | Real zero-pairing anchor with an illustrative field; names what a usable DNA-to-flux pair records (specimen, depth, time window, chamber footprint) |
-| 3. The Molecular Atlas | 7,710 genome records mapped by their proteins; nearness is a lead that the four views test | Real counts, UMAP coordinates and selected links; the map is fitted to the space the reading panel and copy card leave free |
+| 2. The Measurement Gap | VM0033 allows a default methane value only above 18 ppt salinity; this atlas release has zero accepted exact molecular-to-flux pairs | Real zero-pairing anchor with an illustrative field; names what a usable DNA-to-flux pair records (specimen, depth, time window, chamber footprint) |
+| 3. The Molecular Atlas | 7,710 lane-scoped MAG/proteome records mapped by their proteins; nearness is a lead for review | Real counts, UMAP coordinates and selected links; the map is fitted to the space the reading panel and copy card leave free |
 | 4. The Evidence Card | One real genome's card separates what is recorded, what is unresolved and the next measurement | Real candidate record with a schematic canvas |
 | 5. Beyond Salinity | Salinity sets the baseline; genome evidence flags exceptions worth measuring | Explicitly illustrative teaching plot, sourced (Poffenbarger et al. 2011; Krause and Treude 2021) |
-| 6. Evidence Scope | Methane screening runs through two annotation routes that are compared separately; other gas lenses are planned | Real atlas geometry colored by route (5,209 shared pipeline, 2,501 source annotations; 0 compared across routes) |
+| 6. Evidence Scope | Methane screening uses two annotation routes; cross-lane quantitative mechanism comparison awaits harmonization | Real atlas geometry colored by route (5,209 pipeline-normalized, 2,501 source annotations; zero cross-lane mechanism-ready) |
 | 7. Molecular evidence, practical decisions | Check what a gene can mean, pin down its sample and depth, choose the test that settles it | Illustrative mangrove workflow with three real evidence-case dialogs |
 | 8. Explore the Evidence | The ontology keeps easily conflated evidence apart and shows why a claim is on hold; three real review profiles | Separately scoped September projection; six rules drawn from the MVO competency questions |
 | 9. Validation Path | Molecular review works today; calibrated risk needs five more rungs of paired evidence | Real MRV roadmap |
@@ -155,11 +155,11 @@ maturity ladder, claim boundaries, and milestones.
 
 1. Reconcile the new release against `DIGEST.md` and the dated report freeze.
 2. Update the relevant values and copy in `config.js`.
-3. Refresh the landing visualization with `tools/export_atlas.py`.
-4. Generate the technical report into
-   `results/reports/emergentbiome_molecular_atlas_20260928_consolidated/`.
+3. Generate the technical report into
+   `results/reports/emergentbiome_molecular_atlas_20260929_layer33/`.
+4. Refresh `data/atlas.json` with `tools/export_atlas.py` and check the hash-bound geometry configuration with `tools/sync_geometry_release.py`.
 5. Build the public tree with `tools/publish_site.sh build`.
-6. Verify the landing page, the stable `/report/` alias, claim-boundary text,
+6. Verify release parity, the landing page, the stable `/report/` alias, claim-boundary text,
    and the absence of public raw report bundles.
 
 For the current August 10 freeze, the report build command from the repository
@@ -168,9 +168,10 @@ root is:
 ```bash
 MPLCONFIGDIR=/tmp/methanet_mpl NUMBA_CACHE_DIR=/tmp/methanet_numba \
 .venv/bin/python scripts/reports/build_mbag_nextgen_molecular_niche_atlas.py \
-  --lane-registry configs/methanet_atlas_lanes.tsv \
+  --lane-registry configs/methanet_atlas_lanes_20260929.tsv \
+  --embedding-contract configs/atlas_embedding_contract_20260929.json \
   --freeze-manifest results/reports/methanet_3view_payload_freeze_20260810_end_to_end/freeze_manifest.tsv \
-  --skip-phate --output-dir results/reports/emergentbiome_molecular_atlas_20260928_consolidated
+  --skip-phate --output-dir results/reports/emergentbiome_molecular_atlas_20260929_layer33
 ```
 
 `--skip-phate` keeps the published projection buttons to UMAP (the default),
