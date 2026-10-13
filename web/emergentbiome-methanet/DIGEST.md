@@ -139,6 +139,13 @@ indexing, or expand the claims above. The September 23 local bundle passed its r
 
 The user explicitly authorized pooling reconciliation and correction deployment on September 28. The September 29 release preserves the `noindex` and claim boundaries above. Its current validation receipt is `docs/releases/atlas_embedding_reconciliation_20260929.json`; the case-review payloads retain their original scope.
 
+The 13 October report review retains the August 10 payload and September 29
+geometry. It corrects the distinction between 7,965 registered lane-scoped
+records and 7,710 three-view records, qualifies zero exact Old Woman Creek
+sample-to-flux joins as an integrated-atlas status, and describes the pending
+cross-lane mechanism gate. The report now states the current evidence-review
+offer and the proposed field/model test alongside the landing page and deck.
+
 ## Provenance pointers
 
 - Current geometry registry: `configs/methanet_atlas_lanes_20260929.tsv`

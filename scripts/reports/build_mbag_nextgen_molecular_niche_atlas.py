@@ -1208,7 +1208,7 @@ def classify_review_tier(row: pd.Series) -> str:
     if row.get("functional_comparability_tier") == "source_scaffold_non_equivalent":
         return "source-scaffold review"
     if row.get("functional_comparability_tier") == "pipeline_normalized_comparability_pending":
-        return "shared-pipeline screening; cross-route comparison pending"
+        return "pipeline-normalized screening; cross-lane comparison pending"
     if row.get("mechanism_equivalence_status") != "mechanism_equivalent":
         return "evidence contract unresolved"
     score = safe_float(row.get("molecular_attestation_index"))
@@ -1826,13 +1826,13 @@ def build_candidate_cards(atlas: pd.DataFrame, top_n_poc: int, top_n_mangrove: i
         "MUCC v1 source-scaffold"
     )
     cards.loc[poc_mask, "allowed_claim_wording"] = (
-        "Reference-core screening hypothesis with shared-pipeline features. "
-        "Cross-route comparison, ecological transfer, methane flux and sample "
+        "Reference-core screening hypothesis with pipeline-normalized events. "
+        "Cross-lane comparison, ecological transfer, methane flux and sample "
         "risk each need their own evidence."
     )
     cards.loc[mangrove_mask, "allowed_claim_wording"] = (
         "Mangrove review candidate chosen by embedding geometry and QC, with "
-        "shared-pipeline screening events. Mechanism strength and cross-route "
+        "pipeline-normalized screening events. Mechanism strength and cross-lane "
         "ranking are withheld until comparability checks pass."
     )
     cards.loc[scaffold_mask, "allowed_claim_wording"] = (
@@ -1934,7 +1934,8 @@ def build_external_source_readiness(atlas: pd.DataFrame) -> list[dict[str, Any]]
                     "blocking_gap": (
                         "A shared mechanism-feature contract and an authoritative "
                         "sample, date, depth, environment and flux crosswalk "
-                        "(exact joins: 0 of 133); expression normalization units"
+                        "(0 of 133 authoritative exact joins in this atlas release); "
+                        "expression normalization units"
                     ),
                 }
             )
@@ -3066,9 +3067,9 @@ def build_mucc_validation_readiness(
         )
     out["claim_boundary"] = (
         "Expression is orthogonal processed detection evidence. ESS-DIVE flux "
-        "and porewater observations are staged site/time context only: 0/133 "
-        "sequencing samples currently have an authoritative exact "
-        "sample-depth-environment-flux join."
+        "and porewater observations are staged site/time context in this "
+        "atlas release. Its integrated warehouse has 0/133 authoritative "
+        "exact sample-depth-environment-flux joins."
     )
     return out
 
@@ -3105,13 +3106,15 @@ def build_scientific_findings(
             "finding": "Complete data and comparable data are separate states.",
             "result": (
                 f"{tri_view:,} records have all three views. {pipeline_normalized:,} carry "
-                f"shared-pipeline screening events, {source_scaffold:,} carry source "
-                f"annotations, {annotation_pending:,} await shared aggregation and "
-                f"{comparable:,} are mechanism-comparable across routes."
+                f"pipeline-normalized screening events within their source lanes, "
+                f"{source_scaffold:,} carry source annotations, and {comparable:,} "
+                "are eligible for a harmonized cross-lane mechanism score. "
+                f"The separate aggregation-pending ledger state contains {annotation_pending:,} rows; "
+                "pipeline-normalized records still require cross-lane harmonization."
             ),
             "report_action": (
-                "Every count is reported with its state. No record receives a "
-                "cross-route methane ranking."
+                "Report each count with its evidence state. Cross-lane methane "
+                "ranking remains withheld."
             ),
         },
         {
@@ -3940,7 +3943,7 @@ def plot_evidence_contract(payload: dict[str, Any], path: Path) -> Path:
             ("data_complete_tri_view_units", "All three views", "#0f766e"),
             (
                 "mechanism_comparable_tri_view_units",
-                "Comparable across routes",
+                "Cross-lane mechanism-ready",
                 "#d89b14",
             ),
         ]
@@ -3975,21 +3978,21 @@ def plot_evidence_contract(payload: dict[str, Any], path: Path) -> Path:
         ax.legend(
             handles=[
                 matplotlib.patches.Patch(facecolor="#cbd5e1", edgecolor="#475569", label="Registered"),
-                matplotlib.patches.Patch(facecolor="#0f766e", edgecolor="#475569", label="All three views, shared pipeline"),
+                matplotlib.patches.Patch(facecolor="#0f766e", edgecolor="#475569", label="All three views, pipeline normalized"),
                 matplotlib.patches.Patch(facecolor="#a16207", edgecolor="#475569", label="All three views, source annotations"),
-                matplotlib.patches.Patch(facecolor="#d89b14", edgecolor="#475569", label="Comparable across routes"),
+                matplotlib.patches.Patch(facecolor="#d89b14", edgecolor="#475569", label="Cross-lane mechanism-ready"),
             ],
             frameon=False, ncol=2, loc="lower right", fontsize=9,
         )
-    ax.set_title("Genome records by source lane and evidence state", loc="left", fontsize=13, weight="bold")
-    ax.set_xlabel("Genome records")
+    ax.set_title("MAG/proteome records by source lane and evidence state", loc="left", fontsize=13, weight="bold")
+    ax.set_xlabel("Lane-scoped MAG/proteome records")
     ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda value, _pos: f"{int(value):,}"))
     ax.grid(axis="x", color="#e2e8f0", linewidth=0.7)
     ax.set_axisbelow(True)
     fig.text(
         0.125,
         0.015,
-        "All three views = ESM-2 + gLM2 + functional annotation. No record is yet comparable across annotation routes.",
+        "All three views = ESM-2 + gLM2 + functional payload. Cross-lane mechanism scoring awaits harmonization.",
         fontsize=9,
         color=COLORS["muted"],
     )
@@ -4122,18 +4125,18 @@ def render_html(
     mucc_columns = safe_int(mucc_audit.get("expression_sample_columns"))
     metric_cards = "\n".join(
         [
-            f"<div class='metric'><b>{summary['atlas_registered_units']:,}</b><span>registered genome records, including {summary['explicit_non_runnable_gaps']:,} documented source gaps</span></div>",
-            f"<div class='metric'><b>{release_multiview:,}</b><span>records with all three evidence views: ESM-2, gLM2 and functional annotation</span></div>",
-            f"<div class='metric'><b>{summary['pipeline_normalized_tri_view_units']:,}</b><span>screened for methane-cycle genes through the shared annotation pipeline</span></div>",
-            f"<div class='metric'><b>{summary['source_scaffold_tri_view']:,}</b><span>screened with the Old Woman Creek source annotations</span></div>",
-            f"<div class='metric'><b>{summary['mechanism_comparable_tri_view']:,}</b><span>records with a methane mechanism score comparable across annotation routes</span></div>",
-            f"<div class='metric'><b>{mucc_exact}/{mucc_columns}</b><span>Old Woman Creek sequencing samples with an exact sample, environment and flux join</span></div>",
+            f"<div class='metric'><b>{summary['atlas_registered_units']:,}</b><span>lane-scoped MAG/proteome records, including {summary['explicit_non_runnable_gaps']:,} documented source gaps</span></div>",
+            f"<div class='metric'><b>{release_multiview:,}</b><span>records with ESM-2, gLM2 and a functional payload</span></div>",
+            f"<div class='metric'><b>{summary['pipeline_normalized_tri_view_units']:,}</b><span>three-view records with pipeline-normalized screening events; cross-lane equivalence pending</span></div>",
+            f"<div class='metric'><b>{summary['source_scaffold_tri_view']:,}</b><span>three-view records with Old Woman Creek source annotations</span></div>",
+            f"<div class='metric'><b>{summary['mechanism_comparable_tri_view']:,}</b><span>records eligible for a harmonized cross-lane mechanism score</span></div>",
+            f"<div class='metric'><b>{mucc_exact}/{mucc_columns}</b><span>Old Woman Creek sequencing contexts with an authoritative exact sample, environment and flux join in this atlas release</span></div>",
         ]
     )
     release_ledger_cards = "\n".join(
         [
             f"<div class='metric'><b data-release-key='snapshot_date'>{summary['snapshot_date']}</b><span>release snapshot date</span></div>",
-            f"<div class='metric'><b data-release-key='registered_units'>{summary['atlas_registered_units']:,}</b><span>registered genome records, including documented gaps</span></div>",
+            f"<div class='metric'><b data-release-key='registered_units'>{summary['atlas_registered_units']:,}</b><span>registered lane-scoped MAG/proteome records, including documented gaps</span></div>",
             f"<div class='metric'><b data-release-key='esm2_units'>{summary['release_esm2_units']:,}</b><span>ESM-2 protein embeddings</span></div>",
             f"<div class='metric'><b data-release-key='glm2_units'>{summary['release_glm2_units']:,}</b><span>gLM2 genomic-context embeddings, under two protocols</span></div>",
             f"<div class='metric'><b data-release-key='functional_payload_units'>{summary['release_functional_payload_units']:,}</b><span>functional annotation payloads, across both routes</span></div>",
@@ -4142,11 +4145,11 @@ def render_html(
             f"<div class='metric'><b data-release-key='tri_view_ready_units'>{summary['release_multiview_complete']:,}</b><span>records with all three evidence views</span></div>",
             f"<div class='metric'><b data-release-key='schema_normalized_units'>{summary['schema_normalized_units']:,}</b><span>functional payloads in the shared schema</span></div>",
             f"<div class='metric'><b data-release-key='schema_normalized_tri_view_units'>{summary['schema_normalized_tri_view_units']:,}</b><span>three-view records in the shared schema</span></div>",
-            f"<div class='metric'><b data-release-key='pipeline_normalized_tri_view_units'>{summary['pipeline_normalized_tri_view_units']:,}</b><span>three-view records from the shared pipeline</span></div>",
-            f"<div class='metric'><b data-release-key='mechanism_comparable_units'>{summary['mechanism_comparable_tri_view']:,}</b><span>records comparable across annotation routes</span></div>",
-            f"<div class='metric'><b data-release-key='annotation_complete_tri_view_units'>{summary['annotation_complete_harmonization_pending_tri_view']:,}</b><span>annotated records awaiting shared aggregation</span></div>",
+            f"<div class='metric'><b data-release-key='pipeline_normalized_tri_view_units'>{summary['pipeline_normalized_tri_view_units']:,}</b><span>three-view records with pipeline-normalized screening; cross-lane equivalence pending</span></div>",
+            f"<div class='metric'><b data-release-key='mechanism_comparable_units'>{summary['mechanism_comparable_tri_view']:,}</b><span>records eligible for a harmonized cross-lane mechanism score</span></div>",
+            f"<div class='metric'><b data-release-key='annotation_complete_tri_view_units'>{summary['annotation_complete_harmonization_pending_tri_view']:,}</b><span>rows in the separate aggregation-pending ledger state</span></div>",
             f"<div class='metric'><b data-release-key='source_scaffold_tri_view_units'>{summary['source_scaffold_tri_view']:,}</b><span>three-view records with source annotations</span></div>",
-            f"<div class='metric'><b data-release-key='blocking_units'>{summary['blocking_units']:,}</b><span>unresolved release blockers</span></div>",
+            f"<div class='metric'><b data-release-key='blocking_units'>{summary['blocking_units']:,}</b><span>unresolved payload-release blockers; scientific validation remains pending</span></div>",
         ]
     )
     indexing = str(summary.get("indexing_decision", ""))
@@ -4183,7 +4186,7 @@ def render_html(
         return f"<a href='{url}'>{text}</a>" if url else text
 
     functional_contract_labels = {
-        "pipeline_normalized_comparability_pending": "Shared pipeline; cross-route comparison pending",
+        "pipeline_normalized_comparability_pending": "Pipeline-normalized screening; cross-lane equivalence pending",
         "source_scaffold_non_equivalent": "Source annotations (DRAM terms, genes, expression); separate contract",
         "annotation_complete_harmonization_pending": "Annotated; shared aggregation pending",
         "canonical_mechanism_comparable": "Comparable mechanism features",
@@ -4204,7 +4207,7 @@ def render_html(
         "curated_accepted_or_present_mechanism_features": "Curated accepted or present mechanism features",
     }
     public_rate_labels = {
-        "pipeline_normalized_screening_not_cross_lane_mechanism_rate": "Screening events only; no cross-route rate",
+        "pipeline_normalized_screening_not_cross_lane_mechanism_rate": "Screening events only; no cross-lane mechanism rate",
         "source_scaffold_term_density_non_equivalent": "Source-term density; not comparable across routes",
         "quarantined_raw_hit_row_numerator_not_marker_density": "Raw hit rows quarantined; not a marker density",
         "comparable_curated_feature_density": "Comparable curated-feature density",
@@ -4351,7 +4354,7 @@ def render_html(
       phate:'PHATE emphasizes transitions between neighborhoods.'
     };
     const LABELS = {
-      pipeline_normalized_comparability_pending:'shared pipeline; cross-route comparison pending',
+      pipeline_normalized_comparability_pending:'pipeline-normalized screening; cross-lane equivalence pending',
       source_scaffold_non_equivalent:'source annotations; separate contract',
       functional_incomplete:'no functional payload',
       annotation_complete_harmonization_pending:'annotated; shared aggregation pending',
@@ -4628,24 +4631,24 @@ def render_html(
       el.selectAll('*').remove();
       if(!data.length){ el.append('div').attr('class','runtime-error').html('The evidence-contract summary is unavailable.'); return; }
       const w=panelWidth(el,760), m={t:92,r:70,b:96,l:250}, bandH=78, h=m.t+data.length*bandH+m.b;
-      const svg=el.append('svg').attr('viewBox',[0,0,w,h]).attr('width',w).attr('height',h).attr('role','img').attr('aria-label','Genome records by source lane: registered, with all three evidence views, and comparable across annotation routes');
+      const svg=el.append('svg').attr('viewBox',[0,0,w,h]).attr('width',w).attr('height',h).attr('role','img').attr('aria-label','Lane-scoped MAG/proteome records by source, with three evidence views and cross-lane mechanism readiness');
       const route=d=>d.functional_contract==='source_scaffold_non_equivalent'?'source':'pipeline';
       const y0=d3.scaleBand().domain(data.map(d=>d.lane)).range([m.t,h-m.b]).padding(.22);
       const y1=d3.scaleBand().domain(['registered','complete']).range([0,y0.bandwidth()]).padding(.14);
       const x=d3.scaleLinear().domain([0,d3.max(data,d=>d.registered_units)||1]).nice().range([m.l,w-m.r]);
       const comparable=d3.sum(data,d=>Number(d.mechanism_comparable_tri_view_units||0)), complete=d3.sum(data,d=>Number(d.data_complete_tri_view_units||0));
-      svg.append('text').attr('x',16).attr('y',26).attr('font-weight',800).attr('font-size',14).attr('fill','#172033').text('Genome records by source lane and evidence state');
+      svg.append('text').attr('x',16).attr('y',26).attr('font-weight',800).attr('font-size',14).attr('fill','#172033').text('MAG/proteome records by source lane and evidence state');
       svg.append('text').attr('x',16).attr('y',46).attr('font-size',12).attr('fill','#64748b').text('All three views = ESM-2 + gLM2 + functional annotation. Bar color shows the annotation route.');
-      svg.append('text').attr('x',16).attr('y',64).attr('font-size',12).attr('fill','#64748b').text(`Comparable across routes: ${fmt(comparable)} of ${fmt(complete)} complete records.`);
+      svg.append('text').attr('x',16).attr('y',64).attr('font-size',12).attr('fill','#64748b').text(`Cross-lane mechanism-ready: ${fmt(comparable)} of ${fmt(complete)} complete records.`);
       svg.append('g').attr('transform',`translate(0,${h-m.b})`).call(d3.axisBottom(x).ticks(6).tickFormat(d3.format(',')));
-      svg.append('text').attr('x',(m.l+w-m.r)/2).attr('y',h-m.b+38).attr('text-anchor','middle').attr('font-size',12).attr('fill','#475569').text('Genome records');
+      svg.append('text').attr('x',(m.l+w-m.r)/2).attr('y',h-m.b+38).attr('text-anchor','middle').attr('font-size',12).attr('fill','#475569').text('Lane-scoped MAG/proteome records');
       svg.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(y0)).call(g=>g.select('.domain').remove()).call(g=>g.selectAll('text').attr('font-size',12).attr('fill','#172033'));
       const rows=svg.append('g').selectAll('g').data(data).join('g').attr('transform',d=>`translate(0,${y0(d.lane)})`);
       const bars=d=>[{key:'registered',value:Number(d.registered_units||0),color:'#cbd5e1'},{key:'complete',value:Number(d.data_complete_tri_view_units||0),color:ROUTE_COLORS[route(d)]}];
       rows.selectAll('rect').data(bars).join('rect').attr('x',m.l).attr('y',d=>y1(d.key)).attr('width',d=>Math.max(0,x(d.value)-m.l)).attr('height',y1.bandwidth()).attr('rx',4).attr('fill',d=>d.color);
       rows.selectAll('text.value').data(bars).join('text').attr('class','value').attr('x',d=>x(d.value)+5).attr('y',d=>y1(d.key)+y1.bandwidth()/2+4).attr('font-size',11).attr('fill','#334155').text(d=>fmt(d.value));
       const legend=svg.append('g').attr('transform',`translate(${m.l},${h-30})`);
-      [['#cbd5e1','Registered'],[ROUTE_COLORS.pipeline,'All three views, shared pipeline'],[ROUTE_COLORS.source,'All three views, source annotations']].forEach((item,i)=>{
+      [['#cbd5e1','Registered'],[ROUTE_COLORS.pipeline,'All three views, pipeline normalized'],[ROUTE_COLORS.source,'All three views, source annotations']].forEach((item,i)=>{
         const g=legend.append('g').attr('transform',`translate(${[0,110,360][i]},0)`);
         g.append('rect').attr('width',12).attr('height',12).attr('rx',3).attr('fill',item[0]);
         g.append('text').attr('x',18).attr('y',10).attr('font-size',11.5).attr('fill','#334155').text(item[1]);
@@ -4769,22 +4772,23 @@ def render_html(
 <header>
   <div class="eyebrow">EmergentBiome · Technical evidence report</div>
   <h1>EmergentBiome Molecular Atlas</h1>
-  <p class="subtitle">Methods, evidence states and limits of the {snapshot_text} atlas release: {release_multiview:,} genome records screened for methane-cycle genes, and the validation each claim still needs.</p>
+  <p class="subtitle">Methods, evidence states and limits of the {snapshot_text} atlas release. {release_multiview:,} lane-scoped MAG/proteome records carry three molecular evidence views; {summary['explicit_non_runnable_gaps']:,} registered source gaps remain explicit.</p>
   <div class="claim">{html.escape(CLAIM_BOUNDARY)}</div>
 </header>
 <main>
   <section class="section">
     <h2>Executive summary</h2>
-    <p><b>The atlas is a frozen, source-audited map of microbial genomes from methane-relevant environments.</b> It registers {summary['atlas_registered_units']:,} genome records (metagenome-assembled genomes and their proteomes) from a rumen reference set, freshwater wetlands and mangrove sediments. {release_multiview:,} carry all three evidence views: an ESM-2 protein embedding, a gLM2 genomic-context embedding and a functional annotation. The remaining {summary['explicit_non_runnable_gaps']:,} are documented source gaps and stay in the release as explicit rows.</p>
-    <p>Every record was screened for methane-cycle genes through one of two annotation routes. {summary['pipeline_normalized_tri_view_units']:,} records went through a shared pipeline (accepted KOfam genes and METABOLIC events, with the best MCycDB and SCycDB hits kept separate). {summary['source_scaffold_tri_view']:,} Old Woman Creek wetland records keep the source's own DRAM annotations and processed expression data. Because the two routes count genes differently, the number of records with a methane mechanism score comparable across routes is {summary['mechanism_comparable_tri_view']:,}.</p>
-    <p><b>What the atlas supports today:</b> genome-level screening, candidate review with source and quality context, and measurement planning. <b>What it does not support yet:</b> measured methane flux, calibrated site risk, A–E risk tiers or carbon-credit decisions. Those need exact sample links, abundance, environmental covariates, uncertainty and paired flux or process measurements, and none of these is joined to the atlas records yet.</p>
+    <p><b>The atlas is a frozen, source-audited map of microbial molecular evidence.</b> It registers {summary['atlas_registered_units']:,} lane-scoped MAG/proteome records from a rumen reference set, freshwater wetlands and mangrove sediments. These are source records rather than globally dereplicated genomes or independent field samples. {release_multiview:,} carry an ESM-2 protein embedding, a gLM2 genomic-context embedding and a functional payload. The remaining {summary['explicit_non_runnable_gaps']:,} are documented source gaps retained as explicit rows.</p>
+    <p>Among the data-complete records, {summary['pipeline_normalized_tri_view_units']:,} carry pipeline-normalized screening events within their source lanes. The best MCycDB and SCycDB hits remain separate from accepted KOfam genes and METABOLIC events. Another {summary['source_scaffold_tri_view']:,} Old Woman Creek records carry the source's DRAM annotations; a subset also has processed expression detection. Tool, database and counting differences still require harmonization across lanes and annotation routes. The number eligible for a harmonized cross-lane methane mechanism score is {summary['mechanism_comparable_tri_view']:,}.</p>
+    <p>Ecosphere Blue develops EmergentBiome as a molecular evidence and inference platform. MethaNet is its first wetland methane application. Today it supports source-linked evidence review and measurement priorities for a defined project question. A scoped paid assessment is a commercial hypothesis whose demand, price and repeat use remain to be tested. Measured methane flux, calibrated site risk, final A–E tiers and carbon-credit decisions require exact sample links, abundance, environmental covariates, uncertainty and paired field outcomes. This atlas release has no exact molecular-to-flux pairs.</p>
+    <p>The landing page's three curated evidence cases are a separately scoped September 26 projection of the ontology. They sit outside this August 10 atlas denominator.</p>
     <div class="metric-grid">{metric_cards}</div>
   </section>
   <section class="section">
     <h2>Verified release snapshot</h2>
-    <p>Each figure below is rendered from the machine-checked release ledger; the build stops if any count disagrees with it. Payload availability, shared-schema normalization, comparability across annotation routes and field validation are separate rungs, so their counts differ by design.</p>
+    <p>Each figure below is rendered from the machine-checked release ledger; the build stops if any count disagrees with it. Payload availability, shared-schema normalization, cross-lane mechanism comparability and field validation are separate rungs, so their counts differ by design.</p>
     <div class="metric-grid">{release_ledger_cards}</div>
-    <p class="note">Release state: <b>{release_state}</b>. Search indexing: <b>{indexing_text}</b>.</p>
+    <p class="note">Payload release state: <b>{release_state} for scoped diligence</b>. Cross-lane mechanism comparability and field validation remain pending. Search indexing: <b>{indexing_text}</b>.</p>
   </section>
   <section class="section">
     <h2>The EmergentBiome evidence graph</h2>
@@ -4806,18 +4810,18 @@ def render_html(
       <thead><tr><th>Area</th><th>Finding</th><th>Result</th><th>Consequence for use</th></tr></thead>
       <tbody>{findings_rows_html}</tbody>
     </table>
-    <p class="note">Evidence matures in four stages: payload availability, signal within one protocol, comparability across annotation routes, then sample and ecological validation. Detailed audit tables stay in the internal warehouse; this report shows the resulting evidence states and the validation agenda.</p>
+    <p class="note">Evidence matures through payload availability, signal within a protocol, harmonized comparisons across source lanes and annotation routes, and paired sample-level ecological validation. Detailed audit tables stay in the internal warehouse; this report shows the resulting evidence states and the validation agenda.</p>
   </section>
   {infographic_block}
   <section class="section">
     <h2>The tri-view evidence contract</h2>
     <p>A tri-view record carries an ESM-2 embedding, a gLM2 embedding and a functional annotation. Its evidence state records whether those payloads support a common quantitative interpretation. That state travels with the record into the freeze manifest, the candidate cards and the release checks.</p>
     <table class="readiness-table">
-      <thead><tr><th>Source lane</th><th>Registered</th><th>ESM-2</th><th>gLM2</th><th>Functional annotation</th><th>All three views</th><th>Comparable across routes</th><th>Functional contract</th></tr></thead>
+      <thead><tr><th>Source lane</th><th>Registered</th><th>ESM-2</th><th>gLM2</th><th>Functional annotation</th><th>All three views</th><th>Cross-lane mechanism-ready</th><th>Functional contract</th></tr></thead>
       <tbody>{evidence_rows_html}</tbody>
     </table>
     <div id="evidence-contract-chart" class="viz medium chart-scroll"></div>
-    <details class="fallback"><summary>Static version of this chart</summary><img src="{fallback_uri['evidence_contract']}" alt="Genome records by source lane: registered, with all three evidence views, and comparable across annotation routes"></details>
+    <details class="fallback"><summary>Static version of this chart</summary><img src="{fallback_uri['evidence_contract']}" alt="Lane-scoped records by source: registered, with all three evidence views, and eligible for a harmonized cross-lane mechanism score"></details>
     <p class="note">gLM2 runs under two protocols and is compared only within a protocol: {summary['glm2_single_window_units']:,} records use one native and one shuffled gene-order window, and {summary['glm2_multiwindow_units']:,} Old Woman Creek records use ten of each. ESM-2 uses one 650-million-parameter model with a cap of 6,000 proteins per genome; the {summary['esm2_cap_applied_units']:,} capped records are flagged.</p>
   </section>
   <section class="section">
@@ -4834,15 +4838,16 @@ def render_html(
     <p>Each view answers a different question, has its own comparison set and carries its own validation gaps. A mechanism claim needs convergent evidence from the right view under a compatible protocol; nearness on a map is only a starting point.</p>
     <div class="approach-grid">
       <div class="approach-card"><b>ESM-2 protein embeddings</b><span>A protein language model summarizes each genome's proteins as one vector. Neighborhoods suggest genomes worth comparing; they do not establish shared function.</span></div>
-      <div class="approach-card"><b>Functional annotation</b><span>The reference core and both mangrove sources carry shared-pipeline screening events. Old Woman Creek keeps its source annotations and expression data. No ranking crosses the two routes.</span></div>
+      <div class="approach-card"><b>Functional annotation</b><span>The reference core and both mangrove sources carry pipeline-normalized screening events. Old Woman Creek keeps source annotations and expression detection. Cross-lane mechanism ranking awaits harmonization.</span></div>
       <div class="approach-card"><b>gLM2 genomic context</b><span>Available for {summary.get('release_glm2_units', summary['external_glm2'] + summary['poc_core_total']):,} records. Native and shuffled gene-order windows run under two protocols, so scores are compared within a protocol.</span></div>
       <div class="approach-card"><b>Quality and provenance checks</b><span>Genome completeness and contamination, taxonomy, annotation coverage, source labels and missingness guard against attractive artifacts. Weak evidence stays visible instead of being dropped.</span></div>
     </div>
-    <p class="note">For every record the report shows what evidence exists, its protocol, what each functional count measures and the claim the record supports. A methane mechanism score across routes becomes possible once a shared feature table is built and validated.</p>
+    <p class="note">For every record the report shows what evidence exists, its protocol, what each functional count measures and the claim the record supports. A cross-lane methane mechanism score requires a validated common feature table, locked tool and database versions, and source-aware controls.</p>
   </section>
   <section class="section">
     <h2>ESM-2 geometry with measured limitations</h2>
-    <p>The ESM-2 representation places {safe_int(geometry.get('embedding_units')):,} records in a {dimensions:,}-dimensional space. Raw cosine similarity in this space is strongly anisotropic: two random records have a mean cosine of {safe_float(geometry.get('random_pair_similarity_mean')):.4f} (median {random_median:.4f}), and the median similarity to the global centroid is {safe_float(geometry.get('similarity_to_global_centroid_median')):.4f}. Cross-habitat neighbor edges therefore sit in a saturated range, with a median raw cosine of {safe_float(geometry.get('raw_cross_edge_similarity_median')):.6f}. The atlas uses this geometry to navigate neighborhoods and keeps functional and validation evidence separate.</p>
+    <p>The ESM-2 representation places {safe_int(geometry.get('embedding_units')):,} records in a {dimensions:,}-dimensional space. The September 29 geometry release recomputed the retained 662-record pilot with final-layer 33 pooling to match the later source lanes. All 662 passed input-identity, protein-count, finite-vector and reproduction checks. In a separate representation control, 23 selected same-DNA records ranked first among 2,501 Old Woman Creek targets. These checks establish configuration consistency for navigation; ecological transfer and flux prediction still need independent tests.</p>
+    <p>Raw cosine similarity in this space is strongly anisotropic: two random records have a mean cosine of {safe_float(geometry.get('random_pair_similarity_mean')):.4f} (median {random_median:.4f}), and the median similarity to the global centroid is {safe_float(geometry.get('similarity_to_global_centroid_median')):.4f}. Cross-habitat neighbor edges therefore sit in a saturated range, with a median raw cosine of {safe_float(geometry.get('raw_cross_edge_similarity_median')):.6f}. The atlas uses this geometry to navigate neighborhoods and keeps functional and validation evidence separate.</p>
     <p>A stricter test counts mutual neighbors: pairs in which each record is among the other's {knn_k} closest across the full atlas. Raw space holds {safe_int(raw_pairs.get('mangrove↔wetland')):,} mutual mangrove–wetland pairs, {raw_rumen_wetland:,} rumen–wetland pair{'' if raw_rumen_wetland == 1 else 's'} and {raw_rumen_mangrove:,} rumen–mangrove pair{'' if raw_rumen_mangrove == 1 else 's'}. After each dimension is standardized, {safe_int(z_pairs.get('mangrove↔wetland')):,} mangrove–wetland pairs remain {z_rumen_text}.</p>
     <p>A separate, one-way comparison asks which member of the {safe_int(nearest_core.get('reference_core_units')):,}-genome reference core ({safe_int(nearest_core.get('reference_core_rumen_units')):,} rumen, {safe_int(nearest_core.get('reference_core_wetland_units')):,} wetland) is closest to each record. Outside the core, {wetland_outside_rumen:,} of {wetland_outside:,} wetland and {mangrove_rumen:,} of {mangrove_units:,} mangrove records point to a rumen genome, as do {candidates_rumen_text}. The median closest-match similarity outside the core is {nearest_median:.3f}; the random-pair atlas median is {random_median:.3f}. These values describe representation geometry, not a calibrated measure of biological equivalence. The core is mostly rumen, so a rumen match nominates a record for review; it does not establish shared biology, transfer between sources or methane flux.</p>
     <p>Taxonomy explains part of the mangrove–wetland continuity. Among mutual pairs with usable phylum labels, {100 * safe_float(taxonomy_audit.get('raw_exact_name_share_usable')):.1f}% match exactly and {100 * safe_float(taxonomy_audit.get('synonym_normalized_share_usable')):.1f}% match after conservative synonym normalization. GTDB release metadata exists only for the reference core, so source and taxonomy-release effects are confounded. Harmonized taxonomy and phylogeny-aware null models are needed before neighborhood enrichment can be read as functional convergence.</p>
@@ -4866,7 +4871,7 @@ def render_html(
   <section class="section">
     <h2>Candidate evidence cards</h2>
     <p>The candidate layer asks which evidence exists for each review hypothesis, and which comparisons that evidence can support. Reference-core cards (P) are reselected from the corrected cross-habitat neighbor fraction, QC and stable record identity. Mangrove cards (M) are ranked by embedding geometry and QC. Old Woman Creek cards (O) carry the source's annotations and, where present, processed expression detection.</p>
-    <p>The matrix and the wheel show availability and eligibility, not strength: ESM-2, gLM2, functional annotation, comparability across routes, expression, QC, taxonomy and sample context. Mechanism strength, activity and any causal link to flux need their own direct evidence.</p>
+    <p>The matrix and the wheel show availability and eligibility rather than strength. They separate ESM-2, gLM2, functional payload, cross-lane mechanism readiness, expression detection, QC, taxonomy and sample context. Mechanism strength, activity and any causal link to flux need direct evidence.</p>
     <div class="signature-stack">
       <div class="signature-panel">
         <h3>Candidate evidence matrix</h3>
@@ -4882,19 +4887,19 @@ def render_html(
   </section>
   <section class="section">
     <h2>Functional metric harmonization</h2>
-    <p>A methane-marker density is only meaningful if every source counts genes the same way. Raw annotation-hit rows do not: one gene can produce several hits, and the number of hits per protein differs by source and tool. The shared pipeline therefore records accepted KOfam genes and METABOLIC events as explicit events and keeps the best MCycDB and SCycDB hits separate; MCycDB hits do not enter a methane score until a validated family map exists. Old Woman Creek keeps its own source annotations under a separate contract.</p>
+    <p>A methane-marker density requires the same accepted gene definitions and denominators across sources. Raw annotation-hit rows do not meet that test because one gene can produce several hits, and the number of hits per protein differs by lane and tool. The pipeline-normalized lanes record accepted KOfam genes and METABOLIC events as explicit events and keep the best MCycDB and SCycDB hits separate. MCycDB hits await a validated family map before entering a methane score. Old Woman Creek retains source annotations under a separate contract. Version, database and feature definitions remain to be reconciled across all lanes.</p>
     <table class="readiness-table">
       <thead><tr><th>Source lane</th><th>Annotated records</th><th>What is counted now</th><th>Raw methane hit rows (median)</th><th>Proteins (median)</th><th>Records with over one raw hit per protein</th><th>Public status</th></tr></thead>
       <tbody>{functional_rows_html}</tbody>
     </table>
-    <p>The raw-row columns are diagnostics that show why raw hits cannot be compared. A combined index built on them is quarantined and plays no part in any ranking here: its methane component tracked the index closely (Pearson r = {safe_float(functional_audit.get('legacy_score_methane_component_pearson_r')):.3f}), and {top500_text}, a pattern consistent with counting differences between sources rather than biology. The event tables support screening and audit within one route; they do not authorize a ranking across routes.</p>
-    <div class="warn"><b>Before a cross-route methane score is enabled:</b> lock tool and database versions, validate the gene-family mappings and denominator behavior, quantify missingness and QC sensitivity, and pass source-aware, taxonomy-aware, null, stability and ablation tests.</div>
+    <p>The raw-row columns are diagnostics that show why raw hits cannot be compared. A combined index built on them is quarantined and plays no part in any ranking here. Its methane component tracked the index closely (Pearson r = {safe_float(functional_audit.get('legacy_score_methane_component_pearson_r')):.3f}), and {top500_text}, a pattern consistent with counting differences between sources rather than biology. The event tables support screening and audit within their lanes. A quantitative cross-lane ranking requires a separate validation gate.</p>
+    <div class="warn"><b>Gate for a cross-lane methane score.</b> Lock tool and database versions, validate gene-family mappings and denominator behavior, quantify missingness and QC sensitivity, and pass source-aware, taxonomy-aware, null, stability and ablation tests.</div>
   </section>
   <section class="section">
     <h2>Old Woman Creek adds expression evidence and a field-validation lane</h2>
     <p>The Old Woman Creek wetland lane (MUCC v1) adds processed metatranscriptome detection across {mucc_columns:,} source sample columns. Expression support exists for {safe_int(mucc_audit.get('processed_expression_supported_mags')):,} MAGs: {mucc_methane:,} have at least one processed methane-associated expressed-gene row and {mucc_sulfur:,} have sulfur-associated rows. These are detection signals from deposited processed tables; comparing activity levels needs expression normalization first.</p>
     <p>The warehouse also stages {safe_int(mucc_audit.get('chamber_flux_rows')):,} chamber-flux rows ({safe_int(mucc_audit.get('chamber_flux_valid_rows')):,} valid in the source), {safe_int(mucc_audit.get('porewater_rows')):,} porewater rows ({safe_int(mucc_audit.get('porewater_valid_rows')):,} valid) and {safe_int(mucc_audit.get('tower_flux_rows')):,} half-hourly, gap-filled tower-flux rows. It includes {safe_int(mucc_audit.get('flashweave_edges')):,} exploratory FlashWeave associations, {safe_int(mucc_audit.get('flashweave_stable_edges')):,} of which pass the current stability filter, and {safe_int(mucc_audit.get('wgcna_non_grey_modules')):,} descriptive WGCNA modules (excluding the unassigned grey module).</p>
-    <p>The decisive gap is linkage: {mucc_exact:,} of {mucc_columns:,} sequencing samples have an authoritative exact join to sample, depth, environment and flux, and {safe_int(mucc_audit.get('ecological_join_blocked_samples')):,} remain blocked for ecological validation. Until that join exists, the flux records are site and time context, and no MAG, expression signature or network edge can be attributed to a measured flux.</p>
+    <p>The source study includes paired geochemical context, including porewater methane concentration. In this atlas release, {mucc_exact:,} of {mucc_columns:,} sequencing sample contexts have an authoritative exact sample-depth-environment-flux join in the integrated warehouse, and {safe_int(mucc_audit.get('ecological_join_blocked_samples')):,} remain blocked for our ecological validation. Concentration is distinct from a paired chamber-flux outcome. Until an exact flux join is established, the staged flux records provide site and time context and cannot be attributed to a specific MAG, expression signature or network edge.</p>
   </section>
   <section class="section">
     <h2>Sample-linkage readiness</h2>
@@ -4904,10 +4909,10 @@ def render_html(
   </section>
   <section class="section">
     <h2>From molecular evidence to environmental readiness</h2>
-    <p>The atlas becomes decision-grade when validated genome features roll up to physical samples, sites and monitoring periods. Today the reference core and both mangrove sources carry shared-pipeline screening events, and Old Woman Creek carries source annotations and expression detection; none is yet a mechanism score comparable across routes. A defensible sample-level score needs four gated layers.</p>
+    <p>The atlas advances toward sample-level decisions when validated genome features roll up to physical samples, sites and monitoring periods. Today the reference core and both mangrove sources carry pipeline-normalized screening events, while Old Woman Creek carries source annotations and expression detection. Cross-lane quantitative mechanism comparability remains pending. A defensible sample-level score needs four gated layers.</p>
     {sample_risk_abstract_block}
     <div class="layer-list">
-      <div class="layer"><span class="state partial">Partial</span><h3>1. Link molecules to samples</h3><p>Assign each genome to its sample and site, keep resolution tiers, and show unlinked genomes as explicit states.</p><p class="now-line">Now: site-month or sample-group context for mangroves; {mucc_exact:,} of {mucc_columns:,} exact joins at Old Woman Creek.</p></div>
+      <div class="layer"><span class="state partial">Partial</span><h3>1. Link molecules to samples</h3><p>Assign each genome to its sample and site, keep resolution tiers, and show unlinked genomes as explicit states.</p><p class="now-line">Now: site-month or sample-group context for mangroves; {mucc_exact:,} of {mucc_columns:,} exact sample-environment-flux joins in this release's Old Woman Creek integration.</p></div>
       <div class="layer"><span class="state missing">Not yet</span><h3>2. Weight by community abundance</h3><p>Turn genome potential into sample capacity with genome coverage, marker abundance, unbinned functional reads and assembly uncertainty.</p><p class="now-line">Now: no abundance joined to the atlas records.</p></div>
       <div class="layer"><span class="state partial">Partial</span><h3>3. Add environmental conditions</h3><p>Measured metadata first, modeled covariates second, with every salinity, sulfate, redox, substrate, depth and vegetation field marked by evidence tier.</p><p class="now-line">Now: environmental fields for some mangrove sample contexts, not yet joined to genomes.</p></div>
       <div class="layer"><span class="state missing">Not yet</span><h3>4. Calibrate with field evidence</h3><p>Anchor predictions to chamber flux, dissolved methane, porewater chemistry, incubations or repeated observations, with explicit joins in time and place.</p><p class="now-line">Now: no genome-to-flux pairs.</p></div>
@@ -4916,10 +4921,21 @@ def render_html(
     <p>The next operational output is a sample-readiness layer. Once samples are mapped, each would be labeled scoreable, monitor more, needs metadata, needs abundance, needs environmental covariates or needs flux validation. Current records do not support calibrated sample-risk scores; the labels would guide sampling while the evidence grows.</p>
   </section>
   <section class="section">
+    <h2>How the atlas enters a flux-model test</h2>
+    <p>The proposed first field study would follow 36 plots across two microsites and two seasons, producing 144 repeated sample-events at one site. Plots are the replicate unit; seasonal revisits test transfer at the same points. Site access, funding, permits, sampling and paired flux outcomes are still required. The design tests whether molecular evidence adds predictive value beyond measured environmental conditions.</p>
+    <div class="approach-grid">
+      <div class="approach-card"><b>Environmental baseline</b><span>Model measured salinity, sulfate, hydrology, temperature and other prespecified covariates against paired methane flux.</span></div>
+      <div class="approach-card"><b>Marker baseline</b><span>Test coverage-qualified <em>mcrA</em> and <em>pmoA</em> abundance, including their ratio where both assays support it.</span></div>
+      <div class="approach-card"><b>Interpretable hybrid</b><span>Evaluate curated methane, sulfur and substrate gene-set features with environmental covariates. Regularized regression is a candidate first learner.</span></div>
+      <div class="approach-card"><b>Transfer-augmented model</b><span>Test whether ESM-2 and gLM2 features around pathway genes add held-out predictive value to the same model and outcome.</span></div>
+    </div>
+    <p>The ontology fixes the meaning of genes, pathways, samples and measurements. The evidence graph records feature lineage, source, QC, identity confidence and uncertainty before a model uses them, then returns model outputs to reviewable evidence cards. Grouped plot folds and a prespecified dry-season holdout would test this single-site design. Independent sites are needed to test geographic transfer. No predictive gain or calibrated risk is reported from the current atlas.</p>
+  </section>
+  <section class="section">
     <h2>What comes next</h2>
     <p class="closing">The atlas rests on a source-audited warehouse of {summary['atlas_registered_units']:,} registered genome records across four source lanes. It already supports payload auditing, neighborhood exploration, protocol-aware candidate review, expression-detection queries, metadata-gap priorities and validation-study design.</p>
-    <p class="closing">Its evidence states are explicit: {summary['pipeline_normalized_tri_view_units']:,} records carry shared-pipeline screening events, {summary['source_scaffold_tri_view']:,} carry Old Woman Creek source annotations, and {summary['mechanism_comparable_tri_view']:,} pass the cross-route comparability gate. Keeping those states separate protects decisions from pipeline artifacts.</p>
-    <p class="closing">The next build should deliver one mechanism-feature table shared by all sources, harmonized taxonomy with phylogeny-aware null models, calibrated gLM2 protocols, exact sample and abundance mappings, and field or process validation with uncertainty. Together these enable cross-route mechanism ranking and calibrated sample-risk modeling.</p>
+    <p class="closing">Its evidence states are explicit. {summary['pipeline_normalized_tri_view_units']:,} records carry pipeline-normalized screening events, {summary['source_scaffold_tri_view']:,} carry Old Woman Creek source annotations, and {summary['mechanism_comparable_tri_view']:,} pass the cross-lane mechanism-comparability gate. Keeping those states separate protects decisions from pipeline artifacts.</p>
+    <p class="closing">The next build should deliver one validated mechanism-feature table across sources, harmonized taxonomy with phylogeny-aware null models, reconciled gLM2 protocols, exact sample and abundance mappings, and paired field or process outcomes with uncertainty. Those steps would permit a quantitative cross-lane mechanism test and a calibrated sample-risk model.</p>
     <div class="warn">Current evidence supports molecular screening, evidence-card review and measurement planning. Final A–E risk tiers, measured methane-flux claims, carbon-credit decisions and claims of transfer between independent sources all require further validation.</div>
   </section>
 </main>
@@ -5126,10 +5142,11 @@ def write_outputs(
             ## Snapshot
 
             - POC core tri-view complete: {summary['poc_core_total']:,}/{summary['poc_core_total']:,}
-            - Registered mangrove ESM-2 complete: {summary['msm_esm2']:,}/{summary['mangrove_ready_payload_total']:,}
-            - Registered mangrove gLM2 complete: {summary['msm_glm2']:,}/{summary['mangrove_ready_payload_total']:,}
-            - Registered mangrove functional complete: {summary['msm_functional']:,}/{summary['mangrove_ready_payload_total']:,}
-            - Release-required registered mangrove functional complete: {summary['mangrove_release_functional']:,}/{summary['mangrove_release_required_payload_total']:,}
+            - Registered mangrove source-lane records: {summary['mangrove_ready_payload_total'] + summary['mangrove_gap_rows']:,}
+            - Mangrove ESM-2 payloads: {summary['msm_esm2']:,}/{summary['mangrove_ready_payload_total'] + summary['mangrove_gap_rows']:,} registered
+            - Mangrove gLM2 payloads: {summary['msm_glm2']:,}/{summary['mangrove_ready_payload_total'] + summary['mangrove_gap_rows']:,} registered
+            - Mangrove functional payloads: {summary['msm_functional']:,}/{summary['mangrove_ready_payload_total'] + summary['mangrove_gap_rows']:,} registered
+            - Release-required mangrove functional payloads: {summary['mangrove_release_functional']:,}/{summary['mangrove_release_required_payload_total']:,}
             - Release-excluded units preserved: {summary['mangrove_release_excluded_units']:,}
             - Registered mangrove source-lane gap rows preserved: {summary['mangrove_gap_rows']:,}
             - Expanded release-required data-complete tri-view atlas: {summary['release_multiview_complete']:,}
@@ -5138,7 +5155,7 @@ def write_outputs(
             - Annotation-complete, harmonization-pending tri-view: {summary['annotation_complete_harmonization_pending_tri_view']:,}
             - MUCC v1 source-scaffold tri-view: {summary['source_scaffold_tri_view']:,}
             - MUCC v1 ESM-2/gLM2/source-functional tri-view: {summary['mucc_v1_tri_view']:,}/{summary['mucc_v1_total']:,}
-            - Registered ESM-2 embedding context: {summary['embedding_context_total']:,}
+            - Atlas ESM-2 embedding context: {summary['embedding_context_total']:,}/{summary['atlas_registered_units']:,} registered
 
             Data-complete tri-view does not imply common mechanism comparability.
             MSM/Futian functional outputs are complete but await a shared

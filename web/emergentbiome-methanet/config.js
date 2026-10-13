@@ -394,9 +394,9 @@ window.EB = (function () {
     {
       id: "engine", n: 6, label: "06 · Evidence Scope",
       kicker: "What is screened today",
-      headline: "Screened for methane. Compared like with like.",
-      copy: "Every genome on the map was screened for methane-cycle genes through one of two annotation routes: a shared pipeline for 5,209 records, and the source's own annotations for 2,501 Old Woman Creek records. " +
-        "Until the two are harmonized, methane evidence is compared within a route, never ranked across the map. " +
+      headline: "Methane evidence, with its limits visible.",
+      copy: "The 7,710 complete MAG/proteome records on the map carry functional evidence through two routes. Of those, 5,209 have pipeline-normalized screening events and 2,501 Old Woman Creek records retain source annotations. " +
+        "Tool, database and counting differences still need harmonization across source lanes. Cross-lane methane mechanism ranking remains withheld. " +
         "Nitrous oxide and sulfur lenses are planned; each will need its own validation.",
       data: "real-coords",
     },

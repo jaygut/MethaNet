@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0.0",
+  "review_date": "2026-10-13",
+  "scope": "Public noindex technical report and linked landing copy, retaining the August 10 molecular payload and September 29 layer-33 geometry",
+  "publication_status": "published_to_gh_pages; custom_domain_checked_separately",
+  "deployment_commit": "234d9e108fbb43d378419dd96b14a0695dd14cce",
+  "source_sha256": {
+    "freeze_manifest": "7dd870ac3cdf0142b8050dbeec4f310ac18e6c21d1f34c4728e43b18df986cfc",
+    "release_ledger": "e59ee4df0e244e734f4e4735af17a70ea1f0547f417ad813ddf446061d3a09d1",
+    "report_builder": "b6fcba95cddec74059cba756f6ada4d4a89abe47313bf44eb8e9f92b3a79bcef",
+    "report_html": "886557f92e2d59d815001fc3e064428472f1ca1047e4b4dd19bc2898178e5cf8",
+    "niche_json": "a4afac294002ced190d0ea1fea2e82a134c0c5b9b92e37c7618b9fcad737f8af",
+    "scientific_audit": "2379029aacb6e83837f9fe669b20993b9f1853aace6af1d4ba009bf55dba9466",
+    "site_atlas_json": "6bb6374b2c3f108582ae5b8aa21f87e2a6db89d637fce40452c297cc77ff9416"
+  },
+  "registered_records": 7965,
+  "data_complete_three_view_records": 7710,
+  "explicit_source_gaps": 255,
+  "pipeline_normalized_records": 5209,
+  "source_scaffold_records": 2501,
+  "cross_lane_mechanism_comparable_records": 0,
+  "exact_mucc_sample_environment_flux_joins_in_atlas": 0,
+  "mucc_sequencing_contexts": 133,
+  "controls": {
+    "report_validation_gates": 20,
+    "release_parity_passed": 201,
+    "release_parity_failed": 0,
+    "browser_status": "pass",
+    "browser_report_release_parity": true,
+    "browser_report_horizontal_overflow": false,
+    "atlas_payload_unchanged_except_embedding_configuration_hashes": true,
+    "new_embedding_configuration_matches_report": true
+  },
+  "corrections": [
+    "Registered lane-scoped records are separated from three-view records and explicit gaps.",
+    "Payload release readiness is separated from cross-lane scientific comparability and field validation.",
+    "Old Woman Creek zero exact joins are scoped to this atlas integration, while the source study has paired observations.",
+    "Ecosphere Blue, EmergentBiome and MethaNet roles, current evidence-review output, proposed paid assessment and model test are aligned with the current deck.",
+    "The September three-case explorer is separated from the August atlas denominator."
+  ],
+  "remaining_boundaries": [
+    "No harmonized cross-lane quantitative mechanism score or sample-level methane risk.",
+    "No exact molecular-to-flux pairs in the atlas release or demonstrated held-out prediction gain.",
+    "The 144 proposed sample-events are repeated visits to 36 plots at one site; independent sites are required for geographic transfer.",
+    "No carbon-credit approval or final A-E risk tier follows from the current release."
+  ],
+  "review_method": "Automated source and release reconciliation plus local rendered browser checks; not independent biological or registry certification."
+}
