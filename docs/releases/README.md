@@ -12,3 +12,7 @@ active pointer's original lane registry and freeze/ledger hashes retain their
 August meaning; its `embedding_lane_registry`, `embedding_contract`, and
 `geometry_receipt` fields identify the corrected representation. The exact prior
 pointer is archived for historical ontology provenance.
+
+The [22 October 2026 history rewrite record](rewrite_refreeze_20261022.md)
+maps rewritten commit SHAs and confirms that every hash the active pointer
+declares is unchanged.

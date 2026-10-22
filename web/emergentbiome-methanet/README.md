@@ -15,7 +15,7 @@ The three-reviewer package, deployment receipt and browser checks are retained
 locally under `results/reports/mvo_landing_release_20260927/`; the current exact
 publication revision is recorded in the `gh-pages` branch history. The 28 September
 narrative revision and the regenerated report were published together as `gh-pages`
-revision `30d8715`; [`design-qa.md`](design-qa.md) records the changes and checks, and
+revision `84e47ac`; [`design-qa.md`](design-qa.md) records the changes and checks, and
 the local QA package is `results/reports/landing_narrative_review_20260928/`.
 
 The 29 September embedding correction and its verification are documented in

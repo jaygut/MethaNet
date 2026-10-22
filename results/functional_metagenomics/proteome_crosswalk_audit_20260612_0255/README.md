@@ -6,7 +6,7 @@ Crosswalk: `ai_docs/functional_metagenomics_expansion/proteome_crosswalk/embedde
 
 ## Git State
 
-`origin/main` contains `190bc69 docs: add proteome crosswalk for POC cohort`. Local `main` is diverged/ahead with Apollo-specific commits, so the crosswalk folder was restored from `origin/main` into the working tree for this audit without rebasing or overwriting local commits.
+`origin/main` contains `0466712 docs: add proteome crosswalk for POC cohort`. Local `main` is diverged/ahead with Apollo-specific commits, so the crosswalk folder was restored from `origin/main` into the working tree for this audit without rebasing or overwriting local commits.
 
 ## Crosswalk Sanity
 

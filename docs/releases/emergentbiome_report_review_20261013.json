@@ -3,7 +3,7 @@
   "review_date": "2026-10-13",
   "scope": "Public noindex technical report and linked landing copy, retaining the August 10 molecular payload and September 29 layer-33 geometry",
   "publication_status": "published_to_gh_pages; custom_domain_checked_separately",
-  "deployment_commit": "234d9e108fbb43d378419dd96b14a0695dd14cce",
+  "deployment_commit": "fa7d6519eab8cd855bac2722c294a330b603e053",
   "source_sha256": {
     "freeze_manifest": "7dd870ac3cdf0142b8050dbeec4f310ac18e6c21d1f34c4728e43b18df986cfc",
     "release_ledger": "e59ee4df0e244e734f4e4735af17a70ea1f0547f417ad813ddf446061d3a09d1",

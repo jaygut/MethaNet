@@ -482,7 +482,7 @@ gated. Treat the July 24 and earlier reports as historical snapshots.
 
 Landing-page update, 2026-09-27: the landing-only interactive evidence network
 is live at `gh-pages` revision
-`458954b545ed21c2adbf099e9797d1f07e459b37`; deployment completed successfully
+`1f22abe44877b1ba9371fbb9791a7fe1579aa5cb`; deployment completed successfully
 in [GitHub Actions run 36372864079](https://github.com/jaygut/MethaNet/actions/runs/36372864079).
 It preserves the `/report/` alias, report archive and August release. The public
 projection contains three case profiles, 492 presentation nodes, 459 source
@@ -495,7 +495,7 @@ and unpublished manuscript materials remain under separate review.
 
 Landing and report update, 2026-09-28: the narrative revision of the landing and the
 consolidated technical report were published together as `gh-pages` revision
-`30d8715` through `tools/publish_site.sh deploy --push`, after the owner approved the
+`84e47ac` through `tools/publish_site.sh deploy --push`, after the owner approved the
 local preview. The report corrects nearest-reference denominators (records outside
 the reference core), expression flags, lane labels and the default projection
 (UMAP); counts and the release ledger are unchanged. Changes and checks are recorded

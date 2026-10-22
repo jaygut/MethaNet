@@ -125,7 +125,7 @@ certification. The website deployment is independent of the MVO local Neo4j
 service.
 
 The latest landing-only `gh-pages` publication is commit
-[`458954b`](https://github.com/jaygut/MethaNet/commit/458954b545ed21c2adbf099e9797d1f07e459b37),
+[`1f22abe`](https://github.com/jaygut/MethaNet/commit/1f22abe44877b1ba9371fbb9791a7fe1579aa5cb),
 deployed successfully by [GitHub Actions run 36372864079](https://github.com/jaygut/MethaNet/actions/runs/36372864079).
 It removes six internal review-status labels from the three-case public network,
 preserves the `/report/` alias and frozen August atlas, and passes a tracked,

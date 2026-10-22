@@ -15,7 +15,7 @@ The current geometry is recomputed under layer-33 pooling. The historical QA not
 final result: passed locally and on the live site; published 28 September 2026 after
 the owner approved the local preview.
 
-Second revision on top of the 27 September coherence pass: source `main` at `d9c6665`
+Second revision on top of the 27 September coherence pass: source `main` at `f5c9e7a`
 plus uncommitted landing, report-builder and tool edits. The two reviewed public case
 files are byte-identical to the hashes in `publication-review.json`; `atlas.json`,
 `CNAME`, `noindex` and the public-data allowlist are unchanged. The regenerated report
@@ -120,7 +120,7 @@ actual `clientWidth`.
 The owner approved the local preview on 28 September 2026. `tools/publish_site.sh deploy
 --push` passed the hash-bound publication gate, rebuilt the site from this source and
 the `20260928_consolidated` report bundle, and pushed `gh-pages` revision
-`30d8715` (from `458954b`). That commit changes only landing files and `report/`;
+`84e47ac` (from `1f22abe`). That commit changes only landing files and `report/`;
 the reviewed case data, `atlas.json`, `CNAME` (`emergentbiome.earth`), `noindex` and the
 dated June snapshot are unchanged, and the retired graphical abstract is no longer
 shipped. Cache-busted and plain requests to the live landing, `config.js` and
@@ -148,7 +148,7 @@ certification were not tested.
 final result: passed locally; published on 28 September 2026 together with the
 narrative and report consolidation above.
 
-Whole-journey review of the assembled landing: source `main` at `8c58cd0` plus
+Whole-journey review of the assembled landing: source `main` at `486aaf0` plus
 uncommitted landing edits. Both reviewed public case-data files are byte-identical
 to the hashes in `publication-review.json`; the data, `/report/` alias, atlas
 payload and CNAME are unchanged. The local evidence package, gitignored, is
