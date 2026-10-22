@@ -1,0 +1,27 @@
+name: Provenance guard
+
+# Same rules as .githooks/pre-commit and pre-push: one commit identity, and no
+# retired identities or machine-specific details in commits or tracked files.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  provenance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check pull request commits
+        if: github.event_name == 'pull_request'
+        run: python scripts/check_provenance.py range "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+      - name: Check tracked files
+        run: python scripts/check_provenance.py tree HEAD

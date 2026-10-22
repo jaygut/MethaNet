@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Block commits under any identity other than the repository's, and staged
+# additions that carry retired identities or machine-specific details.
+set -euo pipefail
+exec python3 "$(git rev-parse --show-toplevel)/scripts/check_provenance.py" staged
