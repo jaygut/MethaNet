@@ -234,6 +234,41 @@ LANE_DISPLAY = {
     "mucc_v1_owc_wetland": "Wetland, Old Woman Creek (MUCC v1)",
 }
 LANE_ORDER = ["poc_core", "msm_china_2025", "futian_mangrove_2026_qi", "mucc_v1_owc_wetland"]
+# Short in-sentence lane names for generated prose.
+LANE_PHRASE = {
+    "poc_core": "the reference core",
+    "msm_china_2025": "the MSM mangrove lane",
+    "futian_mangrove_2026_qi": "the Futian mangrove lane",
+    "mucc_v1_owc_wetland": "the Old Woman Creek lane",
+}
+
+
+def gtdb_release_coverage_text(release_counts: list[dict[str, Any]]) -> str:
+    """Name the lanes that carry GTDB release metadata, from the audited counts."""
+    present: dict[str, set[str]] = {}
+    lanes: set[str] = set()
+    for row in release_counts:
+        lane = str(row.get("lane_id"))
+        lanes.add(lane)
+        release = str(row.get("gtdb_release") or "missing").strip()
+        if release not in {"missing", "", "nan", "None"}:
+            present.setdefault(lane, set()).add(release)
+    if not present:
+        return "No lane carries GTDB release metadata"
+    if set(present) == {"poc_core"}:
+        return "GTDB release metadata exists only for the reference core"
+
+    def ordered(names: set[str]) -> list[str]:
+        known = [LANE_PHRASE.get(lane, lane) for lane in LANE_ORDER if lane in names]
+        return known + sorted(LANE_PHRASE.get(lane, lane) for lane in names if lane not in LANE_ORDER)
+
+    def join(items: list[str]) -> str:
+        return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
+
+    releases = sorted(set().union(*present.values()))
+    text = f"GTDB release metadata ({', '.join(releases)}) exists for {join(ordered(set(present)))}"
+    missing = ordered(lanes - set(present))
+    return text + (f" and is missing for {join(missing)}" if missing else "")
 
 
 def apply_public_lane_display(atlas: pd.DataFrame) -> pd.DataFrame:
@@ -1005,11 +1040,15 @@ def add_molecular_metrics(atlas: pd.DataFrame) -> pd.DataFrame:
         numbers("scycdb_hits").fillna(0)
         + numbers("metabolic_functions_present").fillna(0)
     )
-    raw_methane_count = methane_from_scores.where(
-        methane_from_scores.notna(), methane_from_raw
+    # Raw annotation-row diagnostics stay on raw rows wherever a lane carries
+    # them (the per-MAG MSM and Futian payloads), even though their public
+    # screening scores now come from the lane warehouse. Lanes without raw-row
+    # columns (POC warehouse, MUCC source scaffold) keep their score, as before.
+    raw_methane_count = methane_from_raw.where(
+        methane_from_raw.gt(0), methane_from_scores
     ).fillna(0)
-    raw_sulfur_count = sulfur_from_scores.where(
-        sulfur_from_scores.notna(), sulfur_from_raw
+    raw_sulfur_count = sulfur_from_raw.where(
+        sulfur_from_raw.gt(0), sulfur_from_scores
     ).fillna(0)
     canonical_substrate_count = (
         numbers("cazy_family_count").fillna(0)
@@ -2875,9 +2914,9 @@ def build_taxonomy_bridge_audit(
         "gtdb_release_by_lane": release_counts,
         "interpretation": (
             "Reciprocal mangrove↔wetland neighborhoods are substantially "
-            "taxonomically structured. GTDB release metadata is present only "
-            "for the POC lane, so source and taxonomy-release effects cannot be "
-            "cleanly separated in this freeze."
+            f"taxonomically structured. {gtdb_release_coverage_text(release_counts)}, "
+            "so source and taxonomy-release effects cannot be cleanly separated "
+            "in this freeze."
         ),
     }
 
@@ -2897,10 +2936,22 @@ def build_functional_metric_audit(atlas: pd.DataFrame) -> dict[str, Any]:
             functional["protein_count_for_rates"], errors="coerce"
         )
         ratio = raw / proteins
+        # Raw MCycDB + METABOLIC rows are loaded only for the per-MAG lanes.
+        # Elsewhere the numerator is a screening score or a source term count,
+        # which the table must not present as raw hit rows.
+        raw_hit_rows = sum(
+            pd.to_numeric(
+                functional.get(column, pd.Series(0, index=functional.index)),
+                errors="coerce",
+            ).fillna(0)
+            for column in ("mcycdb_hits", "metabolic_hmm_rows")
+        )
+        raw_rows_loaded = bool(len(functional) and raw_hit_rows.gt(0).any())
         rows.append(
             {
                 "lane_id": lane_id,
                 "lane": labels.get(lane_id, lane_id),
+                "raw_rows_loaded": raw_rows_loaded,
                 "functional_units": int(len(functional)),
                 "numerator_provenance": str(
                     functional["functional_numerator_provenance"].mode().iloc[0]
@@ -3167,8 +3218,8 @@ def build_scientific_findings(
             "result": (
                 f"{100 * taxonomy['synonym_normalized_share_usable']:.1f}% of usable "
                 "mutual mangrove–wetland pairs share a phylum after conservative "
-                "synonym normalization; GTDB release metadata exists only for the "
-                "reference core."
+                "synonym normalization; "
+                f"{gtdb_release_coverage_text(taxonomy.get('gtdb_release_by_lane', []))}."
             ),
             "report_action": (
                 "Part of the neighborhood continuity is taxonomic. Harmonized "
@@ -4246,15 +4297,20 @@ def render_html(
         "</tr>"
         for row in findings
     )
+    def raw_row_cell(row: dict[str, Any], text: str) -> str:
+        # Lanes without loaded raw MCycDB/METABOLIC rows must not show a
+        # screening score or source term count under a raw-hit heading.
+        return f"<td class='num'>{text if row.get('raw_rows_loaded', True) else 'not loaded'}</td>"
+
     functional_rows_html = "\n".join(
         "<tr>"
         f"<td>{html.escape(str(row['lane']))}</td>"
         f"<td class='num'>{safe_int(row['functional_units']):,}</td>"
         f"<td>{html.escape(numerator_labels.get(str(row['numerator_provenance']), str(row['numerator_provenance'])))}</td>"
-        f"<td class='num'>{safe_float(row['raw_methane_row_count_median']):,.1f}</td>"
-        f"<td class='num'>{safe_float(row['protein_count_median']):,.1f}</td>"
-        f"<td class='num'>{100 * safe_float(row['raw_rows_per_protein_gt_1_share']):.1f}%</td>"
-        f"<td>{html.escape(public_rate_labels.get(str(row['public_rate_metric_status']), str(row['public_rate_metric_status']).replace('_', ' ')))}</td>"
+        + raw_row_cell(row, f"{safe_float(row['raw_methane_row_count_median']):,.1f}")
+        + f"<td class='num'>{safe_float(row['protein_count_median']):,.1f}</td>"
+        + raw_row_cell(row, f"{100 * safe_float(row['raw_rows_per_protein_gt_1_share']):.1f}%")
+        + f"<td>{html.escape(public_rate_labels.get(str(row['public_rate_metric_status']), str(row['public_rate_metric_status']).replace('_', ' ')))}</td>"
         "</tr>"
         for row in functional_audit.get("lane_metrics", [])
     )
@@ -4850,7 +4906,7 @@ def render_html(
     <p>Raw cosine similarity in this space is strongly anisotropic: two random records have a mean cosine of {safe_float(geometry.get('random_pair_similarity_mean')):.4f} (median {random_median:.4f}), and the median similarity to the global centroid is {safe_float(geometry.get('similarity_to_global_centroid_median')):.4f}. Cross-habitat neighbor edges therefore sit in a saturated range, with a median raw cosine of {safe_float(geometry.get('raw_cross_edge_similarity_median')):.6f}. The atlas uses this geometry to navigate neighborhoods and keeps functional and validation evidence separate.</p>
     <p>A stricter test counts mutual neighbors: pairs in which each record is among the other's {knn_k} closest across the full atlas. Raw space holds {safe_int(raw_pairs.get('mangrove↔wetland')):,} mutual mangrove–wetland pairs, {raw_rumen_wetland:,} rumen–wetland pair{'' if raw_rumen_wetland == 1 else 's'} and {raw_rumen_mangrove:,} rumen–mangrove pair{'' if raw_rumen_mangrove == 1 else 's'}. After each dimension is standardized, {safe_int(z_pairs.get('mangrove↔wetland')):,} mangrove–wetland pairs remain {z_rumen_text}.</p>
     <p>A separate, one-way comparison asks which member of the {safe_int(nearest_core.get('reference_core_units')):,}-genome reference core ({safe_int(nearest_core.get('reference_core_rumen_units')):,} rumen, {safe_int(nearest_core.get('reference_core_wetland_units')):,} wetland) is closest to each record. Outside the core, {wetland_outside_rumen:,} of {wetland_outside:,} wetland and {mangrove_rumen:,} of {mangrove_units:,} mangrove records point to a rumen genome, as do {candidates_rumen_text}. The median closest-match similarity outside the core is {nearest_median:.3f}; the random-pair atlas median is {random_median:.3f}. These values describe representation geometry, not a calibrated measure of biological equivalence. The core is mostly rumen, so a rumen match nominates a record for review; it does not establish shared biology, transfer between sources or methane flux.</p>
-    <p>Taxonomy explains part of the mangrove–wetland continuity. Among mutual pairs with usable phylum labels, {100 * safe_float(taxonomy_audit.get('raw_exact_name_share_usable')):.1f}% match exactly and {100 * safe_float(taxonomy_audit.get('synonym_normalized_share_usable')):.1f}% match after conservative synonym normalization. GTDB release metadata exists only for the reference core, so source and taxonomy-release effects are confounded. Harmonized taxonomy and phylogeny-aware null models are needed before neighborhood enrichment can be read as functional convergence.</p>
+    <p>Taxonomy explains part of the mangrove–wetland continuity. Among mutual pairs with usable phylum labels, {100 * safe_float(taxonomy_audit.get('raw_exact_name_share_usable')):.1f}% match exactly and {100 * safe_float(taxonomy_audit.get('synonym_normalized_share_usable')):.1f}% match after conservative synonym normalization. {gtdb_release_coverage_text(taxonomy_audit.get('gtdb_release_by_lane', []))}, so source and taxonomy-release effects are not fully separable. Harmonized taxonomy and phylogeny-aware null models are needed before neighborhood enrichment can be read as functional convergence.</p>
     <p>UMAP is the default map view because it keeps local neighborhoods readable. Diffusion, t-SNE and PCA are offered for comparison; source structure and projection distortion must be assessed in the reconciled release. No projection is evidence on its own, and link membership is always computed in the full representation.</p>
     <p class="note"><b>References</b></p>
     <ol class="refs">{references_html}</ol>
@@ -4892,7 +4948,7 @@ def render_html(
       <thead><tr><th>Source lane</th><th>Annotated records</th><th>What is counted now</th><th>Raw methane hit rows (median)</th><th>Proteins (median)</th><th>Records with over one raw hit per protein</th><th>Public status</th></tr></thead>
       <tbody>{functional_rows_html}</tbody>
     </table>
-    <p>The raw-row columns are diagnostics that show why raw hits cannot be compared. A combined index built on them is quarantined and plays no part in any ranking here. Its methane component tracked the index closely (Pearson r = {safe_float(functional_audit.get('legacy_score_methane_component_pearson_r')):.3f}), and {top500_text}, a pattern consistent with counting differences between sources rather than biology. The event tables support screening and audit within their lanes. A quantitative cross-lane ranking requires a separate validation gate.</p>
+    <p>The raw-row columns are diagnostics that show why raw hits cannot be compared. Raw hit rows are loaded only for the per-genome mangrove lanes, so lanes whose warehouse exposes screening events or source terms instead show them as not loaded. A combined index built on them is quarantined and plays no part in any ranking here. Its methane component tracked the index closely (Pearson r = {safe_float(functional_audit.get('legacy_score_methane_component_pearson_r')):.3f}), and {top500_text}, a pattern consistent with counting differences between sources rather than biology. The event tables support screening and audit within their lanes. A quantitative cross-lane ranking requires a separate validation gate.</p>
     <div class="warn"><b>Gate for a cross-lane methane score.</b> Lock tool and database versions, validate gene-family mappings and denominator behavior, quantify missingness and QC sensitivity, and pass source-aware, taxonomy-aware, null, stability and ablation tests.</div>
   </section>
   <section class="section">

@@ -845,6 +845,72 @@ def discover_warehouse_functional(
     return functional, status
 
 
+def overlay_pipeline_warehouse_semantics(
+    functional: pd.DataFrame,
+    warehouse_dirs: list[Path],
+) -> pd.DataFrame:
+    """Use the lane warehouse's screening scores and GTDB release for per-MAG rows.
+
+    Pipeline-normalized lanes (POC, MSM, Futian) share the 24-table warehouse
+    contract. Its feature_mrv_mag_level holds the accepted/best/present
+    screening scores already used for the POC lane, and dim_mag holds the GTDB
+    release. Without this overlay the per-MAG fallback published raw MCycDB
+    plus METABOLIC row counts under the methane_evidence_score name, on a
+    different scale from the POC rows, and left gtdb_release blank. Rows that
+    the warehouse does not cover keep their fallback value and say so in
+    methane_evidence_score_source.
+    """
+    if functional.empty or not warehouse_dirs:
+        return functional
+    features = read_warehouse_table(warehouse_dirs, "feature_mrv_mag_level")
+    dims = read_warehouse_table(warehouse_dirs, "dim_mag")
+    out = functional.copy()
+    out["proteome_id"] = out["proteome_id"].astype(str)
+    from_warehouse = pd.Series(False, index=out.index)
+    if not features.empty and "proteome_id" in features.columns:
+        indexed = features.assign(
+            proteome_id=features["proteome_id"].astype(str)
+        ).set_index("proteome_id")
+        for col in ("methane_evidence_score", "sulfur_competition_score"):
+            if col not in indexed.columns:
+                continue
+            mapped = pd.to_numeric(out["proteome_id"].map(indexed[col]), errors="coerce")
+            current = (
+                pd.to_numeric(out[col], errors="coerce")
+                if col in out.columns
+                else pd.Series(np.nan, index=out.index)
+            )
+            out[col] = mapped.where(mapped.notna(), current)
+            if col == "methane_evidence_score":
+                from_warehouse = mapped.notna()
+    score = (
+        pd.to_numeric(out["methane_evidence_score"], errors="coerce")
+        if "methane_evidence_score" in out.columns
+        else pd.Series(np.nan, index=out.index)
+    )
+    out["methane_evidence_score_source"] = np.select(
+        [from_warehouse, score.notna()],
+        ["lane_warehouse_feature_mrv_mag_level", "per_mag_raw_row_count_fallback"],
+        default="not_available",
+    )
+    if not dims.empty and "proteome_id" in dims.columns:
+        indexed = dims.assign(proteome_id=dims["proteome_id"].astype(str)).set_index(
+            "proteome_id"
+        )
+        for col in ("gtdb_release", "gtdb_classification"):
+            if col not in indexed.columns:
+                continue
+            mapped = out["proteome_id"].map(indexed[col])
+            if col in out.columns:
+                blank = out[col].isna() | out[col].astype(str).str.strip().isin(
+                    ["", "nan", "None"]
+                )
+                out[col] = out[col].where(~blank, mapped)
+            else:
+                out[col] = mapped
+    return out
+
+
 def discover_msm_functional(msm_root: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
     manifest_path = msm_root / "manifests/msm_china_2025_functional_mag_manifest.tsv"
     manifest = read_tsv(manifest_path)
@@ -1077,6 +1143,7 @@ def load_external_lane_features(
         functional, status = discover_external_functional(
             functional_manifest, per_mag_dirs, lane_id
         )
+        functional = overlay_pipeline_warehouse_semantics(functional, warehouse_dirs)
     glm = aggregate_glm_dirs(split_registry_paths(repo_root, lane.get("glm2_artifacts_dirs")))
     esm_dirs = split_registry_paths(repo_root, lane.get("esm2_artifacts_dirs"))
     esm_meta = read_esm_metadata(esm_dirs)
