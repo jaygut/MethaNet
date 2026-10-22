@@ -15,6 +15,10 @@ ontology steward, warehouse/source steward, microbial ecology reviewer,
 GHG-methodology reviewer, rights/community-governance reviewer and security
 owner. The person responsible for a scientific claim must not be replaced by an
 LLM's `accepted` status. Repository code review and domain review are distinct.
+Since shapes 0.2.1 the admission profile enforces this rule. An assertion in
+the `accepted` review state must name a reviewer typed `prov:Person`, and a
+`prov:SoftwareAgent` (an importer, adapter or language-model agent) cannot
+supply that acceptance.
 
 ## Extension recipe
 

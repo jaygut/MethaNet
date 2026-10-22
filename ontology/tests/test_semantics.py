@@ -21,6 +21,13 @@ def g():
     return synthetic()
 
 
+def human_reviewer(g):
+    """A visibly synthetic named person; acceptance requires one (shapes 0.2.1)."""
+    reviewer = node(g, iri("agent", "synthetic-human-reviewer"), M.Agent, "Synthetic human reviewer")
+    g.add((reviewer, RDF.type, PROV.Person))
+    return reviewer
+
+
 def test_valid_synthetic_graph(g):
     ok, errors, _ = validate_graph(g)
     assert ok, errors
@@ -52,7 +59,7 @@ def test_literal_and_object_are_exclusive(g):
     assert not validate_graph(g)[0]
 
 
-@pytest.mark.parametrize("case", ["duplicate_identity", "missing_exclusion_gap", "false_tri_view", "dangling", "same_as", "type_collision", "no_hit_without_coverage", "unreviewed_acceptance", "accepted_hypothesis", "credit_approval", "flux_wrong_quantity", "reversed_time", "invalid_rights", "incompatible_similarity", "manufactured_physical_link"])
+@pytest.mark.parametrize("case", ["duplicate_identity", "missing_exclusion_gap", "false_tri_view", "dangling", "same_as", "type_collision", "no_hit_without_coverage", "unreviewed_acceptance", "software_reviewed_acceptance", "accepted_hypothesis", "credit_approval", "flux_wrong_quantity", "reversed_time", "invalid_rights", "incompatible_similarity", "manufactured_physical_link"])
 def test_negative_semantics(g, case):
     ann = iri("synthetic", "annotation")
     if case == "duplicate_identity":
@@ -73,10 +80,13 @@ def test_negative_semantics(g, case):
         g.set((ann, M.coverageState, Literal("not_assayed")))
     elif case == "unreviewed_acceptance":
         g.set((ann, M.reviewState, C.accepted))
+    elif case == "software_reviewed_acceptance":
+        g.set((ann, M.reviewState, C.accepted))
+        add(g, ann, M.reviewedBy, iri("agent", "mvo-importer-0.1.0"))
     elif case == "accepted_hypothesis":
         key = iri("synthetic", "bridge", "CH4")
         g.set((key, M.reviewState, C.accepted))
-        add(g, key, M.reviewedBy, iri("agent", "mvo-importer-0.1.0"))
+        add(g, key, M.reviewedBy, human_reviewer(g))
     elif case == "credit_approval":
         key = node(g, iri("synthetic", "decision"), M.VerificationDecision)
         add(g, key, M.decisionDisposition, "approved")
@@ -90,12 +100,29 @@ def test_negative_semantics(g, case):
     elif case == "incompatible_similarity":
         sim = iri("synthetic", "similarity")
         g.set((sim, M.reviewState, C.accepted))
-        add(g, sim, M.reviewedBy, iri("agent", "mvo-importer-0.1.0"))
+        add(g, sim, M.reviewedBy, human_reviewer(g))
     else:
         g.add((ann, RDF.type, M.IdentityAssertion))
         g.set((ann, M.predicate, M.exactPhysicalSample))
         add(g, ann, M.linkResolution, "exact_matrix_cell")
     assert not validate_graph(g)[0], case
+
+
+def test_human_reviewed_acceptance_is_admissible(g):
+    ann = iri("synthetic", "annotation")
+    g.set((ann, M.reviewState, C.accepted))
+    add(g, ann, M.reviewedBy, human_reviewer(g))
+    ok, errors, _ = validate_graph(g)
+    assert ok, errors
+
+
+def test_reviewer_typed_as_both_person_and_software_is_rejected(g):
+    ann = iri("synthetic", "annotation")
+    reviewer = human_reviewer(g)
+    g.add((reviewer, RDF.type, PROV.SoftwareAgent))
+    g.set((ann, M.reviewState, C.accepted))
+    add(g, ann, M.reviewedBy, reviewer)
+    assert not validate_graph(g)[0]
 
 
 def test_roundtrip_literals(g, tmp_path):

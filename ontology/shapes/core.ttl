@@ -27,11 +27,14 @@ mvo:AssertionShape a sh:NodeShape ; sh:targetClass mvo:Assertion ; sh:nodeKind s
  UNION { $this mvo:validFrom ?s ; mvo:validUntil ?e . FILTER(?e < ?s) }
  UNION { $this mvo:recordedAt ?r ; mvo:transactionEnd ?t . FILTER(?t < ?r) }
  }""" ] ;
- sh:sparql [ sh:message "Accepted assertions require explicit reviewer; software import is not review." ; sh:select """
+ sh:sparql [ sh:message "Accepted assertions require a named human reviewer (prov:Person); software import or an automated agent is not review." ; sh:select """
  PREFIX mvo: <https://emergentbiome.earth/ontology/mvo/>
  PREFIX c: <https://emergentbiome.earth/ontology/mvo/concept/>
- SELECT $this WHERE { $this mvo:reviewState c:accepted . FILTER NOT EXISTS { $this mvo:reviewedBy ?r } }
- """ ] .
+ PREFIX prov: <http://www.w3.org/ns/prov#>
+ SELECT $this WHERE {
+ $this mvo:reviewState c:accepted .
+ FILTER NOT EXISTS { $this mvo:reviewedBy ?r . ?r a prov:Person . FILTER NOT EXISTS { ?r a prov:SoftwareAgent } }
+ }""" ] .
 
 mvo:ClaimShape a sh:NodeShape ; sh:targetClass mvo:Claim ;
  sh:property [ sh:path mvo:allowedWording ; sh:minCount 1 ; sh:datatype xsd:string ] ;
