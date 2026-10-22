@@ -22,6 +22,27 @@ sys.modules[VALIDATOR_SPEC.name] = VALIDATOR
 VALIDATOR_SPEC.loader.exec_module(VALIDATOR)
 
 
+def not_git_ignored(paths):
+    """Drop git-ignored local material (private manuscript packages) from the scan.
+
+    Those packages stay on the author's machine and never ship; tracked files
+    are never reported by `git check-ignore`, so every tracked doc is still checked.
+    """
+    paths = list(paths)
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(ROOT), "check-ignore", "--stdin"],
+            input="\n".join(str(path.relative_to(ROOT)) for path in paths),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        return paths
+    ignored = {line for line in result.stdout.splitlines() if line}
+    return [path for path in paths if str(path.relative_to(ROOT)) not in ignored]
+
+
 class ApolloPathPortabilityTests(unittest.TestCase):
     def test_scripts_and_runbooks_have_no_account_specific_home_paths(self):
         candidates = [
@@ -32,7 +53,7 @@ class ApolloPathPortabilityTests(unittest.TestCase):
         candidates.extend(PORTABLE_DOCS)
         candidates.extend(path for root in OPERATIONAL_DOC_ROOTS for path in root.rglob("*.md"))
         account_home = re.compile(r"/home/[^/\s|]+/")
-        for path in candidates:
+        for path in not_git_ignored(candidates):
             with self.subTest(path=path.relative_to(ROOT)):
                 self.assertIsNone(account_home.search(path.read_text(errors="replace")))
 
