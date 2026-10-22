@@ -16,9 +16,11 @@ validation-ready methane-risk intelligence**
 
 ## Overview
 
-MethaNet is the internal molecular-attestation platform and repository behind
-the public **EmergentBiome Molecular Atlas**. It supports blue-carbon methane
-diligence.
+Ecosphere Blue, Inc. develops **EmergentBiome**, a molecular-evidence
+platform whose public face is the **EmergentBiome Molecular Atlas**. MethaNet
+is its first application, methane screening and field-validation planning for
+blue-carbon diligence, and this repository holds both the platform code and
+the application.
 It links protein-language geometry, genomic context, functional machinery,
 expression evidence, genome quality, taxonomy, provenance, and validation
 readiness through the MethaNet Bridge Attestation Graph, or MBAG. The current
@@ -139,9 +141,10 @@ MAG-to-sample, abundance, environmental, and outcome joins are authoritative.
 
 We completed a cross-ecosystem proteome embedding POC between MUCC wetland
 genomes and rumen genomes (PRJEB31266) using ESM2-650M protein language model
-embeddings. The POC was developed for the
+embeddings. The POC was originally prepared with the
 [Hatch Blue Blue Catalyst](https://www.hatch.blue/programs/blue-catalyst)
-accelerator program in Singapore in May 2026.
+program (Singapore, May 2026) in mind. It does not indicate participation in
+that program's 2026 cohort.
 
 **Historical 662-genome cohort (`apolo_full_20260228_080644_embed_20260305_061952`)**
 
@@ -156,23 +159,37 @@ accelerator program in Singapore in May 2026.
 | Bridge genomes | 14 with ≥1 opposite-ecosystem k-NN neighbor | Out of 662 total |
 | Top bridge | bin.8 (Archaea), alpha-transfer score=3.47 | >6 SDs above cohort mean; all top 11 are rumen Archaea |
 
-**Embedding configuration reconciliation (29 September 2026).** The historical run above pooled layers 20–33; later atlas lanes used layer 33. All 662 retained pilot proteomes have now been recomputed under final-layer pooling, with per-record retained-input and original-pooling reproduction checks. The corrected public geometry is bound to `configs/atlas_embedding_contract_20260929.json` and uses `configs/methanet_atlas_lanes_20260929.tsv`. Old mixed-pooling cross-run positions, links and rankings remain superseded; the historical within-run statistics above are not claims about the corrected atlas. Historical June model-revision metadata remains incomplete. Biological transfer and methane prediction require independent validation. See [the release receipt](docs/releases/atlas_embedding_reconciliation_20260929.md).
+**Embedding configuration reconciliation (29 September 2026).** The historical run above pooled layers 20–33; later atlas lanes used layer 33. All 662 retained pilot proteomes have now been recomputed under final-layer pooling, with per-record retained-input and original-pooling reproduction checks. The corrected public geometry is bound to `configs/atlas_embedding_contract_20260929.json` and uses `configs/methanet_atlas_lanes_20260929.tsv`. Old mixed-pooling cross-run positions, links and rankings remain superseded; the historical within-run statistics above are not claims about the corrected atlas. Historical June model-revision metadata remains incomplete. Biological transfer and methane prediction require independent validation. Mean-pooled genome vectors are also nearly collinear. Two random genomes have a median cosine similarity of 0.9942, against 0.9973 for nearest core members, so nearest-neighbour links need centering or whitening and taxonomy-matched controls before they can be read as biology. See [the release receipt](docs/releases/atlas_embedding_reconciliation_20260929.md).
 
-**Key scientific findings**
+**Domain composition caveat (21 October 2026).** Every wetland genome in this
+pilot is archaeal: the 107 MUCC genomes are a Methanoregula-group set (106
+Methanomicrobiales, 1 Undinarchaeales) compiled for Bechtold et al. (2025).
+Of the 518 rumen MAG/bin units, 507 are bacteria and 11 are archaea (37
+assembly-context units are excluded). Ecosystem and domain are therefore
+almost the same partition, so the PERMANOVA, silhouette and classifier results
+above mostly show that proteome embeddings separate archaea from bacteria. The
+40-genome baseline reports identical purity for ecosystem and domain (0.990)
+for the same reason. These results do not show ecosystem-specific methane
+biology.
 
-- Rumen Archaea dominate the historical bridge-candidate ranking. All top 11
-  alpha-transfer scores are Archaea, which is consistent with conserved
-  methanogenesis machinery and remains a hypothesis for functional review.
-- Classifier performance of AUC 1.0 documents strong source and ecosystem label
-  separability within this POC. Methane transfer and activity remain separate
-  validation questions.
-- **P0 caveat.** Source and ecosystem are perfectly confounded. All rumen
-  genomes come from PRJEB31266, and all wetland genomes come from MUCC.
-  Deconfounding with additional sources is the highest-priority next step.
+**Key scientific findings, restated**
+
+- Rumen Archaea dominate the historical bridge-candidate ranking. Because the
+  wetland side is entirely archaeal, rumen archaea are the rumen genomes most
+  similar to it by construction. The ranking reflects taxonomy and does not
+  show methanogenesis machinery shared across ecosystems.
+- The classifier's AUC of 1.0 reflects source and domain separability within
+  this POC. A taxonomy-only label separates the same groups. Methane transfer
+  and activity remain separate validation questions.
+- **P0 caveat.** Source, ecosystem and domain are confounded. All rumen
+  genomes come from PRJEB31266, all wetland genomes come from MUCC, and the
+  two sides differ in domain. Deconfounding needs additional sources and
+  taxonomy-matched comparisons.
 
 **40-genome baseline (initial validation, `apolo_20260226_194505`)**
 - 40 samples (20 MUCC + 20 rumen), PERMANOVA R²=0.517, silhouette=0.433, trajectory t=13.97 (p=1.5e-16)
-- bin.23 (Archaea) embeds 100% inside wetland cluster (mixing_coeff=1.0)
+- bin.23 (Archaea) embeds 100% inside wetland cluster (mixing_coeff=1.0),
+  as expected when the wetland cluster is the archaeal cluster
 - The R² decrease from 0.517 to 0.202 at scale is consistent with greater
   within-rumen diversity after adding 515 rumen genomes.
 

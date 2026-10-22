@@ -10,10 +10,12 @@ status and artifact paths remain in
 
 ## Canonical Position
 
-MethaNet is the internal molecular-attestation platform and repository behind
-the public **EmergentBiome Molecular Atlas**. The public page calls its
-reviewable evidence layer the **EmergentBiome evidence graph**; MBAG remains
-the internal architecture and historical artifact identifier. The landing
+Ecosphere Blue, Inc. develops **EmergentBiome**, the molecular-evidence
+platform, whose public face is the **EmergentBiome Molecular Atlas**. MethaNet
+is the platform's first application, methane screening and field-validation
+planning for blue carbon, and the name of this repository. The public page
+calls the reviewable evidence layer the **EmergentBiome evidence graph**; MBAG
+remains the internal architecture and historical artifact identifier. The landing
 page's August atlas and `/report/` use the 2026-08-10 release. Its separately
 reviewed September three-case explorer uses a curated public projection of
 selected MVO 0.2.0 evidence; it is not a live connection to the local graph
@@ -128,7 +130,7 @@ The current system can produce:
 | Molecular potential | “Completed MAGs carry QC-aware functional evidence.” | Common cross-lane mechanism-feature contract |
 | ESM-2 neighborhoods | “Embedding neighborhoods identify review candidates.” | Source-balanced, taxonomy-aware validation for transfer claims |
 | MUCC expression | “Processed expression detection provides occupancy support where present.” | Normalization, exact sample linkage, and activity validation |
-| Monitoring | “MethaNet prioritizes the next measurement or validation action.” | Partner workflow validation |
+| Monitoring | “MethaNet prioritizes where to measure next. That prioritization will be tested against field outcomes before it is used to waive any measurement.” | Partner workflow validation and outcome testing |
 | Sample methane risk | “Sample risk remains a calibrated target.” | Abundance, environment, uncertainty, and paired field evidence |
 | A to E tiers | “A to E tiers are target product vocabulary.” | Quantitative thresholds and holdout calibration |
 | Carbon-market use | “MethaNet can support upstream diligence and monitoring design.” | Methodology integration, independent review, and registry-aligned validation |
@@ -137,6 +139,8 @@ The current system can produce:
 
 Use these terms consistently:
 
+- **Ecosphere Blue, Inc.** for the company, **EmergentBiome** for the
+  platform, and **MethaNet** for its first application and this repository.
 - **Molecular attestation** for the current product category.
 - **MBAG evidence graph** or **molecular-attestation knowledge graph** for the
   internal architecture; **EmergentBiome evidence graph** for the public
@@ -165,7 +169,7 @@ under separate typed evidence contracts.
 Repository and external materials should follow one coherent sequence:
 
 1. Methane can erode blue-carbon climate value.
-2. Direct monitoring is expensive and spatially sparse.
+2. Direct monitoring is expensive and spatially sparse, so it must be targeted.
 3. The EmergentBiome Molecular Atlas presents sequencing-derived evidence and
    explicit gaps through a traceable review surface.
 4. The internal MBAG architecture separates representation context, mechanism evidence, and reliability

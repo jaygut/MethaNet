@@ -12,6 +12,17 @@
 > [atlas data foundation](atlas_data_foundation.md) and [release
 > pointer](../configs/atlas_current_release.json) for current interpretation.
 
+> **Correction, 2026-10-21:** The 40-sample structure-recovery result quoted
+> in this package (about 99 percent cluster purity) reports identical purity
+> for ecosystem and domain because every wetland genome in the pilot is
+> archaeal and nearly every rumen genome is bacterial. It mostly measures
+> archaea-versus-bacteria separation and is not evidence of methane-relevant
+> structure, so it should not anchor a first meeting. Sections 2 and 6 now
+> restate the validation thresholds: a dozen sites gives a feasibility readout,
+> and a validation verdict needs several tens of independent sites. Methane is
+> treated as an emissions risk that can offset credited benefit, which is
+> distinct from permanence.
+
 > **Status: 2026-08-10 controlled-diligence validation design; not customer-validated.**
 >
 > This package preserves customer-discovery questions and proposed pilot
@@ -36,7 +47,7 @@ What MethaNet can show today is a source-audited, four-lane molecular evidence l
 Three capability tiers recur throughout and are kept distinct everywhere:
 
 - **(A) Methane flux prediction (continuous):** predicting an actual methane emission rate. Aspirational and currently blocked. Requires a paired molecular, environmental, and measured-flux calibration layer that does not yet exist inside MethaNet.
-- **(B) Methane-risk classification (ranking / binary):** flagging and ranking sites where a material methane liability is more plausible. The credible near-term target. Validatable against proxies and held-out labels once a flux or activity label is joined.
+- **(B) Methane-risk classification (ranking / binary):** flagging and ranking sites where a material methane liability is more plausible. The credible next target, once paired field data exist. Validatable against proxies and held-out labels once a flux or activity label is joined.
 - **(C) Microbial fingerprint discovery:** identifying which MAGs and functions co-occur with methane-relevant contexts, delivered as reviewable candidate cards with explicit blockers. Supported today as hypothesis generation.
 
 ---
@@ -113,7 +124,7 @@ This section defines, precisely, what a prediction is, what an observation is, w
 
 - The existing structure-recovery result runs on **40 samples** (5 clusters excluding noise, 10 percent noise fraction). This is adequate to demonstrate that the latent space carries biological structure, not to demonstrate methane skill.
 - For a near-term risk-classification demo (tier B), the wetland side is adequate: the Old Woman Creek (OWC) scaffold provides **2,508 wetland MAG rows (2,501 source-protein supported), of which 1,948 are expression-supported across 133 depth- and month-resolved metatranscriptome samples**, giving a genuine held-out split by month or depth. The multi-wetland MUCC source study (Bechtold et al. 2025, Nature Communications 16:944) spans nine freshwater wetlands (seven in the United States, two in northern Sweden; marsh, swamp, fen, and bog) and integrates 16S, metagenomes, metatranscriptomes, and annual methane flux, providing site-level high-vs-low methane contrast usable as classification labels once that flux is joined. The measured flux lives in that external publication and in AmeriFlux/FLUXNET-CH4, not yet ingested into MethaNet.
-- A defensible minimum for a first classification readout is roughly a **dozen or more sites** spanning both high- and low-methane contexts with a leave-one-site-out or leave-one-month-out split. Below that, precision and recall estimates are too unstable to report.
+- A **dozen or more sites** spanning both high- and low-methane contexts gives a first, wide-interval feasibility readout with a leave-one-site-out or leave-one-month-out split. A validation verdict needs several tens of independent sites: the V19 units-needed simulation gives an 84 percent chance of a "supported" verdict at 64 independent sites when the true added skill is 30 percent. Below a dozen sites, precision and recall estimates are too unstable to report.
 
 ### What predicted-vs-observed CAN be shown right now
 
@@ -250,7 +261,7 @@ Three buyers engage with MethaNet, each for a different reason and each paying f
 
 ### (b) Carbon-credit buyer / investor / insurer
 
-- **What they care about.** Downside. They are pricing the chance that a credit they buy, back, or underwrite turns out not to represent real, durable removal. Methane leakage is a permanence risk that most diligence never looks at, because it is invisible at the accounting layer.
+- **What they care about.** Downside. They are pricing the chance that a credit they buy, back, or underwrite turns out not to represent real, durable removal. Methane is an emissions risk that can offset the credited carbon benefit, and most diligence does not measure it.
 - **The output they need.** An independent, upstream molecular signal they can put into diligence: a flag that says "this project's biology carries elevated methane-emission potential, prioritize verification here," with the evidence and the uncertainty both legible.
 - **What makes them take a meeting.** We are looking at a risk axis their current process ignores, we have a real molecular backbone across blue-carbon systems (662 POC proteomes; 625 MAG/bin-comparable units after quarantining 37 non-comparable units, plus the MSM and Futian coastal lanes in preparation), and we can produce reviewable candidate cards with explicit confidence tiers and blockers. The pitch is a new diligence input, positioned upstream of registry accounting, not a replacement for it.
 - **What makes them PAY.** Calibration. A buyer or insurer pays for a signal that has been shown to track observed methane behavior: risk classification validated on an independent holdout, ideally with calibrated risk versus observed flux. That is exactly the milestone we have not cleared. So the honest offer today is a paid pilot to build and test that signal on their portfolio, with the explicit statement that MethaNet is not registry-approved, not credit-decisional, and does not certify or replace flux accounting.
@@ -272,7 +283,7 @@ Four escalating bars. Each names the concrete evidence that clears it. We state 
 
 The minimum to earn a serious first meeting.
 
-- Reproducible structure recovery on real data: ESM2 proteome embeddings recover held-out ecosystem and domain labels at about 99 percent cluster purity (cluster_purity_ecosystem = 0.990, cluster_purity_domain = 0.990, silhouette_non_noise = 0.433, 5 clusters, 10 percent noise) on the 40-sample POC. Presented as label recovery, not flux.
+- Reproducible structure recovery on real data: ESM2 proteome embeddings recover held-out ecosystem and domain labels at about 99 percent cluster purity (cluster_purity_ecosystem = 0.990, cluster_purity_domain = 0.990, silhouette_non_noise = 0.433, 5 clusters, 10 percent noise) on the 40-sample POC. Presented as label recovery, not flux. Because ecosystem and domain coincide in that POC, it mostly shows archaea-versus-bacteria separation (see the 21 October 2026 correction), which makes it weak evidence for a first meeting.
 - Fingerprint-discovery candidate cards: reviewable cards naming which MAGs and functions co-occur with methane-relevant contexts (26 in the frozen atlas, 100 MRV-readiness cards on OWC/MUCC), each with a mechanism class and explicit blockers.
 - A credible protocol on paper: the named paired datasets and the holdout design that would turn fingerprints into validated risk classification.
 
@@ -283,6 +294,7 @@ Enough for a partner to commit budget to a scoped co-development.
 - A future held-out expression-detection analysis may use the OWC scaffold (2,508 archive MAGs; 2,501 source-protein supported; 1,948 expression-supported across 133 processed sequencing-sample contexts) after normalization and source-aware split checks. It must not be reported as methane-risk classification without an eligible outcome label.
 - Sample size stated honestly: 133 OWC samples give a genuine within-site split; multi-site classification labels wait on the flux join.
 - The source-confounding caveat carried explicitly, with leave-one-source-out named as the next control.
+- A leave-one-site-out analysis across the nine MUCC wetlands (Bechtold et al. 2025) once their published flux is joined. Nine wetlands give a first feasibility estimate with wide intervals and cannot return a validation verdict.
 
 This bar is a proposed analysis gate, not a completed classification result or observed-flux validation.
 
@@ -290,7 +302,7 @@ This bar is a proposed analysis gate, not a completed classification result or o
 
 Enough to charge for a risk-classification product, not just a pilot.
 
-- Calibrated methane-risk versus observed flux on an independent holdout: the published multi-wetland methane flux (Bechtold et al. 2025) fetched and joined, site-level high-versus-low methane labels assigned, and leave-one-site-out validation across the MUCC wetlands reported as precision, ROC-AUC, and a calibration check, not rank alone.
+- Calibrated methane-risk classification versus observed flux in a multi-site trial sized by the units-needed estimate (several tens of independent sites), reported as precision, ROC-AUC and a calibration check against environment-only baselines. The nine-wetland MUCC analysis counts as Bar 2 evidence.
 - Every count and denominator reconciled and carried with its gap (for example MSM 1,428 local versus 966 published).
 - The claim held to risk classification (distinction B). Continuous flux prediction remains labeled aspirational.
 
@@ -352,7 +364,7 @@ calibrated methane-risk intelligence.
 **What MethaNet answers.** Given metagenome-derived microbial genomes (MAGs) and proteomes from a wetland or coastal site, MethaNet screens the molecular evidence for methane-relevant capacity: which organisms and functions are present, where methane permanence risk is more plausible, and where field flux measurement should be prioritized. It is an upstream molecular screening layer for methane-risk prioritization and monitoring design, not a replacement for flux measurement.
 
 **What we can show today (real numbers).**
-- **Structure recovery, honest predicted-vs-observed.** On a 40-sample proof-of-concept, unsupervised ESM2 proteome embeddings recover held-out ecosystem and domain labels at about 99 percent cluster purity (ecosystem 0.990, domain 0.990; silhouette 0.433; 5 clusters; 10 percent noise). This shows the latent space carries real biological structure. It is label recovery, not methane prediction.
+- **Structure recovery, honest predicted-vs-observed.** On a 40-sample proof-of-concept, unsupervised ESM2 proteome embeddings recover held-out ecosystem and domain labels at about 99 percent cluster purity (ecosystem 0.990, domain 0.990; silhouette 0.433; 5 clusters; 10 percent noise). Ecosystem and domain coincide in this POC, so the result mostly shows that the latent space separates archaea from bacteria. It is label recovery, not methane prediction.
 - **Molecular backbone.** 662 POC proteomes (555 rumen reference, 107 wetland/MUCC); 625 MAG/bin-comparable units after quarantining 37 non-comparable units.
 - **Consolidated warehouse.** A gate-passed functional atlas over the 625 units, DuckDB-queryable, 711 validation gates passing, with methane-mechanism, sulfur-competition, and MAG-level MRV feature tables.
 - **Wetland activity scaffold.** MUCC v1 (Old Woman Creek): 2,508 wetland MAG rows (2,501 source-protein supported), of which 1,948 are expression-supported across 133 depth- and month-resolved metatranscriptome samples (259,084 MAG-by-sample expression rows), plus 100 MRV-readiness candidate cards.
