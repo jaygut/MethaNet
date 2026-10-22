@@ -24,7 +24,7 @@
     blindspot: [["0 verified pairs", "wetland/mangrove genome-to-flux pairs in this atlas", true], ["no default", "VM0033 methane value below 18 ppt"]],
     atlas: [[D.fmt(EB.num.triViewReady), "genome records on the map", true], [D.fmt(EB.num.sampledNeighborLinks), "neighbor links drawn"], [D.fmt(EB.num.highlightedCandidateLinks), "selected nearest-reference links"], [String(EB.num.standardizedRumenReciprocalPairs), "rumen matches that stay mutual after standardizing"]],
     surveyor: [["1 real genome", "from the August atlas", true], ["0 matched flux", "measurements for this record"]],
-    cheap: [["salinity", "sets the baseline", true], ["genome evidence", "flags exceptions worth measuring"]],
+    cheap: [["salinity", "sets the default", true], ["genome evidence", "could flag exceptions worth measuring (untested)"]],
     engine: [[D.fmt(EB.num.triViewReady), "records screened for methane-cycle genes", true], ["2", "annotation routes, compared separately"], [D.fmt(EB.num.mechanismComparableTriView), "records with a cross-route methane score"]],
     ladder: [["rung 0", "available now: review and triage", true], ["rungs 1–5", "the path to calibrated risk"]],
     path: [[EB.study.sampleEvents + " planned", "sample-events, not independent replicates", true], [EB.study.plots + " plots", "the replicate unit in analysis"]],
@@ -108,7 +108,7 @@
     const points = [
       "Pair " + S.sampleEvents + " planned sediment metagenomes with chamber methane flux, chemistry and hydrology across three restoration stages, " +
         "four salinity positions and two seasons",
-      "Test whether molecular features predict net methane flux better than environmental covariates and a reviewed methane-marker baseline, on the same held-out records",
+      "Test, within this site, whether molecular features predict net methane flux better than environmental covariates and a reviewed methane-marker baseline, on the same held-out records",
       "Freeze each model before its flux outcomes are unblinded: the first campaign tests a new site; the second tests seasonal transfer at the same points, not independent-site validation",
       "Release the paired data and reproducible workflows under the agreed access and sharing terms, including if molecular features add little",
     ];
@@ -116,7 +116,8 @@
     document.getElementById("askStudyNote").textContent =
       S.sampleEvents + " sample-events = " + S.plots + " plots × " + S.micrositesPerPlot + " microsites × " + S.campaigns.length + " seasons. " +
       "Revisits are repeated measurements, not independent replicates; the " + S.plotsPerCombination +
-      " plots at each stage and salinity position are the replicate unit.";
+      " plots at each stage and salinity position are the replicate unit. " +
+      "One site is one independent unit for geographic transfer, so a general verdict needs several tens of independent sites. This study is designed to help size that trial.";
     // factsheet rows
     const F = [
       ["Genome records registered", D.fmt(EB.num.warehouseReach) + " <span class='in-progress'>(255 documented source gaps)</span>"],

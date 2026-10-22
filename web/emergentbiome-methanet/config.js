@@ -12,7 +12,7 @@
      1. What does it do?            (the decision it produces, not the method)
      2. Who is it for?              (the named buyer and their job-to-be-done)
      3. What exactly do I get?      (the concrete output object, shown)
-     4. Why add it to proxy screening? (vs using metabarcoding, qPCR, or salinity alone)
+     4. Why add it to proxy screening? (vs metabarcoding, qPCR, salinity, porewater chemistry or a one-date chamber survey)
      5. What does it NOT claim?     (the honesty that makes it credible)
    Voice: plain words first, technical terms in the glossary and report. One
    caveat per point, placed where it changes the reading. Every external fact
@@ -140,7 +140,8 @@ window.EB = (function () {
     methaneGWP: 30,                  // ~30x CO2 over 100yr (round GWP-100)
     methaneGWP20: 80,                // ~80x CO2 over 20yr (biogenic GWP-20, IPCC AR6, the front-loaded story)
     methaneLifetimeYears: 12,        // perturbation lifetime ~11.8yr (IPCC AR6). NOT a half-life.
-    benchmarkR2: 0.879,              // marker-ratio literature target (Lee et al. 2014, freshwater)
+    // 21 Oct 2026: the in-sample marker-ratio R2 (0.879, one freshwater study) was removed.
+    // In-sample correlations do not show added skill over environmental baselines on held-out sites.
   };
 
   /* ---- external grounded facts (each traces to the dossier; sources + dates inline) ----
@@ -157,15 +158,14 @@ window.EB = (function () {
     blueActiveProjects: 10,          // ~10 projects actively issuing (supply-constrained)
     premiumSource: "Platts DBC, Aug 2025",
     // Methane wedge: VM0033 v2.1; Frontiers Env Sci 2024; par.nsf.gov review.
-    vm0033SalinityPpt: 18,           // below 18 ppt salinity: NO default CH4 factor permitted
+    vm0033SalinityPpt: 18,           // v2.1: default CH4 factors only above 18 ppt; the v3.0 draft (consultation closed 5 Oct 2026) adds a US-only 5-18 ppt default
     ch4HotspotX: 400,                // methane hotspots ~400x background (Robison et al. 2021)
     wedgeSource: "VM0033 v2.1",
     // Flight to quality: BeZero / Sylvera (State of Carbon Credits 2025).
     integrityRetireFromPct: 10,      // high-integrity retirements 10% share (2022)
     integrityRetireToPct: 22,        // -> 22% share (early 2025); volume to value
-    // Science backbone: Baker et al. 2022 ISME J (salt ponds); ISME J 2022 methylotrophy.
-    mcraFluxSpearman: "0.7",         // methanogen marker mcrA vs measured CH4 flux, Spearman r > 0.7
-    scienceSource: "Baker et al. 2022, ISME J",
+    // 21 Oct 2026: the in-sample mcrA-to-flux correlation (Spearman r > 0.7, Baker et al. 2022) was
+    // removed. It is untested against salinity and porewater chemistry at new sites; keep it out of copy.
     // Competitive white space: structured primary-source review (2026-07-01).
     whiteSpaceAsOf: "July 2026",     // no company found doing molecular methane-risk attestation for blue carbon
   };
@@ -179,7 +179,7 @@ window.EB = (function () {
       "EmergentBiome turns their DNA into evidence you can check, and shows which field measurement would settle what DNA alone cannot.",
     sub:
       "Available now: 7,710 genome records from mangroves, wetlands and a rumen reference set, and three worked evidence cases. " +
-      "Next: a proposed field study to test whether molecular data improves methane prediction.",
+      "Next: a proposed field study at one restoration landscape to test whether molecular data add to plot-scale methane prediction there, and to size the multi-site trial a general answer needs.",
     // Two dated scopes: the frozen August atlas and the September case reviews.
     release: "Payload: 10 Aug · Case reviews: 26 Sep · Geometry reconciled: 29 Sep 2026",
   };
@@ -239,7 +239,7 @@ window.EB = (function () {
     {
       term: "VM0033",
       full: "Verra methodology for tidal wetland restoration",
-      detail: "The carbon-crediting method for tidal wetland and seagrass restoration. It allows a default methane value only where salinity is above 18 ppt.",
+      detail: "The carbon-crediting method for tidal wetland and seagrass restoration. Version 2.1 allows a default methane value only where salinity is above 18 ppt. A version 3.0 draft, open for consultation until 5 October 2026, would add a default for US marshes between 5 and 18 ppt.",
     },
     {
       term: "Sample-event",
@@ -277,7 +277,7 @@ window.EB = (function () {
     { rung: 4, title: "Measured flux", state: "dim",
       unlock: "Chamber or eddy-covariance methane flux and incubations, paired with the molecular evidence." },
     { rung: 5, title: "Calibrated risk", state: "target",
-      unlock: "A risk model tested on held-out sites, with A–E tiers mapped to thresholds and uncertainty." },
+      unlock: "A risk model tested on enough independent held-out sites, with A–E tiers mapped to thresholds and uncertainty." },
   ];
   const ladderHorizon = "6 · MRV product & audit / registry integration";
 
@@ -357,7 +357,7 @@ window.EB = (function () {
       id: "blindspot", n: 2, label: "02 · The Measurement Gap",
       kicker: "Verification today",
       headline: "Methane evidence is thinnest where it matters most.",
-      copy: "Under Verra's VM0033 methodology, only tidal wetlands above 18 ppt salinity may use a default methane value; fresher sites must estimate it from field data, published values, proxies or models. " +
+      copy: "Under version 2.1 of Verra's VM0033 methodology, only tidal wetlands above 18 ppt salinity may use a default methane value; fresher sites must estimate it from field data, published values, proxies or models. " +
         "Field measurements are costly, cover little ground, and are rarely paired with the sediment DNA. " +
         "In this atlas, no wetland or mangrove genome yet has a methane measurement from the same sample: zero pairs, not zero emissions.",
       source: "Source: Verra VM0033, default factor from Poffenbarger et al. 2011.",
@@ -384,10 +384,11 @@ window.EB = (function () {
     {
       id: "cheap", n: 5, label: "05 · Beyond Salinity",
       kicker: "Why genomes add information",
-      headline: "Salinity sets the baseline. Microbes set the exceptions.",
+      headline: "Salinity sets the default. Microbes may explain the exceptions.",
       copy: "Saltier wetlands usually emit less methane, because sulfate-reducing microbes outcompete most methane makers. " +
         "Some methanogens use substrates that sulfate reducers ignore, and keep producing methane in salty sediments. " +
-        "A salinity reading cannot see them. Genome evidence can reveal the microbes involved, which tells a field team where a measurement is most informative.",
+        "Genome evidence could show which microbes are involved and help a field team decide where to measure. " +
+        "A field test must show whether it beats salinity and porewater chemistry.",
       source: "Sources: Poffenbarger et al. 2011, Wetlands; Krause and Treude 2021, Geochimica et Cosmochimica Acta.",
       data: "illustrative",
     },
@@ -429,7 +430,8 @@ window.EB = (function () {
       id: "path", n: 10, label: "10 · Partnership Path",
       kicker: "Proposed field study",
       headline: "Pair molecular evidence with field outcomes.",
-      copy: "A proposed two-season study would pair each sediment metagenome with chamber methane flux, chemistry and hydrology at two microsites in each of 36 plots.",
+      copy: "A proposed two-season study would pair each sediment metagenome with chamber methane flux, chemistry and hydrology at two microsites in each of 36 plots. " +
+        "The plots test predictions within one site. A general answer needs several tens of independent sites, and this study is designed to help plan them.",
       data: "proposed",
     },
   ];

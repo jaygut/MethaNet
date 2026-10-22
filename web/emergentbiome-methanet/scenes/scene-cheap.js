@@ -75,7 +75,7 @@
 
       // teaching takeaway; the visible plot is explicitly illustrative
       if (!R.narrow) {
-        D.label(p, "salinity sets the baseline; genome evidence flags where to measure", R.px0, R.py1 + h * 0.075, D.rgba(EB.color.textPrimary, 0.9 * axesA), 10.5);
+        D.label(p, "salinity sets the default · genome evidence could flag where to measure", R.px0, R.py1 + h * 0.075, D.rgba(EB.color.textPrimary, 0.9 * axesA), 10.5);
         D.label(p, "schematic · not site data, no flux or risk inferred", R.px0, R.py1 + h * 0.105, D.rgba(MUT, 0.85 * axesA), 9);
       }
       D.vignette(p, w, h, EB.color.bgBase, 0.5);
