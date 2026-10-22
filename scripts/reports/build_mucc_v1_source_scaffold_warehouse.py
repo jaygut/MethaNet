@@ -13,9 +13,16 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+SCRIPTS_DIR = Path(__file__).resolve().parents[1]
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
+
+from local_paths import methanet_root, portable_path
 
 BASE = Path("results/functional_metagenomics/mucc_v1_owc_wetland_20260626")
 COHORT_RUN_ID = "mucc_v1_owc_wetland_20260626"
@@ -28,7 +35,7 @@ CLAIM_BOUNDARY = (
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--repo-root", type=Path, default=Path.cwd())
+    parser.add_argument("--repo-root", type=Path, default=methanet_root(Path.cwd()))
     parser.add_argument("--run-dir", type=Path, default=BASE)
     parser.add_argument("--cohort-run-id", default=COHORT_RUN_ID)
     parser.add_argument("--output-dir", type=Path, default=BASE / "cohort_warehouse")
@@ -516,7 +523,7 @@ def table_specs(run_dir: Path) -> list[tuple[str, Path, str]]:
 
 
 def write_partitioned_table(
-    df: Any, output_dir: Path, table: str, cohort_run_id: str
+    df: Any, output_dir: Path, table: str, cohort_run_id: str, repo_root: Path
 ) -> dict[str, Any]:
     table_dir = output_dir / "parquet" / table / f"cohort_run_id={cohort_run_id}"
     table_dir.mkdir(parents=True, exist_ok=True)
@@ -524,7 +531,7 @@ def write_partitioned_table(
     df.to_parquet(path, index=False)
     return {
         "table": table,
-        "path": str(path),
+        "path": portable_path(path, repo_root),
         "rows": len(df),
         "columns": len(df.columns),
         "bytes": path.stat().st_size,
@@ -1143,6 +1150,7 @@ def markdown_report(
     manifest_rows: list[dict[str, Any]],
     checks: list[dict[str, str]],
     duckdb_path: Path,
+    repo_root: Path,
 ) -> str:
     status = "pass" if all(row["status"] != "fail" for row in checks) else "fail"
     lines = [
@@ -1157,7 +1165,7 @@ def markdown_report(
         "plus a DuckDB catalog. It is queryable atlas infrastructure, not a final curated "
         "MethaNet mechanism warehouse.",
         "",
-        f"DuckDB catalog: `{duckdb_path}`",
+        f"DuckDB catalog: `{portable_path(duckdb_path, repo_root)}`",
         "",
         "## Tables",
         "",
@@ -1216,7 +1224,7 @@ def build(args: argparse.Namespace) -> int:
         tables[table] = ensure_claim(df)
 
     manifest_rows = [
-        write_partitioned_table(df, output_dir, table, args.cohort_run_id)
+        write_partitioned_table(df, output_dir, table, args.cohort_run_id, repo_root)
         for table, df in sorted(tables.items())
     ]
     write_tsv(output_dir / "cohort_table_manifest.tsv", manifest_rows)
@@ -1225,7 +1233,7 @@ def build(args: argparse.Namespace) -> int:
     write_tsv(output_dir / "validation_gates.tsv", checks)
     (output_dir / "DATA_ARCHITECTURE_VALIDATION.md").write_text(
         markdown_report(
-            output_dir, args.cohort_run_id, manifest_rows, checks, duckdb_path
+            output_dir, args.cohort_run_id, manifest_rows, checks, duckdb_path, repo_root
         )
     )
     summary = {

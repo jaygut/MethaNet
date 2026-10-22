@@ -8,9 +8,9 @@ set -euo pipefail
 #
 # Required env var:
 #   APOLO_EXPORT_DIR=/absolute/path/to/export/directory/on/Apolo
-# Optional env vars:
-#   APOLO_USER="$USER" (defaults to the local account name)
-#   APOLO_HOST=$HPC_HOST
+# Optional env vars (also read from the git-ignored .methanet.env; see .methanet.env.example):
+#   APOLO_USER (defaults to HPC_USER, then the local account name)
+#   APOLO_HOST (defaults to HPC_HOST)
 #   APOLO_PASSWORD=...        # used only if sshpass is installed
 #
 # Notes:
@@ -57,9 +57,21 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-APOLO_USER="${APOLO_USER:-${USER:-}}"
-APOLO_HOST="${APOLO_HOST:-$HPC_HOST}"
+if [[ -f "$REPO_ROOT/.methanet.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$REPO_ROOT/.methanet.env"
+  set +a
+fi
+
+APOLO_USER="${APOLO_USER:-${HPC_USER:-${USER:-}}}"
+APOLO_HOST="${APOLO_HOST:-${HPC_HOST:-}}"
 APOLO_EXPORT_DIR="${APOLO_EXPORT_DIR:-}"
+
+if [[ -z "$APOLO_HOST" ]]; then
+  echo "ERROR: Set HPC_HOST (or APOLO_HOST) in the environment or in .methanet.env." >&2
+  exit 2
+fi
 
 if [[ -z "$APOLO_USER" ]]; then
   echo "ERROR: Set APOLO_USER to the account name on Apolo." >&2

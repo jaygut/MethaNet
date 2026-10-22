@@ -12,8 +12,15 @@ import argparse
 import csv
 import hashlib
 import json
+import sys
 from pathlib import Path
 from typing import Any
+
+SCRIPTS_DIR = Path(__file__).resolve().parents[1]
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
+
+from local_paths import expand_local_path
 
 
 REQUIRED_COLUMNS = [
@@ -120,8 +127,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def resolve(repo_root: Path, value: str) -> Path:
-    path = Path(value)
-    return path if path.is_absolute() else repo_root / path
+    return expand_local_path(value, repo_root)
 
 
 def split_paths(value: str | None) -> list[str]:

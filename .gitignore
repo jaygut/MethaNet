@@ -27,6 +27,9 @@ env/
 venv/
 ENV/
 
+# Machine-local paths and HPC login (template: .methanet.env.example)
+/.methanet.env
+
 # IDE
 .idea/
 .vscode/

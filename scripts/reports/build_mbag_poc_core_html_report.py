@@ -19,6 +19,7 @@ import json
 import math
 import re
 import subprocess
+import sys
 import textwrap
 from datetime import datetime, timezone
 from pathlib import Path
@@ -35,6 +36,10 @@ import seaborn as sns
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT / "scripts") not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT / "scripts"))
+
+from local_paths import expand_local_path, methanet_root
 
 DEFAULT_ESM_DIR = Path(
     "results/blue_catalyst_poc/runs/"
@@ -245,7 +250,7 @@ def read_warehouse_table(warehouse_dir: Path, table: str) -> pd.DataFrame:
     match = manifest.loc[manifest["table"].eq(table)]
     if match.empty:
         return pd.DataFrame()
-    return pd.read_parquet(Path(match.iloc[0]["path"]))
+    return pd.read_parquet(expand_local_path(match.iloc[0]["path"], methanet_root(REPO_ROOT)))
 
 
 def norm01(series: pd.Series) -> pd.Series:

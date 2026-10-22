@@ -24,6 +24,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
+from local_paths import methanet_root, portable_path
 from run_metabolic_guarded import OutputContractError, validate_workbook
 
 
@@ -146,7 +147,7 @@ def rel(path: Path, root: Path) -> str:
     try:
         return str(path.resolve().relative_to(root.resolve()))
     except ValueError:
-        return str(path.resolve())
+        return portable_path(path, root)
 
 
 def coerce_bool(value: Any) -> bool | None:
@@ -830,7 +831,7 @@ def build_mechanism_features(pd: Any, dim_mag: Any, tables: dict[str, Any], cove
     return pd.DataFrame(methane_rows), pd.DataFrame(sulfur_rows), pd.DataFrame(mrv_rows)
 
 
-def write_partitioned_tables(tables: dict[str, Any], output_dir: Path, cohort_run_id: str) -> list[dict[str, Any]]:
+def write_partitioned_tables(tables: dict[str, Any], output_dir: Path, cohort_run_id: str, repo_root: Path) -> list[dict[str, Any]]:
     output_dir.mkdir(parents=True, exist_ok=True)
     manifest = []
     for table_name, df in sorted(tables.items()):
@@ -842,7 +843,7 @@ def write_partitioned_tables(tables: dict[str, Any], output_dir: Path, cohort_ru
         df.to_parquet(target, index=False, compression="zstd")
         manifest.append({
             "table": table_name,
-            "path": str(target),
+            "path": portable_path(target, repo_root),
             "rows": int(len(df)),
             "columns": len(df.columns),
             "bytes": target.stat().st_size,
@@ -996,6 +997,7 @@ def validate_tables(tables: dict[str, Any], attempts: list[dict[str, Any]], sele
 
 
 def markdown_report(
+    repo_root: Path,
     output_dir: Path,
     cohort_run_id: str,
     attempts: list[dict[str, Any]],
@@ -1029,8 +1031,8 @@ Generated: {datetime.now(timezone.utc).isoformat()}
 - Completed curated MAG/bin runs selected for `dim_mag` and MAG-level features: {len(selected)}
 - Attempt status counts: {dict(status_counts)}
 - Attempt unit-scope counts: {dict(scope_counts)}
-- Output root: `{output_dir}`
-- DuckDB catalog: `{duckdb_path if duckdb_path else 'not built'}`
+- Output root: `{portable_path(output_dir, repo_root)}`
+- DuckDB catalog: `{portable_path(duckdb_path, repo_root) if duckdb_path else 'not built'}`
 
 ## Decision
 
@@ -1065,7 +1067,7 @@ Generated: {datetime.now(timezone.utc).isoformat()}
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--repo-root", default=Path.cwd(), type=Path)
+    parser.add_argument("--repo-root", default=methanet_root(Path.cwd()), type=Path)
     parser.add_argument("--cohort-run-id", default="fgx_662_apollo3_20260612")
     parser.add_argument(
         "--cohort-dir",
@@ -1134,11 +1136,11 @@ def main() -> int:
     tables["feature_mrv_mag_level"] = mrv
 
     validation, decision = validate_tables(tables, attempts, selected, args.expected_complete_count)
-    table_manifest = write_partitioned_tables(tables, output_dir, args.cohort_run_id)
+    table_manifest = write_partitioned_tables(tables, output_dir, args.cohort_run_id, repo_root)
     write_tsv(output_dir / "cohort_table_manifest.tsv", table_manifest)
     write_tsv(output_dir / "validation_gates.tsv", validation)
     duckdb_path = build_duckdb_catalog(output_dir, table_manifest) if args.build_duckdb else None
-    report = markdown_report(output_dir, args.cohort_run_id, attempts, selected, table_manifest, validation, decision, duckdb_path)
+    report = markdown_report(repo_root, output_dir, args.cohort_run_id, attempts, selected, table_manifest, validation, decision, duckdb_path)
     (output_dir / "DATA_ARCHITECTURE_VALIDATION.md").write_text(report)
     print(output_dir / "DATA_ARCHITECTURE_VALIDATION.md")
     print(decision)

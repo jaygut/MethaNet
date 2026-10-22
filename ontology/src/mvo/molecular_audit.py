@@ -15,6 +15,7 @@ from pathlib import Path
 import duckdb
 import pyarrow.parquet as pq
 
+from .ingest import strip_root_token
 from .model import digest
 
 
@@ -43,7 +44,7 @@ def write_tsv(path, rows, fields=None):
 
 def local_path(repo, value):
     """Explicit supported legacy root rebasing; never search by basename."""
-    path = Path(value)
+    path = Path(strip_root_token(str(value)))
     if not path.is_absolute():
         path = repo / path
     elif not path.is_relative_to(repo):

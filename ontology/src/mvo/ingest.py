@@ -26,8 +26,19 @@ def boolean(value: str) -> bool:
     return value == "true"
 
 
+ROOT_TOKENS = ("$METHANET_ROOT/", "${METHANET_ROOT}/")
+
+
+def strip_root_token(value: str) -> str:
+    """Portable manifests name the repository root as $METHANET_ROOT."""
+    for token in ROOT_TOKENS:
+        if value.startswith(token):
+            return value[len(token):]
+    return value
+
+
 def resolve(repo: Path, value: str) -> Path:
-    p = Path(value)
+    p = Path(strip_root_token(value))
     if p.is_absolute():
         # Legacy manifests contain absolute paths. Rebase only the repository suffix.
         if "MethaNet" not in p.parts:
