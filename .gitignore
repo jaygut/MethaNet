@@ -163,18 +163,20 @@ web/emergentbiome-methanet/_site/
 /scripts/reports/v16_*.py
 /scripts/reports/v16_*.sbatch
 
-# V18-V20 manuscript packages and their builders carry the same author,
+# V18-V21 manuscript packages and their builders carry the same author,
 # source-rights and deposition gates, and the packages hold private full-text
 # copies of publications. The October 2026 design-lab sprint (including its root
 # pointer logs) and private strategy drafts stay local for the same reason.
 /docs/white-paper/v18/
 /docs/white-paper/v19/
 /docs/white-paper/v20/
+/docs/white-paper/v21/
 /scripts/reports/v18_*.py
 /scripts/reports/v19_*.py
 /scripts/reports/v19_*.sbatch
 /scripts/reports/v19_*.R
 /scripts/reports/v20_*.py
+/scripts/reports/v21_*.py
 /design_lab/
 /CHANGELOG.md
 /DECISIONS.md
