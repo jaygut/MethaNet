@@ -156,7 +156,7 @@ maturity ladder, claim boundaries, and milestones.
 1. Reconcile the new release against `DIGEST.md` and the dated report freeze.
 2. Update the relevant values and copy in `config.js`.
 3. Generate the technical report into
-   `results/reports/emergentbiome_molecular_atlas_20260929_layer33/`.
+   `results/reports/emergentbiome_molecular_atlas_20261021_semantic_scores/`.
 4. Refresh `data/atlas.json` with `tools/export_atlas.py` and check the hash-bound geometry configuration with `tools/sync_geometry_release.py`.
 5. Build the public tree with `tools/publish_site.sh build`.
 6. Verify release parity, the landing page, the stable `/report/` alias, claim-boundary text,
@@ -171,7 +171,7 @@ MPLCONFIGDIR=/tmp/methanet_mpl NUMBA_CACHE_DIR=/tmp/methanet_numba \
   --lane-registry configs/methanet_atlas_lanes_20260929.tsv \
   --embedding-contract configs/atlas_embedding_contract_20260929.json \
   --freeze-manifest results/reports/methanet_3view_payload_freeze_20260810_end_to_end/freeze_manifest.tsv \
-  --skip-phate --output-dir results/reports/emergentbiome_molecular_atlas_20260929_layer33
+  --skip-phate --output-dir results/reports/emergentbiome_molecular_atlas_20261021_semantic_scores
 ```
 
 `--skip-phate` keeps the published projection buttons to UMAP (the default),

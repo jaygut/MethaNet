@@ -150,7 +150,7 @@ offer and the proposed field/model test alongside the landing page and deck.
 
 - Current geometry registry: `configs/methanet_atlas_lanes_20260929.tsv`
 - Current embedding contract: `configs/atlas_embedding_contract_20260929.json`
-- Current public report: `results/reports/emergentbiome_molecular_atlas_20260929_layer33/` (publisher default)
+- Current public report: `results/reports/emergentbiome_molecular_atlas_20261021_semantic_scores/` (publisher default; rebuilt 21 October 2026 with lane-warehouse screening scores, GTDB release fills and the taxonomy-controlled geometry retest, on the same frozen payload and geometry)
 
 - Lane registry: `configs/methanet_atlas_lanes.tsv`
 - Freeze: `results/reports/methanet_3view_payload_freeze_20260810_end_to_end/`
