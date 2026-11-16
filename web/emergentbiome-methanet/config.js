@@ -119,6 +119,23 @@ window.EB = (function () {
     highlightedCandidateLinks: 26, // corrected geometry audit, 2026-09-29
     standardizedRumenReciprocalPairs: 486, // corrected geometry audit, 2026-09-29
 
+    // Taxonomy-controlled geometry retest, 2026-10-21 (local record:
+    // results/analysis/geometry_retest_20261021). It reproduces every count above
+    // and shows that closest-core matches mostly reflect the core's lineages.
+    nearestCoreSamePhylumPct: 12,           // 859 of 7,077 closest-core matches share a phylum
+    bacteriaMatchedToArchaealReference: 2315, // bacterial records whose closest core genome is an archaeon
+    outsideCoreBacteria: 6390,
+    topTenReferenceSharePct: 53,            // share of all matches received by ten core genomes
+    candidateRumenRange: "10 to 16",        // candidates with a rumen closest reference, raw vs rescaled
+    candidateSelfMatches: 2,                // candidate links that join a genome to its own copy in the core
+    neighborSamePhylumPct: 77,              // k=35 neighbor links within one phylum (random pairs 10%)
+    neighborSameFamilyPct: 35,              // within one family (random pairs 1%)
+    randomPairSamePhylumPct: 10,
+    randomPairSameFamilyPct: 1,
+    rumenMutualPairRange: "478 to 887",     // mutual pairs involving a rumen genome across four scalings
+    rumenMutualSamePhylumPct: 30,           // of the 486 standardized pairs
+    mangroveWetlandMutualSamePhylumPct: 78,
+
     // POC geometry (662-genome cohort)
     pocCohort: 662,
     pocRumen: 555,
@@ -304,7 +321,7 @@ window.EB = (function () {
         points: [
           "Genome quality reported by the source: 94.89% complete, 1.14% contamination, checked against the archived genome.",
           "Marker transcripts were detected in the source's processed RNA data. Detection shows presence, not how active the pathway is.",
-          "Closest core reference after pooling reconciliation: mucc__3300005325_23, raw cosine 0.9979. An exploratory match for review.",
+          "Its closest core reference depends on how similarity is scaled. In the raw representation it is an archaeal genome (mucc__3300005325_23, cosine 0.9979), and after centering it is a rumen bacterium. The record is a review lead and carries no transfer claim.",
         ],
       },
       pending: {

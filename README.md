@@ -146,52 +146,57 @@ embeddings. The POC was originally prepared with the
 program (Singapore, May 2026) in mind. It does not indicate participation in
 that program's 2026 cohort.
 
-**Historical 662-genome cohort (`apolo_full_20260228_080644_embed_20260305_061952`)**
+**Historical 662-genome cohort (`apolo_full_20260228_080644_embed_20260305_061952`), retested with taxonomy controls on 21 October 2026**
 
-| Metric | Value | Interpretation |
-|--------|-------|----------------|
-| Cohort | 662 genomes (107 wetland MUCC + 555 rumen PRJEB31266) | 16.5× scale-up from baseline |
-| Embedding | 662 × 1,280 (ESM2-650M, mean of hidden layers 20–33, then mean over proteins) | Zero attrition, zero non-finite vectors |
-| PERMANOVA R² | 0.202 (p=0.001) | Ecosystem explains 20.2% of embedding variance |
-| Silhouette | 0.398 [95% CI: 0.364–0.439] | Bootstrap CI from 150 resamples |
-| CV Classifier | AUC=1.000, balanced accuracy=0.999 | 5-fold CV, PCA-50, balanced class weights |
-| Cohen's d | 3.63 | Very large effect size on trajectory axis |
-| Bridge genomes | 14 with ≥1 opposite-ecosystem k-NN neighbor | Out of 662 total |
-| Top bridge | bin.8 (Archaea), alpha-transfer score=3.47 | >6 SDs above cohort mean; all top 11 are rumen Archaea |
+| Metric | Historical result | Retest (625 MAG/bin units, final-layer vectors) | Reading |
+|--------|-------------------|--------------------------------------------------|---------|
+| Cohort | 662 genomes (107 wetland MUCC and 555 rumen PRJEB31266) | 518 rumen units (507 bacteria, 11 archaea) and 107 wetland units (all archaea, 106 Methanomicrobiales) | Ecosystem, domain and GTDB order are confounded |
+| Embedding | ESM-2 650M, mean of hidden layers 20 to 33, then mean over proteins | Final layer 33, bound to `configs/atlas_embedding_contract_20260929.json` | The historical pooling is superseded |
+| CV classifier | AUC 1.000, balanced accuracy 0.999 | Embeddings AUC 1.000, domain label alone 0.986, GTDB order label alone 0.998 | Lineage labels reproduce the separation |
+| PERMANOVA R² | 0.202 for ecosystem | Ecosystem 0.200, domain 0.231, GTDB order 0.898 (cosine distance) | Ecosystem adds 0.034 after domain, and nothing is left to test after order |
+| Cluster purity | 0.990 for ecosystem and for domain | 0.997 for both with the historical recipe | The historical run labelled every wetland genome's domain as unknown, so the two purities measured the same split |
+| Bridge genomes | Top 11 alpha-transfer scores were rumen archaea | Rumen archaea neighbour wetland archaea because every wetland genome is an archaeon, and with final-layer vectors 3 of the 11 have any wetland neighbour | Domain composition explains the ranking, which is retired |
+
+Silhouette, trajectory and Cohen's d values from the historical run compare the
+same confounded groups and are withdrawn as ecosystem evidence. The retest
+record is kept locally in `results/analysis/geometry_retest_20261021/` (not part
+of the repository).
 
 **Embedding configuration reconciliation (29 September 2026).** The historical run above pooled layers 20–33; later atlas lanes used layer 33. All 662 retained pilot proteomes have now been recomputed under final-layer pooling, with per-record retained-input and original-pooling reproduction checks. The corrected public geometry is bound to `configs/atlas_embedding_contract_20260929.json` and uses `configs/methanet_atlas_lanes_20260929.tsv`. Old mixed-pooling cross-run positions, links and rankings remain superseded; the historical within-run statistics above are not claims about the corrected atlas. Historical June model-revision metadata remains incomplete. Biological transfer and methane prediction require independent validation. Mean-pooled genome vectors are also nearly collinear. Two random genomes have a median cosine similarity of 0.9942, against 0.9973 for nearest core members, so nearest-neighbour links need centering or whitening and taxonomy-matched controls before they can be read as biology. See [the release receipt](docs/releases/atlas_embedding_reconciliation_20260929.md).
 
-**Domain composition caveat (21 October 2026).** Every wetland genome in this
-pilot is archaeal: the 107 MUCC genomes are a Methanoregula-group set (106
-Methanomicrobiales, 1 Undinarchaeales) compiled for Bechtold et al. (2025).
-Of the 518 rumen MAG/bin units, 507 are bacteria and 11 are archaea (37
-assembly-context units are excluded). Ecosystem and domain are therefore
-almost the same partition, so the PERMANOVA, silhouette and classifier results
-above mostly show that proteome embeddings separate archaea from bacteria. The
-40-genome baseline reports identical purity for ecosystem and domain (0.990)
-for the same reason. These results do not show ecosystem-specific methane
-biology.
+**Key scientific findings (retested 21 October 2026)**
 
-**Key scientific findings, restated**
-
-- Rumen Archaea dominate the historical bridge-candidate ranking. Because the
-  wetland side is entirely archaeal, rumen archaea are the rumen genomes most
-  similar to it by construction. The ranking reflects taxonomy and does not
-  show methanogenesis machinery shared across ecosystems.
-- The classifier's AUC of 1.0 reflects source and domain separability within
-  this POC. A taxonomy-only label separates the same groups. Methane transfer
-  and activity remain separate validation questions.
-- **P0 caveat.** Source, ecosystem and domain are confounded. All rumen
-  genomes come from PRJEB31266, all wetland genomes come from MUCC, and the
-  two sides differ in domain. Deconfounding needs additional sources and
-  taxonomy-matched comparisons.
+- The pilot cannot separate ecosystem from lineage. All 107 wetland genomes are
+  archaea, 507 of the 518 rumen genomes are bacteria, and the two ecosystems
+  share no GTDB order or family. Within the archaea, an order label alone
+  matches the embedding classifier (AUC 0.999 for both).
+- The historical bridge ranking reflected domain composition. Rumen archaea sat
+  next to wetland archaea because those were the only other archaea in the
+  cohort. The alpha-transfer ranking is retired, and its reading as conserved
+  methanogenesis machinery is withdrawn.
+- Source and ecosystem remain perfectly confounded. All rumen genomes come from
+  PRJEB31266 and all wetland genomes from MUCC, so the pilot supports
+  configuration checks and lineage-level navigation.
+- Across the 7,710-record atlas, embedding neighbours mostly share lineage (77%
+  of k=35 neighbour links stay within a phylum, against 10% for random pairs).
+  The embeddings also carry a source signature that separates two mangrove
+  studies almost as well as it separates habitats, so habitat, study and
+  lineage effects need independent sources before any ecological reading.
+- Closest-core links reflect the core's lineages. Every bacterium in the
+  625-genome core is a rumen genome, 2,315 of 6,390 bacterial records outside
+  the core match an archaeal core genome in raw cosine, and only 12% of all
+  closest-core matches share a phylum. These links serve navigation and review.
 
 **40-genome baseline (initial validation, `apolo_20260226_194505`)**
 - 40 samples (20 MUCC + 20 rumen), PERMANOVA R²=0.517, silhouette=0.433, trajectory t=13.97 (p=1.5e-16)
 - bin.23 (Archaea) embeds 100% inside wetland cluster (mixing_coeff=1.0),
   as expected when the wetland cluster is the archaeal cluster
-- The R² decrease from 0.517 to 0.202 at scale is consistent with greater
-  within-rumen diversity after adding 515 rumen genomes.
+- The R² fell from 0.517 to 0.202 as group sizes moved from 20 against 20 to
+  107 against 555, so the change does not by itself measure within-rumen
+  diversity.
+- Its recorded cluster purity is identical for ecosystem and domain (0.990 in
+  `results/blue_catalyst_poc/poc_metrics.json`) for the same reason as in the
+  662-genome run. This baseline was not retested.
 
 **Deep-dive analytics report**
 - 6 publication-grade figures + Word report: `results/blue_catalyst_poc/interim_snapshots/apolo_full_20260228_080644_embed_20260305_061952_notebook_interim_20260306_055012/deep_dive_report/`

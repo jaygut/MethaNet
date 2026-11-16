@@ -139,6 +139,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--skip-phate", action="store_true", help="Skip PHATE if runtime is constrained.")
     parser.add_argument("--skip-umap", action="store_true", help="Skip UMAP if runtime is constrained.")
     parser.add_argument("--skip-tsne", action="store_true", help="Skip t-SNE if runtime is constrained.")
+    parser.add_argument(
+        "--geometry-retest",
+        type=Path,
+        default=Path("results/analysis/geometry_retest_20261021/key_numbers.json"),
+        help="Optional taxonomy-controlled geometry retest summary; its lineage checks are cited when present.",
+    )
     return parser.parse_args()
 
 
@@ -269,6 +275,71 @@ def gtdb_release_coverage_text(release_counts: list[dict[str, Any]]) -> str:
     text = f"GTDB release metadata ({', '.join(releases)}) exists for {join(ordered(set(present)))}"
     missing = ordered(lanes - set(present))
     return text + (f" and is missing for {join(missing)}" if missing else "")
+
+
+def load_geometry_retest(path: Path | None) -> dict[str, Any]:
+    """Read the taxonomy-controlled geometry retest when its summary is present.
+
+    Only the lineage checks the report cites are kept, each with its source, so
+    the report states them only when the retest record exists.
+    """
+    if path is None or not path.exists():
+        return {}
+    data = json.loads(path.read_text())
+    tables = path.parent / "tables"
+    core = data.get("B4_B6_nearest_core_and_candidates", {}).get("raw", {})
+    hoods = data.get("B3_B5_neighbourhoods_and_mutual_pairs", {})
+    knn = hoods.get("knn_coherence_all_edges", {}).get("raw", {})
+    pilot = data.get("A_pilot", {}).get("ecosystem_by_domain", {})
+    rumen_pairs = [
+        counts["any pair involving rumen"]
+        for counts in hoods.get("mutual_pair_counts", {}).values()
+        if isinstance(counts, dict) and counts.get("any pair involving rumen") is not None
+    ]
+    offsets = [
+        row for row in data.get("B2_collinearity", {}).get("effective_dimensionality", [])
+        if str(row.get("transform", "")).startswith("raw")
+    ]
+    out: dict[str, Any] = {
+        "source": str(path),
+        "core_wetland_bacteria": pilot.get("wetland", {}).get("Bacteria"),
+        "bacteria_to_archaeal_core": core.get("bacterial_records_to_archaeal_core"),
+        "bacteria_outside_core": core.get("bacterial_records_outside_core"),
+        "nearest_core_same_phylum_share": (
+            core["same_phylum"] / core["phylum_known"] if core.get("phylum_known") else None
+        ),
+        "top10_hub_share": core.get("top10_hub_share"),
+        "knn_same_phylum_share": knn.get("phylum"),
+        "knn_same_family_share": knn.get("family"),
+        "mangrove_wetland_mutual_same_phylum_share": hoods.get(
+            "raw_mangrove_wetland_phylum_share_retest_taxonomy"
+        ),
+        "rumen_mutual_same_phylum_share": hoods.get("zscore_rumen_pairs_share_same", {}).get("phylum"),
+        "rumen_mutual_pair_min": min(rumen_pairs) if rumen_pairs else None,
+        "rumen_mutual_pair_max": max(rumen_pairs) if rumen_pairs else None,
+        "offset_share": offsets[0].get("offset_share_of_squared_norm") if offsets else None,
+        "pairs_above_099_share": data.get("B2_collinearity", {})
+        .get("pairwise", {})
+        .get("raw", {})
+        .get("share_pairs_above_0.99"),
+    }
+    coherence = tables / "B3_knn_taxonomic_coherence.tsv"
+    if coherence.exists():
+        frame = pd.read_csv(coherence, sep="\t")
+        rows = frame[frame["transform"].eq("raw") & frame["scope"].eq("all neighbour edges")]
+        for rank in ("phylum", "family"):
+            match = rows[rows["rank"].eq(rank)]
+            if len(match):
+                out[f"random_same_{rank}_share"] = float(
+                    match["random_expectation_same_habitat_pairing"].iloc[0]
+                )
+    candidates = tables / "B6_candidate_nearest_core.tsv"
+    if candidates.exists():
+        frame = pd.read_csv(candidates, sep="\t")
+        out["candidate_self_copies"] = int(
+            pd.to_numeric(frame["published_similarity"], errors="coerce").ge(0.99999).sum()
+        )
+    return out
 
 
 def apply_public_lane_display(atlas: pd.DataFrame) -> pd.DataFrame:
@@ -4808,6 +4879,58 @@ def render_html(
         <p class="figure-caption">Illustrative concept art, not data.</p>
         """
 
+    retest = audit.get("geometry_retest") or {}
+
+    def pct(value: Any) -> str:
+        return f"{100 * safe_float(value):.0f}%"
+
+    def has(*keys: str) -> bool:
+        return all(retest.get(key) is not None for key in keys)
+
+    anisotropy_retest_text = (
+        f" The atlas mean vector carries {100 * safe_float(retest['offset_share']):.1f}% of the squared norm, and "
+        f"{pct(retest['pairs_above_099_share'])} of record pairs exceed 0.99."
+        if has("offset_share", "pairs_above_099_share")
+        else ""
+    )
+    mutual_retest_text = (
+        f" Of the mutual mangrove–wetland pairs, {pct(retest['mangrove_wetland_mutual_same_phylum_share'])} share a phylum. "
+        f"Pairs that include a rumen genome mostly join different phyla ({pct(retest['rumen_mutual_same_phylum_share'])} of the standardized ones share one), "
+        f"and their number ranges from {safe_int(retest['rumen_mutual_pair_min']):,} to {safe_int(retest['rumen_mutual_pair_max']):,} "
+        "across raw, centered, standardized and whitened scalings, so they are reported as geometry diagnostics."
+        if has("mangrove_wetland_mutual_same_phylum_share", "rumen_mutual_same_phylum_share", "rumen_mutual_pair_min", "rumen_mutual_pair_max")
+        else ""
+    )
+    nearest_retest_text = (
+        (
+            " Every bacterium in the core comes from the rumen and every wetland core genome is an archaeon, "
+            "so the comparison mostly reports which lineages the core contains."
+            if retest.get("core_wetland_bacteria") == 0
+            else ""
+        )
+        + (
+            f" In raw cosine, {safe_int(retest['bacteria_to_archaeal_core']):,} of {safe_int(retest['bacteria_outside_core']):,} "
+            f"bacterial records match an archaeal core genome, {pct(retest['nearest_core_same_phylum_share'])} of all matches share a phylum, "
+            f"and ten core genomes receive {pct(retest['top10_hub_share'])} of the matches."
+            if has("bacteria_to_archaeal_core", "bacteria_outside_core", "nearest_core_same_phylum_share", "top10_hub_share")
+            else ""
+        )
+    )
+    taxonomy_lead_text = (
+        "Taxonomy explains most of the neighborhood structure. "
+        f"Across the atlas, {pct(retest['knn_same_phylum_share'])} of {safe_int(geometry.get('knn_k'))}-nearest-neighbor links join genomes of the same phylum "
+        f"and {pct(retest['knn_same_family_share'])} of the same family, compared with {pct(retest['random_same_phylum_share'])} "
+        f"and {pct(retest['random_same_family_share'])} for random pairs."
+        if has("knn_same_phylum_share", "knn_same_family_share", "random_same_phylum_share", "random_same_family_share")
+        else "Taxonomy explains part of the mangrove–wetland continuity."
+    )
+    count_words = {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six", 7: "Seven", 8: "Eight", 9: "Nine"}
+    caption_retest_text = (
+        f" {count_words.get(safe_int(retest['candidate_self_copies']), safe_int(retest['candidate_self_copies']))} of them join an Old Woman Creek genome to its own copy in the core."
+        if safe_int(retest.get("candidate_self_copies")) > 0
+        else ""
+    )
+
     wetland_outside = safe_int(nearest_core.get("wetland_outside_core_units"))
     wetland_outside_rumen = safe_int(nearest_core.get("wetland_outside_core_nearest_rumen_units"))
     mangrove_units = safe_int(nearest_core.get("mangrove_embedding_units"))
@@ -4903,10 +5026,10 @@ def render_html(
   <section class="section">
     <h2>ESM-2 geometry with measured limitations</h2>
     <p>The ESM-2 representation places {safe_int(geometry.get('embedding_units')):,} records in a {dimensions:,}-dimensional space. The September 29 geometry release recomputed the retained 662-record pilot with final-layer 33 pooling to match the later source lanes. All 662 passed input-identity, protein-count, finite-vector and reproduction checks. In a separate representation control, 23 selected same-DNA records ranked first among 2,501 Old Woman Creek targets. These checks establish configuration consistency for navigation; ecological transfer and flux prediction still need independent tests.</p>
-    <p>Raw cosine similarity in this space is strongly anisotropic: two random records have a mean cosine of {safe_float(geometry.get('random_pair_similarity_mean')):.4f} (median {random_median:.4f}), and the median similarity to the global centroid is {safe_float(geometry.get('similarity_to_global_centroid_median')):.4f}. Cross-habitat neighbor edges therefore sit in a saturated range, with a median raw cosine of {safe_float(geometry.get('raw_cross_edge_similarity_median')):.6f}. The atlas uses this geometry to navigate neighborhoods and keeps functional and validation evidence separate.</p>
-    <p>A stricter test counts mutual neighbors: pairs in which each record is among the other's {knn_k} closest across the full atlas. Raw space holds {safe_int(raw_pairs.get('mangrove↔wetland')):,} mutual mangrove–wetland pairs, {raw_rumen_wetland:,} rumen–wetland pair{'' if raw_rumen_wetland == 1 else 's'} and {raw_rumen_mangrove:,} rumen–mangrove pair{'' if raw_rumen_mangrove == 1 else 's'}. After each dimension is standardized, {safe_int(z_pairs.get('mangrove↔wetland')):,} mangrove–wetland pairs remain {z_rumen_text}.</p>
-    <p>A separate, one-way comparison asks which member of the {safe_int(nearest_core.get('reference_core_units')):,}-genome reference core ({safe_int(nearest_core.get('reference_core_rumen_units')):,} rumen, {safe_int(nearest_core.get('reference_core_wetland_units')):,} wetland) is closest to each record. Outside the core, {wetland_outside_rumen:,} of {wetland_outside:,} wetland and {mangrove_rumen:,} of {mangrove_units:,} mangrove records point to a rumen genome, as do {candidates_rumen_text}. The median closest-match similarity outside the core is {nearest_median:.3f}; the random-pair atlas median is {random_median:.3f}. These values describe representation geometry, not a calibrated measure of biological equivalence. The core is mostly rumen, so a rumen match nominates a record for review; it does not establish shared biology, transfer between sources or methane flux.</p>
-    <p>Taxonomy explains part of the mangrove–wetland continuity. Among mutual pairs with usable phylum labels, {100 * safe_float(taxonomy_audit.get('raw_exact_name_share_usable')):.1f}% match exactly and {100 * safe_float(taxonomy_audit.get('synonym_normalized_share_usable')):.1f}% match after conservative synonym normalization. {gtdb_release_coverage_text(taxonomy_audit.get('gtdb_release_by_lane', []))}, so source and taxonomy-release effects are not fully separable. Harmonized taxonomy and phylogeny-aware null models are needed before neighborhood enrichment can be read as functional convergence.</p>
+    <p>Raw cosine similarity in this space is strongly anisotropic. Two random records have a mean cosine of {safe_float(geometry.get('random_pair_similarity_mean')):.4f} (median {random_median:.4f}), and the median similarity to the global centroid is {safe_float(geometry.get('similarity_to_global_centroid_median')):.4f}.{anisotropy_retest_text} Cross-habitat neighbor edges therefore sit in a saturated range, with a median raw cosine of {safe_float(geometry.get('raw_cross_edge_similarity_median')):.6f}. The atlas uses this geometry to navigate neighborhoods and keeps functional and validation evidence separate.</p>
+    <p>A stricter test counts mutual neighbors, the pairs in which each record is among the other's {knn_k} closest across the full atlas. Raw space holds {safe_int(raw_pairs.get('mangrove↔wetland')):,} mutual mangrove–wetland pairs, {raw_rumen_wetland:,} rumen–wetland pair{'' if raw_rumen_wetland == 1 else 's'} and {raw_rumen_mangrove:,} rumen–mangrove pair{'' if raw_rumen_mangrove == 1 else 's'}. After each dimension is standardized, {safe_int(z_pairs.get('mangrove↔wetland')):,} mangrove–wetland pairs remain {z_rumen_text}.{mutual_retest_text}</p>
+    <p>A separate, one-way comparison asks which member of the {safe_int(nearest_core.get('reference_core_units')):,}-genome reference core ({safe_int(nearest_core.get('reference_core_rumen_units')):,} rumen, {safe_int(nearest_core.get('reference_core_wetland_units')):,} wetland) is closest to each record.{nearest_retest_text} Outside the core, {wetland_outside_rumen:,} of {wetland_outside:,} wetland and {mangrove_rumen:,} of {mangrove_units:,} mangrove records point to a rumen genome, as do {candidates_rumen_text}. The median closest-match similarity outside the core is {nearest_median:.3f}; the random-pair atlas median is {random_median:.3f}. These values describe representation geometry, not a calibrated measure of biological equivalence. Closest-core links serve navigation and review. They do not establish shared biology, transfer between sources or methane flux.</p>
+    <p>{taxonomy_lead_text} Among mutual pairs with usable phylum labels, {100 * safe_float(taxonomy_audit.get('raw_exact_name_share_usable')):.1f}% match exactly and {100 * safe_float(taxonomy_audit.get('synonym_normalized_share_usable')):.1f}% match after conservative synonym normalization. {gtdb_release_coverage_text(taxonomy_audit.get('gtdb_release_by_lane', []))}, so source and taxonomy-release effects are not fully separable. Harmonized taxonomy and phylogeny-aware null models are needed before neighborhood enrichment can be read as functional convergence.</p>
     <p>UMAP is the default map view because it keeps local neighborhoods readable. Diffusion, t-SNE and PCA are offered for comparison; source structure and projection distortion must be assessed in the reconciled release. No projection is evidence on its own, and link membership is always computed in the full representation.</p>
     <p class="note"><b>References</b></p>
     <ol class="refs">{references_html}</ol>
@@ -4914,7 +5037,7 @@ def render_html(
   <section class="section">
     <h2>Molecular niche-space map</h2>
     <p>Every record with an ESM-2 embedding appears on the map, colored by source lane. Positions come from a two-dimensional projection; links come from the full {dimensions:,}-dimensional representation, so switching projections moves points but never changes which links exist.</p>
-    <p>Gold lines join the {drawn_case_links:,} selected candidates outside the reference core to their closest reference-core genome. Teal lines are mutual neighbor pairs and gray lines one-way neighbor pairs; the map draws the {drawn_neighbor_links:,} most similar of the {cross_edges:,} directed cross-habitat neighbor edges.{neighbor_mix_text} Gold rings mark the {case_study_count:,} case-study candidates: select one to read its evidence card, or hover over any point.</p>
+    <p>Gold lines join the {drawn_case_links:,} selected candidates outside the reference core to their closest reference-core genome.{caption_retest_text} Teal lines are mutual neighbor pairs and gray lines one-way neighbor pairs. The map draws the {drawn_neighbor_links:,} most similar of the {cross_edges:,} directed cross-habitat neighbor edges.{neighbor_mix_text} Gold rings mark the {case_study_count:,} case-study candidates. Select one to read its evidence card, or hover over any point.</p>
     <div class="toolbar" id="method-buttons"></div>
     <p class="note" id="projection-note"></p>
     <div class="legend"><span><i class="dot" style="background:var(--rumen)"></i>Rumen reference</span><span><i class="dot" style="background:var(--wetland)"></i>Wetland (mostly Old Woman Creek)</span><span><i class="dot" style="background:var(--mangrove)"></i>Mangrove, China coast (MSM)</span><span><i class="dot" style="background:var(--futian)"></i>Mangrove, Futian (Shenzhen)</span><span><i class="halo"></i>Case-study candidate</span><span><i class="line" style="border-color:var(--gold)"></i>Candidate to closest core genome</span><span><i class="line" style="border-color:var(--teal)"></i>Mutual neighbors</span><span><i class="line" style="border-color:#94a3b8"></i>One-way neighbors</span></div>
@@ -5651,6 +5774,9 @@ def main() -> None:
         "functional_metric_provenance": functional_metric_audit,
         "mucc_validation_readiness": mucc_validation,
         "findings": scientific_findings,
+        "geometry_retest": load_geometry_retest(
+            resolve(repo_root, args.geometry_retest) if args.geometry_retest else None
+        ),
     }
     summary["cross_domain_knn_edges"] = int(
         geometry_audit["raw_cross_domain_directed_edges"]
