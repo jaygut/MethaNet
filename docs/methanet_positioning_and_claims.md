@@ -72,6 +72,40 @@ Each relationship retains its evidence class. Representation proximity,
 functional annotation, expression detection, and field evidence therefore
 remain distinguishable in every review path.
 
+## Proposed Path From Atlas To Flux Models
+
+EmergentBiome connects molecular evidence to methane-flux prediction through a
+shared semantic and provenance layer. The ontology defines gene, pathway,
+sample, site, and measurement meaning. The evidence graph links those entities
+with their source, method, QC, status, and identity confidence. The model uses
+versioned features from this atlas; model outputs return to evidence cards with
+their feature lineage, uncertainty, and next measurement.
+
+The first proposed predictor is an interpretable benchmark for measured net
+methane flux. It compares environmental covariates alone, the published
+`mcrA` to `pmoA` abundance-ratio benchmark, and a combined model with coverage-qualified
+methane, sulfur, and substrate gene-set features plus salinity, sulfate,
+hydrology, and temperature. Regularized regression is a transparent candidate
+learner. The final feature definitions and learner should follow the paired
+sample design and preregistered evaluation.
+
+A complementary transfer learning module uses gene-level ESM-2 and gLM2
+representations around methane-pathway genes. It prioritizes bridge genomes
+and transfers functional hypotheses from characterized references to
+underrepresented wetland genomes. Transfer-derived features then enter the
+same methane flux evaluation with matched environmental context. The proposed
+tests compare environment-only, marker-only, interpretable hybrid, and
+transfer-augmented inputs. Use grouped plot folds, public-source holdouts where
+data allow, and the prelabel dry-season holdout at the target site. Several
+tens of independent sites are needed to evaluate geographic transfer.
+
+These are proposed model stages. Training on field outcomes requires exact
+sample identity, abundance or read coverage, environmental covariates, and
+paired methane-flux measurements. The current MVO 0.2.0 graph contains selected
+molecular evidence for 145 MAGs. The broader atlas registers 7,965 lane-scoped
+records. The current graph admits zero exact molecular-to-flux pairs, so the
+field predictor remains a research objective.
+
 ## Current Release Snapshot
 
 The August 10, 2026 controlled-diligence release contains:
