@@ -19,6 +19,12 @@ Then read the immediately relevant supporting contracts:
 - `ai_docs/functional_metagenomics_expansion/pipeline_reproducibility_contract.md`
 - `ai_docs/functional_metagenomics_expansion/embedding_functional_transfer_framework/methanet_embedding_functional_transfer_framework.md`
 
+## Current State And Field Protocol Work
+
+- Read `docs/project_state_20261116.md` for the current release, warehouses, branch and deployment state, and next steps.
+- For field sampling, campaign protocol, field schema 0.2 or training-data contract work, the reviewed field sampling blueprint of 16 Nov 2026 lives in the git-ignored local working folder `results/sampling_blueprint_20261116/v2/` (not part of the public tree). Read its `REVISION_LOG.md` and `src/contract.json` first, and build it with `python3 -P build.py`.
+- The repository is public. Keep site, partner and funding details, registry census figures, local paths and host names out of tracked files. The commit guard (`scripts/check_provenance.py`, `.githooks/`) must pass, and a push to `main` that touches `web/` deploys the landing page, so publish only after an approved local preview.
+
 ## Non-Negotiable Claim Boundaries
 
 - Use `proteome_id` as the canonical cohort key unless a source explicitly requires another key.
@@ -27,6 +33,8 @@ Then read the immediately relevant supporting contracts:
 - Do not assign final A-E methane-risk tiers until sample mapping, abundance/read coverage, environmental covariates, uncertainty propagation, and flux/process validation exist.
 - Do not claim carbon-credit approval, measured methane flux, or source-independent rumen-to-wetland transfer from the current molecular atlas alone.
 - Preserve failed, pending, partial, and missing evidence as explicit status rows rather than dropping them from analyses.
+- Describe the 7,965 release records as lane-scoped records. Genome embeddings support navigation, and no environment signal has been separated from study, processing or composition effects with the current lanes.
+- Molecular evidence can help decide where to measure. Do not claim it can clear a stratum or site, or replace measured flux, before a multi-site study bounds its miss rate.
 
 ## Preferred Output Pattern
 

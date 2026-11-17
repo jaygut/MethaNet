@@ -1,6 +1,6 @@
 # MethaNet Repository Guide
 
-Documentation refresh: 2026-09-27
+Documentation refresh: 2026-11-16
 
 This guide is the shortest path from a fresh clone to a useful local
 exploration. MethaNet is a code-and-contract repository; the large sequencing,
@@ -102,6 +102,25 @@ deployment receipt described in the data foundation guide before rebuilding
 or asserting parity. The deployed `gh-pages` tree and default source branch
 can differ; check the receipt's source commit rather than assuming that a
 fresh clone reproduces the live site.
+
+### Commit identity guard
+
+Commits use one identity and must not carry machine details. Enable the hooks
+once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+The pre-commit hook checks the staged identity and additions, and the pre-push
+hook checks every commit being pushed. Run the same checks by hand with
+`python3 scripts/check_provenance.py range origin/main..HEAD` and
+`python3 scripts/check_provenance.py tree HEAD`. Push named refspecs only. A
+push to `main` that touches `web/` deploys the landing page, so publish only
+after a locally verified preview is approved.
+
+On 16 November 2026 the unit suite (`pytest tests/unit -q`) passed with 264
+tests and 1 skip on the working branch.
 
 ## Operational conventions
 

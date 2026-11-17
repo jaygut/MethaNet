@@ -1,7 +1,7 @@
 # MethaNet Current Artifact Inventory
 
-Documentation refresh: 2026-09-29. Molecular release counts remain the 2026-08-10
-freeze. The landing page received a separately reviewed three-case network release
+Documentation refresh: 2026-11-16. Molecular release counts remain the 2026-08-10
+freeze, read as 7,965 lane-scoped records. The 21 October 2026 geometry retest and report bundle are recorded below and in the [16 November project state](project_state_20261116.md). The landing page received a separately reviewed three-case network release
 on 2026-09-27. The 29 September geometry overlay corrects pilot pooling and rebuilds the landing/report; the August molecular denominator and functional payload remain unchanged. The active pointer and [reconciliation receipt](releases/atlas_embedding_reconciliation_20260929.md) identify the current geometry.
 
 This page summarizes the datasets, databases, generated warehouses, and graph
@@ -501,6 +501,19 @@ the reference core), expression flags, lane labels and the default projection
 (UMAP); counts and the release ledger are unchanged. Changes and checks are recorded
 in `web/emergentbiome-methanet/design-qa.md`.
 
+Report and retest update, 21 October 2026. A taxonomy-controlled geometry retest
+re-read the pilot and atlas geometry. The pilot's ecosystem separation is a
+domain and order separation, embedding neighbours share a phylum 77% of the
+time against 10% for random pairs, and the embeddings carry a source signature.
+The corrected report bundle
+`results/reports/emergentbiome_molecular_atlas_20261021_semantic_scores/` uses
+lane-warehouse screening scores and GTDB release coverage, and it is now the
+default for `tools/publish_site.sh` and `tools/export_atlas.py`. It is not yet
+deployed. The live landing and `/report/` were last deployed on 13 October 2026
+from the 29 September layer-33 bundle. `configs/atlas_current_release.json`
+still points at that bundle until the next approved publication. The retest
+record stays in a git-ignored local analysis folder.
+
 ## Molecular Attestation Graph
 
 Foundational graph MVP:
@@ -562,6 +575,7 @@ and [SQL/Neo4j comparison](../ontology/docs/STORE_COMPARISON_20260926.md).
 | Document | Role |
 | --- | --- |
 | `README.md` | public-facing project overview and current artifact arc |
+| `docs/project_state_20261116.md` | dated status recap: release, warehouses, claim boundaries, branch and deployment state, field-evidence next steps |
 | `docs/atlas_data_foundation.md` | data authority, release identity, table grains, and portability contract |
 | `docs/knowledge_graph_foundation.md` | current graph scope and future typed biogeochemical graph contract |
 | `docs/methanet_positioning_and_claims.md` | canonical product narrative, terminology, release counts, and claim matrix |

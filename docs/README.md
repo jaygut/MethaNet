@@ -15,7 +15,7 @@ than silently rewrites a prior release freeze.
 | Compare SQL, RDF, and Neo4j roles and local query evidence | [MVO store comparison](../ontology/docs/STORE_COMPARISON_20260926.md) |
 | Read the current MVO graph implementation and local recovery commands | [MVO package guide](../ontology/README.md) and [0.2.0 handoff](../ontology/docs/MOLECULAR_HANDOFF_20260926.md) |
 | Review ontology design and formal verification | [MVO architecture](../ontology/docs/ARCHITECTURE.md), [verification history](../ontology/docs/VERIFICATION.md), and [governance gates](../ontology/docs/GOVERNANCE_AND_EXTENSION.md) |
-| Understand the end-to-end status as of 2026-09-27 | [Project state recap](project_state_20260927.md) |
+| Understand the end-to-end status as of 2026-11-16, including branch, deployment and field-evidence next steps | [Project state recap, 16 Nov 2026](project_state_20261116.md) (the [27 Sep recap](project_state_20260927.md) stays as a dated snapshot) |
 | Run local workflows and tests from a clean clone | [Repository guide](repository_guide.md) and [reproducibility](reproducibility.md) |
 
 ## Data and implementation contracts
@@ -27,6 +27,13 @@ than silently rewrites a prior release freeze.
 - Preserve failed, partial, pending, excluded, and missing evidence explicitly.
 - MAG-level molecular potential is not sample-level activity or methane flux.
   No final A–E tiers or credit approvals are supported by the current atlas.
+- Genome embeddings support navigation. With the current lanes no environment
+  signal can be separated from study, processing or composition effects
+  (21 October 2026 retest), so environment enters models through measured
+  sample context.
+- The next contracts are field schema 0.2 and a training-data contract for
+  paired molecular, chemical and flux campaign data. See the
+  [project state recap](project_state_20261116.md).
 - SQL/Parquet warehouse facts remain source authority. RDF is the canonical
   semantic snapshot; Neo4j is a rebuildable graph-query projection.
 - Large source data, warehouse outputs, graph builds, internal report bundles,
