@@ -11,9 +11,9 @@ The molecular release is unchanged. The August 10, 2026 freeze still defines
 7,965 lane-scoped `(lane_id, proteome_id)` records, of which 7,710 carry the
 complete protein, genomic-context and functional tri-view and 255 remain
 explicit exclusions. Since September the work has corrected how the atlas
-geometry is read, tightened claims and provenance, recorded the corrected report
-and landing copy on the working branch, and designed the field evidence that
-the atlas lacks.
+geometry is read, tightened claims and provenance, brought the corrected report
+builder and landing copy onto `main`, deployed the corrected landing copy, and
+designed the field evidence that the atlas lacks.
 
 No sample in the atlas is yet paired with a methane measurement taken at the
 same place, depth and time. That missing pair is the main gap between the
@@ -102,28 +102,36 @@ The next deliverables follow in order.
 
 ## Branch and deployment state
 
-- `main` on GitHub is the rewritten history from 22 October 2026.
-- The working branch `fix/strategic-review-20261021` holds ten correction commits
-  and this documentation update on top of `main`. The corrections carry the 21 October claim, report and landing corrections, the
-  ignore rules for unpublished manuscripts, and the geometry-retest wording.
-  The branch was rebased onto the rewritten `main` on 16 November 2026 and
-  fast-forwards cleanly.
-- Several of these commits change `web/emergentbiome-methanet/`. A push to
-  `main` therefore deploys the landing page through
-  `.github/workflows/deploy-landing.yml`. The landing and report are published
-  only after a locally verified preview is approved.
-- The live site serves the landing and report built from the 29 September
-  layer-33 bundle (last deployed 13 October 2026) against the August freeze,
-  under `noindex`. The 21 October report bundle and landing wording are not
-  deployed yet.
+- `main` on GitHub is the rewritten history from 22 October 2026 plus ten
+  correction commits and this documentation update. The corrections carry the
+  21 October claim, report and landing corrections, the ignore rules for
+  unpublished manuscripts, and the geometry-retest wording. They were rebased
+  onto the rewritten `main` as the branch `fix/strategic-review-20261021`, and
+  `main` was fast-forwarded to that branch on 16 November 2026.
+- Several of these commits change `web/emergentbiome-methanet/`, so the push to
+  `main` deployed the landing page through
+  `.github/workflows/deploy-landing.yml` on 16 November 2026, after a locally
+  verified preview. The workflow refreshes the landing files only. It changed
+  the landing copy and scene scripts and left `/report/` and the landing data
+  as they were.
+- The live landing now carries the 21 October wording. The report and the
+  landing data still come from the 29 September layer-33 bundle (last deployed
+  13 October 2026) against the August freeze, and the site stays under
+  `noindex`. The 21 October report bundle is not deployed yet. Publishing it is
+  a separate step that needs its own approved preview.
 
 ## Verification recorded for this recap
 
-- The unit suite on the working branch gave 264 passed and 1 skipped, with 94
+- The unit suite on the working branch gave 264 passed and 1 skipped, with 95
   subtests passed (`.venv/bin/python -m pytest tests/unit -q`).
 - The commit guard (`scripts/check_provenance.py range`) passed on the ten branch
   commits, and `tree HEAD` passed on the full tree.
 - The rebased branch tree is byte-identical to the pre-rebase branch tip.
+- Before the push to `main`, the deploy workflow's steps were run locally
+  against the published site. The assembled landing loaded at desktop and phone
+  widths with no console errors, and the files the workflow then published
+  match the previewed ones. GitHub reported the Pages deployment as successful.
+  A browser check of the live page is still pending.
 
 These checks cover code contracts and repository hygiene. They do not provide
 independent biological review, clear publication rights, or close the

@@ -509,8 +509,10 @@ The corrected report bundle
 `results/reports/emergentbiome_molecular_atlas_20261021_semantic_scores/` uses
 lane-warehouse screening scores and GTDB release coverage, and it is now the
 default for `tools/publish_site.sh` and `tools/export_atlas.py`. It is not yet
-deployed. The live landing and `/report/` were last deployed on 13 October 2026
-from the 29 September layer-33 bundle. `configs/atlas_current_release.json`
+deployed. The corrected landing copy was deployed on 16 November 2026 through
+the landing workflow, which leaves `/report/` and the landing data as last
+deployed on 13 October 2026 from the 29 September layer-33 bundle.
+`configs/atlas_current_release.json`
 still points at that bundle until the next approved publication. The retest
 record stays in a git-ignored local analysis folder.
 
