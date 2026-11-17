@@ -22,9 +22,9 @@
   const READOUTS = {
     stakes: [["~" + EB.num.methaneGWP20 + "×", "CH₄ vs CO₂ over 20 years", true], ["field flux", "needed for a site's methane balance"]],
     blindspot: [["0 verified pairs", "wetland/mangrove genome-to-flux pairs in this atlas", true], ["no default", "VM0033 methane value below 18 ppt"]],
-    atlas: [[D.fmt(EB.num.triViewReady), "genome records on the map", true], [D.fmt(EB.num.sampledNeighborLinks), "neighbor links drawn"], [D.fmt(EB.num.highlightedCandidateLinks), "selected nearest-reference links"], [String(EB.num.standardizedRumenReciprocalPairs), "rumen matches that stay mutual after standardizing"]],
+    atlas: [[D.fmt(EB.num.triViewReady), "genome records on the map", true], [D.fmt(EB.num.sampledNeighborLinks), "neighbor links drawn"], [D.fmt(EB.num.highlightedCandidateLinks), "selected nearest-reference links"], [EB.num.neighborSamePhylumPct + "%", "of neighbor links stay within a phylum"]],
     surveyor: [["1 real genome", "from the August atlas", true], ["0 matched flux", "measurements for this record"]],
-    cheap: [["salinity", "sets the baseline", true], ["genome evidence", "flags exceptions worth measuring"]],
+    cheap: [["salinity", "sets the default", true], ["genome evidence", "could flag exceptions worth measuring (untested)"]],
     engine: [[D.fmt(EB.num.triViewReady), "records screened for methane-cycle genes", true], ["2", "annotation routes, compared separately"], [D.fmt(EB.num.mechanismComparableTriView), "records with a cross-route methane score"]],
     ladder: [["rung 0", "available now: review and triage", true], ["rungs 1–5", "the path to calibrated risk"]],
     path: [[EB.study.sampleEvents + " planned", "sample-events, not independent replicates", true], [EB.study.plots + " plots", "the replicate unit in analysis"]],
@@ -108,7 +108,7 @@
     const points = [
       "Pair " + S.sampleEvents + " planned sediment metagenomes with chamber methane flux, chemistry and hydrology across three restoration stages, " +
         "four salinity positions and two seasons",
-      "Test whether molecular features predict net methane flux better than environmental covariates and a reviewed methane-marker baseline, on the same held-out records",
+      "Test, within this site, whether molecular features predict net methane flux better than environmental covariates and a reviewed methane-marker baseline, on the same held-out records",
       "Freeze each model before its flux outcomes are unblinded: the first campaign tests a new site; the second tests seasonal transfer at the same points, not independent-site validation",
       "Release the paired data and reproducible workflows under the agreed access and sharing terms, including if molecular features add little",
     ];
@@ -116,7 +116,8 @@
     document.getElementById("askStudyNote").textContent =
       S.sampleEvents + " sample-events = " + S.plots + " plots × " + S.micrositesPerPlot + " microsites × " + S.campaigns.length + " seasons. " +
       "Revisits are repeated measurements, not independent replicates; the " + S.plotsPerCombination +
-      " plots at each stage and salinity position are the replicate unit.";
+      " plots at each stage and salinity position are the replicate unit. " +
+      "One site is one independent unit for geographic transfer, so a general verdict needs several tens of independent sites. This study is designed to help size that trial.";
     // factsheet rows
     const F = [
       ["Genome records registered", D.fmt(EB.num.warehouseReach) + " <span class='in-progress'>(255 documented source gaps)</span>"],
@@ -135,20 +136,25 @@
     const mangroveRecords = EB.ecosystems[2].count + EB.ecosystems[3].count;
     const evidenceCards = [
       {
-        metric: D.fmt(EB.num.nearestCoreWetland) + " wetland · " + D.fmt(EB.num.nearestCoreMangrove) + " mangrove",
-        title: "Point first to a rumen genome",
-        detail: "Of the " + D.fmt(EB.num.wetlandOutsideCore) + " wetland and " + D.fmt(mangroveRecords) + " mangrove records outside the 625-genome reference core, these have a rumen genome as their closest core match. " +
-          "The core contains 518 rumen genomes. Median nearest-core similarity (cosine " + EB.num.nearestCoreMedianCosine + ") is shown alongside the random-pair median (" + EB.num.randomPairMedianCosine + "). Each is a lead for review, not evidence of shared function.",
+        metric: EB.num.nearestCoreSamePhylumPct + "%",
+        title: "Closest reference rarely shares lineage",
+        detail: "Each of the " + D.fmt(EB.num.wetlandOutsideCore) + " wetland and " + D.fmt(mangroveRecords) + " mangrove records outside the 625-genome reference core is linked to its most similar core genome. " +
+          "Every bacterium in that core comes from the rumen, so a bacterial record that matches a bacterial reference always lands on a rumen genome. " +
+          "Only " + EB.num.nearestCoreSamePhylumPct + "% of these matches share a major lineage (phylum), and ten reference genomes receive half of all matches. The links help a reviewer open comparisons. They carry no claim of shared function.",
       },
       {
-        metric: EB.num.nearestCoreCandidates + " of " + EB.num.candidateCards,
+        metric: EB.num.candidateRumenRange + " of " + EB.num.candidateCards,
         title: "Selected candidate links",
-        detail: "Of " + EB.num.candidateCards + " selected wetland and mangrove candidates, " + EB.num.nearestCoreCandidates + " point to a rumen genome. Core self-matches are excluded from the drawn links. The map draws these " + EB.num.highlightedCandidateLinks + " gold links and " + D.fmt(EB.num.sampledNeighborLinks) + " sampled neighbor links, not every match.",
+        detail: "Of " + EB.num.candidateCards + " selected wetland and mangrove candidates, " + EB.num.nearestCoreCandidates + " have a rumen genome as their closest reference in the raw representation, and 14 to 16 do once the shared offset is removed. " +
+          "Of the original " + EB.num.nearestCoreCandidates + ", five or fewer keep the same rumen genome, and one shares its phylum. " +
+          EB.num.candidateSelfMatches + " of the " + EB.num.highlightedCandidateLinks + " drawn links join an Old Woman Creek genome to its own copy in the reference core. The gold links are navigation aids for review.",
       },
       {
-        metric: String(EB.num.standardizedRumenReciprocalPairs),
-        title: "Mutual rumen neighbors",
-        detail: "Count of wetland or mangrove–rumen pairs that remain mutual top-35 neighbors after dimension standardization. These corrected geometry diagnostics are separate from functional transfer validation.",
+        metric: EB.num.neighborSamePhylumPct + "%",
+        title: "Neighbors share lineage",
+        detail: "Across the atlas, " + EB.num.neighborSamePhylumPct + "% of neighbor links join genomes of the same major lineage (phylum) and " + EB.num.neighborSameFamilyPct + "% join genomes of the same family, compared with " +
+          EB.num.randomPairSamePhylumPct + "% and " + EB.num.randomPairSameFamilyPct + "% for random pairs. Links that cross habitats follow the same pattern. " +
+          "The map is a practical way to find related genomes across sources, and lineage accounts for much of the resemblance between habitats. Mutual pairs that include a rumen genome mostly join different phyla, so they stay an internal diagnostic.",
       },
     ];
     const evidenceGrid = document.getElementById("evidenceSummaryGrid");

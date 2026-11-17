@@ -184,17 +184,19 @@
           '<li><span class="atlas__swatch atlas__swatch--futian" aria-hidden="true"></span>Mangrove, Futian, Shenzhen · ' + fmt(byEco[3].length) + '</li></ul>' +
           '<p class="atlas__fineprint">Scroll to reveal the map. The overview previews 240 of the ' + fmt(neighbors.length) + ' neighbor links; choose Neighbor links to see them all.</p>';
       } else if (view === "candidates") {
+        // 21 Oct 2026 taxonomy-controlled retest: closest-core matches mostly reflect
+        // the core's lineages, so the panel reports lineage agreement, not rumen counts.
         const counts = validFreeze()
-          ? '<dl class="atlas__stat-grid"><div><dt>Wetland → rumen</dt><dd>' + fmt(FROZEN.wetlandRumen) + ' / ' + fmt(FROZEN.wetlandTotal) + '</dd></div>' +
-            '<div><dt>Mangrove → rumen</dt><dd>' + fmt(FROZEN.mangroveRumen) + ' / ' + fmt(FROZEN.mangroveTotal) + '</dd></div>' +
-            '<div><dt>Selected cards</dt><dd>' + fmt(FROZEN.cardsRumen) + ' / ' + fmt(FROZEN.cardsTotal) + '</dd></div></dl>'
+          ? '<dl class="atlas__stat-grid"><div><dt>Matches within the same phylum</dt><dd>' + EB.num.nearestCoreSamePhylumPct + '%</dd></div>' +
+            '<div><dt>Bacteria matched to an archaeal reference</dt><dd>' + fmt(EB.num.bacteriaMatchedToArchaealReference) + ' / ' + fmt(EB.num.outsideCoreBacteria) + '</dd></div>' +
+            '<div><dt>Matches received by ten reference genomes</dt><dd>' + EB.num.topTenReferenceSharePct + '%</dd></div></dl>'
           : '<p class="atlas__fineprint">The frozen nearest-reference counts are unavailable for this export.</p>';
         panelBody.innerHTML =
           '<p class="atlas__eyebrow">02 / Nearest reference</p>' +
           '<h3>' + fmt(candidates.length) + ' highlighted links</h3>' +
-          '<p>Gold lines join selected wetland and mangrove genomes to their closest genome in the 625-genome reference core (518 rumen, 107 wetland). The counts below describe the corrected final-layer representation. Reference composition and shared ancestry can influence the closest match.</p>' +
+          '<p>Gold lines join selected wetland and mangrove genomes to their closest genome in the 625-genome reference core. The core holds 518 rumen and 107 wetland genomes, and every bacterium in it comes from the rumen, so a bacterial record that matches a bacterial reference lands on a rumen genome. These links help a reviewer open comparisons. They carry no claim of shared function or transfer.</p>' +
           counts +
-          '<p class="atlas__fineprint">Median nearest-core cosine: ' + Number(AUDIT.outside_core_nearest_similarity_median).toFixed(4) + '. Random-pair median: ' + Number(GEOMETRY.random_pair_similarity_median).toFixed(4) + '. High raw cosine alone does not establish shared function. Only the ' + fmt(candidates.length) + ' selected links are drawn; core self-matches are excluded.</p>' +
+          '<p class="atlas__fineprint">Raw cosine similarity is 0.94 or higher for every pair of genomes in the atlas, and 79% of all pairs exceed 0.99, so a high value carries little information by itself. Median closest-core cosine: ' + Number(AUDIT.outside_core_nearest_similarity_median).toFixed(4) + '. Random-pair median: ' + Number(GEOMETRY.random_pair_similarity_median).toFixed(4) + '. Only the ' + fmt(candidates.length) + ' selected links are drawn, and ' + EB.num.candidateSelfMatches + ' of them join an Old Woman Creek genome to its own copy in the core.</p>' +
           '<label class="atlas__select-label" for="atlasCandidateSelect">Inspect a highlighted link</label>' +
           '<select id="atlasCandidateSelect" class="atlas__candidate-select"><option value="-1">All ' + fmt(candidates.length) + ' highlighted links</option></select>' +
           '<p class="atlas__candidate-readout" id="atlasCandidateReadout" role="status" aria-live="polite" aria-atomic="true">Choose a link to see both record IDs and their raw cosine similarity.</p>';
@@ -222,11 +224,11 @@
         panelBody.innerHTML =
           '<p class="atlas__eyebrow">04 / Stricter test</p>' +
           '<h3>Which resemblances are mutual?</h3>' +
-          '<p>This test counts pairs in which each genome is among the other’s 35 closest neighbors across the whole atlas. Standardizing each dimension first removes the shared offset that makes all genomes look alike.</p>' +
+          '<p>This test counts pairs in which each genome is among the other’s 35 closest neighbors across the whole atlas. Standardizing each dimension first removes the shared offset that makes all genomes look alike. Most mutual pairs between mangrove and wetland genomes share a phylum (' + EB.num.mangroveWetlandMutualSamePhylumPct + '%). Pairs that include a rumen genome are the exception. About 70% of the standardized ones join different phyla, and their number ranges from ' + EB.num.rumenMutualPairRange + ' depending on how similarity is scaled.</p>' +
           '<dl class="atlas__sensitivity-grid">' +
           [['Rumen ↔ wetland','rumen↔wetland'],['Rumen ↔ mangrove','mangrove↔rumen'],['Mangrove ↔ wetland','mangrove↔wetland']].map(([label,key]) =>
             '<div><dt>' + label + '</dt><dd><span>Raw</span><b>' + pairCount('raw_reciprocal_pair_counts',key) + '</b><span>Standardized</span><b>' + pairCount('dimension_zscore_reciprocal_pair_counts',key) + '</b></dd></div>').join('') + '</dl>' +
-          '<p class="atlas__fineprint">These are geometry sensitivity counts after pooling reconciliation. Mutual neighbors remain hypotheses for review; phylogeny, source effects and functional evidence must be tested independently. This test draws no edges of its own.</p>';
+          '<p class="atlas__fineprint">These are geometry diagnostics after pooling reconciliation. Mutual neighbors remain hypotheses for review, and phylogeny, source effects and functional evidence must be tested independently. This test draws no edges of its own.</p>';
 
       }
       if (panelAnnounce) {
@@ -244,7 +246,7 @@
       const link = candidates[selectedCandidate];
       const source = pts[link.s], reference = pts[link.t];
       readout.textContent = "Candidate: " + source.id + ". Closest core reference: " + reference.id +
-        ". Raw cosine similarity: " + Number(link.w).toFixed(4) + ". A lead for evidence review, not validated transfer.";
+        ". Raw cosine similarity: " + Number(link.w).toFixed(4) + ". A navigation lead for evidence review.";
     }
     p.setup = function () {
       p.createCanvas(ctx.W, ctx.H); p.pixelDensity(Math.min(2, window.devicePixelRatio || 1));
